@@ -1,0 +1,6 @@
+# Ignore all secret data
+*
+!.gitignore
+
+# Keep directory structure visible
+!*/

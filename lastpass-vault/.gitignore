@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Secrets data (NEVER commit)
+data/catalog.json
+data/exports/
+data/legacy/
+
+# Keep structure
+!data/.gitignore
+!config/.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+tests/**/*.pyc
+tests/**/__pycache__/
+*.tmp

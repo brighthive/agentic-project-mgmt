@@ -90,8 +90,13 @@ agentic-project-mgmt/
 │   ├── README.md                   # Notion setup guide
 │   └── [Product specs, meeting notes, requirements]
 │
-└── .github/                         # GitHub Actions (if used)
-    └── workflows/                   # CI/CD for project mgmt
+├── lastpass-vault/                  # Secrets Management
+│   ├── data/                       # Encrypted credential storage
+│   └── [LastPass integration files]
+│
+└── .github/                         # GitHub Actions & CI/CD
+    └── workflows/
+        └── sprint-release.yml      # Sprint release automation
 ```
 
 ---
