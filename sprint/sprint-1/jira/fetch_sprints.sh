@@ -1,7 +1,19 @@
 #!/bin/bash
-BASE_URL="https://brighthiveio.atlassian.net"
-USERNAME="kuri@brighthive.io"
-TOKEN="YOUR_JIRA_TOKEN_HERE"
+# Set these before running:
+# export JIRA_BASE_URL="https://brighthiveio.atlassian.net"
+# export JIRA_USERNAME="your-email@brighthive.io"
+# export JIRA_TOKEN="your-api-token"
+
+BASE_URL="${JIRA_BASE_URL:-https://brighthiveio.atlassian.net}"
+USERNAME="${JIRA_USERNAME:-}"
+TOKEN="${JIRA_TOKEN:-}"
+
+if [ -z "$USERNAME" ] || [ -z "$TOKEN" ]; then
+    echo "❌ Error: JIRA_USERNAME and JIRA_TOKEN environment variables must be set"
+    echo "   export JIRA_USERNAME='your-email@brighthive.io'"
+    echo "   export JIRA_TOKEN='your-api-token'"
+    exit 1
+fi
 
 # Get board ID
 BOARD_ID=$(curl -s -u "$USERNAME:$TOKEN" "$BASE_URL/rest/agile/1.0/board" | jq -r '.values[0].id')
