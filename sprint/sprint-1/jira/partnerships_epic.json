@@ -1,0 +1,18 @@
+{
+  "epic": {
+    "key": "BH-196",
+    "summary": "Partnerships"
+  },
+  "tasks": [
+    {
+      "key": "BH-197",
+      "summary": "LangChain DeepAgent Integration",
+      "epic": "BH-196"
+    },
+    {
+      "key": "BH-198",
+      "summary": "AWS Bedrock Core Agent Integration",
+      "epic": "BH-196"
+    }
+  ]
+}

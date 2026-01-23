@@ -1,0 +1,241 @@
+{
+  "sprint_1": {
+    "name": "Sprint 1 (REFOCUSED)",
+    "dates": "Jan 13-24, 2026",
+    "focus": "Data lake context engineering design (NOT user-facing features)",
+    "note": "Context engineering = data lake management intelligence (asset metadata, lineage, schema evolution, quality, governance)",
+    "epics": [
+      {
+        "epic_key": "BH-110",
+        "epic_name": "Data Asset Context Model",
+        "tasks": [
+          {
+            "key": "BH-150",
+            "description": "Design Asset Context Schema (business, quality, freshness, governance)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-150"
+          },
+          {
+            "key": "BH-151",
+            "description": "Design Schema Metadata Structure (SchemaVersion nodes, evolution history)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-151"
+          },
+          {
+            "key": "BH-152",
+            "description": "Design Owner/Steward Model (BusinessOwner, TechnicalSteward, DataGovernancePolicy)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-152"
+          },
+          {
+            "key": "BH-153",
+            "description": "Design Multi-Level Lineage Graph (dataset, transformation, column-level)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-153"
+          },
+          {
+            "key": "BH-154",
+            "description": "Design Lineage Capture from Existing Systems (Glue, DBT, Redshift)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-154"
+          },
+          {
+            "key": "BH-155",
+            "description": "Design Cross-Organization Schema Matching (similarity scoring)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-155"
+          },
+          {
+            "key": "BH-156",
+            "description": "Design Master Data / Golden Record Strategy",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-156"
+          },
+          {
+            "key": "BH-157",
+            "description": "Design Context Snapshot Strategy (versioning, Neo4j + S3 + DynamoDB)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-157"
+          },
+          {
+            "key": "BH-158",
+            "description": "Design Context Diff Algorithm",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-158"
+          }
+        ]
+      },
+      {
+        "epic_key": "BH-113",
+        "epic_name": "Audit & Monitoring (data-focused)",
+        "tasks": [
+          {
+            "key": "BH-159",
+            "description": "Design Context Change Audit Log (DynamoDB + CloudWatch)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-159"
+          },
+          {
+            "key": "BH-160",
+            "description": "Design Data Quality Monitoring (completeness, accuracy, consistency)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-160"
+          },
+          {
+            "key": "BH-161",
+            "description": "Design Monitoring Decision (data lake health metrics, alarms)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-161"
+          }
+        ]
+      },
+      {
+        "epic_key": "BH-114",
+        "epic_name": "UX WebApp (catalog-focused)",
+        "tasks": [
+          {
+            "key": "BH-162",
+            "description": "Design Context-Rich Data Catalog UI (quality, freshness, lineage, governance)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-162"
+          },
+          {
+            "key": "BH-163",
+            "description": "Design Lineage Visualization (interactive graph)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-163"
+          },
+          {
+            "key": "BH-164",
+            "description": "Design Enterprise Context Configuration View",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-164"
+          }
+        ]
+      },
+      {
+        "epic_key": "BH-115",
+        "epic_name": "Interconnect-ability (connector spec)",
+        "tasks": [
+          {
+            "key": "BH-165",
+            "description": "Audit Existing Connector Context Flow (Glue, Airbyte, Snowflake)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-165"
+          },
+          {
+            "key": "BH-166",
+            "description": "Define Rich Connector Metadata Spec (JSON schema, OpenAPI)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-166"
+          },
+          {
+            "key": "BH-167",
+            "description": "Design Connector Developer Guide",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-167"
+          }
+        ]
+      }
+    ],
+    "bonus_tasks": [
+      {
+        "epic_key": "BONUS",
+        "epic_name": "Agent Integration (lightweight)",
+        "tasks": [
+          {
+            "key": "BH-168",
+            "description": "Design Agent Context Query API (GraphQL for agents)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-168"
+          },
+          {
+            "key": "BH-169",
+            "description": "Design Context Injection for Agents (BBState extension, SIMPLE)",
+            "url": "https://brighthiveio.atlassian.net/browse/BH-169"
+          }
+        ]
+      }
+    ],
+    "critical_path": {
+      "total_tasks": 20,
+      "critical_for_2_weeks": 15,
+      "tasks": [
+        "BH-110: Tasks 1-7 (asset context, lineage, cross-org)",
+        "BH-113: Tasks 10-11 (audit, quality monitoring)",
+        "BH-114: Tasks 13-14 (catalog UI, lineage viz)",
+        "BH-115: Tasks 16-17 (connector audit, spec)"
+      ]
+    },
+    "deferred_to_sprint_2": [
+      "Task 9: Context Diff Algorithm",
+      "Task 12: Monitoring Decision",
+      "Task 15: Config UI",
+      "Task 18: Connector Guide",
+      "Tasks 19-20: Agent Integration"
+    ]
+  },
+  "sprint_2": {
+    "name": "Sprint 2",
+    "dates": "Jan 27-31, 2026",
+    "focus": "Implementation, UI, integration",
+    "note": "Implementation of designs from Sprint 1 + deferred tasks",
+    "epics": [
+      {
+        "epic_key": "BH-110",
+        "tasks": [
+          "Implement Neo4j schema extensions (DataAsset, SchemaVersion, BusinessOwner)",
+          "Implement lineage capture Lambdas (Glue, DBT, Redshift)",
+          "Implement context snapshot pipeline",
+          "Implement context diff algorithm",
+          "Implement cross-org schema matching batch job",
+          "Implement master data designation logic",
+          "Write unit tests for context model"
+        ]
+      },
+      {
+        "epic_key": "BH-114",
+        "tasks": [
+          "Implement context-rich catalog UI components",
+          "Implement lineage visualization",
+          "Implement configuration UI",
+          "Implement GraphQL resolvers for context queries",
+          "Add responsive design for catalog",
+          "Add favorites/bookmarks feature",
+          "Add recently accessed section"
+        ]
+      },
+      {
+        "epic_key": "BH-113",
+        "tasks": [
+          "Implement audit log middleware",
+          "Implement data quality monitoring pipeline",
+          "Set up CloudWatch custom metrics",
+          "Create monitoring dashboard",
+          "Set up alerting rules",
+          "Implement trace ID generation/propagation"
+        ]
+      },
+      {
+        "epic_key": "BH-115",
+        "tasks": [
+          "Update connector integration to push rich metadata",
+          "Implement connector registry",
+          "Add connector lifecycle management",
+          "Write connector developer guide"
+        ]
+      },
+      {
+        "epic_key": "BONUS",
+        "tasks": [
+          "Implement agent context query API",
+          "Implement context injection for agents (lightweight)"
+        ]
+      }
+    ]
+  },
+  "what_were_building": {
+    "yes": [
+      "Rich metadata for datasets (quality, freshness, lineage, governance)",
+      "Cross-org schema matching and master data strategy",
+      "Lineage capture from Glue, DBT, Redshift",
+      "Context versioning and auditing",
+      "Context-rich data catalog UI"
+    ],
+    "no": [
+      "User behavioral tracking (defer to BH_V3 Phase 1 in M2)",
+      "Conversation history tracking (defer to M2)",
+      "Proactive notifications (defer to M3)",
+      "Recommendation engine (defer to M4)"
+    ]
+  },
+  "storage_strategy": {
+    "context_metadata": "Neo4j (fast graph queries)",
+    "context_versions": "DynamoDB ContextVersions (point-in-time lookup)",
+    "context_snapshots": "S3 with Glacier lifecycle (archival)",
+    "audit_logs": "DynamoDB AuditLogs + CloudWatch Logs",
+    "schema_metadata": "Neo4j properties/nodes",
+    "quality_metrics": "DynamoDB DataQualityMetrics + CloudWatch custom metrics"
+  }
+}

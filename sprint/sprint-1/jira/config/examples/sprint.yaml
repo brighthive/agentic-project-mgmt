@@ -1,0 +1,28 @@
+# Example: Sprint configuration
+# Usage: jira sprint add --config config/examples/sprint.yaml
+
+sprint_name: Sprint 1
+tickets:
+  # Core platform tickets
+  - BH-150
+  - BH-151
+  - BH-152
+
+  # Security tickets
+  - BH-183
+  - BH-184
+  - BH-185
+
+  # Infrastructure tickets
+  - BH-192
+  - BH-193
+
+  # Design tickets
+  - BH-156
+  - BH-157
+  - BH-158
+
+  # AI/ML tickets
+  - BH-197
+  - BH-198
+  - BH-199

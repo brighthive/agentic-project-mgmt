@@ -1,0 +1,18 @@
+[
+  {
+    "key": "BH-170",
+    "summary": "SDLC & Code Quality"
+  },
+  {
+    "key": "BH-171",
+    "summary": "AWS DevOps & Infrastructure"
+  },
+  {
+    "key": "BH-172",
+    "summary": "Platform Features & Enhancements"
+  },
+  {
+    "key": "BH-173",
+    "summary": "Bugs & Fixes"
+  }
+]

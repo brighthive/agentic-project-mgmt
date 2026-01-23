@@ -1,0 +1,29 @@
+# Example: Team member assignments
+# Usage: jira assign --config config/examples/assignments.yaml
+
+team:
+  marwan:
+    email: marwan@brighthive.io
+    tickets:
+      - BH-150
+      - BH-151
+      - BH-152
+      - BH-156
+      - BH-157
+
+  ahmed:
+    email: ahmed@brighthive.io
+    tickets:
+      - BH-183
+      - BH-184
+      - BH-185
+      - BH-186
+      - BH-187
+
+  hikuri:
+    email: hikuri@brighthive.io
+    tickets:
+      - BH-197
+      - BH-198
+      - BH-153
+      - BH-154

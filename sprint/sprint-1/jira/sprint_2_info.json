@@ -1,0 +1,11 @@
+{
+  "id": 1013,
+  "self": "https://brighthiveio.atlassian.net/rest/agile/1.0/sprint/1013",
+  "state": "future",
+  "name": "Sprint 2 🥝",
+  "startDate": "2026-01-20T16:00:00.000Z",
+  "endDate": "2026-01-27T16:00:00.000Z",
+  "createdDate": "2026-01-13T03:25:59.791Z",
+  "originBoardId": 152,
+  "goal": "- Web App UX Improvement\n- Projects v0\n- Onboarding & Off-boarding CDK & CI/CD controlled\n- CEMAF integration for execution audit & agentic metrics\n- Connectors Audit & Ingestion Improvements for new Sources"
+}

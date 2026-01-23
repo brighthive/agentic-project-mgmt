@@ -1,0 +1,1256 @@
+{
+  "issues": [
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25018",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25018",
+      "key": "BH-132",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design multi-agent orchestration framework",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24984",
+          "key": "BH-111",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24984",
+          "fields": {
+            "summary": "Proactive Multi Agents",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Ab4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "accountId": "712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "emailAddress": "kuri@brighthive.io",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/32"
+          },
+          "displayName": "Hikuri Chinca",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25026",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25026",
+      "key": "BH-136",
+      "fields": {
+        "customfield_10016": 2.0,
+        "summary": "Set up performance monitoring and observability stack",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24986",
+          "key": "BH-113",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24986",
+          "fields": {
+            "summary": "Internal improvements (Performance/Monitoring)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3A906373f4-4ecd-4c31-8415-089069ad2c4e",
+          "accountId": "712020:906373f4-4ecd-4c31-8415-089069ad2c4e",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/32"
+          },
+          "displayName": "Ahmed Elsherbiny",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25028",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25028",
+      "key": "BH-137",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Implement distributed tracing and logging",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24986",
+          "key": "BH-113",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24986",
+          "fields": {
+            "summary": "Internal improvements (Performance/Monitoring)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3A906373f4-4ecd-4c31-8415-089069ad2c4e",
+          "accountId": "712020:906373f4-4ecd-4c31-8415-089069ad2c4e",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/32"
+          },
+          "displayName": "Ahmed Elsherbiny",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "feature"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25030",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25030",
+      "key": "BH-138",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design new UI/UX mockups for latest features",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24987",
+          "key": "BH-114",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24987",
+          "fields": {
+            "summary": "UX WebApp Re-design for latest features",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Adff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "accountId": "712020:dff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "24x24": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "16x16": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "32x32": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png"
+          },
+          "displayName": "Marwan Samih",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "feature"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25032",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25032",
+      "key": "BH-139",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Implement responsive navigation and component library updates",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24987",
+          "key": "BH-114",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24987",
+          "fields": {
+            "summary": "UX WebApp Re-design for latest features",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Adff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "accountId": "712020:dff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "24x24": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "16x16": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "32x32": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png"
+          },
+          "displayName": "Marwan Samih",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "feature"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25034",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25034",
+      "key": "BH-140",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design connector architecture for sources and destinations",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24988",
+          "key": "BH-115",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24988",
+          "fields": {
+            "summary": "Interconnect-ability: Source & Destinations (A2A)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Ab4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "accountId": "712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "emailAddress": "kuri@brighthive.io",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/32"
+          },
+          "displayName": "Hikuri Chinca",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25038",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25038",
+      "key": "BH-142",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design project container and workspace model",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24989",
+          "key": "BH-116",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24989",
+          "fields": {
+            "summary": "Projects & automations tasks (Containers of Custom contexts)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": null,
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25060",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25060",
+      "key": "BH-153",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design Multi-Level Lineage Graph",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24983",
+          "key": "BH-110",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24983",
+          "fields": {
+            "summary": "Context Engineering Architecture",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Ab4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "accountId": "712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "emailAddress": "kuri@brighthive.io",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/32"
+          },
+          "displayName": "Hikuri Chinca",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/2",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/high_new.svg",
+          "name": "High",
+          "id": "2"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10371",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "To Do",
+          "id": "10371",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "M1",
+          "data-lake-context",
+          "roadmap",
+          "sprint-1"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25074",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25074",
+      "key": "BH-160",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design Data Quality Monitoring",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24986",
+          "key": "BH-113",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24986",
+          "fields": {
+            "summary": "Internal improvements (Performance/Monitoring)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Adff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "accountId": "712020:dff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "24x24": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "16x16": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "32x32": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png"
+          },
+          "displayName": "Marwan Samih",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/2",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/high_new.svg",
+          "name": "High",
+          "id": "2"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10371",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "To Do",
+          "id": "10371",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "M1",
+          "data-lake-context",
+          "sprint-1"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25086",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25086",
+      "key": "BH-166",
+      "fields": {
+        "customfield_10016": 2.0,
+        "summary": "Define Rich Connector Metadata Spec",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24988",
+          "key": "BH-115",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24988",
+          "fields": {
+            "summary": "Interconnect-ability: Source & Destinations (A2A)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Ab4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "accountId": "712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264",
+          "emailAddress": "kuri@brighthive.io",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264/486803b6-1f62-4ab7-a965-0872b4221233/32"
+          },
+          "displayName": "Hikuri Chinca",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/2",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/high_new.svg",
+          "name": "High",
+          "id": "2"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "M1",
+          "data-lake-context",
+          "sprint-1"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25088",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25088",
+      "key": "BH-167",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "Design Connector Developer Guide",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "24988",
+          "key": "BH-115",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/24988",
+          "fields": {
+            "summary": "Interconnect-ability: Source & Destinations (A2A)",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3Adff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "accountId": "712020:dff1a867-eb10-4a4a-aa2d-c0603206e4f1",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "24x24": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "16x16": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png",
+            "32x32": "https://secure.gravatar.com/avatar/7a57661173316845094671d4207bc85c?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMS-1.png"
+          },
+          "displayName": "Marwan Samih",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/4",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/low_new.svg",
+          "name": "Low",
+          "id": "4"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10371",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "To Do",
+          "id": "10371",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "M1",
+          "data-lake-context",
+          "sprint-1"
+        ]
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25247",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25247",
+      "key": "BH-201",
+      "fields": {
+        "customfield_10016": null,
+        "summary": "Onboarding & Offboarding 100% working ",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "25124",
+          "key": "BH-171",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25124",
+          "fields": {
+            "summary": "AWS DevOps & Infrastructure",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10371",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "To Do",
+              "id": "10371",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=712020%3A906373f4-4ecd-4c31-8415-089069ad2c4e",
+          "accountId": "712020:906373f4-4ecd-4c31-8415-089069ad2c4e",
+          "avatarUrls": {
+            "48x48": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/48",
+            "24x24": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/24",
+            "16x16": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/16",
+            "32x32": "https://avatar-management--avatars.us-west-2.prod.public.atl-paas.net/712020:906373f4-4ecd-4c31-8415-089069ad2c4e/3952df5a-00ad-437d-94e4-ab3a03081984/32"
+          },
+          "displayName": "Ahmed Elsherbiny",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "Needs Refinement",
+          "id": "10437",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": []
+      }
+    },
+    {
+      "expand": "renderedFields,names,schema,operations,editmeta,changelog,versionedRepresentations",
+      "id": "25280",
+      "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25280",
+      "key": "BH-202",
+      "fields": {
+        "customfield_10016": 3.0,
+        "summary": "do Claude Skills POC",
+        "issuetype": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10168",
+          "id": "10168",
+          "description": "Tasks track small, distinct pieces of work.",
+          "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+          "name": "Task",
+          "subtask": false,
+          "avatarId": 10318,
+          "entityId": "12ed0fd8-215c-46f8-9fee-757370886ed3",
+          "hierarchyLevel": 0
+        },
+        "parent": {
+          "id": "25205",
+          "key": "BH-196",
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/issue/25205",
+          "fields": {
+            "summary": "Partnerships",
+            "status": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10437",
+              "description": "",
+              "iconUrl": "https://brighthiveio.atlassian.net/",
+              "name": "Needs Refinement",
+              "id": "10437",
+              "statusCategory": {
+                "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+                "id": 2,
+                "key": "new",
+                "colorName": "blue-gray",
+                "name": "To Do"
+              }
+            },
+            "priority": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+              "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+              "name": "Medium",
+              "id": "3"
+            },
+            "issuetype": {
+              "self": "https://brighthiveio.atlassian.net/rest/api/3/issuetype/10171",
+              "id": "10171",
+              "description": "Epics track collections of related bugs, stories, and tasks.",
+              "iconUrl": "https://brighthiveio.atlassian.net/rest/api/2/universal_avatar/view/type/issuetype/avatar/10307?size=medium",
+              "name": "Epic",
+              "subtask": false,
+              "avatarId": 10307,
+              "entityId": "2181358c-5d77-4c4b-843e-1c24ae80f7f1",
+              "hierarchyLevel": 1
+            }
+          }
+        },
+        "assignee": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/user?accountId=5f3bd012347294003e1fc5bf",
+          "accountId": "5f3bd012347294003e1fc5bf",
+          "avatarUrls": {
+            "48x48": "https://secure.gravatar.com/avatar/046d5f43f71b91977ce2d9bfb096da12?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMG-6.png",
+            "24x24": "https://secure.gravatar.com/avatar/046d5f43f71b91977ce2d9bfb096da12?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMG-6.png",
+            "16x16": "https://secure.gravatar.com/avatar/046d5f43f71b91977ce2d9bfb096da12?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMG-6.png",
+            "32x32": "https://secure.gravatar.com/avatar/046d5f43f71b91977ce2d9bfb096da12?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FMG-6.png"
+          },
+          "displayName": "Matt Gee",
+          "active": true,
+          "timeZone": "America/Chicago",
+          "accountType": "atlassian"
+        },
+        "priority": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/priority/3",
+          "iconUrl": "https://brighthiveio.atlassian.net/images/icons/priorities/medium_new.svg",
+          "name": "Medium",
+          "id": "3"
+        },
+        "status": {
+          "self": "https://brighthiveio.atlassian.net/rest/api/3/status/10371",
+          "description": "",
+          "iconUrl": "https://brighthiveio.atlassian.net/",
+          "name": "To Do",
+          "id": "10371",
+          "statusCategory": {
+            "self": "https://brighthiveio.atlassian.net/rest/api/3/statuscategory/2",
+            "id": 2,
+            "key": "new",
+            "colorName": "blue-gray",
+            "name": "To Do"
+          }
+        },
+        "labels": [
+          "agent-framework"
+        ]
+      }
+    }
+  ],
+  "isLast": true
+}

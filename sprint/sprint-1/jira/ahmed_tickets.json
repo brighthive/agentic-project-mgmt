@@ -1,0 +1,80 @@
+[
+  {
+    "key": "BH-183",
+    "summary": "Fix User Enumeration in passwordReset (SOC/Vanta)",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-184",
+    "summary": "Fix Sensitive Data Exposure in getConfigWarehouse (SOC/Vanta)",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-185",
+    "summary": "Update RBAC Implementation for Missing Mutations (SOC/Vanta)",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-186",
+    "summary": "Implement Redis-Based Rate Limiting for forgetPassword (DoS Prevention)",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-187",
+    "summary": "Create Security Group Audit Script & Document Neo4j Lockdown",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-188",
+    "summary": "Complete Pentest Remediation - Medium Vulnerabilities",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-189",
+    "summary": "Complete Pentest Remediation - Low Vulnerabilities",
+    "epic": "BH-173",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-190",
+    "summary": "Implement Custom Authentication via LangSmith",
+    "epic": "BH-172",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-191",
+    "summary": "Fix BrightAgent Credential Retrieval (Secret Manager Migration)",
+    "epic": "BH-172",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-192",
+    "summary": "Fix createOrg Automation (GitHub Apps Migration)",
+    "epic": "BH-171",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-193",
+    "summary": "Provision Airbyte Instance for Virginia Region",
+    "epic": "BH-171",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-194",
+    "summary": "Production Cleanup Automation Scripts",
+    "epic": "BH-171",
+    "assignee": "Ahmed Sherbiny"
+  },
+  {
+    "key": "BH-195",
+    "summary": "Update Indiana Tech Slate Connection (2 New Data Streams)",
+    "epic": "BH-171",
+    "assignee": "Ahmed Sherbiny"
+  }
+]

@@ -1,0 +1,212 @@
+{
+  "fetched_at": "2026-01-20T04:39:50.231275+00:00",
+  "sprint": {
+    "end_date": "2026-01-27T16:00:00.000Z",
+    "goal": "- Web App UX Improvement\n- Projects v0\n- Onboarding & Off-boarding CDK & CI/CD controlled\n- CEMAF integration for execution audit & agentic metrics\n- Connectors Audit & Ingestion Improvements for new Sources",
+    "id": 1013,
+    "name": "Sprint 2 🥝",
+    "start_date": "2026-01-20T16:00:00.000Z",
+    "state": "future"
+  },
+  "stats": {
+    "assignee_breakdown": {
+      "Ahmed Elsherbiny": 3,
+      "Hikuri Chinca": 4,
+      "Marwan Samih": 4,
+      "Matt Gee": 1,
+      "Unassigned": 1
+    },
+    "status_breakdown": {
+      "Needs Refinement": 9,
+      "To Do": 4
+    },
+    "total_story_points": 34.0,
+    "total_tickets": 13,
+    "type_breakdown": {
+      "Task": 13
+    }
+  },
+  "tickets": [
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-111",
+      "key": "BH-132",
+      "labels": [],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design multi-agent orchestration framework",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-113",
+      "key": "BH-136",
+      "labels": [],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 2.0,
+      "summary": "Set up performance monitoring and observability stack",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-113",
+      "key": "BH-137",
+      "labels": [
+        "feature"
+      ],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Implement distributed tracing and logging",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-114",
+      "key": "BH-138",
+      "labels": [
+        "feature"
+      ],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design new UI/UX mockups for latest features",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-114",
+      "key": "BH-139",
+      "labels": [
+        "feature"
+      ],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Implement responsive navigation and component library updates",
+      "type": "Task"
+    },
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-115",
+      "key": "BH-140",
+      "labels": [],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design connector architecture for sources and destinations",
+      "type": "Task"
+    },
+    {
+      "assignee": "Unassigned",
+      "epic": "BH-116",
+      "key": "BH-142",
+      "labels": [],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design project container and workspace model",
+      "type": "Task"
+    },
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-110",
+      "key": "BH-153",
+      "labels": [
+        "M1",
+        "data-lake-context",
+        "roadmap",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "To Do",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design Multi-Level Lineage Graph",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-113",
+      "key": "BH-160",
+      "labels": [
+        "M1",
+        "data-lake-context",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "To Do",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design Data Quality Monitoring",
+      "type": "Task"
+    },
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-115",
+      "key": "BH-166",
+      "labels": [
+        "M1",
+        "data-lake-context",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": 2.0,
+      "summary": "Define Rich Connector Metadata Spec",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-115",
+      "key": "BH-167",
+      "labels": [
+        "M1",
+        "data-lake-context",
+        "sprint-1"
+      ],
+      "priority": "Low",
+      "status": "To Do",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "Design Connector Developer Guide",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-201",
+      "labels": [],
+      "priority": "Medium",
+      "status": "Needs Refinement",
+      "status_category": "To Do",
+      "story_points": null,
+      "summary": "Onboarding & Offboarding 100% working ",
+      "type": "Task"
+    },
+    {
+      "assignee": "Matt Gee",
+      "epic": "BH-196",
+      "key": "BH-202",
+      "labels": [
+        "agent-framework"
+      ],
+      "priority": "Medium",
+      "status": "To Do",
+      "status_category": "To Do",
+      "story_points": 3.0,
+      "summary": "do Claude Skills POC",
+      "type": "Task"
+    }
+  ]
+}

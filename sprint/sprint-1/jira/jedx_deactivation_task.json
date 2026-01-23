@@ -1,0 +1,8 @@
+{
+  "task": {
+    "key": "BH-200",
+    "summary": "JEDX Deactivation (workspace)",
+    "epic": "BH-171",
+    "assignee": "Ahmed Sherbiny"
+  }
+}

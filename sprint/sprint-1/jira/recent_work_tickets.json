@@ -1,0 +1,44 @@
+[
+  {
+    "key": "BH-174",
+    "summary": "Refactor Analyst Agent from Jupyter Notebook to ReAct Pattern",
+    "epic": "BH-170",
+    "priority": "High"
+  },
+  {
+    "key": "BH-175",
+    "summary": "Implement Data Sanitization for Staging Environment",
+    "epic": "BH-171",
+    "priority": "Medium"
+  },
+  {
+    "key": "BH-176",
+    "summary": "Implement Secure Code Execution Platform (E2B Sandbox)",
+    "epic": "BH-172",
+    "priority": "High"
+  },
+  {
+    "key": "BH-177",
+    "summary": "Implement Cloud-Based File Storage System (S3-backed Virtual Filesystem)",
+    "epic": "BH-172",
+    "priority": "High"
+  },
+  {
+    "key": "BH-178",
+    "summary": "Implement Security Layer (FastAPI Authentication & Authorization)",
+    "epic": "BH-172",
+    "priority": "High"
+  },
+  {
+    "key": "BH-179",
+    "summary": "Implement WebApp Security & Authentication Improvements",
+    "epic": "BH-172",
+    "priority": "High"
+  },
+  {
+    "key": "BH-180",
+    "summary": "Fix Chat Stream Disconnections and Error Handling - WebApp",
+    "epic": "BH-173",
+    "priority": "High"
+  }
+]

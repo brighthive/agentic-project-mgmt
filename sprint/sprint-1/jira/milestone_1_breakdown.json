@@ -1,0 +1,97 @@
+{
+  "milestone": "M1 - End of January",
+  "target_date": "2026-01-31",
+  "theme": "Core architecture + UX + foundations",
+  "epics": [
+    {
+      "epic_key": "BH-110",
+      "epic_name": "Context Engineering Architecture",
+      "sprint": "Sprint 1 & 2",
+      "tasks": [
+        "Design asset entity schema",
+        "Design schema metadata structure",
+        "Design owner/steward model",
+        "Design lineage graph structure",
+        "Implement data model in database",
+        "Create migrations",
+        "Write unit tests for data model",
+        "Design version control strategy",
+        "Implement workspace-level isolation",
+        "Create versioning API",
+        "Implement snapshot/rollback capabilities",
+        "Add version history UI components",
+        "Write tests for versioning"
+      ]
+    },
+    {
+      "epic_key": "BH-114",
+      "epic_name": "UX WebApp Re-design (Foundations)",
+      "sprint": "Sprint 1 & 2",
+      "tasks": [
+        "Audit current navigation structure",
+        "Design new navigation hierarchy",
+        "Implement new navigation component",
+        "Update routing configuration",
+        "Add breadcrumbs/context indicators",
+        "Mobile responsive navigation",
+        "Design data catalog homepage layout",
+        "Implement search and filter UI",
+        "Create asset list view",
+        "Add quick actions menu",
+        "Implement recently accessed section",
+        "Add favorites/bookmarks feature",
+        "Design configuration UI mockups",
+        "Implement settings page layout",
+        "Create configuration forms",
+        "Add validation and error handling",
+        "Implement save/apply mechanism",
+        "Add configuration history/audit"
+      ]
+    },
+    {
+      "epic_key": "BH-116",
+      "epic_name": "Projects & Automation Tasks - v0",
+      "sprint": "Sprint 2",
+      "tasks": [
+        "Design project/session data model",
+        "Implement context storage backend",
+        "Create project CRUD APIs",
+        "Add collaborator management",
+        "Build project list/detail UI",
+        "Implement context sharing"
+      ]
+    },
+    {
+      "epic_key": "BH-113",
+      "epic_name": "Internal Improvements - v0",
+      "sprint": "Sprint 1 & 2",
+      "tasks": [
+        "Design audit log schema (who/when/trace)",
+        "Implement logging middleware",
+        "Add trace ID generation/propagation",
+        "Create log storage backend",
+        "Build audit log query API",
+        "Create admin audit log viewer UI",
+        "Set up metrics collection (Prometheus/CloudWatch)",
+        "Add performance instrumentation",
+        "Create custom metric hooks",
+        "Set up alerting rules",
+        "Build monitoring dashboard",
+        "Document monitoring runbook"
+      ]
+    },
+    {
+      "epic_key": "BH-115",
+      "epic_name": "Interconnect-ability A2A - Spec & scaffolding",
+      "sprint": "Sprint 1 & 2",
+      "tasks": [
+        "Define connector interface specification",
+        "Design standard I/O format",
+        "Create connector base classes",
+        "Implement connector registry",
+        "Add connector lifecycle management",
+        "Write connector developer docs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+[
+  {
+    "key": "BH-150",
+    "summary": "Design Asset Context Schema",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-151",
+    "summary": "Design Schema Metadata Structure",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-152",
+    "summary": "Design Owner/Steward Model",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-153",
+    "summary": "Design Multi-Level Lineage Graph",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-154",
+    "summary": "Design Lineage Capture from Existing Systems",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-155",
+    "summary": "Design Cross-Organization Schema Matching",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-156",
+    "summary": "Design Master Data / Golden Record Strategy",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-157",
+    "summary": "Design Context Snapshot Strategy",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-158",
+    "summary": "Design Context Diff Algorithm",
+    "epic": "BH-110"
+  },
+  {
+    "key": "BH-159",
+    "summary": "Design Context Change Audit Log",
+    "epic": "BH-113"
+  },
+  {
+    "key": "BH-160",
+    "summary": "Design Data Quality Monitoring",
+    "epic": "BH-113"
+  },
+  {
+    "key": "BH-161",
+    "summary": "Design Monitoring Decision (data lake focus)",
+    "epic": "BH-113"
+  },
+  {
+    "key": "BH-162",
+    "summary": "Design Context-Rich Data Catalog UI",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-163",
+    "summary": "Design Lineage Visualization",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-164",
+    "summary": "Design Enterprise Context Configuration View",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-165",
+    "summary": "Audit Existing Connector Context Flow",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-166",
+    "summary": "Define Rich Connector Metadata Spec",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-167",
+    "summary": "Design Connector Developer Guide",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-168",
+    "summary": "Design Agent Context Query API",
+    "epic": "BONUS"
+  },
+  {
+    "key": "BH-169",
+    "summary": "Design Context Injection for Agents (SIMPLE)",
+    "epic": "BONUS"
+  }
+]

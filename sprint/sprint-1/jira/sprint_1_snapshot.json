@@ -1,0 +1,582 @@
+{
+  "fetched_at": "2026-01-20T04:39:45.105160+00:00",
+  "sprint": {
+    "end_date": "2026-01-20T16:00:00.000Z",
+    "goal": "- SDLC Automation & Integration cross-apps (Visibility, reports & metrics)\n- AWS Cost reduced & actions taken; Estimation of client/ingest value\n- Audit & PenTest out of our court\n- Bedrock Sandbox & Trial research done \n- Proactive Agent v0 (Quality)",
+    "id": 1012,
+    "name": "Sprint 1 🍇",
+    "start_date": "2026-01-13T17:00:00.000Z",
+    "state": "active"
+  },
+  "stats": {
+    "assignee_breakdown": {
+      "Ahmed Elsherbiny": 16,
+      "Hikuri Chinca": 4,
+      "Marwan Samih": 9
+    },
+    "status_breakdown": {
+      "Code Review": 4,
+      "Done": 21,
+      "In Progress": 2,
+      "Ready for Staging": 2
+    },
+    "total_story_points": 78.0,
+    "total_tickets": 29,
+    "type_breakdown": {
+      "Task": 29
+    }
+  },
+  "tickets": [
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-118",
+      "key": "BH-146",
+      "labels": [],
+      "priority": "Medium",
+      "status": "Code Review",
+      "status_category": "In Progress",
+      "story_points": 3.0,
+      "summary": "Design usage tracking and metrics collection system",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-118",
+      "key": "BH-147",
+      "labels": [],
+      "priority": "Medium",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "story_points": 2.0,
+      "summary": "Billing calculation ",
+      "type": "Task"
+    },
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-115",
+      "key": "BH-165",
+      "labels": [
+        "M1",
+        "data-lake-context",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "In Progress",
+      "status_category": "In Progress",
+      "story_points": 2.0,
+      "summary": "Audit Existing Connector Context Flow",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-170",
+      "key": "BH-174",
+      "labels": [
+        "2026",
+        "brightbot",
+        "completed-work",
+        "refactoring",
+        "sdlc"
+      ],
+      "priority": "High",
+      "status": "Code Review",
+      "status_category": "In Progress",
+      "story_points": 3.0,
+      "summary": "Refactor Analyst Agent from Jupyter Notebook to ReAct Pattern",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-175",
+      "labels": [
+        "2026",
+        "completed-work",
+        "devops",
+        "feature",
+        "platform-core",
+        "security"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Implement Data Sanitization for Staging Environment",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-172",
+      "key": "BH-176",
+      "labels": [
+        "2026",
+        "brightbot",
+        "completed-work",
+        "feature",
+        "security"
+      ],
+      "priority": "High",
+      "status": "Ready for Staging",
+      "status_category": "In Progress",
+      "story_points": 3.0,
+      "summary": "Implement Secure Code Execution Platform (E2B Sandbox)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-172",
+      "key": "BH-177",
+      "labels": [
+        "2026",
+        "brightbot",
+        "completed-work",
+        "feature",
+        "storage"
+      ],
+      "priority": "High",
+      "status": "Code Review",
+      "status_category": "In Progress",
+      "story_points": 3.0,
+      "summary": "Implement Cloud-Based File Storage System (S3-backed Virtual Filesystem)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-172",
+      "key": "BH-178",
+      "labels": [
+        "2026",
+        "auth",
+        "brightbot",
+        "completed-work",
+        "feature",
+        "security"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 5.0,
+      "summary": "Implement Security Layer (FastAPI Authentication & Authorization)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-172",
+      "key": "BH-179",
+      "labels": [
+        "2026",
+        "auth",
+        "completed-work",
+        "feature",
+        "security",
+        "webapp"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 5.0,
+      "summary": "Implement WebApp Security & Authentication Improvements",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-173",
+      "key": "BH-180",
+      "labels": [
+        "2026",
+        "bug",
+        "bug-fix",
+        "completed-work",
+        "stability",
+        "webapp"
+      ],
+      "priority": "High",
+      "status": "Ready for Staging",
+      "status_category": "In Progress",
+      "story_points": 2.0,
+      "summary": "Fix Chat Stream Disconnections and Error Handling - WebApp",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-173",
+      "key": "BH-181",
+      "labels": [
+        "2026",
+        "bug",
+        "bug-fix",
+        "completed-work",
+        "pentest",
+        "security",
+        "webapp"
+      ],
+      "priority": "Highest",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Fix Security Vulnerabilities (Pentest) - WebApp",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-173",
+      "key": "BH-182",
+      "labels": [
+        "2026",
+        "bug",
+        "bug-fix",
+        "completed-work",
+        "pentest",
+        "platform-core",
+        "security"
+      ],
+      "priority": "Highest",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Fix Security Vulnerabilities (Pentest) - Platform Core",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-183",
+      "labels": [
+        "2026",
+        "bug",
+        "completed-work",
+        "pentest",
+        "security",
+        "soc",
+        "sprint-1",
+        "vanta"
+      ],
+      "priority": "Highest",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Fix User Enumeration in passwordReset (SOC/Vanta)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-184",
+      "labels": [
+        "2026",
+        "bug",
+        "completed-work",
+        "data-leak",
+        "pentest",
+        "security",
+        "soc",
+        "sprint-1",
+        "vanta"
+      ],
+      "priority": "Highest",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Fix Sensitive Data Exposure in getConfigWarehouse (SOC/Vanta)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-185",
+      "labels": [
+        "2026",
+        "authorization",
+        "completed-work",
+        "feature",
+        "pentest",
+        "rbac",
+        "security",
+        "sprint-1"
+      ],
+      "priority": "Highest",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Update RBAC Implementation for Missing Mutations (SOC/Vanta)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-186",
+      "labels": [
+        "2026",
+        "completed-work",
+        "dos",
+        "feature",
+        "pentest",
+        "rate-limiting",
+        "security",
+        "sprint-1"
+      ],
+      "priority": "Highest",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Implement Redis-Based Rate Limiting for forgetPassword (DoS Prevention)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-187",
+      "labels": [
+        "2026",
+        "completed-work",
+        "firewall",
+        "infrastructure",
+        "neo4j",
+        "security",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 5.0,
+      "summary": "Create Security Group Audit Script & Document Neo4j Lockdown",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-188",
+      "labels": [
+        "2026",
+        "completed-work",
+        "pentest",
+        "remediation",
+        "security",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Complete Pentest Remediation - Medium Vulnerabilities",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-173",
+      "key": "BH-189",
+      "labels": [
+        "2026",
+        "completed-work",
+        "pentest",
+        "remediation",
+        "security",
+        "sprint-1"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Complete Pentest Remediation - Low Vulnerabilities",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-172",
+      "key": "BH-190",
+      "labels": [
+        "2026",
+        "authentication",
+        "brightbot",
+        "completed-work",
+        "feature",
+        "langsmith",
+        "security",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Implement Custom Authentication via LangSmith",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-172",
+      "key": "BH-191",
+      "labels": [
+        "2026",
+        "brightbot",
+        "bug",
+        "bug-fix",
+        "completed-work",
+        "secrets-manager",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Fix BrightAgent Credential Retrieval (Secret Manager Migration)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-192",
+      "labels": [
+        "2026",
+        "automation",
+        "bug",
+        "cdk",
+        "completed-work",
+        "devops",
+        "github-apps",
+        "sprint-1"
+      ],
+      "priority": "High",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 3.0,
+      "summary": "Fix createOrg Automation (GitHub Apps Migration)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-193",
+      "labels": [
+        "2026",
+        "airbyte",
+        "completed-work",
+        "devops",
+        "infrastructure",
+        "sprint-1",
+        "virginia"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Provision Airbyte Instance for Virginia Region",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-194",
+      "labels": [
+        "2026",
+        "automation",
+        "cleanup",
+        "completed-work",
+        "cost-optimization",
+        "devops",
+        "sprint-1"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Production Cleanup Automation Scripts",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-195",
+      "labels": [
+        "2026",
+        "completed-work",
+        "customer",
+        "data-ingestion",
+        "devops",
+        "slate",
+        "sprint-1"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "Update Indiana Tech Slate Connection (2 New Data Streams)",
+      "type": "Task"
+    },
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-196",
+      "key": "BH-197",
+      "labels": [
+        "2026",
+        "agent-framework",
+        "integration",
+        "langchain",
+        "partnerships"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "LangChain DeepAgent Integration",
+      "type": "Task"
+    },
+    {
+      "assignee": "Hikuri Chinca",
+      "epic": "BH-196",
+      "key": "BH-198",
+      "labels": [
+        "2026",
+        "agent-framework",
+        "aws",
+        "bedrock",
+        "integration",
+        "partnerships"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "AWS Bedrock Core Agent Integration",
+      "type": "Task"
+    },
+    {
+      "assignee": "Marwan Samih",
+      "epic": "BH-111",
+      "key": "BH-199",
+      "labels": [
+        "2026",
+        "automation",
+        "cron",
+        "proactive-agents",
+        "quality-agent",
+        "sdlc"
+      ],
+      "priority": "Medium",
+      "status": "Code Review",
+      "status_category": "In Progress",
+      "story_points": 2.0,
+      "summary": "Proactive Agents for Quality Agent CRON",
+      "type": "Task"
+    },
+    {
+      "assignee": "Ahmed Elsherbiny",
+      "epic": "BH-171",
+      "key": "BH-200",
+      "labels": [
+        "2026",
+        "aws",
+        "cleanup",
+        "deactivation",
+        "infrastructure",
+        "jedx",
+        "workspace"
+      ],
+      "priority": "Medium",
+      "status": "Done",
+      "status_category": "Done",
+      "story_points": 2.0,
+      "summary": "JEDX Deactivation (workspace)",
+      "type": "Task"
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "milestones": {
+    "M1": {
+      "name": "Milestone 1 - Core Architecture + UX Foundations",
+      "start_date": "2026-01-13",
+      "end_date": "2026-01-31",
+      "epics": [
+        {"key": "BH-110", "name": "Context Engineering Architecture"},
+        {"key": "BH-114", "name": "UX WebApp Re-design (Foundations)"},
+        {"key": "BH-116", "name": "Projects & automations tasks - v0"},
+        {"key": "BH-113", "name": "Internal improvements - v0"},
+        {"key": "BH-115", "name": "Interconnect-ability (Spec & scaffolding)"}
+      ]
+    },
+    "M2": {
+      "name": "Milestone 2 - Agent Platform + Quality + Governance",
+      "start_date": "2026-02-01",
+      "end_date": "2026-02-28",
+      "epics": [
+        {"key": "BH-110", "name": "Context Engineering → Agent Integration (continuation)"},
+        {"key": "BH-111", "name": "Proactive Multi Agents - v1"},
+        {"key": "BH-113", "name": "Internal improvements - v1 (continuation)"},
+        {"key": "BH-115", "name": "Interconnect-ability - Agent Invocation (continuation)"}
+      ]
+    },
+    "M3": {
+      "name": "Milestone 3 - Personas, Automation, Integrations",
+      "start_date": "2026-03-01",
+      "end_date": "2026-03-31",
+      "epics": [
+        {"key": "BH-111", "name": "Proactive Agents - Advanced (continuation)"},
+        {"key": "BH-114", "name": "UX WebApp Re-design - Latest Features (continuation)"},
+        {"key": "BH-112", "name": "Custom Tailored Personas - v1"},
+        {"key": "BH-116", "name": "Projects & automations - v1 (continuation)"},
+        {"key": "BH-117", "name": "Non-technical BH Omni integrations"},
+        {"key": "BH-115", "name": "Interconnect-ability (continuation)"}
+      ]
+    },
+    "M4": {
+      "name": "Milestone 4 - Enterprise Reporting + Big Data Scale",
+      "start_date": "2026-04-01",
+      "end_date": "2026-04-15",
+      "epics": [
+        {"key": "BH-112", "name": "Custom Tailored Personas - Expansion (continuation)"},
+        {"key": "BH-117", "name": "Non-technical Omni Integrations (continuation)"},
+        {"key": "BH-118", "name": "Workspace/Orgs usage & pricing reporting"},
+        {"key": "BH-119", "name": "Big Data Highly Complex Tasks"}
+      ]
+    }
+  },
+  "ongoing_epics": {
+    "comment": "Epics that span multiple milestones - set dates to overall range",
+    "epics": [
+      {
+        "key": "BH-110",
+        "name": "Context Engineering Architecture",
+        "start_date": "2026-01-13",
+        "end_date": "2026-02-28",
+        "milestones": ["M1", "M2"]
+      },
+      {
+        "key": "BH-111",
+        "name": "Proactive Multi Agents",
+        "start_date": "2026-02-01",
+        "end_date": "2026-03-31",
+        "milestones": ["M2", "M3"]
+      },
+      {
+        "key": "BH-112",
+        "name": "Custom Tailored Personas",
+        "start_date": "2026-03-01",
+        "end_date": "2026-04-15",
+        "milestones": ["M3", "M4"]
+      },
+      {
+        "key": "BH-113",
+        "name": "Internal improvements",
+        "start_date": "2026-01-13",
+        "end_date": "2026-02-28",
+        "milestones": ["M1", "M2"]
+      },
+      {
+        "key": "BH-114",
+        "name": "UX WebApp Re-design",
+        "start_date": "2026-01-13",
+        "end_date": "2026-03-31",
+        "milestones": ["M1", "M3"]
+      },
+      {
+        "key": "BH-115",
+        "name": "Interconnect-ability",
+        "start_date": "2026-01-13",
+        "end_date": "2026-03-31",
+        "milestones": ["M1", "M2", "M3"]
+      },
+      {
+        "key": "BH-116",
+        "name": "Projects & automations",
+        "start_date": "2026-01-13",
+        "end_date": "2026-03-31",
+        "milestones": ["M1", "M3"]
+      },
+      {
+        "key": "BH-117",
+        "name": "Non-technical Omni integrations",
+        "start_date": "2026-03-01",
+        "end_date": "2026-04-15",
+        "milestones": ["M3", "M4"]
+      },
+      {
+        "key": "BH-118",
+        "name": "Usage & pricing reporting",
+        "start_date": "2026-04-01",
+        "end_date": "2026-04-15",
+        "milestones": ["M4"]
+      },
+      {
+        "key": "BH-119",
+        "name": "Big Data tasks",
+        "start_date": "2026-04-01",
+        "end_date": "2026-04-15",
+        "milestones": ["M4"]
+      }
+    ]
+  },
+  "engineering_epics": {
+    "comment": "Ongoing engineering epics - span entire Q1",
+    "epics": [
+      {
+        "key": "BH-170",
+        "name": "SDLC & Code Quality",
+        "start_date": "2026-01-13",
+        "end_date": "2026-04-15"
+      },
+      {
+        "key": "BH-171",
+        "name": "AWS DevOps & Infrastructure",
+        "start_date": "2026-01-13",
+        "end_date": "2026-04-15"
+      },
+      {
+        "key": "BH-172",
+        "name": "Platform Features & Enhancements",
+        "start_date": "2026-01-13",
+        "end_date": "2026-04-15"
+      },
+      {
+        "key": "BH-173",
+        "name": "Bugs & Fixes",
+        "start_date": "2026-01-13",
+        "end_date": "2026-04-15"
+      },
+      {
+        "key": "BH-196",
+        "name": "Partnerships",
+        "start_date": "2026-01-13",
+        "end_date": "2026-04-15"
+      }
+    ]
+  }
+}
