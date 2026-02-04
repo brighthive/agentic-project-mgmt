@@ -1,0 +1,48 @@
+{
+  "sprint": 2,
+  "dates": {
+    "start": "2026-01-20",
+    "end": "2026-01-27",
+    "duration_days": 7
+  },
+  "tickets": {
+    "total": 42,
+    "completed": 33,
+    "in_progress": 5,
+    "to_do": 4,
+    "testing": 0,
+    "out_of_scope": 0
+  },
+  "points": {
+    "total": 50.0,
+    "completed": 40.0,
+    "remaining": 10.0
+  },
+  "completion": {
+    "tickets_pct": 78.6,
+    "points_pct": 80.0
+  },
+  "goals": [
+    "UX improvements",
+    "Projects v0",
+    "Observability",
+    "Connectors",
+    "CEMAF"
+  ],
+  "team": ["Hikuri", "Marwan", "Ahmed", "Harbour"],
+  "carry_over": {
+    "from_previous": 8,
+    "to_next": 9,
+    "tickets": []
+  },
+  "out_of_scope": {
+    "count": 0,
+    "tickets": []
+  },
+  "wip_analysis": {
+    "avg_hours": null,
+    "avg_days": null,
+    "by_ticket": [],
+    "distribution": {}
+  }
+}

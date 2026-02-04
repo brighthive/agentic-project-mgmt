@@ -1,0 +1,46 @@
+{
+  "sprint": 1,
+  "dates": {
+    "start": "2026-01-13",
+    "end": "2026-01-20",
+    "duration_days": 7
+  },
+  "tickets": {
+    "total": 29,
+    "completed": 21,
+    "in_progress": 4,
+    "to_do": 4,
+    "testing": 0,
+    "out_of_scope": 0
+  },
+  "points": {
+    "total": 78.0,
+    "completed": 56.0,
+    "remaining": 22.0
+  },
+  "completion": {
+    "tickets_pct": 72.4,
+    "points_pct": 71.8
+  },
+  "goals": [
+    "SDLC Automation",
+    "Security Remediation",
+    "Infrastructure"
+  ],
+  "team": ["Hikuri", "Marwan", "Ahmed"],
+  "carry_over": {
+    "from_previous": 0,
+    "to_next": 8,
+    "tickets": []
+  },
+  "out_of_scope": {
+    "count": 0,
+    "tickets": []
+  },
+  "wip_analysis": {
+    "avg_hours": null,
+    "avg_days": null,
+    "by_ticket": [],
+    "distribution": {}
+  }
+}
