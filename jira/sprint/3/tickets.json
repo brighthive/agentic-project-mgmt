@@ -1,0 +1,18 @@
+[
+  {"key": "BH-206", "summary": "ProjectContainer resources", "status": "Done", "assignee": "Harbour Wang", "points": null},
+  {"key": "BH-214", "summary": "Project Creation Wizard", "status": "Done", "assignee": "Harbour Wang", "points": null},
+  {"key": "BH-205", "summary": "Add Agent Capabilities to Data asset in Platform Core", "status": "Done", "assignee": "Marwan Samih", "points": null},
+  {"key": "BH-160", "summary": "UX Tab Data Asset Quality", "status": "Done", "assignee": "Marwan Samih", "points": 3},
+  {"key": "BH-139", "summary": "Implement responsive navigation and component library updates", "status": "Done", "assignee": "Marwan Samih", "points": 2},
+  {"key": "BH-199", "summary": "Proactive Agents for Quality Agent", "status": "Done", "assignee": "Marwan Samih", "points": 2},
+  {"key": "BH-141", "summary": "Implement enhancement data ingestion pipeline", "status": "Done", "assignee": "Ahmed Elsherbiny", "points": 3},
+  {"key": "BH-229", "summary": "[BE] Add lambda that triggers OMD agents", "status": "Done", "assignee": "Ahmed Elsherbiny", "points": null},
+  {"key": "BH-228", "summary": "[CDK-org] update ingestion Snf with lambda function", "status": "Done", "assignee": "Ahmed Elsherbiny", "points": null},
+  {"key": "BH-227", "summary": "Test PII in new OpenMetadata version", "status": "Done", "assignee": "Ahmed Elsherbiny", "points": null},
+  {"key": "BH-234", "summary": "No-Cloud Local DX", "status": "Done", "assignee": "Hikuri Chinca", "points": null},
+  {"key": "BH-144", "summary": "Implement Slack integration for notifications and commands", "status": "Done", "assignee": "Hikuri Chinca", "points": 3},
+  {"key": "BH-232", "summary": "GitOps approach for server resources", "status": "In Progress", "assignee": "Ahmed Elsherbiny", "points": null},
+  {"key": "BH-202", "summary": "Claude Skills PoC", "status": "To Do", "assignee": "Matt", "points": 3},
+  {"key": "BH-136", "summary": "Audit performance monitoring", "status": "To Do", "assignee": "Ahmed Elsherbiny", "points": 3},
+  {"key": "BH-226", "summary": "GetResources mutation fix", "status": "To Do", "assignee": "Ahmed Elsherbiny", "points": null}
+]
