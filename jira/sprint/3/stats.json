@@ -1,0 +1,63 @@
+{
+  "sprint": 3,
+  "dates": {
+    "start": "2026-01-27",
+    "end": "2026-02-03",
+    "duration_days": 7
+  },
+  "tickets": {
+    "total": 23,
+    "completed": 12,
+    "in_progress": 1,
+    "to_do": 6,
+    "testing": 3,
+    "out_of_scope": 1
+  },
+  "points": {
+    "total": 30.0,
+    "completed": 13.0,
+    "remaining": 17.0
+  },
+  "completion": {
+    "tickets_pct": 52.2,
+    "points_pct": 43.3
+  },
+  "goals": [
+    "Web App UX Improvement",
+    "Projects v0",
+    "Quality Agents & OMD Integration",
+    "Data Ingestion Pipeline",
+    "Slack Integration",
+    "Local DX"
+  ],
+  "team": ["Hikuri", "Marwan", "Ahmed", "Harbour"],
+  "carry_over": {
+    "from_previous": 4,
+    "to_next": 4,
+    "tickets": ["BH-232", "BH-202", "BH-136", "BH-226"]
+  },
+  "out_of_scope": {
+    "count": 1,
+    "tickets": ["BH-XXX"]
+  },
+  "wip_analysis": {
+    "avg_hours": 152.5,
+    "avg_days": 6.4,
+    "by_ticket": [
+      {"key": "BH-199", "days": 19.6, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-201", "days": 8.2, "status": "Testing", "flag": "stuck"},
+      {"key": "BH-144", "days": 8.1, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-206", "days": 8.0, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-160", "days": 7.6, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-214", "days": 2.5, "status": "Done", "flag": null},
+      {"key": "BH-232", "days": 3.1, "status": "In Progress", "flag": null},
+      {"key": "BH-234", "days": 0.1, "status": "Done", "flag": "quick-win"}
+    ],
+    "distribution": {
+      "under_1_day": 1,
+      "1_to_3_days": 2,
+      "4_to_7_days": 4,
+      "over_7_days": 6
+    }
+  }
+}
