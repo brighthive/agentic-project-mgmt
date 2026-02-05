@@ -19,8 +19,8 @@ on:
         description: 'End date (YYYY-MM-DD)'
         required: true
         type: string
-      create_repo_releases:
-        description: 'Create releases on code repos'
+      update_repo_changelogs:
+        description: 'Update CHANGELOG.md in touched repos'
         required: false
         type: boolean
         default: true
@@ -295,23 +295,21 @@ jobs:
           fi
 
   # ===========================================
-  # Job 4: Create releases on discovered repos
+  # Job 4: Update CHANGELOG.md in each touched repo
   # ===========================================
-  create-repo-releases:
+  update-repo-changelogs:
     runs-on: ubuntu-latest
     needs: [discover-repos, collect-repo-data, generate-release-notes]
-    if: ${{ github.event.inputs.create_repo_releases == 'true' }}
+    if: ${{ github.event.inputs.update_repo_changelogs == 'true' }}
     steps:
-      - name: Create Releases on All Touched Repos
+      - name: Update CHANGELOG.md in All Touched Repos
         env:
           GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
           REPOS: ${{ needs.discover-repos.outputs.repos_list }}
           REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
         run: |
-          TAG="sprint-${{ env.SPRINT_NUM }}"
-
           for REPO in $REPOS; do
-            echo "Creating release on brighthive/$REPO..."
+            echo "Updating CHANGELOG.md in brighthive/$REPO..."
 
             # Get PR data for this repo from stats
             REPO_DATA=$(echo "$REPO_STATS" | jq --arg r "$REPO" '.[] | select(.repo == $r)')
@@ -322,22 +320,42 @@ jobs:
               continue
             fi
 
-            # Generate changelog from stored PR data
-            CHANGELOG="## Sprint ${{ env.SPRINT_NUM }} Release
+            # Clone the repo
+            git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/brighthive/$REPO.git" "/tmp/$REPO"
+            cd "/tmp/$REPO"
 
-          **Period:** ${{ env.SINCE_DATE }} to ${{ env.UNTIL_DATE }}
+            # Generate new changelog entry
+            NEW_ENTRY="## Sprint ${{ env.SPRINT_NUM }} (${{ env.UNTIL_DATE }})
 
-          ### Changes
+**Period:** ${{ env.SINCE_DATE }} to ${{ env.UNTIL_DATE }}
 
-          "
-            CHANGELOG+=$(echo "$REPO_DATA" | jq -r '.prs[] | "- #\(.number) \(.title) (@\(.author.login))"')
+### Changes
 
-            # Create tag and release
-            gh release create "$TAG" \
-              --repo "brighthive/$REPO" \
-              --title "Sprint ${{ env.SPRINT_NUM }}" \
-              --notes "$CHANGELOG" \
-              --latest 2>/dev/null || echo "Release may already exist for $REPO"
+$(echo "$REPO_DATA" | jq -r '.prs[] | "- [#\(.number)](https://github.com/brighthive/'"$REPO"'/pull/\(.number)) \(.title) (@\(.author.login))"')
+
+---
+
+"
+            # Prepend to CHANGELOG.md (or create if doesn't exist)
+            if [ -f CHANGELOG.md ]; then
+              # Insert after the first line (title) or at the top
+              echo "$NEW_ENTRY" | cat - CHANGELOG.md > /tmp/changelog_new.md
+              mv /tmp/changelog_new.md CHANGELOG.md
+            else
+              echo "# Changelog
+
+$NEW_ENTRY" > CHANGELOG.md
+            fi
+
+            # Commit and push
+            git config user.name 'github-actions[bot]'
+            git config user.email 'github-actions[bot]@users.noreply.github.com'
+            git add CHANGELOG.md
+            git commit -m "docs(changelog): add Sprint ${{ env.SPRINT_NUM }} changes" || echo "No changes to commit"
+            git push || echo "Push failed for $REPO"
+
+            cd -
+            rm -rf "/tmp/$REPO"
           done
 
   # ===========================================
@@ -374,11 +392,14 @@ jobs:
                 },
                 {
                   \"type\": \"section\",
-                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Repos touched:* $REPOS_TEXT\"}
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Repos:* $REPOS_TEXT\"}
+                },
+                {
+                  \"type\": \"divider\"
                 },
                 {
                   \"type\": \"section\",
-                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"<https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md|View Release Notes>\"}
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"📋 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md|Technical Release Notes>\n📣 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md|Marketing Release Notes>\"}
                 }
               ]
             }"
