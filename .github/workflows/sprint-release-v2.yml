@@ -371,8 +371,10 @@ $NEW_ENTRY" > CHANGELOG.md
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           REPOS: ${{ needs.discover-repos.outputs.repos_list }}
+          REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
         run: |
-          REPOS_TEXT=$(echo "$REPOS" | tr ' ' ', ')
+          # Build repo breakdown text
+          REPO_BREAKDOWN=$(echo "$REPO_STATS" | jq -r '.[] | "• *\(.repo)*: \(.pr_count) PRs, \(.lines) lines"' | tr '\n' '\n')
 
           curl -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
@@ -380,27 +382,47 @@ $NEW_ENTRY" > CHANGELOG.md
               \"blocks\": [
                 {
                   \"type\": \"header\",
-                  \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Sprint ${{ env.SPRINT_NUM }} Complete!\"}
+                  \"text\": {\"type\": \"plain_text\", \"text\": \"🚀 Sprint ${{ env.SPRINT_NUM }} Complete!\", \"emoji\": true}
                 },
                 {
-                  \"type\": \"section\",
-                  \"fields\": [
-                    {\"type\": \"mrkdwn\", \"text\": \"*Tickets:* ${{ needs.discover-repos.outputs.ticket_count }}\"},
-                    {\"type\": \"mrkdwn\", \"text\": \"*Points:* ${{ needs.discover-repos.outputs.points_total }}\"},
-                    {\"type\": \"mrkdwn\", \"text\": \"*PRs:* ${{ needs.collect-repo-data.outputs.total_prs }}\"},
-                    {\"type\": \"mrkdwn\", \"text\": \"*Lines:* ${{ needs.collect-repo-data.outputs.total_lines }}\"}
+                  \"type\": \"context\",
+                  \"elements\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"${{ env.SPRINT_NAME }} • ${{ env.SINCE_DATE }} → ${{ env.UNTIL_DATE }}\"}
                   ]
-                },
-                {
-                  \"type\": \"section\",
-                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Repos:* $REPOS_TEXT\"}
                 },
                 {
                   \"type\": \"divider\"
                 },
                 {
                   \"type\": \"section\",
-                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"📋 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md|Technical Release Notes>\n📣 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md|Marketing Release Notes>\"}
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*📊 Sprint Metrics*\"}
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {\"type\": \"mrkdwn\", \"text\": \"*Tickets Completed*\n${{ needs.discover-repos.outputs.ticket_count }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Story Points*\n${{ needs.discover-repos.outputs.points_total }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*PRs Merged*\n${{ needs.collect-repo-data.outputs.total_prs }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Lines Changed*\n${{ needs.collect-repo-data.outputs.total_lines }}\"}
+                  ]
+                },
+                {
+                  \"type\": \"divider\"
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*📦 Repositories Modified*\n$REPO_BREAKDOWN\"}
+                },
+                {
+                  \"type\": \"divider\"
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*📎 Links*\"}
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"📋 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md|Release Notes (Engineering)>\n📣 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md|Marketing Notes (GTM)>\n📊 <https://www.notion.so/2fd02437dde481feb7e2e7b689fc0679|Sprint ${{ env.SPRINT_NUM }} Notion Page>\n🎯 <https://brighthiveio.atlassian.net/jira/software/projects/BH/boards|Jira Board>\"}
                 }
               ]
             }"
