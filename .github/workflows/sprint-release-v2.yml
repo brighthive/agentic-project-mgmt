@@ -238,6 +238,16 @@ jobs:
         run: |
           REPO_COUNT=$(echo "$REPOS_LIST" | wc -w | tr -d ' ')
           RELEASE_DATE=$(date +%Y-%m-%d)
+          ENG_HOURS=$((POINTS_TOTAL * 2))
+
+          # Auto-detect UX/Customer-facing features (FE, UX, UI, Wizard, navigation, Tab, integration)
+          UX_FEATURES=$(echo "$TICKETS_JSON" | jq -r '.[] | select(.summary | test("\\[FE\\]|UX|UI|Wizard|navigation|Tab|integration|responsive"; "i")) | "- **\(.summary | gsub("\\[FE\\]\\s*|\\[BE\\]\\s*"; ""))** ([\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)))"')
+
+          # Auto-detect backend/infrastructure improvements (BE, CDK, lambda, pipeline, API)
+          BE_IMPROVEMENTS=$(echo "$TICKETS_JSON" | jq -r '.[] | select(.summary | test("\\[BE\\]|\\[CDK|lambda|pipeline|API|Agent"; "i")) | "- **\(.summary | gsub("\\[FE\\]\\s*|\\[BE\\]\\s*|\\[CDK[^\\]]*\\]\\s*"; ""))** ([\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)))"')
+
+          # Auto-detect bug fixes (fix, bug)
+          BUG_FIXES=$(echo "$TICKETS_JSON" | jq -r '.[] | select(.summary | test("fix|bug"; "i")) | "- **\(.summary)** ([\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)))"')
 
           {
             echo "# Sprint $SPRINT_NUM - What's New"
@@ -248,26 +258,30 @@ jobs:
             echo ""
             echo "## Highlights for Customers"
             echo ""
-            echo "<!--"
-            echo "INSTRUCTIONS FOR GTM TEAM:"
-            echo "1. Review the completed tickets below"
-            echo "2. Identify customer-facing features"
-            echo "3. Write 2-3 bullet points in customer-friendly language"
-            echo "4. Add screenshots/GIFs if available"
-            echo "-->"
-            echo ""
             echo "### New Features"
-            echo "- [ ] TODO: Add customer-facing features"
+            if [ -n "$UX_FEATURES" ]; then
+              echo "$UX_FEATURES"
+            else
+              echo "_No new customer-facing features this sprint_"
+            fi
             echo ""
-            echo "### Improvements"
-            echo "- [ ] TODO: Add improvements"
+            echo "### Platform Improvements"
+            if [ -n "$BE_IMPROVEMENTS" ]; then
+              echo "$BE_IMPROVEMENTS"
+            else
+              echo "_No platform improvements this sprint_"
+            fi
             echo ""
             echo "### Bug Fixes"
-            echo "- [ ] TODO: Add notable bug fixes"
+            if [ -n "$BUG_FIXES" ]; then
+              echo "$BUG_FIXES"
+            else
+              echo "_No bug fixes this sprint_"
+            fi
             echo ""
             echo "---"
             echo ""
-            echo "## Engineering Stats (for investors)"
+            echo "## Engineering Stats"
             echo ""
             echo "| Metric | Value |"
             echo "|--------|-------|"
@@ -276,6 +290,7 @@ jobs:
             echo "| PRs Merged | $TOTAL_PRS |"
             echo "| Lines Changed | $TOTAL_LINES |"
             echo "| Repos Touched | $REPO_COUNT |"
+            echo "| Engineering Hours | ~${ENG_HOURS}h |"
             echo ""
             echo "---"
             echo ""
@@ -289,12 +304,12 @@ jobs:
             echo ""
             echo "---"
             echo ""
-            echo "## Technical Tickets (Reference)"
+            echo "## All Tickets (Reference)"
             echo ""
           } >> jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
 
-          # Add tickets grouped by type
-          echo "$TICKETS_JSON" | jq -r 'group_by(.type) | .[] | "### \(.[0].type)\n" + (map("- [\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)): \(.summary)") | join("\n")) + "\n"' >> jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
+          # Add all tickets
+          echo "$TICKETS_JSON" | jq -r '.[] | "- [\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)): \(.summary)"' >> jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
 
       - name: Commit Release Notes
         run: |
@@ -395,40 +410,45 @@ jobs:
           TOTAL_PRS: ${{ needs.collect-repo-data.outputs.total_prs }}
           TOTAL_LINES: ${{ needs.collect-repo-data.outputs.total_lines }}
         run: |
-          # Build repo breakdown text
-          REPO_BREAKDOWN=$(echo "$REPO_STATS" | jq -r '.[] | "• *\(.repo)*: \(.pr_count) PRs, \(.lines) lines"' | paste -sd '\n' -)
+          # Calculate engineering hours (estimate: 2hrs per story point)
+          ENG_HOURS=$((POINTS_TOTAL * 2))
 
-          # Build JSON payload using jq for proper escaping
-          PAYLOAD=$(jq -n \
-            --arg sprint_num "$SPRINT_NUM" \
-            --arg sprint_name "$SPRINT_NAME" \
+          # Build repo breakdown with actual newlines
+          REPO_LIST=$(echo "$REPO_STATS" | jq -r '[.[] | "• *\(.repo)*: \(.pr_count) PRs, \(.lines) lines"] | join("\n")')
+
+          # Build JSON using jq with raw strings (not escaped)
+          jq -n \
+            --arg sprint "$SPRINT_NUM" \
+            --arg name "$SPRINT_NAME" \
             --arg since "$SINCE_DATE" \
             --arg until "$UNTIL_DATE" \
             --arg tickets "$TICKET_COUNT" \
             --arg points "$POINTS_TOTAL" \
             --arg prs "$TOTAL_PRS" \
             --arg lines "$TOTAL_LINES" \
-            --arg repos "$REPO_BREAKDOWN" \
-            '{
-              blocks: [
-                {type: "header", text: {type: "plain_text", text: ("🚀 Sprint " + $sprint_num + " Complete!"), emoji: true}},
-                {type: "context", elements: [{type: "mrkdwn", text: ($sprint_name + " • " + $since + " → " + $until)}]},
-                {type: "divider"},
-                {type: "section", text: {type: "mrkdwn", text: "*📊 Sprint Metrics*"}},
-                {type: "section", fields: [
-                  {type: "mrkdwn", text: ("*Tickets Completed*\\n" + $tickets)},
-                  {type: "mrkdwn", text: ("*Story Points*\\n" + $points)},
-                  {type: "mrkdwn", text: ("*PRs Merged*\\n" + $prs)},
-                  {type: "mrkdwn", text: ("*Lines Changed*\\n" + $lines)}
-                ]},
-                {type: "divider"},
-                {type: "section", text: {type: "mrkdwn", text: ("*📦 Repositories Modified*\\n" + $repos)}},
-                {type: "divider"},
-                {type: "section", text: {type: "mrkdwn", text: "*📎 Links*"}},
-                {type: "section", text: {type: "mrkdwn", text: ("📋 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/" + $sprint_num + "/RELEASE_NOTES.md|Release Notes (Engineering)>\\n📣 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/" + $sprint_num + "/MARKETING_RELEASE_NOTES.md|Marketing Notes (GTM)>\\n📊 <https://www.notion.so/2fd02437dde481feb7e2e7b689fc0679|Sprint " + $sprint_num + " Notion Page>\\n🎯 <https://brighthiveio.atlassian.net/jira/software/projects/BH/boards|Jira Board>")}}
-              ]
-            }')
+            --arg hours "$ENG_HOURS" \
+            --arg repos "$REPO_LIST" \
+            '{blocks: [
+              {type: "header", text: {type: "plain_text", text: ("🚀 Sprint " + $sprint + " Complete!"), emoji: true}},
+              {type: "context", elements: [{type: "mrkdwn", text: ($name + " • " + $since + " → " + $until)}]},
+              {type: "divider"},
+              {type: "section", text: {type: "mrkdwn", text: "*📊 Sprint Metrics*"}},
+              {type: "section", fields: [
+                {type: "mrkdwn", text: ("*Tickets*\n" + $tickets + " completed")},
+                {type: "mrkdwn", text: ("*Story Points*\n" + $points + " pts")},
+                {type: "mrkdwn", text: ("*PRs Merged*\n" + $prs)},
+                {type: "mrkdwn", text: ("*Lines Changed*\n" + $lines)}
+              ]},
+              {type: "section", fields: [
+                {type: "mrkdwn", text: ("*Engineering Hours*\n~" + $hours + "h estimated")}
+              ]},
+              {type: "divider"},
+              {type: "section", text: {type: "mrkdwn", text: ("*📦 Repositories*\n" + $repos)}},
+              {type: "divider"},
+              {type: "section", text: {type: "mrkdwn", text: ("*📎 Links*\n📋 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/" + $sprint + "/RELEASE_NOTES.md|Release Notes>\n📣 <https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/" + $sprint + "/MARKETING_RELEASE_NOTES.md|Marketing Notes>\n📊 <https://www.notion.so/2fd02437dde481feb7e2e7b689fc0679|Notion Page>\n🎯 <https://brighthiveio.atlassian.net/jira/software/projects/BH/boards|Jira Board>")}}
+            ]}' > /tmp/slack_payload.json
 
+          # Send to Slack
           curl -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -d "$PAYLOAD"
+            -d @/tmp/slack_payload.json
