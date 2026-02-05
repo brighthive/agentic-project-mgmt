@@ -54,22 +54,22 @@
 ## Pull Requests by Repository
 
 ### brightbot
-- [#364](https://github.com/brighthive/null/pull/364) Bh 199 crons jobs quality agent poc (@Marwan-Samih-Brighthive)
-- [#363](https://github.com/brighthive/null/pull/363) Develop => Staging (1/30/2026) (@Marwan-Samih-Brighthive)
-- [#362](https://github.com/brighthive/null/pull/362) Two way authorization (@Marwan-Samih-Brighthive)
-- [#361](https://github.com/brighthive/null/pull/361) added two way authroization for x-api-key and authorization (#360) (@Marwan-Samih-Brighthive)
-- [#360](https://github.com/brighthive/null/pull/360) added two way authroization for x-api-key and authorization (@Marwan-Samih-Brighthive)
+- [#364](https://github.com/brighthive/brightbot/pull/364) Bh 199 crons jobs quality agent poc (@Marwan-Samih-Brighthive)
+- [#363](https://github.com/brighthive/brightbot/pull/363) Develop => Staging (1/30/2026) (@Marwan-Samih-Brighthive)
+- [#362](https://github.com/brighthive/brightbot/pull/362) Two way authorization (@Marwan-Samih-Brighthive)
+- [#361](https://github.com/brighthive/brightbot/pull/361) added two way authroization for x-api-key and authorization (#360) (@Marwan-Samih-Brighthive)
+- [#360](https://github.com/brighthive/brightbot/pull/360) added two way authroization for x-api-key and authorization (@Marwan-Samih-Brighthive)
 
 ### brighthive-platform-core
-- [#667](https://github.com/brighthive/null/pull/667) Feature/bh 205 agent capability tracking (@Marwan-Samih-Brighthive)
-- [#666](https://github.com/brighthive/null/pull/666) dev -> Staging (@drchinca)
-- [#665](https://github.com/brighthive/null/pull/665) chore: remove unused cliff.toml configuration (@drchinca)
-- [#664](https://github.com/brighthive/null/pull/664) feat: local development environment setup (@drchinca)
-- [#663](https://github.com/brighthive/null/pull/663) feat(release): automated changelog and versioning system (@drchinca)
+- [#667](https://github.com/brighthive/brighthive-platform-core/pull/667) Feature/bh 205 agent capability tracking (@Marwan-Samih-Brighthive)
+- [#666](https://github.com/brighthive/brighthive-platform-core/pull/666) dev -> Staging (@drchinca)
+- [#665](https://github.com/brighthive/brighthive-platform-core/pull/665) chore: remove unused cliff.toml configuration (@drchinca)
+- [#664](https://github.com/brighthive/brighthive-platform-core/pull/664) feat: local development environment setup (@drchinca)
+- [#663](https://github.com/brighthive/brighthive-platform-core/pull/663) feat(release): automated changelog and versioning system (@drchinca)
 
 ### brighthive-webapp
-- [#974](https://github.com/brighthive/null/pull/974) BH 160 ux tab data asset quality (@Marwan-Samih-Brighthive)
-- [#973](https://github.com/brighthive/null/pull/973) fix graphql codegen issue (@Marwan-Samih-Brighthive)
-- [#972](https://github.com/brighthive/null/pull/972) feat(local-dev): allow webapp to work without cloud  (@drchinca)
-- [#970](https://github.com/brighthive/null/pull/970) [BH-139] implement responsive navigation (@Marwan-Samih-Brighthive)
+- [#974](https://github.com/brighthive/brighthive-webapp/pull/974) BH 160 ux tab data asset quality (@Marwan-Samih-Brighthive)
+- [#973](https://github.com/brighthive/brighthive-webapp/pull/973) fix graphql codegen issue (@Marwan-Samih-Brighthive)
+- [#972](https://github.com/brighthive/brighthive-webapp/pull/972) feat(local-dev): allow webapp to work without cloud  (@drchinca)
+- [#970](https://github.com/brighthive/brighthive-webapp/pull/970) [BH-139] implement responsive navigation (@Marwan-Samih-Brighthive)
 
