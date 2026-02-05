@@ -6,26 +6,25 @@
 
 ## Highlights for Customers
 
-<!--
-INSTRUCTIONS FOR GTM TEAM:
-1. Review the completed tickets below
-2. Identify customer-facing features
-3. Write 2-3 bullet points in customer-friendly language
-4. Add screenshots/GIFs if available
--->
-
 ### New Features
-- [ ] TODO: Add customer-facing features
+- **Project Creation Wizard** ([BH-214](https://brighthiveio.atlassian.net/browse/BH-214))
+- **UX Tab Data Asset Quality** ([BH-160](https://brighthiveio.atlassian.net/browse/BH-160))
+- **Implement Slack integration for notifications and commands** ([BH-144](https://brighthiveio.atlassian.net/browse/BH-144))
+- **Implement responsive navigation and component library updates** ([BH-139](https://brighthiveio.atlassian.net/browse/BH-139))
 
-### Improvements
-- [ ] TODO: Add improvements
+### Platform Improvements
+- **Add lambda that triggers OMD agents based on the worksapce that get passed to it** ([BH-229](https://brighthiveio.atlassian.net/browse/BH-229))
+- **update ingestion Snf with a lambda function  that triggers main lambda in BH accounts for running OMD agents** ([BH-228](https://brighthiveio.atlassian.net/browse/BH-228))
+- **Add Agent Capabilities to Data asset in Platform Core** ([BH-205](https://brighthiveio.atlassian.net/browse/BH-205))
+- **Proactive Agents for Quality Agent** ([BH-199](https://brighthiveio.atlassian.net/browse/BH-199))
+- **Implement enhancement data ingestion pipeline** ([BH-141](https://brighthiveio.atlassian.net/browse/BH-141))
 
 ### Bug Fixes
-- [ ] TODO: Add notable bug fixes
+_No bug fixes this sprint_
 
 ---
 
-## Engineering Stats (for investors)
+## Engineering Stats
 
 | Metric | Value |
 |--------|-------|
@@ -34,6 +33,7 @@ INSTRUCTIONS FOR GTM TEAM:
 | PRs Merged | 14 |
 | Lines Changed | 13896 |
 | Repos Touched | 3 |
+| Engineering Hours | ~26h |
 
 ---
 
@@ -45,9 +45,8 @@ INSTRUCTIONS FOR GTM TEAM:
 
 ---
 
-## Technical Tickets (Reference)
+## All Tickets (Reference)
 
-### Task
 - [BH-234](https://brighthiveio.atlassian.net/browse/BH-234): No-Cloud Local DX
 - [BH-229](https://brighthiveio.atlassian.net/browse/BH-229): [BE] Add lambda that triggers OMD agents based on the worksapce that get passed to it
 - [BH-228](https://brighthiveio.atlassian.net/browse/BH-228): [CDK-org] update ingestion Snf with a lambda function  that triggers main lambda in BH accounts for running OMD agents
@@ -60,4 +59,3 @@ INSTRUCTIONS FOR GTM TEAM:
 - [BH-144](https://brighthiveio.atlassian.net/browse/BH-144): Implement Slack integration for notifications and commands
 - [BH-141](https://brighthiveio.atlassian.net/browse/BH-141): Implement enhancement data ingestion pipeline
 - [BH-139](https://brighthiveio.atlassian.net/browse/BH-139): Implement responsive navigation and component library updates
-
