@@ -1,4 +1,5 @@
 name: Sprint Release Automation
+# Generates release notes, updates changelogs, posts to Slack
 
 on:
   workflow_dispatch:
