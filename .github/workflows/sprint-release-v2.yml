@@ -171,127 +171,130 @@ jobs:
         env:
           TICKETS_JSON: ${{ needs.discover-repos.outputs.tickets_json }}
           REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
+          TICKET_COUNT: ${{ needs.discover-repos.outputs.ticket_count }}
+          POINTS_TOTAL: ${{ needs.discover-repos.outputs.points_total }}
+          TOTAL_PRS: ${{ needs.collect-repo-data.outputs.total_prs }}
+          TOTAL_LINES: ${{ needs.collect-repo-data.outputs.total_lines }}
         run: |
-          cat > jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md << 'RELEASE_EOF'
-# Sprint ${{ env.SPRINT_NUM }} Release Notes
-
-**Sprint:** ${{ env.SPRINT_NAME }}
-**Period:** ${{ env.SINCE_DATE }} to ${{ env.UNTIL_DATE }}
-**Released:** RELEASE_DATE_PLACEHOLDER
-
----
-
-## Summary
-
-| Metric | Value |
-|--------|-------|
-| Tickets Completed | TICKET_COUNT_PLACEHOLDER |
-| Story Points | POINTS_PLACEHOLDER |
-| PRs Merged | PRS_PLACEHOLDER |
-| Lines Changed | LINES_PLACEHOLDER |
-
----
-
-## Repository Changes
-
-RELEASE_EOF
-
-          # Replace placeholders
-          sed -i "s/RELEASE_DATE_PLACEHOLDER/$(date +%Y-%m-%d)/" jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          sed -i "s/TICKET_COUNT_PLACEHOLDER/${{ needs.discover-repos.outputs.ticket_count }}/" jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          sed -i "s/POINTS_PLACEHOLDER/${{ needs.discover-repos.outputs.points_total }}/" jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          sed -i "s/PRS_PLACEHOLDER/${{ needs.collect-repo-data.outputs.total_prs }}/" jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          sed -i "s/LINES_PLACEHOLDER/${{ needs.collect-repo-data.outputs.total_lines }}/" jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          # Generate release notes header
+          RELEASE_DATE=$(date +%Y-%m-%d)
+          {
+            echo "# Sprint $SPRINT_NUM Release Notes"
+            echo ""
+            echo "**Sprint:** $SPRINT_NAME"
+            echo "**Period:** $SINCE_DATE to $UNTIL_DATE"
+            echo "**Released:** $RELEASE_DATE"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Summary"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Tickets Completed | $TICKET_COUNT |"
+            echo "| Story Points | $POINTS_TOTAL |"
+            echo "| PRs Merged | $TOTAL_PRS |"
+            echo "| Lines Changed | $TOTAL_LINES |"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Repository Changes"
+            echo ""
+          } > jira/sprint/$SPRINT_NUM/RELEASE_NOTES.md
 
           # Add repo stats dynamically
-          echo "$REPO_STATS" | jq -r '.[] | "### \(.repo)\n- PRs merged: \(.pr_count)\n- Lines changed: \(.lines)\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          echo "$REPO_STATS" | jq -r '.[] | "### \(.repo)\n- PRs merged: \(.pr_count)\n- Lines changed: \(.lines)\n"' >> jira/sprint/$SPRINT_NUM/RELEASE_NOTES.md
 
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "---" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "## Completed Tickets" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Completed Tickets"
+            echo ""
+          } >> jira/sprint/$SPRINT_NUM/RELEASE_NOTES.md
 
           # Add tickets from JSON
-          echo "$TICKETS_JSON" | jq -r '.[] | "- **[\(.key)](https://brighthiveio.atlassian.net/browse/\(.key))** \(.summary) (@\(.assignee))"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          echo "$TICKETS_JSON" | jq -r '.[] | "- **[\(.key)](https://brighthiveio.atlassian.net/browse/\(.key))** \(.summary) (@\(.assignee))"' >> jira/sprint/$SPRINT_NUM/RELEASE_NOTES.md
 
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "---" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "## Pull Requests by Repository" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Pull Requests by Repository"
+            echo ""
+          } >> jira/sprint/$SPRINT_NUM/RELEASE_NOTES.md
 
-          echo "$REPO_STATS" | jq -r '.[] | select(.pr_count > 0) | . as $r | "### \(.repo)\n" + (.prs | map("- [#\(.number)](https://github.com/brighthive/\($r.repo)/pull/\(.number)) \(.title) (@\(.author.login))") | join("\n")) + "\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          echo "$REPO_STATS" | jq -r '.[] | select(.pr_count > 0) | . as $r | "### \(.repo)\n" + (.prs | map("- [#\(.number)](https://github.com/brighthive/\($r.repo)/pull/\(.number)) \(.title) (@\(.author.login))") | join("\n")) + "\n"' >> jira/sprint/$SPRINT_NUM/RELEASE_NOTES.md
 
       - name: Generate GTM/Marketing Release Notes
         env:
           TICKETS_JSON: ${{ needs.discover-repos.outputs.tickets_json }}
           REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
+          TICKET_COUNT: ${{ needs.discover-repos.outputs.ticket_count }}
+          POINTS_TOTAL: ${{ needs.discover-repos.outputs.points_total }}
+          TOTAL_PRS: ${{ needs.collect-repo-data.outputs.total_prs }}
+          TOTAL_LINES: ${{ needs.collect-repo-data.outputs.total_lines }}
+          REPOS_LIST: ${{ needs.discover-repos.outputs.repos_list }}
         run: |
-          REPO_COUNT=$(echo '${{ needs.discover-repos.outputs.repos_list }}' | wc -w | tr -d ' ')
+          REPO_COUNT=$(echo "$REPOS_LIST" | wc -w | tr -d ' ')
+          RELEASE_DATE=$(date +%Y-%m-%d)
 
-          cat > jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md << 'MARKETING_EOF'
-# Sprint ${{ env.SPRINT_NUM }} - What's New
+          {
+            echo "# Sprint $SPRINT_NUM - What's New"
+            echo ""
+            echo "**Release Date:** $RELEASE_DATE"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Highlights for Customers"
+            echo ""
+            echo "<!--"
+            echo "INSTRUCTIONS FOR GTM TEAM:"
+            echo "1. Review the completed tickets below"
+            echo "2. Identify customer-facing features"
+            echo "3. Write 2-3 bullet points in customer-friendly language"
+            echo "4. Add screenshots/GIFs if available"
+            echo "-->"
+            echo ""
+            echo "### New Features"
+            echo "- [ ] TODO: Add customer-facing features"
+            echo ""
+            echo "### Improvements"
+            echo "- [ ] TODO: Add improvements"
+            echo ""
+            echo "### Bug Fixes"
+            echo "- [ ] TODO: Add notable bug fixes"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Engineering Stats (for investors)"
+            echo ""
+            echo "| Metric | Value |"
+            echo "|--------|-------|"
+            echo "| Features Delivered | $TICKET_COUNT tickets |"
+            echo "| Story Points | $POINTS_TOTAL pts |"
+            echo "| PRs Merged | $TOTAL_PRS |"
+            echo "| Lines Changed | $TOTAL_LINES |"
+            echo "| Repos Touched | $REPO_COUNT |"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Repos Modified"
+            echo ""
+          } > jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
 
-**Release Date:** RELEASE_DATE_PLACEHOLDER
+          echo "$REPO_STATS" | jq -r '.[] | "- **\(.repo)**: \(.pr_count) PRs, \(.lines) lines"' >> jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
 
----
-
-## Highlights for Customers
-
-<!--
-INSTRUCTIONS FOR GTM TEAM:
-1. Review the completed tickets below
-2. Identify customer-facing features
-3. Write 2-3 bullet points in customer-friendly language
-4. Add screenshots/GIFs if available
--->
-
-### New Features
-- [ ] TODO: Add customer-facing features
-
-### Improvements
-- [ ] TODO: Add improvements
-
-### Bug Fixes
-- [ ] TODO: Add notable bug fixes
-
----
-
-## Engineering Stats (for investors)
-
-| Metric | Value |
-|--------|-------|
-| Features Delivered | TICKET_COUNT_PLACEHOLDER tickets |
-| Story Points | POINTS_PLACEHOLDER pts |
-| PRs Merged | PRS_PLACEHOLDER |
-| Lines Changed | LINES_PLACEHOLDER |
-| Repos Touched | REPOS_PLACEHOLDER |
-
----
-
-## Repos Modified
-
-MARKETING_EOF
-
-          # Replace placeholders
-          sed -i "s/RELEASE_DATE_PLACEHOLDER/$(date +%Y-%m-%d)/" jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          sed -i "s/TICKET_COUNT_PLACEHOLDER/${{ needs.discover-repos.outputs.ticket_count }}/" jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          sed -i "s/POINTS_PLACEHOLDER/${{ needs.discover-repos.outputs.points_total }}/" jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          sed -i "s/PRS_PLACEHOLDER/${{ needs.collect-repo-data.outputs.total_prs }}/" jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          sed -i "s/LINES_PLACEHOLDER/${{ needs.collect-repo-data.outputs.total_lines }}/" jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          sed -i "s/REPOS_PLACEHOLDER/$REPO_COUNT/" jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-
-          echo "$REPO_STATS" | jq -r '.[] | "- **\(.repo)**: \(.pr_count) PRs, \(.lines) lines"' >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          echo "---" >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          echo "## Technical Tickets (Reference)" >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
-          echo "" >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "## Technical Tickets (Reference)"
+            echo ""
+          } >> jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
 
           # Add tickets grouped by type
-          echo "$TICKETS_JSON" | jq -r 'group_by(.type) | .[] | "### \(.[0].type)\n" + (map("- [\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)): \(.summary)") | join("\n")) + "\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
+          echo "$TICKETS_JSON" | jq -r 'group_by(.type) | .[] | "### \(.[0].type)\n" + (map("- [\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)): \(.summary)") | join("\n")) + "\n"' >> jira/sprint/$SPRINT_NUM/MARKETING_RELEASE_NOTES.md
 
       - name: Commit Release Notes
         run: |
@@ -335,29 +338,31 @@ MARKETING_EOF
             git clone --depth 1 "https://x-access-token:${GH_TOKEN}@github.com/brighthive/$REPO.git" "/tmp/$REPO"
             cd "/tmp/$REPO"
 
-            # Generate changelog entry using heredoc
+            # Generate changelog entry
             PR_LINES=$(echo "$REPO_DATA" | jq -r '.prs[] | "- [#\(.number)](https://github.com/brighthive/'"$REPO"'/pull/\(.number)) \(.title) (@\(.author.login))"')
 
-            cat > /tmp/new_entry.md << CHANGELOG_EOF
-## Sprint ${{ env.SPRINT_NUM }} (${{ env.UNTIL_DATE }})
-
-**Period:** ${{ env.SINCE_DATE }} to ${{ env.UNTIL_DATE }}
-
-### Changes
-
-${PR_LINES}
-
----
-
-CHANGELOG_EOF
+            {
+              echo "## Sprint $SPRINT_NUM ($UNTIL_DATE)"
+              echo ""
+              echo "**Period:** $SINCE_DATE to $UNTIL_DATE"
+              echo ""
+              echo "### Changes"
+              echo ""
+              echo "$PR_LINES"
+              echo ""
+              echo "---"
+              echo ""
+            } > /tmp/new_entry.md
 
             # Prepend to CHANGELOG.md (or create if doesn't exist)
             if [ -f CHANGELOG.md ]; then
               cat /tmp/new_entry.md CHANGELOG.md > /tmp/changelog_new.md
               mv /tmp/changelog_new.md CHANGELOG.md
             else
-              echo "# Changelog" > /tmp/header.md
-              echo "" >> /tmp/header.md
+              {
+                echo "# Changelog"
+                echo ""
+              } > /tmp/header.md
               cat /tmp/header.md /tmp/new_entry.md > CHANGELOG.md
             fi
 
