@@ -1,4 +1,4 @@
-# Sprint 3 - What's New 🚀
+# Sprint 3 - What's New
 
 **Release Date:** 2026-02-05
 
