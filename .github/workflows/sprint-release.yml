@@ -42,93 +42,58 @@ env:
 
 jobs:
   # ===========================================
-  # Job 1: Collect data from all repos
+  # Job 1: Discover repos from Jira ticket links
   # ===========================================
-  collect-repo-data:
+  discover-repos:
     runs-on: ubuntu-latest
     outputs:
-      platform_core_prs: ${{ steps.platform-core.outputs.prs }}
-      platform_core_lines: ${{ steps.platform-core.outputs.lines }}
-      webapp_prs: ${{ steps.webapp.outputs.prs }}
-      webapp_lines: ${{ steps.webapp.outputs.lines }}
-      brightbot_prs: ${{ steps.brightbot.outputs.prs }}
-      brightbot_lines: ${{ steps.brightbot.outputs.lines }}
+      repos_json: ${{ steps.discover.outputs.repos }}
+      repos_list: ${{ steps.discover.outputs.repos_list }}
+      tickets_json: ${{ steps.discover.outputs.tickets }}
+      ticket_count: ${{ steps.discover.outputs.count }}
+      points_total: ${{ steps.discover.outputs.points }}
     steps:
-      - name: Collect brighthive-platform-core PRs
-        id: platform-core
-        env:
-          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        run: |
-          PRS=$(gh pr list --repo brighthive/brighthive-platform-core \
-            --state merged \
-            --search "merged:${{ env.SINCE_DATE }}..${{ env.UNTIL_DATE }}" \
-            --limit 100 \
-            --json number,title,author,additions,deletions,mergedAt)
-          echo "prs<<EOF" >> $GITHUB_OUTPUT
-          echo "$PRS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          LINES=$(echo "$PRS" | jq '[.[] | .additions + .deletions] | add // 0')
-          echo "lines=$LINES" >> $GITHUB_OUTPUT
-
-      - name: Collect brighthive-webapp PRs
-        id: webapp
-        env:
-          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        run: |
-          PRS=$(gh pr list --repo brighthive/brighthive-webapp \
-            --state merged \
-            --search "merged:${{ env.SINCE_DATE }}..${{ env.UNTIL_DATE }}" \
-            --limit 100 \
-            --json number,title,author,additions,deletions,mergedAt)
-          echo "prs<<EOF" >> $GITHUB_OUTPUT
-          echo "$PRS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          LINES=$(echo "$PRS" | jq '[.[] | .additions + .deletions] | add // 0')
-          echo "lines=$LINES" >> $GITHUB_OUTPUT
-
-      - name: Collect brightbot PRs
-        id: brightbot
-        env:
-          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        run: |
-          PRS=$(gh pr list --repo brighthive/brightbot \
-            --state merged \
-            --search "merged:${{ env.SINCE_DATE }}..${{ env.UNTIL_DATE }}" \
-            --limit 100 \
-            --json number,title,author,additions,deletions,mergedAt)
-          echo "prs<<EOF" >> $GITHUB_OUTPUT
-          echo "$PRS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-          LINES=$(echo "$PRS" | jq '[.[] | .additions + .deletions] | add // 0')
-          echo "lines=$LINES" >> $GITHUB_OUTPUT
-
-  # ===========================================
-  # Job 2: Collect Jira tickets
-  # ===========================================
-  collect-jira-data:
-    runs-on: ubuntu-latest
-    outputs:
-      tickets_json: ${{ steps.jira.outputs.tickets }}
-      ticket_count: ${{ steps.jira.outputs.count }}
-      points_total: ${{ steps.jira.outputs.points }}
-    steps:
-      - name: Fetch Jira Sprint Tickets
-        id: jira
+      - name: Discover repos from Jira ticket PR links
+        id: discover
         env:
           JIRA_USER: ${{ secrets.JIRA_USER }}
           JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
         run: |
+          # Fetch all Done tickets in sprint
           RESPONSE=$(curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
             -X POST "https://brighthiveio.atlassian.net/rest/api/3/search/jql" \
             -H "Content-Type: application/json" \
             -d "{\"jql\":\"project = BH AND sprint = \\\"${{ env.SPRINT_NAME }}\\\" AND status = Done\", \"fields\":[\"key\",\"summary\",\"issuetype\",\"assignee\",\"customfield_10016\"], \"maxResults\":200}")
 
-          TICKETS=$(echo "$RESPONSE" | jq '[.issues[] | {key: .key, summary: .fields.summary, type: .fields.issuetype.name, assignee: (.fields.assignee.displayName // "Unassigned"), points: (.fields.customfield_10016 // 0)}]')
+          TICKETS=$(echo "$RESPONSE" | jq '[.issues[] | {key: .key, id: .id, summary: .fields.summary, type: .fields.issuetype.name, assignee: (.fields.assignee.displayName // "Unassigned"), points: (.fields.customfield_10016 // 0)}]')
           COUNT=$(echo "$TICKETS" | jq 'length')
           POINTS=$(echo "$TICKETS" | jq '[.[].points] | add // 0')
+
+          # Discover repos from ticket PR links
+          REPOS=""
+          TICKET_REPOS="[]"
+
+          for ISSUE_ID in $(echo "$TICKETS" | jq -r '.[].id'); do
+            # Get linked PRs from Jira dev-status API
+            PR_DATA=$(curl -s -u "$JIRA_USER:$JIRA_TOKEN" \
+              "https://brighthiveio.atlassian.net/rest/dev-status/latest/issue/detail?issueId=${ISSUE_ID}&applicationType=GitHub&dataType=pullrequest")
+
+            # Extract repo names from PR URLs
+            PR_REPOS=$(echo "$PR_DATA" | jq -r '.detail[].pullRequests[].url // empty' | \
+              sed 's|https://github.com/brighthive/||' | cut -d'/' -f1 | sort -u)
+
+            if [ -n "$PR_REPOS" ]; then
+              REPOS="$REPOS $PR_REPOS"
+            fi
+          done
+
+          # Deduplicate repos
+          UNIQUE_REPOS=$(echo "$REPOS" | tr ' ' '\n' | sort -u | grep -v '^$' | tr '\n' ' ')
+          REPOS_JSON=$(echo "$UNIQUE_REPOS" | tr ' ' '\n' | grep -v '^$' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "Discovered repos: $UNIQUE_REPOS"
+          echo "repos=$REPOS_JSON" >> $GITHUB_OUTPUT
+          echo "repos_list=$UNIQUE_REPOS" >> $GITHUB_OUTPUT
 
           echo "tickets<<EOF" >> $GITHUB_OUTPUT
           echo "$TICKETS" >> $GITHUB_OUTPUT
@@ -137,11 +102,63 @@ jobs:
           echo "points=$POINTS" >> $GITHUB_OUTPUT
 
   # ===========================================
+  # Job 2: Collect PR data from discovered repos
+  # ===========================================
+  collect-repo-data:
+    runs-on: ubuntu-latest
+    needs: discover-repos
+    outputs:
+      repo_stats: ${{ steps.collect.outputs.stats }}
+      total_lines: ${{ steps.collect.outputs.total_lines }}
+      total_prs: ${{ steps.collect.outputs.total_prs }}
+    steps:
+      - name: Collect PR data from all discovered repos
+        id: collect
+        env:
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          REPOS: ${{ needs.discover-repos.outputs.repos_list }}
+        run: |
+          STATS="[]"
+          TOTAL_LINES=0
+          TOTAL_PRS=0
+
+          for REPO in $REPOS; do
+            echo "Collecting data from brighthive/$REPO..."
+
+            PRS=$(gh pr list --repo "brighthive/$REPO" \
+              --state merged \
+              --search "merged:${{ env.SINCE_DATE }}..${{ env.UNTIL_DATE }}" \
+              --limit 100 \
+              --json number,title,author,additions,deletions,mergedAt 2>/dev/null || echo "[]")
+
+            PR_COUNT=$(echo "$PRS" | jq 'length')
+            LINES=$(echo "$PRS" | jq '[.[] | .additions + .deletions] | add // 0')
+
+            TOTAL_LINES=$((TOTAL_LINES + LINES))
+            TOTAL_PRS=$((TOTAL_PRS + PR_COUNT))
+
+            REPO_STAT=$(jq -n \
+              --arg repo "$REPO" \
+              --argjson prs "$PRS" \
+              --argjson lines "$LINES" \
+              --argjson count "$PR_COUNT" \
+              '{repo: $repo, lines: $lines, pr_count: $count, prs: $prs}')
+
+            STATS=$(echo "$STATS" | jq --argjson stat "$REPO_STAT" '. + [$stat]')
+          done
+
+          echo "stats<<EOF" >> $GITHUB_OUTPUT
+          echo "$STATS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "total_lines=$TOTAL_LINES" >> $GITHUB_OUTPUT
+          echo "total_prs=$TOTAL_PRS" >> $GITHUB_OUTPUT
+
+  # ===========================================
   # Job 3: Generate Release Notes
   # ===========================================
   generate-release-notes:
     runs-on: ubuntu-latest
-    needs: [collect-repo-data, collect-jira-data]
+    needs: [discover-repos, collect-repo-data]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -150,8 +167,11 @@ jobs:
         run: mkdir -p jira/sprint/${{ env.SPRINT_NUM }}
 
       - name: Generate Technical Release Notes
+        env:
+          TICKETS_JSON: ${{ needs.discover-repos.outputs.tickets_json }}
+          REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
         run: |
-          cat > jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md << 'RELEASE_EOF'
+          cat > jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md << EOF
           # Sprint ${{ env.SPRINT_NUM }} Release Notes
 
           **Sprint:** ${{ env.SPRINT_NAME }}
@@ -164,36 +184,48 @@ jobs:
 
           | Metric | Value |
           |--------|-------|
-          | Tickets Completed | ${{ needs.collect-jira-data.outputs.ticket_count }} |
-          | Story Points | ${{ needs.collect-jira-data.outputs.points_total }} |
-          | PRs Merged | TBD |
-          | Lines Changed | TBD |
+          | Tickets Completed | ${{ needs.discover-repos.outputs.ticket_count }} |
+          | Story Points | ${{ needs.discover-repos.outputs.points_total }} |
+          | PRs Merged | ${{ needs.collect-repo-data.outputs.total_prs }} |
+          | Lines Changed | ${{ needs.collect-repo-data.outputs.total_lines }} |
 
           ---
 
           ## Repository Changes
 
-          ### brighthive-platform-core
-          - Lines changed: ${{ needs.collect-repo-data.outputs.platform_core_lines }}
+          EOF
 
-          ### brighthive-webapp
-          - Lines changed: ${{ needs.collect-repo-data.outputs.webapp_lines }}
+          # Add repo stats dynamically
+          echo "$REPO_STATS" | jq -r '.[] | "### \(.repo)\n- PRs merged: \(.pr_count)\n- Lines changed: \(.lines)\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
 
-          ### brightbot
-          - Lines changed: ${{ needs.collect-repo-data.outputs.brightbot_lines }}
+          cat >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md << EOF
 
           ---
 
           ## Completed Tickets
 
-          RELEASE_EOF
+          EOF
 
           # Add tickets from JSON
-          echo '${{ needs.collect-jira-data.outputs.tickets_json }}' | jq -r '.[] | "- **[\(.key)]** \(.summary) (@\(.assignee))"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+          echo "$TICKETS_JSON" | jq -r '.[] | "- **[\(.key)](https://brighthiveio.atlassian.net/browse/\(.key))** \(.summary) (@\(.assignee))"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
+
+          # Add PR details per repo
+          cat >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md << EOF
+
+          ---
+
+          ## Pull Requests by Repository
+
+          EOF
+
+          echo "$REPO_STATS" | jq -r '.[] | select(.pr_count > 0) | "### \(.repo)\n" + (.prs | map("- [#\(.number)](https://github.com/brighthive/\(.repo)/pull/\(.number)) \(.title) (@\(.author.login))") | join("\n")) + "\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/RELEASE_NOTES.md
 
       - name: Generate GTM/Marketing Release Notes
+        env:
+          TICKETS_JSON: ${{ needs.discover-repos.outputs.tickets_json }}
+          REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
         run: |
-          cat > jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md << 'MARKETING_EOF'
+          cat > jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md << EOF
           # Sprint ${{ env.SPRINT_NUM }} - What's New 🚀
 
           **Release Date:** $(date +%Y-%m-%d)
@@ -225,19 +257,30 @@ jobs:
 
           | Metric | Value |
           |--------|-------|
-          | Features Delivered | ${{ needs.collect-jira-data.outputs.ticket_count }} tickets |
-          | Story Points | ${{ needs.collect-jira-data.outputs.points_total }} pts |
-          | Code Changes | ${{ needs.collect-repo-data.outputs.platform_core_lines }} + ${{ needs.collect-repo-data.outputs.webapp_lines }} + ${{ needs.collect-repo-data.outputs.brightbot_lines }} lines |
-          | Team Velocity | ~X pts/week |
+          | Features Delivered | ${{ needs.discover-repos.outputs.ticket_count }} tickets |
+          | Story Points | ${{ needs.discover-repos.outputs.points_total }} pts |
+          | PRs Merged | ${{ needs.collect-repo-data.outputs.total_prs }} |
+          | Lines Changed | ${{ needs.collect-repo-data.outputs.total_lines }} |
+          | Repos Touched | $(echo '${{ needs.discover-repos.outputs.repos_list }}' | wc -w | tr -d ' ') |
+
+          ---
+
+          ## Repos Modified
+
+          EOF
+
+          echo "$REPO_STATS" | jq -r '.[] | "- **\(.repo)**: \(.pr_count) PRs, \(.lines) lines"' >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
+
+          cat >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md << EOF
 
           ---
 
           ## Technical Tickets (Reference)
 
-          MARKETING_EOF
+          EOF
 
           # Add tickets grouped by type
-          echo '${{ needs.collect-jira-data.outputs.tickets_json }}' | jq -r 'group_by(.type) | .[] | "### \(.[0].type)\n" + (map("- \(.key): \(.summary)") | join("\n")) + "\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
+          echo "$TICKETS_JSON" | jq -r 'group_by(.type) | .[] | "### \(.[0].type)\n" + (map("- [\(.key)](https://brighthiveio.atlassian.net/browse/\(.key)): \(.summary)") | join("\n")) + "\n"' >> jira/sprint/${{ env.SPRINT_NUM }}/MARKETING_RELEASE_NOTES.md
 
       - name: Commit Release Notes
         run: |
@@ -252,54 +295,66 @@ jobs:
           fi
 
   # ===========================================
-  # Job 4: Create releases on code repos
+  # Job 4: Create releases on discovered repos
   # ===========================================
   create-repo-releases:
     runs-on: ubuntu-latest
-    needs: [collect-repo-data, generate-release-notes]
+    needs: [discover-repos, collect-repo-data, generate-release-notes]
     if: ${{ github.event.inputs.create_repo_releases == 'true' }}
-    strategy:
-      matrix:
-        repo: [brighthive-platform-core, brighthive-webapp, brightbot]
     steps:
-      - name: Create Release on ${{ matrix.repo }}
+      - name: Create Releases on All Touched Repos
         env:
           GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          REPOS: ${{ needs.discover-repos.outputs.repos_list }}
+          REPO_STATS: ${{ needs.collect-repo-data.outputs.repo_stats }}
         run: |
           TAG="sprint-${{ env.SPRINT_NUM }}"
 
-          # Get merged PRs for changelog
-          PRS=$(gh pr list --repo brighthive/${{ matrix.repo }} \
-            --state merged \
-            --search "merged:${{ env.SINCE_DATE }}..${{ env.UNTIL_DATE }}" \
-            --limit 100 \
-            --json number,title,author)
+          for REPO in $REPOS; do
+            echo "Creating release on brighthive/$REPO..."
 
-          # Generate changelog
-          CHANGELOG="## Sprint ${{ env.SPRINT_NUM }} Release\n\n"
-          CHANGELOG+="**Period:** ${{ env.SINCE_DATE }} to ${{ env.UNTIL_DATE }}\n\n"
-          CHANGELOG+="### Changes\n\n"
-          CHANGELOG+=$(echo "$PRS" | jq -r '.[] | "- #\(.number) \(.title) (@\(.author.login))"')
+            # Get PR data for this repo from stats
+            REPO_DATA=$(echo "$REPO_STATS" | jq --arg r "$REPO" '.[] | select(.repo == $r)')
+            PR_COUNT=$(echo "$REPO_DATA" | jq '.pr_count')
 
-          # Create tag and release
-          gh release create "$TAG" \
-            --repo brighthive/${{ matrix.repo }} \
-            --title "Sprint ${{ env.SPRINT_NUM }}" \
-            --notes "$CHANGELOG" \
-            --latest || echo "Release may already exist"
+            if [ "$PR_COUNT" -eq 0 ]; then
+              echo "Skipping $REPO - no PRs"
+              continue
+            fi
+
+            # Generate changelog from stored PR data
+            CHANGELOG="## Sprint ${{ env.SPRINT_NUM }} Release
+
+          **Period:** ${{ env.SINCE_DATE }} to ${{ env.UNTIL_DATE }}
+
+          ### Changes
+
+          "
+            CHANGELOG+=$(echo "$REPO_DATA" | jq -r '.prs[] | "- #\(.number) \(.title) (@\(.author.login))"')
+
+            # Create tag and release
+            gh release create "$TAG" \
+              --repo "brighthive/$REPO" \
+              --title "Sprint ${{ env.SPRINT_NUM }}" \
+              --notes "$CHANGELOG" \
+              --latest 2>/dev/null || echo "Release may already exist for $REPO"
+          done
 
   # ===========================================
   # Job 5: Post to Slack
   # ===========================================
   post-to-slack:
     runs-on: ubuntu-latest
-    needs: [collect-jira-data, generate-release-notes]
+    needs: [discover-repos, collect-repo-data, generate-release-notes]
     if: ${{ github.event.inputs.post_to_slack == 'true' }}
     steps:
       - name: Post Sprint Summary to Slack
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          REPOS: ${{ needs.discover-repos.outputs.repos_list }}
         run: |
+          REPOS_TEXT=$(echo "$REPOS" | tr ' ' ', ')
+
           curl -X POST "$SLACK_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "{
@@ -311,9 +366,15 @@ jobs:
                 {
                   \"type\": \"section\",
                   \"fields\": [
-                    {\"type\": \"mrkdwn\", \"text\": \"*Tickets:* ${{ needs.collect-jira-data.outputs.ticket_count }}\"},
-                    {\"type\": \"mrkdwn\", \"text\": \"*Points:* ${{ needs.collect-jira-data.outputs.points_total }}\"}
+                    {\"type\": \"mrkdwn\", \"text\": \"*Tickets:* ${{ needs.discover-repos.outputs.ticket_count }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Points:* ${{ needs.discover-repos.outputs.points_total }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*PRs:* ${{ needs.collect-repo-data.outputs.total_prs }}\"},
+                    {\"type\": \"mrkdwn\", \"text\": \"*Lines:* ${{ needs.collect-repo-data.outputs.total_lines }}\"}
                   ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {\"type\": \"mrkdwn\", \"text\": \"*Repos touched:* $REPOS_TEXT\"}
                 },
                 {
                   \"type\": \"section\",
