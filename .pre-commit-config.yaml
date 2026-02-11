@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: branch-naming
+        name: Check branch naming (username/TICKET-123/description)
+        entry: bash -c 'BRANCH=$(git rev-parse --abbrev-ref HEAD); if [[ "$BRANCH" == "main" || "$BRANCH" == "master" || "$BRANCH" == "develop" ]]; then exit 0; fi; if [[ ! "$BRANCH" =~ ^[a-z]+/[A-Z]+-[0-9]+/.+$ ]]; then echo "❌ Branch must follow: username/TICKET-123/description"; echo "   Current: $BRANCH"; echo "   Example: drchinca/BH-234/add-auth-flow"; exit 1; fi'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit, pre-push]
+
+      - id: conventional-commit
+        name: Check conventional commit format
+        entry: bash -c 'MSG=$(cat "$1"); if [[ "$MSG" =~ ^Merge ]]; then exit 0; fi; FIRST=$(echo "$MSG" | head -1); if [[ ! "$FIRST" =~ ^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\([a-z0-9_-]+\))?\!?:\ .+ ]]; then echo "❌ Commit must follow: type(scope): description"; echo "   Types: feat|fix|docs|style|refactor|test|chore|perf|ci|build"; echo "   Your message: $FIRST"; exit 1; fi; if [[ ${#FIRST} -gt 72 ]]; then echo "❌ Subject too long (${#FIRST} > 72 chars)"; exit 1; fi'
+        language: system
+        always_run: true
+        stages: [commit-msg]
