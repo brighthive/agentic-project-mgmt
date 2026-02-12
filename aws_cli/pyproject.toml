@@ -1,0 +1,12 @@
+[project]
+name = "aws-cli"
+version = "0.1.0"
+description = "BrightHive AWS Secrets Manager CLI - fetch, search, catalog secrets across environments"
+requires-python = ">=3.12"
+dependencies = ["boto3>=1.35.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
