@@ -1,0 +1,181 @@
+name: PR Auto Template
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  auto-template:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Get PR diff stats
+        id: diff
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+
+            const additions = pr.additions || 0;
+            const deletions = pr.deletions || 0;
+            const changedFiles = pr.changed_files || 0;
+            const totalLines = additions + deletions;
+
+            console.log(`PR #${pr.number}: +${additions} -${deletions} (${totalLines} total), ${changedFiles} files`);
+
+            let size = 'small';
+            let label = 'size/S';
+
+            if (totalLines > 700 || changedFiles > 15) {
+              size = 'large';
+              label = 'size/L';
+            } else if (totalLines > 200 || changedFiles > 4) {
+              size = 'medium';
+              label = 'size/M';
+            }
+
+            core.setOutput('size', size);
+            core.setOutput('label', label);
+            core.setOutput('total_lines', totalLines);
+            core.setOutput('changed_files', changedFiles);
+
+      - name: Check if PR body needs template
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+            const trimmed = body.trim();
+            const hasContent = trimmed.length > 100 &&
+              (trimmed.includes('##') || trimmed.includes('Summary') || trimmed.includes('Changes'));
+            core.setOutput('needs_template', !hasContent);
+
+      - name: Apply PR template
+        if: steps.check.outputs.needs_template == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const size = '${{ steps.diff.outputs.size }}';
+            const totalLines = '${{ steps.diff.outputs.total_lines }}';
+            const changedFiles = '${{ steps.diff.outputs.changed_files }}';
+            const prTitle = context.payload.pull_request.title;
+
+            let template = '';
+
+            if (size === 'small') {
+              template = `## What & Why
+            - **What**: ${prTitle}
+            - **Why**: <!-- Brief explanation -->
+
+            ## Tests
+            - [ ] Unit tests added/modified
+            - [ ] Tests passing
+
+            ## Review
+            \`\`\`bash
+            # Quick verification
+            \`\`\`
+
+            ---
+            _PR Size: ${totalLines} lines, ${changedFiles} files (Small)_`;
+
+            } else if (size === 'medium') {
+              template = `## What & Why
+            **What does this do?**
+            - ${prTitle}
+
+            **Why was this needed?**
+            - <!-- Context -->
+
+            ## Changes
+            - **Added**: <!-- files/features -->
+            - **Modified**: <!-- files/changes -->
+
+            ## Tests
+            - [ ] Unit tests added
+            - [ ] All tests passing
+
+            ## Review Steps
+            \`\`\`bash
+            # Run tests
+            \`\`\`
+
+            ## Notes
+            - <!-- Edge cases, risks -->
+
+            ---
+            _PR Size: ${totalLines} lines, ${changedFiles} files (Medium)_`;
+
+            } else {
+              template = `# Pull Request
+
+            ## Ticket
+            - Related: <!-- Link -->
+
+            ## Description
+
+            ### What does this PR do?
+            ${prTitle}
+
+            ### Why was this needed?
+            <!-- Context -->
+
+            ### Changelog
+            - <!-- Summary -->
+
+            ---
+
+            ## Unit Tests
+            - [ ] Unit tests added
+            - [ ] Unit tests modified
+
+            ---
+
+            ## Steps to Review
+
+            ### 1. Setup
+            \`\`\`bash
+            # Environment setup
+            \`\`\`
+
+            ### 2. Verify
+            - <!-- Expected behavior -->
+
+            ---
+
+            ## Notes
+            - **Next Steps**: <!-- Follow-up -->
+            - **Risks**: <!-- Issues -->
+
+            ---
+            _PR Size: ${totalLines} lines, ${changedFiles} files (Large - consider splitting if > 700 lines)_`;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              body: template
+            });
+
+      - name: Add size label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const label = '${{ steps.diff.outputs.label }}';
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: [label]
+              });
+            } catch (e) {
+              console.log(`Could not add label: ${e.message}`);
+            }
