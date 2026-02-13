@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Data (secrets metadata)
+data/catalog.json
+data/index.json
+data/index.md
+data/organized/
+
+# IDE
+.idea/
+.vscode/
