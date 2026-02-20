@@ -66,6 +66,9 @@ build/
 *~
 .#*
 
+# Process IDs (make slack-start)
+.pids/
+
 # OS
 .DS_Store
 Thumbs.db
