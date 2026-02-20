@@ -4,15 +4,15 @@
 
 ```
 jira/
+├── TICKET_TEMPLATE.md  # Canonical Jira ticket format
 ├── sprint/
-│   ├── SPRINTS.md      # All sprints summary
+│   ├── SPRINTS.md      # All sprints velocity summary
 │   ├── 1/
 │   │   ├── stats.json  # Metrics (deterministic)
 │   │   ├── tickets.json# Ticket list
 │   │   └── SUMMARY.md  # Analysis (LLM-generated)
-│   ├── 2/
-│   └── 3/
-└── scripts/            # Jira API scripts
+│   ├── 2/ ... 5/       # Same pattern per sprint
+│   └── N/RELEASE_NOTES.md, MARKETING_RELEASE_NOTES.md (when generated)
 ```
 
 ## Files
