@@ -18,6 +18,11 @@
 | **System architecture?** | `../platform-saas-ai-context/docs/architecture/` |
 | **Team ownership?** | `../platform-saas-ai-context/docs/team/TEAM.md` |
 | **Quarterly roadmap?** | `../platform-saas-ai-context/docs/roadmap/ROADMAP.md` |
+| **AWS accounts & clients?** | `dynamo-vault/INFRASTRUCTURE.md` or `../platform-saas-ai-context/docs/infrastructure/AWS_ACCOUNTS.md` |
+| **DynamoDB workspace configs?** | `dynamo-vault/cli/secrets list --account PROD` |
+| **Secrets Manager inventory?** | `aws-secrets-vault/cli/secrets list` |
+| **Client account lookup?** | `dynamo-vault/cli/secrets fetch <name> --account PROD` |
+| **Full platform secrets (Kurilead + LastPass)?** | `./scripts/export-kurilead.sh` → `docs/KURILEAD_EXPORT.md` |
 
 ---
 
@@ -160,6 +165,16 @@ agentic-project-mgmt/
 │   ├── snapshots/              # Board snapshots
 │   ├── scripts/                # Automation scripts
 │   └── jira_lib/               # Jira Python library
+│
+├── dynamo-vault/                # 🔐 DynamoDB workspace config vault
+│   ├── INFRASTRUCTURE.md       # Master doc: AWS accounts, clients, DynamoDB
+│   ├── cli/secrets             # CLI tool for querying workspace configs
+│   ├── lib/                    # Python library (config, models, client, indexer)
+│   └── data/                   # Exported indexes (gitignored)
+│
+├── aws-secrets-vault/           # 🔑 AWS Secrets Manager inventory
+│   ├── cli/secrets             # CLI tool for secrets enumeration
+│   └── lib/                    # Python library
 │
 └── notion/                      # 📝 Notion integration
     └── [Product specs, requirements, meeting notes]

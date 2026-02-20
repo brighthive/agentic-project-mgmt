@@ -74,6 +74,9 @@ Thumbs.db
 *.log
 logs/
 
+# Personal vault dumps (NEVER commit)
+kurilead/
+
 # Large Exported Files (older sprints)
 sprint/archive/**/*.json
 sprint/archive/**/*.csv

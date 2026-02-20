@@ -1,0 +1,33 @@
+# Generated data files
+data/index.json
+data/index.md
+data/aliases.json
+data/organized/
+data/exports/
+data/secrets_inventory.md
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (never commit!)
+*.key
+*.pem
+*.p12
+.aws/
+credentials

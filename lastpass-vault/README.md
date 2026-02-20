@@ -21,6 +21,9 @@ Minimal CLI for managing LastPass secrets locally.
 # Sync from LastPass
 ./cli/secrets sync
 
+# Export all secrets to JSON (for kurilead / full platform view)
+./cli/secrets export [--output path]
+
 # Delete from catalog
 ./cli/secrets delete <name>
 ```

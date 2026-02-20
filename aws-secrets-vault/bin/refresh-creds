@@ -1,0 +1,17 @@
+#!/bin/bash
+# Quick credential refresher wrapper
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Activate venv if needed
+if [ ! -d "$PROJECT_DIR/.venv" ]; then
+    echo "🐍 Creating virtual environment..."
+    python3 -m venv "$PROJECT_DIR/.venv"
+fi
+
+# Activate and run refresher
+source "$PROJECT_DIR/.venv/bin/activate"
+python3 "$SCRIPT_DIR/refresh-credentials.py" "$@"
