@@ -1,0 +1,151 @@
+{
+  "sprint": 6,
+  "name": "Sprint 6 🍉",
+  "dates": {
+    "start": "2026-02-19",
+    "end": "2026-03-04",
+    "duration_days": 13
+  },
+  "tickets": {
+    "total": 28,
+    "completed": 11,
+    "in_progress": 5,
+    "to_do": 5,
+    "testing": 5,
+    "needs_refinement": 2
+  },
+  "points": {
+    "total": 71.0,
+    "completed": 34.0,
+    "remaining": 37.0
+  },
+  "completion": {
+    "tickets_pct": 39.3,
+    "points_pct": 47.9
+  },
+  "goals": [
+    "BrightStudio",
+    "Slack release",
+    "Projects release",
+    "Unstructured Files Ingest",
+    "CX Support (EDL Shutdown/Indiana DeepAgent)"
+  ],
+  "team": [
+    "Ahmed",
+    "Harbour",
+    "Hikuri",
+    "Marwan"
+  ],
+  "carry_over": {
+    "from_previous": 0,
+    "to_next": 17,
+    "tickets": [
+      "BH-294",
+      "BH-293",
+      "BH-292",
+      "BH-291",
+      "BH-290",
+      "BH-289",
+      "BH-288",
+      "BH-286",
+      "BH-285",
+      "BH-284",
+      "BH-282",
+      "BH-280",
+      "BH-277",
+      "BH-275",
+      "BH-274",
+      "BH-271",
+      "BH-210"
+    ]
+  },
+  "prs": {
+    "total": 14,
+    "matched_to_tickets": 2,
+    "unmatched": 12,
+    "lines_changed": 220336,
+    "repos_touched": [
+      "brightbot",
+      "brighthive-platform-core",
+      "brighthive-webapp"
+    ]
+  },
+  "wip_analysis": {
+    "avg_hours": 199.2,
+    "avg_days": 8.3,
+    "by_ticket": [
+      {
+        "key": "BH-238",
+        "days": 22.1,
+        "status": "Done",
+        "flag": "multi-sprint"
+      },
+      {
+        "key": "BH-279",
+        "days": 12.0,
+        "status": "Done",
+        "flag": "full-sprint"
+      },
+      {
+        "key": "BH-270",
+        "days": 11.5,
+        "status": "Done",
+        "flag": "full-sprint"
+      },
+      {
+        "key": "BH-276",
+        "days": 11.4,
+        "status": "Done",
+        "flag": "full-sprint"
+      },
+      {
+        "key": "BH-273",
+        "days": 11.4,
+        "status": "Done",
+        "flag": "full-sprint"
+      },
+      {
+        "key": "BH-269",
+        "days": 7.7,
+        "status": "Done",
+        "flag": null
+      },
+      {
+        "key": "BH-268",
+        "days": 5.4,
+        "status": "Done",
+        "flag": null
+      },
+      {
+        "key": "BH-283",
+        "days": 5.2,
+        "status": "Done",
+        "flag": null
+      },
+      {
+        "key": "BH-267",
+        "days": 4.5,
+        "status": "Done",
+        "flag": null
+      },
+      {
+        "key": "BH-287",
+        "days": 0.0,
+        "status": "Done",
+        "flag": "quick-win"
+      },
+      {
+        "key": "BH-281",
+        "days": 0.0,
+        "status": "Done",
+        "flag": "quick-win"
+      }
+    ],
+    "distribution": {
+      "under_1_day": 2,
+      "1_to_3_days": 0,
+      "4_to_7_days": 3,
+      "over_7_days": 6
+    }
+  }
+}

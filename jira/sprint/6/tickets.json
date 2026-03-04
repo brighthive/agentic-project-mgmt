@@ -1,0 +1,198 @@
+[
+  {
+    "key": "BH-294",
+    "summary": "[CRITICAL] Fix system bugs for production push",
+    "status": "To Do",
+    "assignee": "Marwan Samih",
+    "points": null
+  },
+  {
+    "key": "BH-293",
+    "summary": "Update the unstructured data stack to be deployable into the workspace aws accounts instead of BH env account (bh-stg, bh-prod)",
+    "status": "To Do",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-292",
+    "summary": "Investigation how to deploy LangChain into Core-Agent",
+    "status": "To Do",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-291",
+    "summary": "[FE] Support creating custom agents in brightstudio",
+    "status": "To Do",
+    "assignee": "Harbour Wang",
+    "points": 5.0
+  },
+  {
+    "key": "BH-290",
+    "summary": "[BE] Support creating custom agents",
+    "status": "To Do",
+    "assignee": "Harbour Wang",
+    "points": 5.0
+  },
+  {
+    "key": "BH-289",
+    "summary": "Investigate in Langchain Assistants and custom agents",
+    "status": "In Progress",
+    "assignee": "Harbour Wang",
+    "points": 4.0
+  },
+  {
+    "key": "BH-288",
+    "summary": "Fix Unknown type showing the schema section in the frontend",
+    "status": "In Progress",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-287",
+    "summary": "Update Indiana tech Zenjbar connection pointing to the new database IP",
+    "status": "Done",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-286",
+    "summary": "integrate knowledge base in aws bedrock with brightagent",
+    "status": "Code Review",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-285",
+    "summary": "integrate unstructured data with webapp in the files section",
+    "status": "In Progress",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-284",
+    "summary": "[WebApp] Refactor Brightagent code on FE",
+    "status": "In Progress",
+    "assignee": "Marwan Samih",
+    "points": null
+  },
+  {
+    "key": "BH-283",
+    "summary": "Create a Pulumi stack for automating the full environment needed for supporting unstructured data",
+    "status": "Done",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null
+  },
+  {
+    "key": "BH-282",
+    "summary": "[Brightagent] Replace Claude provider to AWS Claude Foundation Models",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null
+  },
+  {
+    "key": "BH-281",
+    "summary": "[CRITICAL] Fix bugs/issues in production environment",
+    "status": "Done",
+    "assignee": "Marwan Samih",
+    "points": null
+  },
+  {
+    "key": "BH-280",
+    "summary": "[WebApp] Reconnect To brightagent request stream/interrupt form if connection lost",
+    "status": "Staging QC",
+    "assignee": "Marwan Samih",
+    "points": null
+  },
+  {
+    "key": "BH-279",
+    "summary": "[Infra] Slack Deployment - How to Deploy",
+    "status": "Done",
+    "assignee": "Hikuri Chinca",
+    "points": 5.0
+  },
+  {
+    "key": "BH-277",
+    "summary": "[CRITICAL] Indiana Supervisor vs DeepAgent Prod Release",
+    "status": "Staging QC",
+    "assignee": "Marwan Samih",
+    "points": 3.0
+  },
+  {
+    "key": "BH-276",
+    "summary": "[Platform] Unstructured Data - How to manage (AWS / 3rd party / self-solution)",
+    "status": "Done",
+    "assignee": "Ahmed Elsherbiny",
+    "points": 3.0
+  },
+  {
+    "key": "BH-275",
+    "summary": "[Platform] Unstructured Data - How to consume into warehouse (multi-workspace/source)",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": 5.0
+  },
+  {
+    "key": "BH-274",
+    "summary": "[Platform] Unstructured Data - How to vector embed",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": 5.0
+  },
+  {
+    "key": "BH-273",
+    "summary": "[Platform] Unstructured Data - How to ingest",
+    "status": "Done",
+    "assignee": "Ahmed Elsherbiny",
+    "points": 5.0
+  },
+  {
+    "key": "BH-271",
+    "summary": "[AWS] Switch provider models to Bedrock models",
+    "status": "Ready for Staging",
+    "assignee": "Ahmed Elsherbiny",
+    "points": 5.0
+  },
+  {
+    "key": "BH-270",
+    "summary": "[FE] BrightStudio - Connect with Resources (parity with Projects)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": 5.0
+  },
+  {
+    "key": "BH-269",
+    "summary": "[FE] BrightStudio - Make it work against different models",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": 5.0
+  },
+  {
+    "key": "BH-268",
+    "summary": "[FE] BrightStudio - Update models list",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": 3.0
+  },
+  {
+    "key": "BH-267",
+    "summary": "[FE] BrightStudio - Investigate current state",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": 3.0
+  },
+  {
+    "key": "BH-238",
+    "summary": "[BE] PoC Unstructured data source connector",
+    "status": "Done",
+    "assignee": "Ahmed Elsherbiny",
+    "points": 5.0
+  },
+  {
+    "key": "BH-210",
+    "summary": "[FE] Project Brightagent integration",
+    "status": "In Progress",
+    "assignee": "Marwan Samih",
+    "points": 5.0
+  }
+]

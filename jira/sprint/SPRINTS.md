@@ -1,15 +1,30 @@
 # Sprint Summary - Q1 2026
 
-**Current**: Sprint 4 (Planning) | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 6 (CLOSING) | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 ---
 
-## Sprint 4 (PLANNING)
+## Sprint 6 (CLOSING - Mar 4, 2026)
+- **Tickets**: 28 | **Points**: 71
+- **Completion**: 39.3% tickets, 47.9% points
+- **Focus**: BrightStudio, Slack Release, Unstructured Data Ingest, CX Support
+- **Team**: Ahmed, Harbour, Hikuri, Marwan
+- **PRs Merged**: 14 (3 repos, 220K lines) — ⚠️ only 2/14 linked to Jira
+- **Carried Over**: 17 → Sprint 7
+- [Details →](./6/)
+
+## Sprint 5 (COMPLETED - Feb 17, 2026)
+- **Tickets**: 11 | **Points**: 23
+- **Completion**: 100% tickets
+- **Focus**: Projects v1, Slack Auth, Context Engineering, Infra Hardening
+- **Team**: Hikuri, Marwan, Ahmed, Harbour
+- **PRs Merged**: 13 (4 repos)
+- [Details →](./5/)
+
+## Sprint 4 (COMPLETED - Feb 11, 2026)
 - **Tickets**: 10 | **Points**: ~27
 - **Focus**: Background Agent Analyst, Slack Auth Design, Unstructured Data, Context Engineering, Projects v0
 - **Team**: Hikuri, Marwan, Ahmed, Harbour
-- **New**: 7 tickets | **Carryover**: 3 from Sprint 3
-- **Backlog Cleanup**: 14 tickets canceled
 - [Details →](./4/)
 
 ## Sprint 3 (COMPLETED - Feb 3, 2026)
@@ -41,9 +56,12 @@
 ## Velocity Trend
 
 ```
-Sprint │ Tickets │ Points │ Completion │ Avg WIP
-───────┼─────────┼────────┼────────────┼────────
-   1   │   29    │   78   │   72.4%    │  5.8d
-   2   │   42    │   50   │   78.6%    │  4h
-   3   │   23    │   30   │   52.2%    │  6.4d
+Sprint │ Tickets │ Points │ Completion │ Avg WIP  │ Carryover
+───────┼─────────┼────────┼────────────┼──────────┼──────────
+   1   │   29    │   78   │   72.4%    │  5.8d    │  8
+   2   │   42    │   50   │   78.6%    │  4h      │  9
+   3   │   23    │   30   │   52.2%    │  6.4d    │  4
+   4   │   10    │   27   │    —       │   —      │  —
+   5   │   11    │   23   │  100%      │   —      │  —
+   6   │   28    │   71   │   39.3%    │  8.3d    │ 17  ⚠️
 ```
