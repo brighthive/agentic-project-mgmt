@@ -34,3 +34,9 @@ Sprint Period: February 19 - March 4, 2026
 • Completion: 39.3% — scope was ambitious at 28 tickets
 • 17 tickets carrying over to Sprint 7
 • 5 tickets in testing/staging pipeline ready to land
+
+📎 Links
+📋 Release Notes: https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/6/RELEASE_NOTES.md
+📣 Marketing Notes: https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/6/MARKETING_RELEASE_NOTES.md
+📊 Notion Sprint 6: https://www.notion.so/31902437dde481cd851dd24b875bff29
+🎯 Jira Board: https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152
