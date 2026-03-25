@@ -1,0 +1,89 @@
+{
+  "sprint": 7,
+  "name": "Sprint 7 (Unofficial)",
+  "dates": {
+    "start": "2026-03-04",
+    "end": "2026-03-24",
+    "duration_days": 20
+  },
+  "official_sprint": false,
+  "note": "No official Jira sprint existed. Work continued post-Sprint 6 without formal sprint boundaries.",
+  "tickets": {
+    "total": 14,
+    "completed": 12,
+    "in_progress": 2,
+    "to_do": 0,
+    "testing": 0,
+    "needs_refinement": 0
+  },
+  "points": {
+    "total": 43,
+    "completed": 33,
+    "remaining": 10,
+    "unpointed_done": 3
+  },
+  "completion": {
+    "tickets_pct": 85.7,
+    "points_pct": 76.7
+  },
+  "goals": [
+    "BrightStudio & Custom Agents",
+    "Agent Sharing & Collaboration",
+    "Projects v1 Completion",
+    "Slack Integration Hardening",
+    "Production Stability"
+  ],
+  "team": ["Harbour", "Marwan", "Hikuri", "Ahmed"],
+  "carry_over": {
+    "from_previous": 17,
+    "to_next": 2,
+    "tickets": ["BH-293", "BH-210"]
+  },
+  "prs": {
+    "total": 63,
+    "feature_prs": 36,
+    "build_promotion_prs": 27,
+    "matched_to_tickets": 8,
+    "unmatched": 28,
+    "repos": {
+      "brightbot": {
+        "total": 26,
+        "feature": 15,
+        "build": 11
+      },
+      "brighthive-webapp": {
+        "total": 21,
+        "feature": 10,
+        "build": 11
+      },
+      "brighthive-platform-core": {
+        "total": 12,
+        "feature": 7,
+        "build": 5
+      },
+      "brightbot-slack-server": {
+        "total": 4,
+        "feature": 4,
+        "build": 0
+      }
+    }
+  },
+  "wip_analysis": {
+    "avg_days": 7.2,
+    "note": "Many tickets carried over from Sprint 6 — WIP includes cross-sprint time",
+    "by_ticket": [
+      {"key": "BH-241", "days": 33.0, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-242", "days": 33.0, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-248", "days": 33.0, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-277", "days": 20.0, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-280", "days": 20.0, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-284", "days": 14.0, "status": "Done", "flag": "multi-sprint"},
+      {"key": "BH-294", "days": 7.0, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-289", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-266", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-290", "days": 10.0, "status": "Done", "flag": null},
+      {"key": "BH-291", "days": 10.0, "status": "Done", "flag": null},
+      {"key": "BH-295", "days": 10.0, "status": "Done", "flag": null}
+    ]
+  }
+}

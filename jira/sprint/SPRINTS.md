@@ -1,10 +1,20 @@
 # Sprint Summary - Q1 2026
 
-**Current**: Sprint 6 (CLOSING) | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Between sprints | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 ---
 
-## Sprint 6 (CLOSING - Mar 4, 2026)
+## Sprint 7 — Unofficial (Mar 4–24, 2026)
+- **Tickets**: 14 | **Points**: 43
+- **Completion**: 85.7% tickets, 76.7% points
+- **Focus**: BrightStudio & Custom Agents, Agent Sharing, Projects v1, Slack Hardening, Production Stability
+- **Team**: Harbour, Marwan, Hikuri, Ahmed
+- **PRs Merged**: 63 (36 feature + 27 build, 4 repos)
+- **Carried Over**: 2 (BH-293, BH-210)
+- **Note**: No official Jira sprint — post-Sprint 6 development period
+- [Details →](./7/)
+
+## Sprint 6 (COMPLETED - Mar 4, 2026)
 - **Tickets**: 28 | **Points**: 71
 - **Completion**: 39.3% tickets, 47.9% points
 - **Focus**: BrightStudio, Slack Release, Unstructured Data Ingest, CX Support
@@ -64,4 +74,6 @@ Sprint │ Tickets │ Points │ Completion │ Avg WIP  │ Carryover
    4   │   10    │   27   │    —       │   —      │  —
    5   │   11    │   23   │  100%      │   —      │  —
    6   │   28    │   71   │   39.3%    │  8.3d    │ 17  ⚠️
+   7*  │   14    │   43   │   85.7%    │  7.2d    │  2
 ```
+*Sprint 7 was unofficial (no Jira sprint created)

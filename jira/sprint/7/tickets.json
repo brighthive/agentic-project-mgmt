@@ -1,0 +1,142 @@
+[
+  {
+    "key": "BH-295",
+    "summary": "Investigate Subagents for custom agents",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 2,
+    "type": "Task",
+    "epic": "BH-260",
+    "resolved": "2026-03-16"
+  },
+  {
+    "key": "BH-294",
+    "summary": "[CRITICAL] Fix system bugs for production push",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": "2026-03-11"
+  },
+  {
+    "key": "BH-291",
+    "summary": "[FE] Support creating custom agents in BrightStudio",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 5,
+    "type": "Task",
+    "epic": "BH-260",
+    "resolved": "2026-03-16"
+  },
+  {
+    "key": "BH-290",
+    "summary": "[BE] Support creating custom agents",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 5,
+    "type": "Task",
+    "epic": "BH-260",
+    "resolved": "2026-03-16"
+  },
+  {
+    "key": "BH-289",
+    "summary": "Investigate LangChain Assistants and custom agents",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 4,
+    "type": "Task",
+    "epic": "BH-260",
+    "resolved": "2026-03-06"
+  },
+  {
+    "key": "BH-284",
+    "summary": "[WebApp] Refactor BrightAgent code on FE",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": "2026-03-11"
+  },
+  {
+    "key": "BH-280",
+    "summary": "[WebApp] Reconnect BrightAgent request stream if connection lost",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": "2026-03-11"
+  },
+  {
+    "key": "BH-277",
+    "summary": "[CRITICAL] Indiana Supervisor vs DeepAgent Prod Release",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": 3,
+    "type": "Task",
+    "epic": "BH-173",
+    "resolved": "2026-03-11"
+  },
+  {
+    "key": "BH-266",
+    "summary": "[FE] BrightStudio - Investigate current state",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 3,
+    "type": "Task",
+    "epic": "BH-260",
+    "resolved": "2026-03-06"
+  },
+  {
+    "key": "BH-248",
+    "summary": "[FE] BrightSide UI/UX polish - chat colors, error tooltips, query titles",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 3,
+    "type": "Task",
+    "epic": "BH-114",
+    "resolved": "2026-03-16"
+  },
+  {
+    "key": "BH-242",
+    "summary": "[FE] Projects - Agent interaction UI",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 3,
+    "type": "Task",
+    "epic": "BH-116",
+    "resolved": "2026-03-16"
+  },
+  {
+    "key": "BH-241",
+    "summary": "[BE] Projects - BHAgent integration",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 5,
+    "type": "Task",
+    "epic": "BH-116",
+    "resolved": "2026-03-16"
+  },
+  {
+    "key": "BH-293",
+    "summary": "Update unstructured data stack for workspace AWS accounts",
+    "status": "In Progress",
+    "assignee": "Ahmed",
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-210",
+    "summary": "[FE] Project BrightAgent integration",
+    "status": "In Progress",
+    "assignee": "Marwan",
+    "points": 5,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  }
+]
