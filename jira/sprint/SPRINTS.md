@@ -1,6 +1,29 @@
 # Sprint Summary - Q1 2026
 
-**Current**: Between sprints | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Between sprints — Q2 starting | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+
+---
+
+## Q1 Roadmap Scorecard
+
+**Overall Delivery**: ~65% of original roadmap | **6 of 10 epics at 80%+**
+
+```
+███████████████████░  95%  Projects & Automations
+██████████████████░░  90%  Custom Tailored Personas (BrightStudio)
+██████████████████░░  90%  UX WebApp Re-design
+█████████████████░░░  85%  Internal Improvements
+████████████████░░░░  80%  Proactive Agents
+████████████░░░░░░░░  60%  Context Engineering
+██████████░░░░░░░░░░  50%  BH Omni Integrations (Slack only)
+████████░░░░░░░░░░░░  40%  Interconnect-ability (A2A)
+██████░░░░░░░░░░░░░░  30%  Workspace/Pricing
+█████░░░░░░░░░░░░░░░  25%  Big Data Complex Tasks
+```
+
+**Over-delivered** (not on original roadmap): BrightStudio, Agent Sharing/AGENT_GUEST, Shareable Conversations, full Slack server from scratch
+
+[Full Scorecard →](./Q1_ROADMAP_SCORECARD.md) | [Q1 CEO Report (Notion)](https://www.notion.so/32602437dde481248ab2e17283318cb4)
 
 ---
 
