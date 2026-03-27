@@ -1,0 +1,97 @@
+{
+  "sprint": 4,
+  "name": "Sprint 4 \ud83c\udf4d",
+  "dates": {
+    "start": "2026-02-03",
+    "end": "2026-02-10",
+    "duration_days": 7
+  },
+  "tickets": {
+    "total": 21,
+    "completed": 15,
+    "in_progress": 1,
+    "to_do": 0,
+    "testing": 1,
+    "needs_refinement": 3,
+    "ready_for_staging": 1
+  },
+  "points": {
+    "total": 65,
+    "completed": 41,
+    "remaining": 24,
+    "unpointed_done": 3
+  },
+  "completion": {
+    "tickets_pct": 71.4,
+    "points_pct": 63.1
+  },
+  "goals": [
+    "Background Agent Analyst v0",
+    "Slack Auth Solution Design v0",
+    "Unstructured data as source",
+    "Workspace Portal + Context Engineering",
+    "Projects v0 + BHAgent integration",
+    "Internal improvements DevOps"
+  ],
+  "team": ["Hikuri", "Marwan", "Ahmed", "Harbour"],
+  "carry_over": {
+    "from_previous": 3,
+    "to_next": 6,
+    "tickets": ["BH-245", "BH-240", "BH-239", "BH-210", "BH-201", "BH-136"]
+  },
+  "prs": {
+    "total": 27,
+    "feature_prs": 18,
+    "build_promotion_prs": 9,
+    "matched_to_tickets": 8,
+    "unmatched": 10,
+    "repos": {
+      "brightbot": {
+        "total": 11,
+        "feature": 10,
+        "build": 1
+      },
+      "brighthive-webapp": {
+        "total": 5,
+        "feature": 3,
+        "build": 2
+      },
+      "brighthive-platform-core": {
+        "total": 9,
+        "feature": 6,
+        "build": 3
+      },
+      "brightbot-slack-server": {
+        "total": 1,
+        "feature": 1,
+        "build": 0
+      },
+      "brighthive-admin": {
+        "total": 1,
+        "feature": 1,
+        "build": 0
+      }
+    }
+  },
+  "wip_analysis": {
+    "avg_days": 4.3,
+    "note": "1-week sprint with some carryover tickets resolved later. WIP calculated from created-to-resolved within sprint window.",
+    "by_ticket": [
+      {"key": "BH-255", "days": 0, "status": "Done", "flag": "same-day"},
+      {"key": "BH-250", "days": 0, "status": "Done", "flag": "same-day"},
+      {"key": "BH-247", "days": 3, "status": "Done", "flag": null},
+      {"key": "BH-244", "days": 5, "status": "Done", "flag": null},
+      {"key": "BH-243", "days": 3, "status": "Done", "flag": null},
+      {"key": "BH-237", "days": 4, "status": "Done", "flag": null},
+      {"key": "BH-236", "days": 7, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-232", "days": 11, "status": "Done", "flag": "carryover"},
+      {"key": "BH-231", "days": 7, "status": "Done", "flag": "carryover"},
+      {"key": "BH-230", "days": 11, "status": "Done", "flag": "carryover"},
+      {"key": "BH-246", "days": 10, "status": "Done", "flag": "resolved-post-sprint"},
+      {"key": "BH-226", "days": 19, "status": "Done", "flag": "resolved-post-sprint"},
+      {"key": "BH-248", "days": 35, "status": "Done", "flag": "resolved-post-sprint"},
+      {"key": "BH-242", "days": 40, "status": "Done", "flag": "resolved-post-sprint"},
+      {"key": "BH-241", "days": 40, "status": "Done", "flag": "resolved-post-sprint"}
+    ]
+  }
+}

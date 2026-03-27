@@ -1,0 +1,92 @@
+{
+  "sprint": 5,
+  "name": "Sprint 5 🍋",
+  "dates": {
+    "start": "2026-02-10",
+    "end": "2026-02-17",
+    "duration_days": 7
+  },
+  "tickets": {
+    "total": 11,
+    "completed": 11,
+    "in_progress": 0,
+    "to_do": 0,
+    "testing": 0,
+    "needs_refinement": 0
+  },
+  "points": {
+    "total": 23,
+    "completed": 23,
+    "remaining": 0,
+    "unpointed_done": 4
+  },
+  "completion": {
+    "tickets_pct": 100.0,
+    "points_pct": 100.0
+  },
+  "goals": [
+    "Slack Server Architecture (OAuth, multi-workspace, V1 cleanup)",
+    "Projects v1 - BHAgent Integration",
+    "BrightSide UI/UX Polish",
+    "Platform Observability & Tracing",
+    "Bug Fixes (GetResources permissions)"
+  ],
+  "team": ["Hikuri", "Marwan", "Ahmed", "Harbour"],
+  "carry_over": {
+    "from_previous": 7,
+    "to_next": 0,
+    "tickets": []
+  },
+  "prs": {
+    "total": 13,
+    "feature_prs": 9,
+    "build_promotion_prs": 4,
+    "matched_to_tickets": 5,
+    "unmatched": 4,
+    "repos": {
+      "brightbot": {
+        "total": 5,
+        "feature": 3,
+        "build": 2
+      },
+      "brighthive-webapp": {
+        "total": 4,
+        "feature": 3,
+        "build": 1
+      },
+      "brighthive-platform-core": {
+        "total": 3,
+        "feature": 2,
+        "build": 1
+      },
+      "brightbot-slack-server": {
+        "total": 1,
+        "feature": 0,
+        "build": 1
+      }
+    }
+  },
+  "wip_analysis": {
+    "avg_days": 6.2,
+    "note": "7 of 11 tickets were carryovers from Sprint 4 — WIP measured from sprint start, not ticket creation",
+    "by_ticket": [
+      {"key": "BH-258", "days": 1.0, "status": "Done", "flag": null},
+      {"key": "BH-259", "days": 4.0, "status": "Done", "flag": null},
+      {"key": "BH-254", "days": 7.0, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-253", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-252", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-251", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-249", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-248", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-241", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-226", "days": 7.0, "status": "Done", "flag": "carryover"},
+      {"key": "BH-137", "days": 7.0, "status": "Done", "flag": "carryover"}
+    ],
+    "distribution": {
+      "under_1_day": 0,
+      "1_to_3_days": 1,
+      "4_to_7_days": 10,
+      "over_7_days": 0
+    }
+  }
+}

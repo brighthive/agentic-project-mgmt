@@ -35,7 +35,7 @@ agentic-project-mgmt/
 │   ├── CLAUDE.md                # Sprint data format spec
 │   └── sprint/
 │       ├── SPRINTS.md           # Master velocity table
-│       ├── 1/ ... 6/            # stats.json, tickets.json, SUMMARY.md, RELEASE_NOTES.md, etc.
+│       ├── 1/ ... 7/            # stats.json, tickets.json, SUMMARY.md, RELEASE_NOTES.md, etc.
 ├── notion/
 │   └── pages.md                 # Notion workspace structure & page IDs
 ├── aws-secrets-vault/            # CLI: Secrets Manager across 4 AWS accounts
@@ -111,8 +111,80 @@ This repo is **ephemeral project management** — changes weekly.
 
 ---
 
+## Source Repositories
+
+GitHub org: `brighthive`. All repos live locally at `../` relative to this repo.
+
+| Service | GitHub Repo | Local Directory | Description |
+|---------|-------------|-----------------|-------------|
+| BrightBot (AI Agent) | `brighthive/brightbot` | `../brightbot` | LangGraph agents, FastAPI, Slack routing |
+| Web App | `brighthive/brighthive-webapp` | `../brighthive-webapp` | React frontend, BrightStudio, Projects UI |
+| Platform Core | `brighthive/brighthive-platform-core` | `../brighthive-platform-core` | GraphQL API, Neo4j, auth, workspace mgmt |
+| Slack Server | `brighthive/brightbot-slack-server` | `../brightbot-slack-server` | Slack OAuth, workspace resolution, ECS infra |
+| Admin Portal | `brighthive/brighthive-admin` | `../brighthive-admin` | Admin dashboard |
+| Data Org CDK | `brighthive/brighthive-data-organization-cdk` | `../brighthive-data-organization-cdk` | Step Functions, Lambda, Glue, data pipelines |
+| Data Workspace CDK | `brighthive/brighthive-data-workspace-cdk` | `../brighthive-data-workspace-cdk` | Per-workspace AWS infrastructure |
+
+**Fetching PRs by date range** (used by `/sprint-release`):
+```bash
+gh pr list --repo brighthive/$REPO --state merged --search "merged:$START..$END" --limit 100 --json number,title,author,additions,deletions,mergedAt,headRefName
+```
+
+---
+
+## Team
+
+| Member | GitHub | Role | Ownership |
+|--------|--------|------|-----------|
+| Hikuri Chinca | `drchinca` | Tech Lead | Architecture, Slack integration, context engineering |
+| Marwan Samih | `Marwan-Samih-Brighthive` | Sr. Engineer | BrightAgent, frontend, data quality |
+| Ahmed Elsherbiny | `ahmed-brighthive` | Sr. Engineer | Infrastructure, unstructured data, DevOps, security |
+| Harbour Wang | `Nano-233` | Engineer | Projects, BrightStudio, CDK, UI/UX |
+
+**Jira IDs**: Hikuri: `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264`
+
+---
+
+## Slack Integration
+
+| Item | Value |
+|------|-------|
+| Channel | `#releases` |
+| Channel ID | `C0AJXPYGJJ0` |
+| Auth | Bot token from `~/.claude/slack/tokens.json` (`bot_token` field) |
+| Token rotation | `~/.claude/slack/rotate.sh` (rotates user token, preserves bot_token) |
+| Post method | `chat.postMessage` API with bot token (`xoxb-*`) |
+| Bot scopes | `chat:write`, `chat:write.public` |
+
+**Posting to Slack**:
+```bash
+SLACK_BOT_TOKEN=$(jq -r '.bot_token' ~/.claude/slack/tokens.json)
+curl -s -X POST "https://slack.com/api/chat.postMessage" \
+  -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @payload.json | jq '{ok, ts, error}'
+```
+
+---
+
+## Notion Integration
+
+Sprint pages live under [Sprint Planning](https://www.notion.so/142bbca09ba04d849960420aa06889be) (ID: `142bbca09ba04d849960420aa06889be`).
+
+| Page | Notion ID |
+|------|-----------|
+| Sprint Planning (parent) | `142bbca09ba04d849960420aa06889be` |
+| Active Sprint | `2f202437-dde4-8110-8851-c7ce0cac1c89` |
+| Sprint Archive | `2f202437-dde4-8191-b4a2-fe4b5d72f0e2` |
+| Q1 Roadmap & Milestones | `2f202437-dde4-81f1-911a-fd4d7782e19d` |
+| Q1 CEO Report | `32602437-dde4-8124-8ab2-e17283318cb4` |
+
+Full page map with all sprint pages: `notion/pages.md`
+
+---
+
 ## Key References
 
 - **Jira Board**: https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152
-- **Sprint 4 ID**: 1084 | **Board ID**: 152
-- **Hikuri Atlassian ID**: `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264`
+- **Board ID**: 152
+- **Key Epics**: BH-170 (SDLC), BH-171 (AWS), BH-172 (Features), BH-173 (Bugs), BH-196 (Partnerships), BH-260 (BrightStudio)

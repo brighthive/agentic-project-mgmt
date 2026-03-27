@@ -1,0 +1,23 @@
+[
+  {"key": "BH-255", "summary": "[BE] BUG causing login to fail on staging", "status": "Done", "assignee": "Ahmed", "points": null, "type": "Task", "epic": null},
+  {"key": "BH-250", "summary": "[BE] Slack Server - Update CLAUDE.md + environment docs", "status": "Done", "assignee": "Hikuri", "points": null, "type": "Task", "epic": "BH-117"},
+  {"key": "BH-248", "summary": "[FE] BrightSide UI/UX polish - chat colors, error tooltips, query titles", "status": "Done", "assignee": "Harbour", "points": 3, "type": "Task", "epic": "BH-114"},
+  {"key": "BH-247", "summary": "Update GitHub workflows for stg and prod in platform core, require tagging", "status": "Done", "assignee": "Ahmed", "points": null, "type": "Task", "epic": null},
+  {"key": "BH-246", "summary": "Setup proper local development environment and seeding", "status": "Done", "assignee": "Harbour", "points": 5, "type": "Task", "epic": "BH-113"},
+  {"key": "BH-245", "summary": "[BE] Slack Auth - 3-tier auth system implementation", "status": "Needs Refinement", "assignee": "Hikuri", "points": 5, "type": "Task", "epic": "BH-117"},
+  {"key": "BH-244", "summary": "[BE] Slack Intent Router - MCP-based message routing", "status": "Done", "assignee": "Hikuri", "points": 5, "type": "Task", "epic": "BH-117"},
+  {"key": "BH-243", "summary": "Pre-Post Checks GitOps: Validate engineering standards across repos", "status": "Done", "assignee": "Hikuri", "points": 3, "type": "Task", "epic": "BH-170"},
+  {"key": "BH-242", "summary": "[FE] Projects - Agent interaction UI", "status": "Done", "assignee": "Harbour", "points": 3, "type": "Task", "epic": "BH-116"},
+  {"key": "BH-241", "summary": "[BE] Projects - BHAgent integration", "status": "Done", "assignee": "Harbour", "points": 5, "type": "Task", "epic": "BH-116"},
+  {"key": "BH-240", "summary": "[BE] Context Engineering - Workspace context API", "status": "Needs Refinement", "assignee": "Hikuri", "points": 3, "type": "Task", "epic": "BH-110"},
+  {"key": "BH-239", "summary": "[FE] Workspace Portal - Context copywriting UI", "status": "Needs Refinement", "assignee": "Marwan", "points": 3, "type": "Task", "epic": "BH-114"},
+  {"key": "BH-237", "summary": "[Design] Slack Auth - OAuth flow design", "status": "Done", "assignee": "Hikuri", "points": 2, "type": "Task", "epic": "BH-117"},
+  {"key": "BH-236", "summary": "[BE] Background Agent Analyst - Design spec", "status": "Done", "assignee": "Marwan", "points": 3, "type": "Task", "epic": "BH-111"},
+  {"key": "BH-232", "summary": "Introduce GitOps approach for server related resources (OMD, Airbyte)", "status": "Done", "assignee": "Ahmed", "points": 5, "type": "Task", "epic": "BH-171"},
+  {"key": "BH-231", "summary": "Resolve issue with Airbyte Pulumi stack route table access", "status": "Done", "assignee": "Ahmed", "points": 2, "type": "Task", "epic": "BH-171"},
+  {"key": "BH-230", "summary": "Update OpenMetadata configuration lambda for autoclassification agents", "status": "Done", "assignee": "Ahmed", "points": 3, "type": "Task", "epic": "BH-171"},
+  {"key": "BH-226", "summary": "GetResources mutation failing - requires systemadmin role fix", "status": "Done", "assignee": "Ahmed", "points": 2, "type": "Bug", "epic": "BH-114"},
+  {"key": "BH-210", "summary": "[FE] Project BrightAgent integration", "status": "In Progress", "assignee": "Marwan", "points": 5, "type": "Task", "epic": "BH-116"},
+  {"key": "BH-201", "summary": "Onboarding & Off-boarding 100% working", "status": "Testing (Dev)", "assignee": "Ahmed", "points": 5, "type": "Task", "epic": "BH-171"},
+  {"key": "BH-136", "summary": "Audit performance monitoring and observability stack", "status": "Ready for Staging", "assignee": "Ahmed", "points": 3, "type": "Task", "epic": "BH-113"}
+]

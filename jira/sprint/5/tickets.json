@@ -1,0 +1,112 @@
+[
+  {
+    "key": "BH-259",
+    "summary": "[BE] Remove confidence elimination from metadata retrieval tool",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": 3,
+    "type": "Task",
+    "epic": "BH-110",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-258",
+    "summary": "[BE-Brightagent] Enhancements and fixes to Brightagent",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": "2026-02-13"
+  },
+  {
+    "key": "BH-254",
+    "summary": "[Infra|BE] enhance platform core logging and observability",
+    "status": "Done",
+    "assignee": "Ahmed",
+    "points": 3,
+    "type": "Task",
+    "epic": null,
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-253",
+    "summary": "[BE] Slack Server - Multi-workspace token management",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-252",
+    "summary": "[BE] Slack Server - OAuth 2.0 installation flow",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-251",
+    "summary": "[BE] Slack Server - Dynamic workspace resolution via Platform Core",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-249",
+    "summary": "[BE] Slack Server - Remove Router V1 dead code + rename V2",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": 2,
+    "type": "Task",
+    "epic": "BH-117",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-248",
+    "summary": "[FE] BrightSide UI/UX polish - chat colors, error tooltips, query titles",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 3,
+    "type": "Task",
+    "epic": "BH-114",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-241",
+    "summary": "[BE] Projects - BHAgent integration",
+    "status": "Done",
+    "assignee": "Harbour",
+    "points": 5,
+    "type": "Task",
+    "epic": "BH-116",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-226",
+    "summary": "GetResources mutation is failing and it needs the user to be systemadmin in order to executes this mutation or list files in staging",
+    "status": "Done",
+    "assignee": "Ahmed",
+    "points": 2,
+    "type": "Bug",
+    "epic": "BH-114",
+    "resolved": "2026-02-17"
+  },
+  {
+    "key": "BH-137",
+    "summary": "Implement distributed tracing and logging",
+    "status": "Done",
+    "assignee": "Ahmed",
+    "points": 5,
+    "type": "Task",
+    "epic": "BH-113",
+    "resolved": "2026-02-17"
+  }
+]
