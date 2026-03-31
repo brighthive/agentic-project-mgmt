@@ -19,9 +19,20 @@
 | **AWS Secrets Manager inventory** | `aws-secrets-vault/cli/secrets` |
 | **Notion workspace page map** | `notion/pages.md` |
 | **System architecture** | `../platform-saas-ai-context/docs/architecture/ARCHITECTURE.md` |
+| **Bedrock migration strategy** | `../platform-saas-ai-context/docs/architecture/BEDROCK_MIGRATION_STRATEGY.md` |
+| **Bedrock AgentCore strategy** | `../platform-saas-ai-context/docs/architecture/BEDROCK_AGENTCORE_STRATEGY.md` |
+| **Production AI architecture** | `../platform-saas-ai-context/docs/architecture/PRODUCTION_AI_ARCHITECTURE.md` |
+| **Ingestion agent design** | `../platform-saas-ai-context/docs/architecture/INGESTION_AGENT_BRIGHTBOT.md` |
 | **Team ownership** | `../platform-saas-ai-context/docs/team/TEAM.md` |
 | **Quarterly roadmap** | `../platform-saas-ai-context/docs/roadmap/ROADMAP.md` |
 | **AWS account hierarchy** | `../platform-saas-ai-context/docs/infrastructure/AWS_ACCOUNTS.md` |
+| **Spec template** | `docs/specs/SPEC_TEMPLATE.md` |
+| **Feature doc template** | `docs/features/FEATURE_TEMPLATE.md` |
+| **Bedrock journal template** | `docs/bedrock/BEDROCK_TEMPLATE.md` |
+| **Bedrock topic index** | `docs/bedrock/INDEX.md` |
+| **POC template** | `docs/pocs/POC_TEMPLATE.md` |
+| **Docs workflow guide** | `docs/CLAUDE.md` |
+| **Q1 roadmap scorecard** | `jira/sprint/Q1_ROADMAP_SCORECARD.md` |
 
 ---
 
@@ -30,12 +41,21 @@
 ```
 agentic-project-mgmt/
 ├── .mcp.json                     # Notion MCP server config
+├── Makefile                      # Multi-repo dev orchestrator (slack integration)
 ├── jira/                         # Sprint data & tracking
 │   ├── TICKET_TEMPLATE.md       # Canonical ticket format
 │   ├── CLAUDE.md                # Sprint data format spec
 │   └── sprint/
 │       ├── SPRINTS.md           # Master velocity table
+│       ├── Q1_ROADMAP_SCORECARD.md  # Q1 delivery scorecard
 │       ├── 1/ ... 7/            # stats.json, tickets.json, SUMMARY.md, RELEASE_NOTES.md, etc.
+├── docs/                         # Documentation & strategy hub
+│   ├── specs/                   # Context generation specs (write before code)
+│   ├── features/                # Product showcase + user manuals
+│   │   └── assets/              # Screenshots, diagrams per feature
+│   ├── bedrock/                 # Insider migration engineering diary
+│   │   └── INDEX.md             # Topic + chronological index
+│   └── pocs/                    # Comparative experiments with qualifying numbers
 ├── notion/
 │   └── pages.md                 # Notion workspace structure & page IDs
 ├── aws-secrets-vault/            # CLI: Secrets Manager across 4 AWS accounts
@@ -79,6 +99,26 @@ agentic-project-mgmt/
 2. `../platform-saas-ai-context/docs/team/TEAM.md`
 3. `../platform-saas-ai-context/docs/roadmap/ROADMAP.md`
 
+### Bedrock Migration & AI Strategy
+1. `../platform-saas-ai-context/docs/architecture/BEDROCK_MIGRATION_STRATEGY.md` — Migration plan from LangGraph to AWS Bedrock
+2. `../platform-saas-ai-context/docs/architecture/BEDROCK_AGENTCORE_STRATEGY.md` — AgentCore adoption strategy
+3. `../platform-saas-ai-context/docs/architecture/PRODUCTION_AI_ARCHITECTURE.md` — Target production AI architecture
+4. `../platform-saas-ai-context/docs/architecture/INGESTION_AGENT_BRIGHTBOT.md` — Ingestion agent design
+
+### Spec-Driven Development
+1. `docs/CLAUDE.md` — Full workflow guide for all 4 doc modules
+2. `docs/specs/SPEC_TEMPLATE.md` — Write specs BEFORE implementation
+3. `docs/features/FEATURE_TEMPLATE.md` — Document shipped capabilities
+4. `docs/bedrock/BEDROCK_TEMPLATE.md` — Migration journal entries
+5. `docs/pocs/POC_TEMPLATE.md` — Experiment write-ups (keep even if No-Go)
+6. Lifecycle: `/write-poc` → `/write-spec` → `/create-jira-ticket` → Implement → `/write-feature-doc`
+
+**Skills for doc generation:**
+- `/write-spec` — Generate spec from conversation/Jira context
+- `/write-feature-doc` — Document shipped features from sprint/PR data
+- `/bedrock-journal` — Record migration decisions, phases, experiments
+- `/write-poc` — Structure and record POC experiments
+
 ---
 
 ## Sprint Data Format
@@ -100,14 +140,25 @@ Each sprint directory `jira/sprint/N/` contains:
 
 ## Scope
 
-This repo is **ephemeral project management** — changes weekly.
+This repo is the **agentic project management hub** — replaces traditional PMs and scrum masters with Claude Code skills, agents, and automation.
 
 | This repo | platform-saas-ai-context |
 |-----------|--------------------------|
 | "What are we doing THIS sprint?" | "What are we building?" |
 | Sprint stats, tickets, release notes | System architecture, team, roadmap |
+| Spec-driven dev, feature specs | Permanent knowledge base |
+| Bedrock migration tracking | Bedrock strategy & architecture docs |
+| Business tool automation (Jira, Slack, Notion) | Technical reference |
 | Changes weekly | Changes quarterly |
-| Jira snapshots, CI automation | Permanent knowledge base |
+
+### What This Repo Manages Agentically
+- **Sprint lifecycle**: Planning → execution → release notes → Slack/Notion publish
+- **Release automation**: PR collection, changelog, marketing notes, validation
+- **Jira operations**: Ticket creation, epic tracking, sprint board management
+- **Documentation generation**: Spec-driven dev, feature specs before code
+- **Infrastructure inventory**: AWS secrets, DynamoDB configs, credential vaults
+- **Cross-repo coordination**: 7 core services + connectors + infra repos
+- **Stakeholder communication**: Slack posts, Notion pages, CEO reports
 
 ---
 
@@ -115,15 +166,51 @@ This repo is **ephemeral project management** — changes weekly.
 
 GitHub org: `brighthive`. All repos live locally at `../` relative to this repo.
 
+### Core Services (tracked by `/sprint-release`)
+
 | Service | GitHub Repo | Local Directory | Description |
 |---------|-------------|-----------------|-------------|
-| BrightBot (AI Agent) | `brighthive/brightbot` | `../brightbot` | LangGraph agents, FastAPI, Slack routing |
+| BrightBot (AI Agent) | `brighthive/brightbot` | `../brightbot` | LangGraph → Bedrock agents, FastAPI, Slack routing |
 | Web App | `brighthive/brighthive-webapp` | `../brighthive-webapp` | React frontend, BrightStudio, Projects UI |
 | Platform Core | `brighthive/brighthive-platform-core` | `../brighthive-platform-core` | GraphQL API, Neo4j, auth, workspace mgmt |
 | Slack Server | `brighthive/brightbot-slack-server` | `../brightbot-slack-server` | Slack OAuth, workspace resolution, ECS infra |
 | Admin Portal | `brighthive/brighthive-admin` | `../brighthive-admin` | Admin dashboard |
 | Data Org CDK | `brighthive/brighthive-data-organization-cdk` | `../brighthive-data-organization-cdk` | Step Functions, Lambda, Glue, data pipelines |
 | Data Workspace CDK | `brighthive/brighthive-data-workspace-cdk` | `../brighthive-data-workspace-cdk` | Per-workspace AWS infrastructure |
+
+### Infrastructure & Supporting Repos
+
+| Service | GitHub Repo | Local Directory | Description |
+|---------|-------------|-----------------|-------------|
+| IBM WXO Integration | `brighthive/brighthive-ibm-wxo` | `../brighthive-ibm-wxo` | IBM watsonx Orchestrate partnership integration |
+| Testing Infra CDK | `brighthive/brighthive_testing_infrastructure_cdk` | `../brighthive_testing_infrastructure_cdk` | Test infrastructure as code |
+| Documentation | `brighthive/brighthive-docs` | `../brighthive-docs` | Public-facing documentation |
+| Scripts | `brighthive/brighthive-scripts` | `../brighthive-scripts` | Shared automation scripts |
+| Jobs Service | `brighthive/brighthive-jobs` | `../brighthive-jobs` | Background job processing |
+| Mock Data | `brighthive/brighthive-mock-data` | `../brighthive-mock-data` | Test/demo data generation |
+| Jupyter Stack | `brighthive/brighthive-jupyter-stack` | `../brighthive-jupyter-stack` | Jupyter notebook infrastructure |
+| OpenMetadata | `brighthive/brighthive-openmetadata-stack` | `../brighthive-openmetadata-stack` | Data catalog / metadata management |
+| Token Usage | `brighthive/brightagent_token_usage` | `../brightagent_token_usage` | LLM token usage tracking |
+| GDrive MCP | `brighthive/gdrive-mcp-server` | `../gdrive-mcp-server` | Google Drive MCP server |
+
+### Data Connectors (Airbyte)
+
+| Connector | GitHub Repo | Description |
+|-----------|-------------|-------------|
+| Canvas | `brighthive/airbyte-source-canvas` | Canvas LMS data source |
+| Credential Engine | `brighthive/airbyte-source-credential-engine` | Credential Engine registry |
+| Indiana Tech Jenzabar | `brighthive/airbyte-source-indiana-tech-jenzabar` | Jenzabar SIS connector |
+| IPEDS | `brighthive/airbyte-source-ipeds` | NCES IPEDS data |
+| Job Post S3 | `brighthive/airbyte-source-job-post-s3` | Job posting data from S3 |
+| NCES Scraper | `brighthive/airbyte-source-nces-scrapper` | NCES web scraper |
+| SFTP Bulk | `brighthive/airbyte-source-sftp-bulk` | Bulk SFTP file ingestion |
+
+### Context & Knowledge (not on GitHub)
+
+| Repo | Local Directory | Description |
+|------|-----------------|-------------|
+| Platform Context | `../platform-saas-ai-context` | Architecture, team, roadmap, Bedrock strategy |
+| Agentic Project Mgmt | `.` (this repo) | Sprint management, release automation, vault CLIs |
 
 **Fetching PRs by date range** (used by `/sprint-release`):
 ```bash
@@ -180,6 +267,44 @@ Sprint pages live under [Sprint Planning](https://www.notion.so/142bbca09ba04d84
 | Q1 CEO Report | `32602437-dde4-8124-8ab2-e17283318cb4` |
 
 Full page map with all sprint pages: `notion/pages.md`
+
+---
+
+## Q2 2026 Planning
+
+Q1 ended March 24, 2026 (Sprint 7 was the last). Q2 starts April 2026.
+
+**Q1 Results**: 65% delivery, 6/10 epics at 80%+ — see `jira/sprint/Q1_ROADMAP_SCORECARD.md`
+
+**Q2 Strategic Priorities**:
+- Bedrock migration: Move BrightBot from LangGraph to AWS Bedrock AgentCore
+- BrightStudio: Custom agent builder (BH-260 epic)
+- IBM WXO partnership integration
+- Spec-driven development workflow (specs before code)
+
+**Q2 Epics** (carry-forward + new):
+- BH-170: SDLC & Code Quality
+- BH-171: AWS DevOps & Infrastructure
+- BH-172: Platform Features & Enhancements
+- BH-173: Bugs & Fixes
+- BH-196: Partnerships (IBM WXO)
+- BH-260: BrightStudio & Custom Agents
+- _New epics TBD for Bedrock migration and spec-driven dev_
+
+---
+
+## Bedrock Migration
+
+BrightBot is migrating from LangGraph to AWS Bedrock. All strategy docs live in `platform-saas-ai-context`:
+
+| Document | Path | Content |
+|----------|------|---------|
+| Migration Strategy | `../platform-saas-ai-context/docs/architecture/BEDROCK_MIGRATION_STRATEGY.md` | Phase plan, timeline, risk assessment |
+| AgentCore Strategy | `../platform-saas-ai-context/docs/architecture/BEDROCK_AGENTCORE_STRATEGY.md` | Agent runtime, tool orchestration |
+| Production Architecture | `../platform-saas-ai-context/docs/architecture/PRODUCTION_AI_ARCHITECTURE.md` | Target state: fully AWS AI-native |
+| Ingestion Agent | `../platform-saas-ai-context/docs/architecture/INGESTION_AGENT_BRIGHTBOT.md` | Data ingestion agent design |
+
+This repo tracks the migration execution — sprint tickets, PRs, release notes. The strategy docs are the source of truth for _what_ to build; this repo tracks _when_ and _how_ it ships.
 
 ---
 

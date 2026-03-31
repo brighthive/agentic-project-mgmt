@@ -28,8 +28,9 @@ SLACK_SERVER_BRANCH  := drchinca/BH-252/slack-oauth
 WEBAPP_BRANCH        := drchinca/slack-integration
 
 # ── Scripts ───────────────────────────────────────────────────
-APPLY_ENV := ./scripts/apply-env-overlay.sh
-OPEN_TERM := ./scripts/open-terminals.sh
+# NOTE: env overlay scripts removed — env config is manual per-repo now
+# APPLY_ENV := ./scripts/apply-env-overlay.sh
+# OPEN_TERM := ./scripts/open-terminals.sh
 
 # ── Start commands per repo ───────────────────────────────────
 CMD_PLATFORM_CORE := cd $(PLATFORM_CORE) && npm run deploy:local

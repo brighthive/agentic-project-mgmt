@@ -1,6 +1,6 @@
 # Agentic Project Management
 
-Sprint planning, Jira automation, AWS infrastructure tooling, and project tracking for BrightHive.
+Agentic replacement for traditional project managers and scrum masters. Claude Code skills, agents, and automation manage BrightHive's sprint lifecycle, release notes, Jira operations, infrastructure inventory, and stakeholder communication.
 
 For permanent architectural knowledge, see: [`platform-saas-ai-context`](../platform-saas-ai-context)
 
@@ -9,54 +9,40 @@ For permanent architectural knowledge, see: [`platform-saas-ai-context`](../plat
 ## Repository Structure
 
 ```
-.github/workflows/       Sprint release automation (CI/CD)
 jira/                    Sprint data, ticket template, velocity tracking
-  sprint/{1..5}/         Per-sprint stats, tickets, summaries, release notes
+  sprint/{1..7}/         Per-sprint stats, tickets, summaries, release notes
+  sprint/SPRINTS.md      Master velocity table
   TICKET_TEMPLATE.md     Canonical Jira ticket format
-  SPRINTS.md             Master velocity table
-scripts/                 Production automation scripts
-  sprint_release.py      Jira+GitHub release notes generator (backs the workflow)
+docs/                    Documentation & strategy
+  specs/                 Feature/migration specs (write before code)
+  features/              Platform feature docs & changelogs
+  bedrock/               Bedrock migration execution tracking
+  pocs/                  Proof-of-concept write-ups
 notion/                  Notion workspace reference (page IDs, structure)
 aws-secrets-vault/       CLI: AWS Secrets Manager inventory across 4 accounts
 dynamo-vault/            CLI: DynamoDB workspace config scanner
-  INFRASTRUCTURE.md      AWS accounts, tables, client registry
 lastpass-vault/          CLI: LastPass credential vault
-archive/                 Completed sprints, old specs (read-only reference)
+archive/                 Completed sprints, old specs (read-only)
 ```
-
-## Quick Navigation
-
-| Goal | Location |
-|------|----------|
-| Sprint velocity | `jira/sprint/SPRINTS.md` |
-| Sprint N data | `jira/sprint/N/stats.json` + `SUMMARY.md` |
-| Release notes | `jira/sprint/N/RELEASE_NOTES.md` |
-| Ticket template | `jira/TICKET_TEMPLATE.md` |
-| AWS infrastructure | `dynamo-vault/INFRASTRUCTURE.md` |
-| System architecture | `../platform-saas-ai-context/docs/architecture/` |
-| Team structure | `../platform-saas-ai-context/docs/team/TEAM.md` |
-| Quarterly roadmap | `../platform-saas-ai-context/docs/roadmap/ROADMAP.md` |
 
 ## Team
 
 | Member | Focus |
 |--------|-------|
-| Hikuri | Platform Lead, DevOps, AI |
-| Ahmed | Backend, Infrastructure |
-| Marwan | Frontend, UX |
-| Harbour | Data, Quality |
+| Hikuri | Tech Lead — Architecture, Slack, context engineering |
+| Ahmed | Sr. Engineer — Infrastructure, DevOps, security |
+| Marwan | Sr. Engineer — BrightAgent, frontend, data quality |
+| Harbour | Engineer — BrightStudio, CDK, UI/UX |
 
-## Sprint Release Workflow
+## Key Integrations
 
-The GitHub Actions workflow (`.github/workflows/sprint-release-v2.yml`) automates end-of-sprint:
-
-1. Queries Jira for Done tickets with linked PRs
-2. Collects git history from touched repos
-3. Generates `RELEASE_NOTES.md` + `MARKETING_RELEASE_NOTES.md`
-4. Updates per-repo `CHANGELOG.md`
-5. Posts summary to Slack
-
-Trigger: `workflow_dispatch` with sprint number and date range.
+| Tool | Purpose |
+|------|---------|
+| Jira (Board 152) | Sprint tracking, tickets, epics |
+| GitHub (brighthive org) | 7 core + 10 infra + 7 Airbyte connectors |
+| Slack (`#releases`) | Sprint release posts via bot token |
+| Notion | Sprint pages, roadmap, CEO reports |
+| AWS (4 accounts) | Secrets Manager, DynamoDB configs |
 
 ---
 
