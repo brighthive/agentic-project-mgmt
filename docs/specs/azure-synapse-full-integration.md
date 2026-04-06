@@ -177,14 +177,14 @@ Platform-provisioned Synapse workspaces, Azure AD/Entra ID integration, CETAS-ba
 
 | Ticket | Summary | Points | Epic |
 |--------|---------|--------|------|
-| — | Move BYO Synapse admin credentials from destinationUrl to Secrets Manager | 3 | BH-172 |
-| — | Add managed Synapse validation in validateAndReturnWarehouseManagedServiceConfigs | 2 | BH-172 |
-| — | Webapp: AddWarehouse tile and AddWarehouseConfig form for Azure Synapse | 3 | BH-172 |
-| — | Webapp: MethodForm Synapse entries in Download/Connect dropdowns with structured JSON form | 3 | BH-172 |
-| — | Webapp: CreateDestination forward destinationUrl for Synapse + schema.graphql codegen stability | 2 | BH-172 |
-| — | BrightBot: T-SQL dialect support in warehouse.py query tools | 5 | BH-172 |
-| — | OpenMetadata: Register Synapse/MSSQL as database service type | 2 | BH-172 |
-| — | E2E test: BYOW Synapse warehouse creation → Connect destination → query | 3 | BH-172 |
+| BH-304 | Move BYO Synapse admin credentials from destinationUrl to Secrets Manager | 3 | BH-172 |
+| BH-305 | Add managed Synapse validation in validateAndReturnWarehouseManagedServiceConfigs | 2 | BH-172 |
+| BH-306 | Webapp: AddWarehouse tile and AddWarehouseConfig form for Azure Synapse | 3 | BH-172 |
+| BH-307 | Webapp: MethodForm Synapse entries in Download/Connect dropdowns with structured JSON form | 3 | BH-172 |
+| BH-308 | Webapp: CreateDestination forward destinationUrl for Synapse + schema.graphql codegen stability | 2 | BH-172 |
+| BH-309 | BrightBot: T-SQL dialect support in warehouse.py query tools | 5 | BH-172 |
+| BH-310 | OpenMetadata: Register Synapse/MSSQL as database service type | 2 | BH-172 |
+| BH-311 | E2E test: BYOW Synapse warehouse creation → Connect destination → query | 3 | BH-172 |
 
 **Phase 1 Total: 23 points**
 
@@ -192,13 +192,13 @@ Platform-provisioned Synapse workspaces, Azure AD/Entra ID integration, CETAS-ba
 
 | Ticket | Summary | Points | Epic |
 |--------|---------|--------|------|
-| — | Organization CDK: Synapse ingestion Step Functions state machine (mirror snowflake_ingestion.py) | 8 | BH-172 |
-| — | Organization CDK: SQL auth Lambda for Synapse credential generation | 3 | BH-172 |
-| — | Organization CDK: Glue catalog → Synapse table sync pipeline | 5 | BH-172 |
-| — | Verify/extend Datapiary create_warehouse API for AZURE_SYNAPSE provider | 3 | BH-172 |
-| — | Document AWS → Azure Synapse network connectivity requirements | 2 | BH-171 |
-| — | Platform Core: Synapse ingestion event handling in DataIngestionStack parallel map | 3 | BH-172 |
-| — | E2E test: Airbyte → S3 → Glue → Synapse ingestion pipeline | 5 | BH-172 |
+| BH-312 | Organization CDK: Synapse ingestion Step Functions state machine (mirror snowflake_ingestion.py) | 8 | BH-172 |
+| BH-313 | Organization CDK: SQL auth Lambda for Synapse credential generation | 3 | BH-172 |
+| BH-314 | Organization CDK: Glue catalog → Synapse table sync pipeline | 5 | BH-172 |
+| BH-315 | Verify/extend Datapiary create_warehouse API for AZURE_SYNAPSE provider | 3 | BH-172 |
+| BH-316 | Document AWS → Azure Synapse network connectivity requirements | 2 | BH-171 |
+| BH-317 | Platform Core: Synapse ingestion event handling in DataIngestionStack parallel map | 3 | BH-172 |
+| BH-318 | E2E test: Airbyte → S3 → Glue → Synapse ingestion pipeline | 5 | BH-172 |
 
 **Phase 2 Total: 29 points**
 
