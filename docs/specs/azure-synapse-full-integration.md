@@ -140,7 +140,7 @@ Platform-provisioned Synapse workspaces, Azure AD/Entra ID integration, CETAS-ba
 | BrightBot | `brightbot` | T-SQL query tools in warehouse.py, dialect detection |
 | Data Org CDK | `brighthive-data-organization-cdk` | Synapse ingestion Step Functions, SQL auth Lambda, Glue→Synapse pipeline |
 | Data Workspace CDK | `brighthive-data-workspace-cdk` | (Phase 3) Synapse query API Lambdas, credential creation |
-| Datapiary | (server-side, external) | Verify AZURE_SYNAPSE provider support in warehouse service API |
+| ~~Datapiary~~ | ~~(deprecated)~~ | ~~No longer used — skip all Datapiary integration~~ |
 | OpenMetadata | `brighthive-openmetadata-stack` | Register MSSQL/Synapse database service type |
 
 ## Acceptance Criteria
@@ -166,7 +166,7 @@ Platform-provisioned Synapse workspaces, Azure AD/Entra ID integration, CETAS-ba
 |------------|------|--------|
 | PR #706 (platform-core enum/types/handler) | Blocking Phase 1 | In Review |
 | mssql npm package | Non-blocking | Installed |
-| Datapiary AZURE_SYNAPSE support | Blocking Phase 2 | Not verified |
+| ~~Datapiary AZURE_SYNAPSE support~~ | ~~Removed~~ | ~~Datapiary deprecated~~ |
 | Customer Azure Synapse instance (for testing) | Blocking Phase 1 QA | Need test instance |
 | AWS → Azure network path | Blocking Phase 2 | Not started |
 | OpenMetadata MSSQL service type | Non-blocking Phase 1 | Not started |
@@ -195,14 +195,14 @@ Platform-provisioned Synapse workspaces, Azure AD/Entra ID integration, CETAS-ba
 | BH-312 | Organization CDK: Synapse ingestion Step Functions state machine (mirror snowflake_ingestion.py) | 8 | BH-172 |
 | BH-313 | Organization CDK: SQL auth Lambda for Synapse credential generation | 3 | BH-172 |
 | BH-314 | Organization CDK: Glue catalog → Synapse table sync pipeline | 5 | BH-172 |
-| BH-315 | Verify/extend Datapiary create_warehouse API for AZURE_SYNAPSE provider | 3 | BH-172 |
+| ~~BH-315~~ | ~~Verify/extend Datapiary create_warehouse API for AZURE_SYNAPSE provider~~ | ~~3~~ | ~~REMOVED — Datapiary deprecated~~ |
 | BH-316 | Document AWS → Azure Synapse network connectivity requirements | 2 | BH-171 |
 | BH-317 | Platform Core: Synapse ingestion event handling in DataIngestionStack parallel map | 3 | BH-172 |
 | BH-318 | E2E test: Airbyte → S3 → Glue → Synapse ingestion pipeline | 5 | BH-172 |
 
-**Phase 2 Total: 29 points**
+**Phase 2 Total: 26 points** (BH-315 removed — Datapiary deprecated)
 
-**Grand Total: 52 points (~5-7 sprints)**
+**Grand Total: 49 points (~5-6 sprints)**
 
 ## Related
 
