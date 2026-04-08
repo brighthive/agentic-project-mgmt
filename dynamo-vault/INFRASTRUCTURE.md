@@ -1,7 +1,7 @@
 # BrightHive AWS Infrastructure & Workspace Registry
 
 **Source**: DynamoDB tables scanned across 4 AWS accounts via `dynamo-vault/` CLI.
-**Last Scanned**: 2026-02-19
+**Last Scanned**: 2026-04-08
 **Linked To**: [`platform-saas-ai-context/docs/infrastructure/AWS_ACCOUNTS.md`](../platform-saas-ai-context/docs/infrastructure/AWS_ACCOUNTS.md)
 
 ---
@@ -12,7 +12,7 @@
 |-------|------------|---------|---------|-----------------|------------|
 | **DEV** | `531731217746` | `brighthive-development` | Development / internal testing | 1 | 0 |
 | **STAGE** | `873769991712` | `brighthive-staging` | Staging environment | 8 | 131 (52 provisioned) |
-| **PROD** | `104403016368` | `brighthive-production` | Production — all live clients | 9 | 474 (169 provisioned) |
+| **PROD** | `104403016368` | `brighthive-production` | Production — all live clients | 9 | 502 (169+ provisioned) |
 | **MAIN** | `396527728813` | `brighthive-main` | Platform core / orchestration | 17 | 175 (167 provisioned) |
 
 > "Provisioned" = has a dedicated AWS account number assigned via CDK.

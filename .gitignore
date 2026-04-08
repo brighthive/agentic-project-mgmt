@@ -17,8 +17,13 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
+
+# Unignore our vault lib/ directories (overrides Python default lib/ ignore)
+!lib/
+!lib/**
+!*/lib/
+!*/lib/**
 parts/
 sdist/
 var/

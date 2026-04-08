@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""
-AWS Credentials Refresher
+"""AWS Credentials Refresher — assumes cdk-admin role into BrightHive accounts.
 
-Assumes roles into all 4 BrightHive accounts and updates ~/.aws/credentials
-with fresh temporary credentials.
+NOTE: With SSO now configured for all accounts, this script is only needed
+for CDK admin credential refresh (writing temp creds to ~/.aws/credentials).
+For normal access, use `aws sso login --profile brighthive-main` instead.
 
 Usage:
     ./bin/refresh-credentials.py
-    ./bin/refresh-credentials.py --source-profile my-admin-profile
+    ./bin/refresh-credentials.py --source-profile brighthive-main
     ./bin/refresh-credentials.py --duration 3600
+    ./bin/refresh-credentials.py --accounts DEV STAGE
 """
 
 import sys
@@ -17,7 +18,14 @@ import boto3
 import configparser
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
+
+# Add repo root to path for shared lib import
+_repo_root = Path(__file__).parent.parent.parent
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
+from shared.accounts import PLATFORM_ACCOUNTS, AWS_REGION
 
 # Setup logging
 logging.basicConfig(
@@ -27,28 +35,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# BrightHive account configuration
+# Build account config from shared registry
 ACCOUNTS = {
-    "DEV": {
-        "account_id": "531731217746",
+    acct.name: {
+        "account_id": acct.account_id,
         "role_name": "cdk-admin",
-        "profile": "brighthive-dev",
-    },
-    "STAGE": {
-        "account_id": "873769991712",
-        "role_name": "cdk-admin",
-        "profile": "brighthive-stage",
-    },
-    "PROD": {
-        "account_id": "104403016368",
-        "role_name": "cdk-admin",
-        "profile": "brighthive-prod",
-    },
-    "MAIN": {
-        "account_id": "396527728813",
-        "role_name": "cdk-admin",
-        "profile": "brighthive-main",
-    },
+        "profile": acct.profile,
+    }
+    for acct in PLATFORM_ACCOUNTS
 }
 
 DEFAULT_DURATION = 3600  # 1 hour
@@ -56,18 +50,7 @@ MAX_DURATION = 43200  # 12 hours
 
 
 def assume_role(sts_client, account_id: str, role_name: str, duration: int) -> dict:
-    """
-    Assume role in target account and get temporary credentials.
-
-    Args:
-        sts_client: Boto3 STS client
-        account_id: Target AWS account ID
-        role_name: Role name to assume
-        duration: Session duration in seconds
-
-    Returns:
-        Dictionary with temporary credentials
-    """
+    """Assume role in target account and get temporary credentials."""
     role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
     session_name = f"brighthive-refresh-{datetime.now().strftime('%s')}"
 
@@ -87,25 +70,18 @@ def assume_role(sts_client, account_id: str, role_name: str, duration: int) -> d
         }
 
     except Exception as e:
-        logger.error(f"Failed to assume role in {account_id}: {str(e)}")
+        logger.error(f"Failed to assume role in {account_id}: {e}")
         raise
 
 
 def update_credentials_file(credentials_dict: dict) -> None:
-    """
-    Update ~/.aws/credentials with new temporary credentials.
-
-    Args:
-        credentials_dict: Dictionary mapping profile names to credentials
-    """
+    """Update ~/.aws/credentials with new temporary credentials."""
     creds_file = Path.home() / ".aws" / "credentials"
 
-    # Read existing credentials
     config = configparser.ConfigParser()
     if creds_file.exists():
         config.read(creds_file)
 
-    # Update profiles with new credentials
     for profile, creds in credentials_dict.items():
         if profile not in config:
             config[profile] = {}
@@ -113,25 +89,21 @@ def update_credentials_file(credentials_dict: dict) -> None:
         config[profile]["aws_access_key_id"] = creds["aws_access_key_id"]
         config[profile]["aws_secret_access_key"] = creds["aws_secret_access_key"]
         config[profile]["aws_session_token"] = creds["aws_session_token"]
-        # Note: configparser doesn't write comments, but we'll add the expiration
         config[profile]["expires_at"] = creds["expiration"]
-        config[profile]["region"] = "us-east-1"
+        config[profile]["region"] = AWS_REGION
 
-    # Write back to file
     creds_file.parent.mkdir(parents=True, exist_ok=True)
     with open(creds_file, "w") as f:
         config.write(f)
 
-    # Set restrictive permissions (600 = rw-------)
     creds_file.chmod(0o600)
-
-    logger.info(f"✅ Updated credentials file: {creds_file}")
+    logger.info(f"Updated credentials file: {creds_file}")
 
 
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Refresh AWS credentials for all BrightHive accounts"
+        description="Refresh AWS credentials for BrightHive accounts via cdk-admin role assumption"
     )
     parser.add_argument(
         "--source-profile",
@@ -159,42 +131,39 @@ def main():
 
     args = parser.parse_args()
 
-    # Validate duration
     if args.duration < 900:
         logger.error("Duration must be at least 900 seconds (15 minutes)")
         sys.exit(1)
     if args.duration > MAX_DURATION:
-        logger.warning(
-            f"Duration exceeds max {MAX_DURATION}s, capping to {MAX_DURATION}s"
-        )
+        logger.warning(f"Duration exceeds max {MAX_DURATION}s, capping")
         args.duration = MAX_DURATION
 
-    logger.info("🔄 Refreshing AWS credentials...")
-    logger.info(f"   Source profile: {args.source_profile}")
-    logger.info(f"   Duration: {args.duration}s (~{args.duration//3600}h)")
-    logger.info(f"   Accounts: {', '.join(args.accounts)}")
+    logger.info("Refreshing AWS credentials (cdk-admin role assumption)...")
+    logger.info(f"  Source profile: {args.source_profile}")
+    logger.info(f"  Duration: {args.duration}s (~{args.duration // 3600}h)")
+    logger.info(f"  Accounts: {', '.join(args.accounts)}")
     logger.info("")
 
-    # Create STS client with source profile
     try:
-        session = boto3.Session(profile_name=args.source_profile)
-        sts_client = session.client("sts", region_name="us-east-1")
+        session = boto3.Session(
+            profile_name=args.source_profile, region_name=AWS_REGION
+        )
+        sts_client = session.client("sts", region_name=AWS_REGION)
 
-        # Verify we have valid credentials
         caller_identity = sts_client.get_caller_identity()
-        logger.info(f"✓ Authenticated as: {caller_identity['Arn']}")
+        logger.info(f"Authenticated as: {caller_identity['Arn']}")
         logger.info("")
 
     except Exception as e:
-        logger.error(f"Failed to initialize STS client: {str(e)}")
-        logger.error(f"Make sure profile '{args.source_profile}' is configured")
+        logger.error(f"Failed to initialize STS client: {e}")
+        logger.error(f"Make sure profile '{args.source_profile}' is authenticated")
+        logger.error("Run: aws sso login --profile brighthive-main")
         sys.exit(1)
 
-    # Assume roles into each account
     new_credentials = {}
     for account_name in args.accounts:
         account = ACCOUNTS[account_name]
-        logger.info(f"🔐 Assuming role into {account_name}...")
+        logger.info(f"Assuming cdk-admin in {account_name} ({account['account_id']})...")
 
         try:
             creds = assume_role(
@@ -204,36 +173,27 @@ def main():
                 duration=args.duration,
             )
 
-            expiration = creds["expiration"]
-            logger.info(f"   ✓ Got temporary credentials (expires: {expiration})")
-
+            logger.info(f"  Got temp creds (expires: {creds['expiration']})")
             new_credentials[account["profile"]] = creds
 
         except Exception as e:
-            logger.error(f"   ✗ Failed: {str(e)}")
+            logger.error(f"  Failed: {e}")
             sys.exit(1)
 
     logger.info("")
 
-    # Update credentials file
     if args.dry_run:
-        logger.info("📋 DRY RUN - Would update the following profiles:")
-        for profile in new_credentials.keys():
-            logger.info(f"   - {profile}")
+        logger.info("DRY RUN — would update profiles:")
+        for profile in new_credentials:
+            logger.info(f"  - {profile}")
     else:
-        logger.info("📝 Updating ~/.aws/credentials...")
+        logger.info("Updating ~/.aws/credentials...")
         try:
             update_credentials_file(new_credentials)
             logger.info("")
-            logger.info("✅ All credentials refreshed successfully!")
-            logger.info("")
-            logger.info("Next steps:")
-            logger.info("  cd /Users/bado/iccha/brighthive/agentic-project-mgmt/aws-secrets-vault")
-            logger.info("  source .venv/bin/activate")
-            logger.info("  ./cli/secrets list")
-
+            logger.info("All credentials refreshed.")
         except Exception as e:
-            logger.error(f"Failed to update credentials: {str(e)}")
+            logger.error(f"Failed to update credentials: {e}")
             sys.exit(1)
 
 

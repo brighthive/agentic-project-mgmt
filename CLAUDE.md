@@ -308,6 +308,15 @@ This repo tracks the migration execution — sprint tickets, PRs, release notes.
 
 ---
 
+## Git Workflow & Merge Strategy
+
+- ALWAYS create a PR for feature branches — never push commits directly to main
+- Use **squash merge** when merging PRs into main
+- PR title becomes the single commit on the target branch — keep it clean and conventional (`type(scope): description`)
+- This keeps main history readable: one commit per feature/fix
+
+---
+
 ## Key References
 
 - **Jira Board**: https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152
