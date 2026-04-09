@@ -23,7 +23,7 @@ notion_page: ""
 
 ## What It Does
 
-BrightAgent's ingestion assistant lets users connect external data sources to their BrightHive workspace through a guided conversational flow. Instead of navigating Airbyte configuration screens, users tell BrightAgent where their data lives (SaaS app, API, database, SFTP), and the agent handles the entire pipeline: finding the right connector, collecting credentials, creating the source, wiring it to the warehouse, and triggering the first sync. If no connector exists, it can scaffold a custom Airbyte connector from scratch using the CDK.
+Connecting a new data source used to mean navigating config screens, looking up connector docs, and copy-pasting credentials into the right fields. Now you just tell BrightAgent where your data lives — "connect our Salesforce" or "pull from our PostgreSQL database" — and it does the rest. It finds the right connector, asks for your credentials in plain language, hooks everything up, runs the first sync, and confirms your data arrived in the warehouse. The whole process is a conversation, not a setup wizard. If a connector doesn't exist yet for your source, BrightAgent builds one on the spot.
 
 ## How It Works
 
