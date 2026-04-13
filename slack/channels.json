@@ -1,0 +1,49 @@
+{
+  "engineering_channels": {
+    "C0782EYPC2K": {
+      "name": "engineering",
+      "purpose": "Main engineering coordination — priorities, blockers, demos, cross-team updates",
+      "members": 8,
+      "priority": "high"
+    },
+    "C08B5B7CH6C": {
+      "name": "backend-work",
+      "purpose": "Backend-specific technical discussions — platform-core, APIs, database",
+      "members": 4,
+      "priority": "medium"
+    },
+    "C0313H51C57": {
+      "name": "dev-team",
+      "purpose": "Legacy channel — mostly deprecated, use #engineering instead",
+      "members": 8,
+      "priority": "low"
+    },
+    "C0AJXPYGJJ0": {
+      "name": "releases",
+      "purpose": "Sprint release posts, deployment announcements",
+      "members": 1,
+      "priority": "high"
+    },
+    "C4LCBMDBL": {
+      "name": "general",
+      "purpose": "Company-wide announcements and updates",
+      "members": 13,
+      "priority": "medium"
+    }
+  },
+  "bot": {
+    "name": "bright_agent",
+    "user_id": "U0AC691GDC1",
+    "bot_id": "B0ABLVC6F27",
+    "team": "brighthivedata",
+    "team_id": "T4KMU8VKK"
+  },
+  "team_members": {
+    "U09NA98TYEM": "Hikuri (Kuri)",
+    "U07RDS6P4DU": "Marwan",
+    "U07S17DJNHF": "Ahmed",
+    "U0A959ZCWKZ": "Harbour",
+    "U4KLYJUJU": "Matt Gee",
+    "U01NK334QEB": "Suzanne"
+  }
+}
