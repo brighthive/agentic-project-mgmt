@@ -29,6 +29,13 @@
       "purpose": "Company-wide announcements and updates",
       "members": 13,
       "priority": "medium"
+    },
+    "C09PDEVR3UZ": {
+      "name": "ai_engineering",
+      "purpose": "Private — AI/agent team coordination, live incident response, feature shipping sync",
+      "members": 4,
+      "priority": "high",
+      "private": true
     }
   },
   "bot": {
