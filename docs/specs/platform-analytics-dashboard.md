@@ -2,7 +2,7 @@
 title: "Platform Analytics, Monitoring & Reporting Dashboard"
 epic: "BH-359"
 author: "drchinca"
-status: "Draft"
+status: "In Progress"
 created: "2026-04-13"
 generates: "tickets"
 tags: [analytics, monitoring, dashboard, enterprise, kpi, observability]
@@ -253,8 +253,75 @@ Generated from epic BH-359 — 14 tickets already created:
 **Phase 2 (Deep Analytics)**: BH-368 through BH-372 = 26 pts
 **Phase 3 (Reporting)**: BH-373 = 5 pts
 
+## Implementation Status (2026-04-14)
+
+### What Shipped
+
+| PR | Repo | What | Status |
+|----|------|------|--------|
+| webapp#1055 | brighthive-webapp | Analytics dashboard + Data Catalog improvements | **Merged → develop** |
+| core#729 | brighthive-platform-core | Health check field resolvers on DataAsset | **Merged → develop** |
+| brightbot#453 | brighthive/brightbot | .env.example (110+ vars documented) | **Merged → develop** |
+| slack#14 | brightbot-slack-server | Fix bot responding to every channel message | **Merged → staging** |
+
+### Architecture Decisions Made
+
+1. **Mock data first** — Dashboard uses `mockData.ts` matching the `types.ts` schema contract. When backend is built (BH-363), swap mock imports for Apollo `useQuery`. No rework needed.
+2. **Health checks as field resolvers** — `metadataAvailable`, `embeddingAvailable`, `qualityReportAvailable` are resolved per-asset on the `DataAsset` GraphQL type (not a separate query). Each check is independent and error-tolerant (returns `false` on any failure).
+3. **No new databases** — Everything derives from existing Neo4j graph. Only 2 new node types planned: `MetricsSnapshotNode` (trends, Phase 2) and `AlertNode` (alerts, Phase 2).
+4. **Codegen limitation** — The webapp uses `graphql-codegen` to generate typed hooks from `.graphql` files. The codegen is currently broken for local dev due to pre-existing query validation errors in `getTransformation.graphql` and `workflow.graphql`. The health check fields were manually patched into `generated.ts`. When codegen is fixed, re-run `npm run codegen` against the updated schema.
+5. **assetType heuristic bug** — `determineDataAssetType` in `data-asset.ts` ignores the `assetType` property from Neo4j and derives type from `redshiftTableName` patterns. Fix is in core#729 but only works when `assetType` is in the OGM SelectionSet (which it isn't — `assetType` is not a field in the OGM schema, it's derived). Full fix requires either adding `assetType` to the OGM or removing the heuristic entirely.
+
+### What's Next (Not Started)
+
+| Ticket | What | Blocks |
+|--------|------|--------|
+| **BH-363** | `workspaceAnalytics` Cypher aggregation query — replaces mock data with real counts | Dashboard shows real data |
+| **BH-364** | Redis cache layer for analytics queries (2-5 min TTLs) | Scale to 1000s of assets |
+| **BH-370** | MetricsSnapshotNode Lambda — daily snapshots for trend charts | Growth chart shows real history |
+| **BH-371** | AlertNode system — Lambda generates alerts from anomalies | Alerts section goes live |
+| **BH-374** | Health check improvements — currently checks Neo4j only, needs S3 + OpenMetadata verification | Health dots accurate on staging |
+
+### Key Files
+
+| File | What |
+|------|------|
+| `brighthive-webapp/src/Analytics/types.ts` | **Schema contract** — all metric interfaces |
+| `brighthive-webapp/src/Analytics/mockData.ts` | Mock data (replace with API) |
+| `brighthive-webapp/src/Analytics/AnalyticsDashboardPage.tsx` | Main dashboard page |
+| `brighthive-webapp/src/Analytics/README.md` | DX documentation |
+| `brighthive-platform-core/src/graphql/models/data-asset-health.ts` | Health check field resolvers |
+| `brighthive-platform-core/src/graphql/schema/typedefs.ts` | GraphQL schema with health fields |
+| `brighthive-platform-core/setup/scripts/cypher/seed-analytics-data.cypher` | Local dev seed (45 assets, 107 capabilities) |
+| `agentic-project-mgmt/docs/specs/platform-analytics-dashboard.md` | This spec |
+
+### Local Dev Setup
+
+```bash
+# 1. Start Neo4j + Redis
+cd brighthive-platform-core
+docker-compose -f docker-compose.local.yml up -d
+
+# 2. Seed data
+bash setup/scripts/seed-neo4j-comprehensive.sh
+cat setup/scripts/cypher/seed-analytics-data.cypher | docker exec -i brighthive-neo4j cypher-shell -u neo4j -p brighthive-local-dev
+
+# 3. Start Platform Core
+npm run deploy:local
+
+# 4. Start Webapp (in another terminal)
+cd brighthive-webapp
+cp .env.example .env.local  # Then fill in VITE_TOKEN_USER from generate-local-token.sh
+npx vite --port 3001
+
+# 5. Open http://localhost:3001/workspace/60c2e688-1d0b-5397-92fa-193a959415a6/analytics
+```
+
 ## Related
 
-- **Feature doc**: Create via `/write-feature-doc` after Phase 1 ships
-- **Token usage model**: `brighthive-platform-core/src/graphql/models/usage-service.ts` — only existing "metrics" feature, pattern reference for DynamoDB queries
-- **Quality agent**: `brightbot/brightbot/agents/governance_agent/sub_agents/quality_check_agent.py` — produces the AgentCapabilityExecution data that feeds quality KPIs
+- **DX README**: `brighthive-webapp/src/Analytics/README.md` — metric sources, file structure, how to add new metrics
+- **Feature doc**: Create via `/write-feature-doc` after Phase 2 ships
+- **Token usage model**: `brighthive-platform-core/src/graphql/models/usage-service.ts` — only existing "metrics" feature
+- **Quality agent**: `brightbot/brightbot/agents/governance_agent/sub_agents/quality_check_agent.py` — produces AgentCapabilityExecution data
+- **Ingestion notifications**: `brighthive-data-organization-cdk` branch `BD-87-statemachine-to-slack-notification` — EventBridge events for ingestion pipeline tracking
+- **Env var audit**: All repos now have `.env.example` documenting new vars added in last 10 days
