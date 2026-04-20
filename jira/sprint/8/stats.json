@@ -1,0 +1,126 @@
+{
+  "sprint": 8,
+  "name": "Sprint 8 \ud83e\udeb6",
+  "dates": {
+    "start": "2026-04-14",
+    "end": "2026-04-28",
+    "duration_days": 14
+  },
+  "mid_sprint_checkpoint": true,
+  "checkpoint_date": "2026-04-20",
+  "note": "Mid-sprint release checkpoint. Tickets resolved as early as Apr 8 (pre-sprint work pulled into sprint). 9 Needs Refinement tickets are dbt provisioning phases planned for second half.",
+  "tickets": {
+    "total": 55,
+    "completed": 21,
+    "in_progress": 4,
+    "code_review": 2,
+    "testing": 4,
+    "staging_qc": 3,
+    "ready_for_staging": 7,
+    "to_do": 8,
+    "needs_refinement": 9,
+    "canceled": 10
+  },
+  "points": {
+    "total": 41,
+    "completed": 5,
+    "remaining": 36,
+    "unpointed_done": 19,
+    "note": "19 of 21 Done tickets are unpointed — velocity tracking unreliable this sprint"
+  },
+  "completion": {
+    "tickets_pct": 38.2,
+    "points_pct": 12.2,
+    "note": "Mid-sprint checkpoint — 38% ticket completion expected to rise. Points misleading due to 19 unpointed Done tickets."
+  },
+  "goals": [
+    "Governance context tools",
+    "Azure Synapse integration",
+    "dbt agent GitHub commits",
+    "Ticket hygiene"
+  ],
+  "team": ["Ahmed", "Harbour", "Hikuri", "Marwan"],
+  "carry_over": {
+    "from_previous": 2,
+    "to_next": null,
+    "tickets": ["BH-293", "BH-210"],
+    "note": "Mid-sprint — carryover TBD at close"
+  },
+  "prs": {
+    "total": 103,
+    "feature_prs": 82,
+    "build_promotion_prs": 21,
+    "matched_to_tickets": 28,
+    "unmatched": 54,
+    "repos": {
+      "brighthive-platform-core": {
+        "total": 30,
+        "feature": 22,
+        "build": 8
+      },
+      "brighthive-webapp": {
+        "total": 36,
+        "feature": 32,
+        "build": 4
+      },
+      "brightbot": {
+        "total": 19,
+        "feature": 15,
+        "build": 4
+      },
+      "brighthive-admin": {
+        "total": 1,
+        "feature": 0,
+        "build": 1
+      },
+      "brightbot-slack-server": {
+        "total": 2,
+        "feature": 2,
+        "build": 0
+      },
+      "brighthive-data-organization-cdk": {
+        "total": 9,
+        "feature": 7,
+        "build": 2
+      },
+      "brighthive-data-workspace-cdk": {
+        "total": 6,
+        "feature": 4,
+        "build": 2
+      }
+    }
+  },
+  "wip_analysis": {
+    "avg_days": 2.5,
+    "note": "Most Done tickets resolved Apr 8-9 in a concentrated burst — low WIP due to batch resolution",
+    "by_ticket": [
+      {"key": "BH-357", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-356", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-355", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-346", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-345", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-344", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-342", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-340", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-339", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-330", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-328", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-327", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-326", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-325", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-322", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-321", "days": 2.0, "status": "Done", "flag": null},
+      {"key": "BH-319", "days": 1.0, "status": "Done", "flag": "quick-win"},
+      {"key": "BH-282", "days": 5.0, "status": "Done", "flag": null},
+      {"key": "BH-278", "days": 7.0, "status": "Done", "flag": "full-sprint"},
+      {"key": "BH-253", "days": 6.0, "status": "Done", "flag": null},
+      {"key": "BH-240", "days": 14.0, "status": "Done", "flag": "multi-sprint"}
+    ],
+    "distribution": {
+      "under_1_day": 12,
+      "1_to_3_days": 5,
+      "4_to_7_days": 3,
+      "over_7_days": 1
+    }
+  }
+}

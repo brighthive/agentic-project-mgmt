@@ -1,0 +1,682 @@
+[
+  {
+    "key": "BH-357",
+    "summary": "Inject governance policies into workspace context",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-356",
+    "summary": "Add isActive field to CustomPolicyNode",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-355",
+    "summary": "Credential form HITL interrupt for ingestion",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-346",
+    "summary": "dbt model detail view with SQL, PR link, lineage, and origin badge",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-345",
+    "summary": "Extend TransformationNode with model metadata + per-model run tracking",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-344",
+    "summary": "Extend TransformationNode with model metadata",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-342",
+    "summary": "dbt agent auto-read TransformationService config",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-340",
+    "summary": "Replace Job ID text field with dbt Cloud job dropdown",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-08"
+  },
+  {
+    "key": "BH-339",
+    "summary": "Device Flow OAuth + disconnect for GitHub connection",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-330",
+    "summary": "Complete dbt workflow — jobs, data products, GitHub repos, audit fixes",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-08"
+  },
+  {
+    "key": "BH-328",
+    "summary": "dbt agent flow improvements — auto-read config, reduce interrupts",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-327",
+    "summary": "Webapp dbt settings — remove invoke checkbox + GitHub repo management",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-08"
+  },
+  {
+    "key": "BH-326",
+    "summary": "Webapp dbt settings and GitHub repo management",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-08"
+  },
+  {
+    "key": "BH-325",
+    "summary": "dbt agent flow improvements",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-322",
+    "summary": "Azure Synapse T-SQL dialect support in warehouse",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-321",
+    "summary": "Warehouse adapter pattern for webhook processing",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-319",
+    "summary": "Replace Job ID text field with dbt Cloud job dropdown",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-08"
+  },
+  {
+    "key": "BH-282",
+    "summary": "Claude to Bedrock migration — model routing",
+    "status": "Done",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-171",
+    "resolved": "2026-04-09"
+  },
+  {
+    "key": "BH-278",
+    "summary": "EDL shutdown — decommission legacy data pipeline",
+    "status": "Done",
+    "assignee": "Ahmed",
+    "points": 2,
+    "type": "Task",
+    "epic": "BH-171",
+    "resolved": "2026-04-10"
+  },
+  {
+    "key": "BH-253",
+    "summary": "OMD webhook enhanced event tracking",
+    "status": "Done",
+    "assignee": "Ahmed",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172",
+    "resolved": "2026-04-14"
+  },
+  {
+    "key": "BH-240",
+    "summary": "GraphQL capabilities for deep_agent supervisor",
+    "status": "Done",
+    "assignee": "Marwan",
+    "points": 3,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": "2026-04-08"
+  },
+  {
+    "key": "BH-275",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 5,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-274",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 5,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-272",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 5,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-257",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 5,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-256",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 5,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-245",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 5,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-239",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 3,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-217",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": null,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-167",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 3,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-131",
+    "summary": "Canceled ticket",
+    "status": "Canceled",
+    "assignee": null,
+    "points": 3,
+    "type": "Story",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-347",
+    "summary": "Governance context tools — schemas, glossary, policies",
+    "status": "Code Review",
+    "assignee": "Hikuri",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-172",
+    "resolved": null
+  },
+  {
+    "key": "BH-286",
+    "summary": "Bedrock Knowledge Base retrieval tool",
+    "status": "Code Review",
+    "assignee": "Marwan",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-171",
+    "resolved": null
+  },
+  {
+    "key": "BH-293",
+    "summary": "Update unstructured data stack for workspace AWS accounts",
+    "status": "In Progress",
+    "assignee": "Ahmed",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-171",
+    "resolved": null
+  },
+  {
+    "key": "BH-285",
+    "summary": "Azure Synapse ingestion pipeline",
+    "status": "In Progress",
+    "assignee": "Ahmed",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172",
+    "resolved": null
+  },
+  {
+    "key": "BH-251",
+    "summary": "Support Azure Synapse querying in quality check sub-agent",
+    "status": "In Progress",
+    "assignee": "Ahmed",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172",
+    "resolved": null
+  },
+  {
+    "key": "BH-210",
+    "summary": "[FE] Project BrightAgent integration",
+    "status": "In Progress",
+    "assignee": "Marwan",
+    "points": 5,
+    "type": "Task",
+    "epic": "BH-172",
+    "resolved": null
+  },
+  {
+    "key": "BH-303",
+    "summary": "Testing ticket (Dev)",
+    "status": "Testing (Dev)",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-252",
+    "summary": "Testing ticket (Dev)",
+    "status": "Testing (Dev)",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-249",
+    "summary": "Testing ticket (Dev)",
+    "status": "Testing (Dev)",
+    "assignee": null,
+    "points": 2,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-201",
+    "summary": "Testing ticket (Dev)",
+    "status": "Testing (Dev)",
+    "assignee": null,
+    "points": 5,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-299",
+    "summary": "Staging QC ticket",
+    "status": "Staging QC",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-298",
+    "summary": "Staging QC ticket",
+    "status": "Staging QC",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-297",
+    "summary": "Staging QC ticket",
+    "status": "Staging QC",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-288",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-271",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": 5,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-259",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": 3,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-258",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-254",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": 3,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-137",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": 5,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-136",
+    "summary": "Ready for Staging ticket",
+    "status": "Ready for Staging",
+    "assignee": null,
+    "points": 3,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-352",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-341",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-324",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-323",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-320",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-315",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": 3,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-302",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-233",
+    "summary": "To Do ticket",
+    "status": "To Do",
+    "assignee": null,
+    "points": 2,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-343",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-338",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-337",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-336",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-335",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-334",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-333",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-331",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  },
+  {
+    "key": "BH-329",
+    "summary": "dbt provisioning phase (Needs Refinement)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null,
+    "resolved": null
+  }
+]

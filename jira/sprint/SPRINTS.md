@@ -1,6 +1,6 @@
 # Sprint Summary - Q1 2026
 
-**Current**: Between sprints — Q2 starting | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 8 🫐 (Active) | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 ---
 
@@ -26,6 +26,16 @@
 [Full Scorecard →](./Q1_ROADMAP_SCORECARD.md) | [Q1 CEO Report (Notion)](https://www.notion.so/32602437dde481248ab2e17283318cb4)
 
 ---
+
+## Sprint 8 🫐 — Mid-Sprint Checkpoint (Apr 14–28, 2026)
+- **Tickets**: 55 active (10 canceled, 65 total) | **Points**: 82 (partial — 19/21 done unpointed)
+- **Completion**: 38.2% tickets at mid-sprint (21/55 done, 16 in pipeline)
+- **Focus**: dbt Agent Pipeline, Governance Tools, Azure Synapse BYOW, Platform Analytics, Webapp UX (Context/Analytics/Personas), Bedrock Migration
+- **Team**: Hikuri, Ahmed, Marwan, Harbour
+- **PRs Merged**: 103 (82 feature + 21 build, 7 repos)
+- **Highlights**: dbt end-to-end delivery, Azure Synapse full-stack, React 17→18, 3 new webapp sections
+- **Note**: First official Q2 sprint — active in Jira. Mid-sprint release on Apr 20.
+- [Details →](./8/)
 
 ## Sprint 7 — Unofficial (Mar 4–24, 2026)
 - **Tickets**: 14 | **Points**: 43
