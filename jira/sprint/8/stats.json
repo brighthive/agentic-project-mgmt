@@ -39,7 +39,7 @@
     "dbt agent GitHub commits",
     "Ticket hygiene"
   ],
-  "team": ["Ahmed", "Harbour", "Hikuri", "Marwan"],
+  "team": ["Ahmed", "Harbour", "Kuri", "Marwan"],
   "carry_over": {
     "from_previous": 2,
     "to_next": null,

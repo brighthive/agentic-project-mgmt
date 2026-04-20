@@ -62,7 +62,7 @@
 
 **Matched tickets**: BH-319, BH-325, BH-326, BH-327, BH-328, BH-330, BH-339, BH-344, BH-345, BH-346, BH-347, BH-351, BH-355, BH-356, BH-357, BH-358, BH-359, BH-360, BH-374, BH-375, BH-376
 
-**Root cause of unmatched**: Hikuri's branches consistently use `drchinca/BH-XXX/description` pattern. Ahmed and Harbour use descriptive branch names without ticket references (`feat/synapse-stack-optional`, `scheduler-cron`, `preview-asset`).
+**Root cause of unmatched**: Kuri's branches consistently use `drchinca/BH-XXX/description` pattern. Ahmed and Harbour use descriptive branch names without ticket references (`feat/synapse-stack-optional`, `scheduler-cron`, `preview-asset`).
 
 ---
 
@@ -79,7 +79,7 @@
 +-----------------------+-------------------------+
 | Average WIP: 2.5 days                           |
 | Most tickets resolved in concentrated Apr 8-9   |
-| batch -- Hikuri's dbt cluster all merged same    |
+| batch -- Kuri's dbt cluster all merged same    |
 | day as a coordinated cross-repo release.         |
 +-------------------------------------------------+
 ```
@@ -92,13 +92,13 @@ The Apr 8-9 batch release pattern is healthy -- cross-repo features (dbt, Synaps
 
 | Member | Done | In Progress | Points | Focus Areas |
 |--------|------|-------------|--------|-------------|
-| **Hikuri** | 18 | 1 (BH-347 CR) | -- | dbt agent pipeline, governance tools, Synapse BYOW, analytics dashboard, custom personas, Slack fixes |
+| **Kuri** | 18 | 1 (BH-347 CR) | -- | dbt agent pipeline, governance tools, Synapse BYOW, analytics dashboard, custom personas, Slack fixes |
 | **Ahmed** | 2 | 3 | 2 | EDL shutdown, OMD webhook tracking, Synapse ingestion, unstructured data stack |
 | **Marwan** | 1 | 1 | 3 | GraphQL capabilities for deep_agent, GitHub auth fix, React 17->18 upgrade |
 | **Harbour** | 0 | 0 | -- | Scheduler, data preview, catalog health checks (PRs merged, no tickets linked) |
 
 **Notes**:
-- Hikuri drove 86% of completed tickets (18/21) -- dominated dbt, governance, Synapse, and analytics work
+- Kuri drove 86% of completed tickets (18/21) -- dominated dbt, governance, Synapse, and analytics work
 - Ahmed has 3 active In Progress tickets on Synapse/unstructured data -- steady infrastructure work
 - Harbour has 7+ PRs merged but 0 tickets linked -- all work under generic branch names
 - Marwan shipped React 17-to-18 upgrade (massive PR: +43K/-87K lines) with no Jira ticket
@@ -126,25 +126,25 @@ The Apr 8-9 batch release pattern is healthy -- cross-repo features (dbt, Synaps
 
 | PR | Repo | Title | Author | Lines |
 |----|------|-------|--------|-------|
-| #1034 | webapp | dbt settings + GitHub repo management | Hikuri | +29.8K/-6.8K |
+| #1034 | webapp | dbt settings + GitHub repo management | Kuri | +29.8K/-6.8K |
 | #1028 | webapp | React 17 to 18 upgrade | Marwan | +43.2K/-86.8K |
-| #713 | platform-core | TransformationNode model metadata + run tracking | Hikuri | +4.1K/-2 |
-| #712 | platform-core | GitHub Device Flow OAuth | Hikuri | +2.7K/-124 |
-| #709 | platform-core | Complete dbt workflow | Hikuri | +2.4K/-124 |
-| #449 | brightbot | dbt agent ReAct migration | Hikuri | +2.6K/-41 |
-| #1055 | webapp | Platform analytics dashboard | Hikuri | +2.3K/-422 |
-| #729 | platform-core | Data asset health check fields | Hikuri | +1.7K/-0 |
+| #713 | platform-core | TransformationNode model metadata + run tracking | Kuri | +4.1K/-2 |
+| #712 | platform-core | GitHub Device Flow OAuth | Kuri | +2.7K/-124 |
+| #709 | platform-core | Complete dbt workflow | Kuri | +2.4K/-124 |
+| #449 | brightbot | dbt agent ReAct migration | Kuri | +2.6K/-41 |
+| #1055 | webapp | Platform analytics dashboard | Kuri | +2.3K/-422 |
+| #729 | platform-core | Data asset health check fields | Kuri | +1.7K/-0 |
 
 ---
 
 ## Problems Identified
 
 1. **19/21 Done tickets unpointed**: Velocity tracking is broken. Points-based metrics (12.2%) are meaningless when 90% of done work has no points.
-2. **Branch naming inconsistency**: Only Hikuri consistently uses `BH-XXX` in branches. Ahmed and Harbour use descriptive names without ticket references.
+2. **Branch naming inconsistency**: Only Kuri consistently uses `BH-XXX` in branches. Ahmed and Harbour use descriptive names without ticket references.
 3. **Harbour's work invisible in Jira**: 7+ PRs merged (scheduler, preview, catalog health checks) with 0 ticket linkage.
 4. **React 18 upgrade untracked**: Marwan's +43K/-87K line React upgrade has no Jira ticket -- this is a major framework migration.
 5. **9 Needs Refinement tickets**: The dbt provisioning phases are planned but not yet refined -- risk of To Do pile-up in sprint's second half.
-6. **Hikuri concentration**: 86% of done tickets assigned to one person. Bus factor = 1 for dbt, governance, and analytics work.
+6. **Kuri concentration**: 86% of done tickets assigned to one person. Bus factor = 1 for dbt, governance, and analytics work.
 
 ---
 
@@ -152,7 +152,7 @@ The Apr 8-9 batch release pattern is healthy -- cross-repo features (dbt, Synaps
 
 1. **Point the 19 unpointed Done tickets retroactively**: Even rough estimates will restore velocity tracking.
 2. **Create tickets for untracked work**: React 18 upgrade, scheduler, data preview, catalog health checks need Jira records.
-3. **Enforce branch naming for all team members**: Not just Hikuri -- `BH-XXX/description` should be the standard.
+3. **Enforce branch naming for all team members**: Not just Kuri -- `BH-XXX/description` should be the standard.
 4. **Refine the 9 dbt provisioning tickets NOW**: These are half the remaining backlog. If they stay in Needs Refinement, sprint completion will stall.
-5. **Pair on governance and dbt**: Hikuri's concentration is a risk. Ahmed or Harbour should shadow the dbt agent work.
+5. **Pair on governance and dbt**: Kuri's concentration is a risk. Ahmed or Harbour should shadow the dbt agent work.
 6. **Celebrate the dbt pipeline delivery**: BH-325 through BH-346 is a complete transformation pipeline shipped in one burst -- GitHub commits, model metadata, DAG views, ReAct agent. This is the sprint's flagship achievement.

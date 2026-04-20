@@ -56,11 +56,11 @@ These tickets were marked Done but have no PRs with their ticket key in the bran
 
 | Ticket | Summary | Assignee | Notes |
 |--------|---------|----------|-------|
-| BH-342 | dbt agent auto-read TransformationService config | Hikuri | Likely covered by #434 (BH-325-328 branch) |
-| BH-340 | Replace Job ID text field with dbt Cloud job dropdown | Hikuri | Likely covered by #1035 (BH-319 branch) |
-| BH-322 | Azure Synapse T-SQL dialect support | Hikuri | Covered by #433, #722 (feature/azure-synapse branch) |
-| BH-321 | Warehouse adapter pattern for webhook processing | Hikuri | Covered by #707 (feature/omd-warehouse-adapter branch) |
-| BH-282 | Claude to Bedrock migration -- model routing | Hikuri | No matching PR branch found |
+| BH-342 | dbt agent auto-read TransformationService config | Kuri | Likely covered by #434 (BH-325-328 branch) |
+| BH-340 | Replace Job ID text field with dbt Cloud job dropdown | Kuri | Likely covered by #1035 (BH-319 branch) |
+| BH-322 | Azure Synapse T-SQL dialect support | Kuri | Covered by #433, #722 (feature/azure-synapse branch) |
+| BH-321 | Warehouse adapter pattern for webhook processing | Kuri | Covered by #707 (feature/omd-warehouse-adapter branch) |
+| BH-282 | Claude to Bedrock migration -- model routing | Kuri | No matching PR branch found |
 | BH-278 | EDL shutdown -- decommission legacy pipeline | Ahmed | No matching PR branch found -- may be infra/config change |
 | BH-253 | OMD webhook enhanced event tracking | Ahmed | Covered by #730 (feat/event-tracking branch, no BH-XXX) |
 | BH-240 | GraphQL capabilities for deep_agent supervisor | Marwan | Covered by #435 (feature/graphql-capabilities branch, no BH-XXX) |
@@ -78,24 +78,24 @@ Major work shipped with no Jira tracking:
 | **Data preview asset tab** | #708, #1033 | core, webapp | Harbour |
 | **Notification endpoint + filtering** | #738, #740, #742 | platform-core | Ahmed |
 | **tableFQN generic warehouse type** | #737 | platform-core | Ahmed |
-| **Synapse ingestion CDK stack** | #139, #150, #151 | data-org-cdk | Ahmed/Hikuri |
+| **Synapse ingestion CDK stack** | #139, #150, #151 | data-org-cdk | Ahmed/Kuri |
 | **Metadata configs for unstructured data** | #119 | data-workspace-cdk | Ahmed |
-| **Redshift CATALOG_ID fix** | #122 | data-workspace-cdk | Hikuri |
-| **Claude PR review workflow** | #119, #111 | data-org-cdk, data-workspace-cdk | Hikuri |
-| **DX readme rewrites** | #145, #118 | data-org-cdk, data-workspace-cdk | Hikuri |
-| **Slack idempotent service user** | #736 | platform-core | Hikuri |
-| **Slack bot mention-only filter** | #13, #14 | slack-server | Hikuri |
+| **Redshift CATALOG_ID fix** | #122 | data-workspace-cdk | Kuri |
+| **Claude PR review workflow** | #119, #111 | data-org-cdk, data-workspace-cdk | Kuri |
+| **DX readme rewrites** | #145, #118 | data-org-cdk, data-workspace-cdk | Kuri |
+| **Slack idempotent service user** | #736 | platform-core | Kuri |
+| **Slack bot mention-only filter** | #13, #14 | slack-server | Kuri |
 | **deepagent package pin** | #447, #448 | brightbot | Ahmed |
 | **addSource mutation fix** | #711 | platform-core | Ahmed |
 | **GitHub auth secret upsert fix** | #734 | platform-core | Marwan |
 | **GitHub device flow polling fix** | #1070 | webapp | Marwan |
-| **Warehouse registry patterns** | #1032 | webapp | Hikuri |
-| **.env.example docs** | #453 | brightbot | Hikuri |
-| **Seed data (workflow entities)** | #714 | platform-core | Hikuri |
+| **Warehouse registry patterns** | #1032 | webapp | Kuri |
+| **.env.example docs** | #453 | brightbot | Kuri |
+| **Seed data (workflow entities)** | #714 | platform-core | Kuri |
 | **BIT datatype for Azure SQL** | #726 | platform-core | Ahmed |
-| **Slack Vite env fix** | #1056 | webapp | Hikuri |
-| **Auth test + cursor guard** | #446 | brightbot | Hikuri |
-| **Dead imports + a11y fix** | #1051 | webapp | Hikuri |
+| **Slack Vite env fix** | #1056 | webapp | Kuri |
+| **Auth test + cursor guard** | #446 | brightbot | Kuri |
+| **Dead imports + a11y fix** | #1051 | webapp | Kuri |
 
 ---
 
@@ -131,6 +131,6 @@ Major work shipped with no Jira tracking:
 
 1. **Retroactively point all 19 unpointed Done tickets** to restore velocity tracking. Even 1/2/3 estimates are better than nothing.
 2. **Create Jira tickets for**: React 18 upgrade, Scheduler, Data preview, Notification endpoints, Synapse CDK stack, Claude PR review workflow.
-3. **Enforce `BH-XXX/` branch prefix** across all team members -- currently only Hikuri follows the convention consistently.
+3. **Enforce `BH-XXX/` branch prefix** across all team members -- currently only Kuri follows the convention consistently.
 4. **Bundle awareness**: #1034 (+29K/-7K) contains multiple tickets' worth of work (BH-326, BH-327, BH-331). Future PRs should be split per ticket.
 5. **The React 18 upgrade** (#1028, +43K/-87K lines) needs a Jira ticket, testing ticket, and documentation -- this is a major framework migration with zero audit trail.

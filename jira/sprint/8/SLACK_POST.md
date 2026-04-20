@@ -52,7 +52,7 @@ Sprint Period: Apr 7–21, 2026 • Mid-sprint checkpoint
 • Sprint Day: 14 of 14
 
 👥 Team Contributions
-• Hikuri — 18 done (dbt pipeline, governance, Synapse, analytics, webapp UX)
+• Kuri — 18 done (dbt pipeline, governance, Synapse, analytics, webapp UX)
 • Ahmed — 1 done + 6 in pipeline (Bedrock KB, unstructured data, infra)
 • Marwan — 1 done + 5 in pipeline (Bedrock models, agent fixes, React upgrade)
 • Harbour — 1 done + 1 in testing (scheduler, data preview, catalog health)
