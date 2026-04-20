@@ -1,6 +1,6 @@
 # Sprint 8 --- Mid-Sprint Checkpoint
 
-**Period**: Apr 14--28, 2026 | **Duration**: 14 days | **Checkpoint**: Apr 20, 2026
+**Period**: Apr 7--21, 2026 | **Duration**: 14 days | **Checkpoint**: Apr 20, 2026
 **Sprint Goal**: Governance context tools, Azure Synapse integration, dbt agent GitHub commits, ticket hygiene
 
 ---
@@ -10,7 +10,7 @@
 ```
 +-------------------------------------------------+
 |         SPRINT 8 --- MID-SPRINT CHECKPOINT       |
-|           Apr 14 -- Apr 28, 2026 (14d)          |
+|           Apr 7 -- Apr 21, 2026 (14d)           |
 +-----------------------+-------------------------+
 | Tickets Completed     |  21 / 55        (38.2%) |
 | Story Points Done     |  5 / 41 pts     (12.2%) |

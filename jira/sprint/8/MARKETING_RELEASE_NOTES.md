@@ -1,6 +1,6 @@
 # Sprint 8 --- Marketing Release Notes (Mid-Sprint Checkpoint)
 
-**Period**: Apr 14--28, 2026
+**Period**: Apr 7--21, 2026
 
 ---
 
@@ -106,6 +106,6 @@ Legacy infrastructure cleanup, package fixes, and cross-repo improvements. The E
 | PRs Merged | 103 (82 feature) |
 | Repos Touched | 7 |
 | Team Size | 4 engineers |
-| Sprint Duration | 14 days (day 7 of 14) |
+| Sprint Duration | 14 days (day 14 of 14) |
 | New Sections | 3 (Context, Analytics, Custom Personas) |
 | Warehouse Support | +1 (Azure Synapse) |

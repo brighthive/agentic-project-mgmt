@@ -1,6 +1,6 @@
 🫐 BrightHive Sprint 8 Release (Mid-Sprint)
 Release Date: Apr 20, 2026
-Sprint Period: Apr 14–28, 2026 • Mid-sprint checkpoint
+Sprint Period: Apr 7–21, 2026 • Mid-sprint checkpoint
 
 🔧 dbt Agent & Transformation Pipeline
 • ✓ Complete dbt workflow: jobs, data products, GitHub repos (BH-330)
@@ -49,7 +49,7 @@ Sprint Period: Apr 14–28, 2026 • Mid-sprint checkpoint
 • Repos Touched: 7
 • New Sections: 3 (Context, Analytics, Personas)
 • Warehouse Support: +1 (Azure Synapse)
-• Sprint Day: 7 of 14
+• Sprint Day: 14 of 14
 
 👥 Team Contributions
 • Hikuri — 18 done (dbt pipeline, governance, Synapse, analytics, webapp UX)

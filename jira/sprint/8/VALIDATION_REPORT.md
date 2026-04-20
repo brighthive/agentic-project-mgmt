@@ -1,6 +1,6 @@
 # Sprint 8 --- Validation Report (Mid-Sprint Checkpoint)
 
-**Period**: Apr 14--28, 2026 | **Checkpoint**: Apr 20, 2026
+**Period**: Apr 7--21, 2026 | **Checkpoint**: Apr 20, 2026
 
 ---
 

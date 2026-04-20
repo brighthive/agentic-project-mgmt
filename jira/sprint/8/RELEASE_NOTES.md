@@ -1,6 +1,6 @@
 # Sprint 8 --- Release Notes (Mid-Sprint Checkpoint)
 
-**Period**: Apr 14--28, 2026 | **Checkpoint**: Apr 20, 2026
+**Period**: Apr 7--21, 2026 | **Checkpoint**: Apr 20, 2026
 **Sprint Goal**: Governance context tools, Azure Synapse integration, dbt agent GitHub commits, ticket hygiene
 
 ---

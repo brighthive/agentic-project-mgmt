@@ -27,7 +27,7 @@
 
 ---
 
-## Sprint 8 🫐 — Mid-Sprint Checkpoint (Apr 14–28, 2026)
+## Sprint 8 🫐 — Mid-Sprint Checkpoint (Apr 7–21, 2026)
 - **Tickets**: 55 active (10 canceled, 65 total) | **Points**: 82 (partial — 19/21 done unpointed)
 - **Completion**: 38.2% tickets at mid-sprint (21/55 done, 16 in pipeline)
 - **Focus**: dbt Agent Pipeline, Governance Tools, Azure Synapse BYOW, Platform Analytics, Webapp UX (Context/Analytics/Personas), Bedrock Migration
