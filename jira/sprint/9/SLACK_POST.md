@@ -61,7 +61,7 @@ Sprint Period: April 20 – May 2, 2026 (12 days — cadence-shortened by 2)
 • 3 untracked Q2 epics (BrightSignals, Scheduler, Bedrock Converse) — retro tickets needed
 
 📎 Links
-📋 Release Notes: https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/9/RELEASE_NOTES.md
-📣 Marketing Notes: https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/9/MARKETING_RELEASE_NOTES.md
-📊 Board Report (Q4 2025 → Q2 2026 to date): https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/BOARD_REPORT_OCT_2025_MAY_2026.md
+📋 Release Notes: https://github.com/brighthive/agentic-project-mgmt/blob/f0719c1dcb6e360da79be8143e7111992f355999/jira/sprint/9/RELEASE_NOTES.md
+📣 Marketing Notes: https://github.com/brighthive/agentic-project-mgmt/blob/f0719c1dcb6e360da79be8143e7111992f355999/jira/sprint/9/MARKETING_RELEASE_NOTES.md
+📊 Board Report (Q4 2025 → Q2 2026 to date): https://github.com/brighthive/agentic-project-mgmt/blob/f0719c1dcb6e360da79be8143e7111992f355999/jira/sprint/BOARD_REPORT_OCT_2025_MAY_2026.md
 🎯 Jira Board: https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152
