@@ -17,9 +17,36 @@ In 6.5 months a **4-engineer team** shipped **535+ PRs across 7 core repositorie
 
 ---
 
-## 1. The Numbers
+## 1. Report Map + The Numbers
 
-### Top-line delivery (Oct 20, 2025 → May 2, 2026)
+### Coverage model (read this first)
+
+This report covers three distinct operating phases:
+
+- **Q4 2025 (partial foundation phase)** = **BD Sprint 1 + Sprint 0**
+- **Q1 2026 (productization phase)** = **Sprint 1 → Sprint 7**
+- **Q2 2026 to date (acceleration phase)** = **Sprint 8 checkpoint + Sprint 9 unofficial date-range release**
+
+Two interpretation notes matter:
+
+- **Sprint 8 is not a clean closed sprint in this report.** The release artifact uses the **Apr 7 → Apr 21** checkpoint window, while the Jira sprint object remained active through **Apr 28**.
+- **Sprint 9 is not a Jira sprint object.** It is an **unofficial date-range release** covering **Apr 20 → May 2**, and it overlaps the tail end of Sprint 8.
+
+### Period totals (all-up view)
+
+| Metric | Total across the full report window |
+|--------|------------------------------------|
+| Period | October 20, 2025 → May 2, 2026 (6.5 months / 195 days) |
+| Team size | 4 engineers |
+| PRs merged (7 core repos) | **535** |
+| Tickets resolved (BH project) | **~150** |
+| Story points delivered | **~340** |
+| Major capabilities shipped | **15+** |
+| New product surfaces | **3** |
+| Repos actively developed | **7 by Q2** |
+| Sprint coverage | BD Sprint 1, Sprint 0, Sprint 1 → Sprint 9 |
+
+### Top-line delivery by quarter
 
 | Metric | Q4 2025 (partial) | Q1 2026 | Q2 2026 to date | **Total** |
 |--------|-------------------|---------|-----------------|-----------|
@@ -32,13 +59,33 @@ In 6.5 months a **4-engineer team** shipped **535+ PRs across 7 core repositorie
 | Engineers | 3–4 | 4 | 4 | 4 |
 | New product surfaces | 0 | 2 (BrightStudio, Agent Sharing) | 1 (BrightSignals) | **3** |
 
+**Why the sprint total stays approximate (`~9`) in the source table**: Q2 is represented by one still-active Jira sprint (**Sprint 8**) plus one unofficial date-range release (**Sprint 9**), so the total is best read as an approximate count of reporting windows rather than a clean count of formally closed Jira sprint objects.
+
+### Sprint map (0–9)
+
+| Sprint window | Sprint | Quarter roll-up | Reporting status | Main theme / why it matters |
+|---------------|--------|-----------------|------------------|-----------------------------|
+| Oct 21 – Nov 4, 2025 | **BD Sprint 1** | Q4 2025 | Official Jira sprint (ID 880); no local dir | Retrieval & analytics agent reliability; early foundation work |
+| Nov 17 – 25, 2025 | **Sprint 0 🥝** | Q4 2025 | Official Jira sprint (ID 946); no local dir | Slack integration definition, agent v2 PoC, SDLC discipline |
+| Jan 13 – Jan 20, 2026 | **Sprint 1 🍇** | Q1 2026 | Completed | SDLC automation, security, infrastructure |
+| Jan 20 – Jan 27, 2026 | **Sprint 2 🥝** | Q1 2026 | Completed | UX, Projects v0, observability, connectors, CEMAF |
+| Jan 27 – Feb 3, 2026 | **Sprint 3 🍎** | Q1 2026 | Completed | Projects v0, quality agents, OMD integration, UX |
+| Feb 3 – Feb 10, 2026 | **Sprint 4 🍍** | Q1 2026 | Completed | Background analyst, Slack auth design, unstructured data, context engineering |
+| Feb 10 – Feb 17, 2026 | **Sprint 5 🍋** | Q1 2026 | Completed | Projects v1, Slack auth, context engineering, infra hardening |
+| Feb 19 – Mar 4, 2026 | **Sprint 6 🍉** | Q1 2026 | Completed | BrightStudio, Slack release, unstructured data ingest, CX support |
+| Mar 4 – Mar 24, 2026 | **Sprint 7 (unofficial)** | Q1 2026 | No Jira sprint object | BrightStudio polish, Slack hardening, production stability |
+| Apr 7 – Apr 21, 2026 | **Sprint 8 🫐** | Q2 2026 to date | Mid-sprint checkpoint artifact; Jira sprint still active | dbt pipeline, governance, Synapse BYOW, analytics, webapp UX, Bedrock migration |
+| Apr 20 – May 2, 2026 | **Sprint 9 (unofficial)** | Q2 2026 to date | Unofficial date-range release | BrightSignals, Bedrock Converse migration, Task Scheduler MVP, streaming hardening |
+
+**How to read Q2 correctly**: Sprint 8 is the active Jira sprint in the board, while Sprint 9 is the date-range release artifact layered across Sprint 8's tail end. That is why Q2 reads as **"work still in flight + release slice"** instead of two cleanly closed sprint objects.
+
 ### Velocity by quarter
 
-```
-Q4 2025  ████████████████░░░░░░░░░░░░░░░░░░  144 PRs  (foundation phase)
-Q1 2026  ████████████████████████░░░░░░░░░░  209 PRs  (productization phase)
-Q2 2026  █████████████████████░░░░░░░░░░░░░  182 PRs  (acceleration — only 5 weeks!)
-```
+| Period | PRs | Read |
+|--------|-----|------|
+| Q4 2025 | 144 | Foundation phase |
+| Q1 2026 | 209 | Productization phase |
+| Q2 2026 to date | 182 | Acceleration — only 5 weeks |
 
 **Q2 velocity is on pace for ~470 PRs / quarter — 2.2x Q1.** The team has materially levelled up cross-repo coordination capability.
 
@@ -95,19 +142,18 @@ This is the quarter that transformed BrightHive from "an agent platform under co
 - **Slack Server from scratch** — Built as standalone enterprise service (was scoped as "integration"). OAuth 2.0, multi-workspace, rate limiting, autoscaling, e2e tracing on ECS.
 - **Quality Check UI** — Tab in data asset page with metadata chips (was backend-only on roadmap).
 
-#### Q1 Sprint Velocity
+#### Q1 sprint-by-sprint readout
 
-```
-Sprint  Tickets  Points  Completion  Carryover  Note
-──────  ───────  ──────  ──────────  ─────────  ────────────────────────
-  1       29       78      72%         8         SDLC, security, infra
-  2       42       50      79%         9         UX, projects v0, observability
-  3       23       30      52%         4         Projects v0, OMD, quality
-  4       21       65      71%         5         Background analyst, slack design
-  5       11       23     100%         0         🏆 Best sprint of Q1 — projects v1, slack auth
-  6       28       71      39%        17         ⚠️ Bottleneck — heavy WIP, low linkage
-  7*      14       43      86%         2         Unofficial — BrightStudio polish, slack hardening
-```
+| Sprint | Tickets | Points | Completion | Carryover | Note |
+|--------|---------|--------|------------|-----------|------|
+| 1 | 29 | 78 | 72% | 8 | SDLC, security, infra |
+| 2 | 42 | 50 | 79% | 9 | UX, projects v0, observability |
+| 3 | 23 | 30 | 52% | 4 | Projects v0, OMD, quality |
+| 4 | 21 | 65 | 71% | 5 | Background analyst, slack design |
+| 5 | 11 | 23 | 100% | 0 | 🏆 Best sprint of Q1 — projects v1, slack auth |
+| 6 | 28 | 71 | 39% | 17 | ⚠️ Bottleneck — heavy WIP, low linkage |
+| 7* | 14 | 43 | 86% | 2 | Unofficial — BrightStudio polish, slack hardening |
+
 \*Sprint 7 had no Jira sprint object — unofficial release period.
 
 **Q1 takeaway**: Two product surfaces (BrightStudio + Slack) emerged *and shipped* on top of the planned roadmap. Sprint 5 hit 100% completion. Sprint 6 was the year's biggest carryover (17 tickets) — coordination capacity was the bottleneck, not raw velocity.
@@ -318,25 +364,25 @@ A board-ready inventory of capabilities the team shipped.
 
 ---
 
-## 9. Appendix — Sprint-by-Sprint Pointers
+## 9. Appendix — Source Pointers
 
-For full detail per sprint, see:
+### Sprint source map
 
-| Sprint | Path |
-|--------|------|
-| BD Sprint 12025 | (Jira sprint ID 880, no local dir) |
-| Sprint 0 🥝 | (Jira sprint ID 946, no local dir) |
-| Sprint 1 🍇 | [`jira/sprint/1/`](./1/) |
-| Sprint 2 🥝 | [`jira/sprint/2/`](./2/) |
-| Sprint 3 🍎 | [`jira/sprint/3/`](./3/) |
-| Sprint 4 🍍 | [`jira/sprint/4/`](./4/) |
-| Sprint 5 🍋 | [`jira/sprint/5/`](./5/) |
-| Sprint 6 🍉 | [`jira/sprint/6/`](./6/) |
-| Sprint 7 (unofficial) | [`jira/sprint/7/`](./7/) |
-| Sprint 8 🫐 (active in Jira) | [`jira/sprint/8/`](./8/) |
-| **Sprint 9 (this release)** | [`jira/sprint/9/`](./9/) |
-| Q1 Roadmap Scorecard | [`Q1_ROADMAP_SCORECARD.md`](./Q1_ROADMAP_SCORECARD.md) |
-| Master velocity table | [`SPRINTS.md`](./SPRINTS.md) |
+| Quarter roll-up | Sprint | Source pointer | Notes |
+|-----------------|--------|----------------|-------|
+| Q4 2025 | **BD Sprint 1** | Jira sprint ID 880 | No local sprint dir; foundation work referenced in the Q4 narrative |
+| Q4 2025 | **Sprint 0 🥝** | Jira sprint ID 946 | No local sprint dir; counted in Q4 foundation |
+| Q1 2026 | **Sprint 1 🍇** | [`jira/sprint/1/`](./1/) | Start of formal Q1 sprint cadence |
+| Q1 2026 | **Sprint 2 🥝** | [`jira/sprint/2/`](./2/) | Productization continues |
+| Q1 2026 | **Sprint 3 🍎** | [`jira/sprint/3/`](./3/) | Projects v0, OMD, quality |
+| Q1 2026 | **Sprint 4 🍍** | [`jira/sprint/4/`](./4/) | Background analyst + Slack auth design |
+| Q1 2026 | **Sprint 5 🍋** | [`jira/sprint/5/`](./5/) | Best execution sprint of Q1 |
+| Q1 2026 | **Sprint 6 🍉** | [`jira/sprint/6/`](./6/) | Carryover-heavy bottleneck sprint |
+| Q1 2026 | **Sprint 7 (unofficial)** | [`jira/sprint/7/`](./7/) | No Jira sprint object; still part of the Q1 productization story |
+| Q2 2026 to date | **Sprint 8 🫐** | [`jira/sprint/8/`](./8/) | Mid-sprint checkpoint artifact; Jira sprint still active in May |
+| Q2 2026 to date | **Sprint 9 (this release)** | [`jira/sprint/9/`](./9/) | Unofficial date-range release layered across Sprint 8 tail work |
+| Cross-quarter | **Q1 Roadmap Scorecard** | [`Q1_ROADMAP_SCORECARD.md`](./Q1_ROADMAP_SCORECARD.md) | Quarter-level roadmap delivery readout |
+| Cross-quarter | **Master velocity table** | [`SPRINTS.md`](./SPRINTS.md) | Sprint index and release history |
 
 ### Strategic Reference Documents
 
