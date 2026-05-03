@@ -1,0 +1,106 @@
+{
+  "sprint": 9,
+  "name": "Sprint 9 (unofficial)",
+  "official": false,
+  "note": "No Jira sprint object created. Date-range release covering Apr 20 - May 2, 2026. Overlaps Sprint 8 (Apr 14-28) tail end + 4 days of post-Sprint 8 work. Cut 2 days short of planned May 4 end due to cadence change.",
+  "dates": {
+    "start": "2026-04-20",
+    "end": "2026-05-02",
+    "planned_end": "2026-05-04",
+    "duration_days": 12,
+    "planned_duration_days": 14
+  },
+  "tickets": {
+    "total": 7,
+    "completed": 7,
+    "in_progress": 0,
+    "to_do": 0,
+    "testing": 0,
+    "needs_refinement": 0,
+    "note": "Tickets resolved within Apr 20 - May 2 window only. Sprint 8 backlog (still active in Jira) tracked separately."
+  },
+  "points": {
+    "total": 0,
+    "completed": 0,
+    "remaining": 0,
+    "note": "All 7 resolved tickets unpointed - estimation discipline gap continues from Sprint 8."
+  },
+  "completion": {
+    "tickets_pct": 100.0,
+    "points_pct": null,
+    "note": "100% of in-window tickets resolved. % is misleading because Sprint 8 carryover not counted."
+  },
+  "goals": [
+    "BrightSignals proactive notifications - end-to-end Slack delivery",
+    "Bedrock Converse migration for brightbot agent",
+    "Task scheduler MVP cross-repo",
+    "Streaming platform hardening (FSM, property tests)",
+    "Synapse + ingestion bug fixes"
+  ],
+  "team": ["Kuri", "Marwan", "Harbour", "Ahmed"],
+  "carry_over": {
+    "from_previous": null,
+    "to_next": null,
+    "note": "Sprint 8 still active in Jira - carryover analysis deferred to Sprint 8 close."
+  },
+  "prs": {
+    "total": 27,
+    "matched_to_tickets": 11,
+    "unmatched": 16,
+    "lines_added": 22543,
+    "lines_deleted": 6837,
+    "lines_changed": 29380,
+    "repos_touched": 5,
+    "repos": {
+      "brighthive-platform-core": 8,
+      "brightbot-slack-server": 8,
+      "brighthive-webapp": 5,
+      "brightbot": 3,
+      "brighthive-data-organization-cdk": 3
+    }
+  },
+  "themes": {
+    "brightsignals": {
+      "name": "BrightSignals - Proactive Notifications",
+      "owner": "Kuri",
+      "prs": ["slack-server#15", "slack-server#16", "slack-server#17", "slack-server#18", "slack-server#19", "slack-server#20", "slack-server#21", "slack-server#22", "platform-core#747"],
+      "description": "End-to-end proactive Slack notifications: subscriptions, poller, delivery, S3 attachments (Tier A + B envelope parser), notification dispatcher Lambda."
+    },
+    "bedrock_migration": {
+      "name": "Bedrock Converse Migration",
+      "owner": "Marwan",
+      "prs": ["brightbot#457"],
+      "description": "ChatBedrock to ChatBedrockConverse migration + deepagents upgrade. Foundation for production Bedrock agent runtime."
+    },
+    "task_scheduler": {
+      "name": "Task Scheduler MVP",
+      "owner": "Harbour",
+      "prs": ["platform-core#750", "webapp#1079", "brightbot#458"],
+      "description": "Cross-repo agnostic scheduler MVP - core service + UI + brightbot integration."
+    },
+    "streaming_platform": {
+      "name": "Streaming Platform Hardening",
+      "owner": "Kuri",
+      "tickets": ["BH-431", "BH-432", "BH-437", "BH-438", "BH-439", "BH-440", "BH-441"],
+      "description": "Span streaming FSM guards, property tests via Hypothesis, clock injection (kill 21s of time.sleep), prototype removal, Cognito + Neo4j adapters."
+    },
+    "synapse_bugs": {
+      "name": "Synapse + Ingestion Fixes",
+      "owner": "Ahmed",
+      "prs": ["data-org-cdk#153", "data-org-cdk#152", "platform-core#749", "platform-core#748"],
+      "description": "Synapse logic + role assumption, mixed-case duplicate prevention, ingestion stack hardening."
+    },
+    "duplicate_check": {
+      "name": "Upload Duplicate Detection",
+      "owner": "Harbour",
+      "prs": ["platform-core#746", "webapp#1077"],
+      "description": "Duplicate check across data assets and files, server-side + UI."
+    }
+  },
+  "authors": [
+    {"name": "Kuri", "github": "drchinca", "prs": 12, "themes": ["BrightSignals", "Streaming"]},
+    {"name": "Harbour", "github": "Nano-233", "prs": 7, "themes": ["Scheduler", "Duplicate Check", "Catalog Schedule"]},
+    {"name": "Ahmed", "github": "sherbiny-bh", "prs": 5, "themes": ["Synapse", "Ingestion"]},
+    {"name": "Marwan", "github": "Marwan-Samih-Brighthive", "prs": 3, "themes": ["Bedrock Converse", "AG Grid Fix"]}
+  ]
+}
