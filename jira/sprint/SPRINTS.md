@@ -1,6 +1,8 @@
-# Sprint Summary - Q1 2026
+# Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 8 🫐 (Active) | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 9 (released May 2, unofficial) | **Sprint 8 🫐 active in Jira** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+
+**📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
 
 ---
 
@@ -26,6 +28,16 @@
 [Full Scorecard →](./Q1_ROADMAP_SCORECARD.md) | [Q1 CEO Report (Notion)](https://www.notion.so/32602437dde481248ab2e17283318cb4)
 
 ---
+
+## Sprint 9 — Unofficial Release (Apr 20 – May 2, 2026)
+- **Tickets Resolved (in window)**: 7 (Kuri's BH-431 → BH-441 streaming/adapter cluster) | **Points**: 0 (all unpointed)
+- **Duration**: 12 days (cut 2 days short of planned May 4 — cadence change)
+- **Focus**: BrightSignals proactive notifications (NEW SURFACE), Bedrock Converse migration, Task Scheduler MVP, streaming platform hardening
+- **Team**: Kuri, Marwan, Harbour, Ahmed (full team)
+- **PRs Merged**: 27 (5 repos, +22.5K/-6.8K lines = 29.4K)
+- **Highlights**: BrightSignals end-to-end (slack-server + dispatcher Lambda), ChatBedrock → ChatBedrockConverse, agnostic scheduler MVP cross-repo, FSM repair + Hypothesis property tests
+- **Note**: No Jira sprint created — date-range release. Overlaps Sprint 8 tail end. Sprint 8 still active in Jira pending formal close.
+- [Details →](./9/)
 
 ## Sprint 8 🫐 — Mid-Sprint Checkpoint (Apr 7–21, 2026)
 - **Tickets**: 55 active (10 canceled, 65 total) | **Points**: 82 (partial — 19/21 done unpointed)
@@ -99,14 +111,17 @@
 ## Velocity Trend
 
 ```
-Sprint │ Tickets │ Points │ Completion │ Avg WIP  │ Carryover
-───────┼─────────┼────────┼────────────┼──────────┼──────────
-   1   │   29    │   78   │   72.4%    │  5.8d    │  8
-   2   │   42    │   50   │   78.6%    │  4h      │  9
-   3   │   23    │   30   │   52.2%    │  6.4d    │  4
-   4   │   10    │   27   │    —       │   —      │  —
-   5   │   11    │   23   │  100%      │   —      │  —
-   6   │   28    │   71   │   39.3%    │  8.3d    │ 17  ⚠️
-   7*  │   14    │   43   │   85.7%    │  7.2d    │  2
+Sprint │ Tickets │ Points │ Completion │ Avg WIP  │ Carryover │ PRs
+───────┼─────────┼────────┼────────────┼──────────┼───────────┼─────
+   1   │   29    │   78   │   72.4%    │  5.8d    │   8       │  ~25
+   2   │   42    │   50   │   78.6%    │  4h      │   9       │  ~30
+   3   │   23    │   30   │   52.2%    │  6.4d    │   4       │  ~25
+   4   │   10    │   27   │    —       │   —      │   —       │  ~25
+   5   │   11    │   23   │  100%      │   —      │   —       │   13
+   6   │   28    │   71   │   39.3%    │  8.3d    │  17  ⚠️    │   14
+   7*  │   14    │   43   │   85.7%    │  7.2d    │   2       │   63
+   8** │   55    │   82   │   38.2%    │  2.5d    │   TBD     │  103
+   9*  │    7    │    0   │  100%(win) │   —      │    —      │   27
 ```
-*Sprint 7 was unofficial (no Jira sprint created)
+*Sprint 7 + 9 were unofficial (no Jira sprint created)
+**Sprint 8 active in Jira at time of Sprint 9 release — final stats pending close

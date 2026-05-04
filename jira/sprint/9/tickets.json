@@ -1,0 +1,72 @@
+[
+  {
+    "key": "BH-441",
+    "summary": "test(streaming): Hypothesis property tests + clock injection (kill 21s of time.sleep)",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170",
+    "resolved": "2026-05-02"
+  },
+  {
+    "key": "BH-440",
+    "summary": "test(streaming): wire SpanStreamProcessor into suite + SSE ordering invariants",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170",
+    "resolved": "2026-05-02"
+  },
+  {
+    "key": "BH-439",
+    "summary": "refactor(streaming): Py 3.14 compliance + deduplicate SpanStreamProcessor",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170",
+    "resolved": "2026-05-01"
+  },
+  {
+    "key": "BH-438",
+    "summary": "fix(streaming): remove prototype \"[refined]\" placeholder from production path",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173",
+    "resolved": "2026-05-01"
+  },
+  {
+    "key": "BH-437",
+    "summary": "fix(streaming): repair state machine — STABILIZED reachable + linear FSM guards",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173",
+    "resolved": "2026-04-30"
+  },
+  {
+    "key": "BH-432",
+    "summary": "feat(adapter): BrightHivePlatformAdapter + Cognito login/refresh",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172",
+    "resolved": "2026-04-25"
+  },
+  {
+    "key": "BH-431",
+    "summary": "feat(adapter): Neo4jGraphStore + Neo4jConnectionConfig",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172",
+    "resolved": "2026-04-25"
+  }
+]
