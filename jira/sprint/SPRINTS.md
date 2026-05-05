@@ -1,6 +1,6 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 9 (released May 2, unofficial) | **Sprint 8 🫐 active in Jira** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 9 v2 (released May 4, unofficial) | **Sprint 8 🫐 active in Jira** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
 
@@ -29,13 +29,15 @@
 
 ---
 
-## Sprint 9 — Unofficial Release (Apr 20 – May 2, 2026)
-- **Tickets Resolved (in window)**: 7 (Kuri's BH-431 → BH-441 streaming/adapter cluster) | **Points**: 0 (all unpointed)
-- **Duration**: 12 days (cut 2 days short of planned May 4 — cadence change)
-- **Focus**: BrightSignals proactive notifications (NEW SURFACE), Bedrock Converse migration, Task Scheduler MVP, streaming platform hardening
+## Sprint 9 — Unofficial Release v2 (Apr 20 – May 4, 2026)
+- **Tickets Resolved**: 17 (7 streaming + 10 retro, all Done) | **Points**: 39 (retro estimates)
+- **Duration**: 14 days (full planned window — original cadence preserved)
+- **Focus**: BrightSignals (NEW SURFACE), BrightStudio Skills (NEW major feature), Bedrock Converse migration, Task Scheduler MVP + UI fixes, UAT eval framework, Vega-Lite visualization, streaming hardening
 - **Team**: Kuri, Marwan, Harbour, Ahmed (full team)
-- **PRs Merged**: 27 (5 repos, +22.5K/-6.8K lines = 29.4K)
-- **Highlights**: BrightSignals end-to-end (slack-server + dispatcher Lambda), ChatBedrock → ChatBedrockConverse, agnostic scheduler MVP cross-repo, FSM repair + Hypothesis property tests
+- **PRs Merged**: 39 (5 repos, +42.5K/-11.7K lines = 54.1K)
+- **Highlights**: BrightSignals end-to-end + dispatcher Lambda, BrightStudio Skills (Harbour, +1.5K), ChatBedrock → ChatBedrockConverse, scheduler MVP + result display cross-repo, UAT deterministic eval framework, Vega-Lite render-to-PNG, FSM repair + Hypothesis property tests
+- **Retro tickets (10)**: BH-443 (Scheduler MVP), BH-444 (Scheduler UI fixes), BH-445 (BrightStudio Skills), BH-446 (Bedrock Converse), BH-447 (Upload dedup), BH-448 (Catalog schedule), BH-449 (Login PW), BH-450 (AG Grid), BH-451 (Mixed-case dedup), BH-452 (Synapse role) — all Done
+- **PR-Ticket Linkage**: 54% (up from 41% v1, 34% Sprint 8 mid)
 - **Note**: No Jira sprint created — date-range release. Overlaps Sprint 8 tail end. Sprint 8 still active in Jira pending formal close.
 - [Details →](./9/)
 
@@ -121,7 +123,7 @@ Sprint │ Tickets │ Points │ Completion │ Avg WIP  │ Carryover │ PRs
    6   │   28    │   71   │   39.3%    │  8.3d    │  17  ⚠️    │   14
    7*  │   14    │   43   │   85.7%    │  7.2d    │   2       │   63
    8** │   55    │   82   │   38.2%    │  2.5d    │   TBD     │  103
-   9*  │    7    │    0   │  100%(win) │   —      │    —      │   27
+   9*  │   17    │   39   │  100%      │   —      │    —      │   39
 ```
-*Sprint 7 + 9 were unofficial (no Jira sprint created)
+*Sprint 7 + 9 were unofficial (no Jira sprint created). Sprint 9 v2 (May 4) includes 10 retro tickets BH-443→452.
 **Sprint 8 active in Jira at time of Sprint 9 release — final stats pending close

@@ -1,7 +1,7 @@
 # BrightHive Engineering Report — Q4 2025 → Q2 2026 to Date
 
 **Audience**: Board, CEO, CTO, Investors
-**Period**: October 20, 2025 → May 2, 2026 (6.5 months / 195 days)
+**Period**: October 20, 2025 → May 4, 2026 (6.5 months / 197 days)
 **Author**: Engineering (Kuri, Tech Lead)
 **Status**: Comprehensive delivery + strategic narrative
 
@@ -30,13 +30,13 @@ This report covers three distinct operating phases:
 Two interpretation notes matter:
 
 - **Sprint 8 is not a clean closed sprint in this report.** The release artifact uses the **Apr 7 → Apr 21** checkpoint window, while the Jira sprint object remained active through **Apr 28**.
-- **Sprint 9 is not a Jira sprint object.** It is an **unofficial date-range release** covering **Apr 20 → May 2**, and it overlaps the tail end of Sprint 8.
+- **Sprint 9 is not a Jira sprint object.** It is an **unofficial date-range release** covering **Apr 20 → May 4** (full 14-day window), and it overlaps the tail end of Sprint 8 + 6 days of post-Sprint 8 work.
 
 ### Period totals (all-up view)
 
 | Metric | Total across the full report window |
 |--------|------------------------------------|
-| Period | October 20, 2025 → May 2, 2026 (6.5 months / 195 days) |
+| Period | October 20, 2025 → May 4, 2026 (6.5 months / 197 days) |
 | Team size | 4 engineers |
 | PRs merged (7 core repos) | **535** |
 | Tickets resolved (BH project) | **~150** |
@@ -75,7 +75,7 @@ Two interpretation notes matter:
 | Feb 19 – Mar 4, 2026 | **Sprint 6 🍉** | Q1 2026 | Completed | BrightStudio, Slack release, unstructured data ingest, CX support |
 | Mar 4 – Mar 24, 2026 | **Sprint 7 (unofficial)** | Q1 2026 | No Jira sprint object | BrightStudio polish, Slack hardening, production stability |
 | Apr 7 – Apr 21, 2026 | **Sprint 8 🫐** | Q2 2026 to date | Mid-sprint checkpoint artifact; Jira sprint still active | dbt pipeline, governance, Synapse BYOW, analytics, webapp UX, Bedrock migration |
-| Apr 20 – May 2, 2026 | **Sprint 9 (unofficial)** | Q2 2026 to date | Unofficial date-range release | BrightSignals, Bedrock Converse migration, Task Scheduler MVP, streaming hardening |
+| Apr 20 – May 4, 2026 | **Sprint 9 (unofficial)** | Q2 2026 to date | Unofficial date-range release | BrightSignals, BrightStudio Skills, Bedrock Converse, Task Scheduler MVP + UI fixes, UAT evals, Vega-Lite, streaming hardening |
 
 **How to read Q2 correctly**: Sprint 8 is the active Jira sprint in the board, while Sprint 9 is the date-range release artifact layered across Sprint 8's tail end. That is why Q2 reads as **"work still in flight + release slice"** instead of two cleanly closed sprint objects.
 
@@ -158,9 +158,9 @@ This is the quarter that transformed BrightHive from "an agent platform under co
 
 **Q1 takeaway**: Two product surfaces (BrightStudio + Slack) emerged *and shipped* on top of the planned roadmap. Sprint 5 hit 100% completion. Sprint 6 was the year's biggest carryover (17 tickets) — coordination capacity was the bottleneck, not raw velocity.
 
-### Q2 2026 to Date (Apr 7 → May 2, 2026) — Acceleration
+### Q2 2026 to Date (Apr 7 → May 4, 2026) — Acceleration
 
-**Sprints**: Sprint 8 🫐 (Apr 14–28, active), Sprint 9 unofficial (Apr 20 – May 2)
+**Sprints**: Sprint 8 🫐 (Apr 14–28, active), Sprint 9 unofficial (Apr 20 – May 4)
 **Theme**: "Bedrock migration starts. Multi-cloud BYOW. Agentic platform deepens."
 
 This is the steepest velocity of the period — **182 PRs in 5–6 weeks**. Three repos that were quiet in Q1 (data-org-cdk, data-workspace-cdk, ibm-wxo) are now active. Sprint 8 + 9 together touched **7 repositories**.
@@ -239,7 +239,7 @@ Across the period, all 4 engineers shipped material work. **Kuri leads on ticket
 
 ---
 
-## 5. Major Capabilities Shipped — Full Inventory (Oct 20 → May 2)
+## 5. Major Capabilities Shipped — Full Inventory (Oct 20 → May 4)
 
 A board-ready inventory of capabilities the team shipped.
 
@@ -287,7 +287,7 @@ A board-ready inventory of capabilities the team shipped.
 
 ---
 
-## 6. Repository Activity Heatmap (Oct 20 → May 2)
+## 6. Repository Activity Heatmap (Oct 20 → May 4)
 
 | Repository | Total PRs | Q4 | Q1 | Q2 | Trend |
 |------------|-----------|----|----|----|-------|
@@ -311,7 +311,7 @@ A board-ready inventory of capabilities the team shipped.
 
 1. **Estimation discipline degraded.** ~70% of Q2 tickets unpointed. Velocity tracking is broken. **Ask**: 30 min team retro on estimation. Either re-anchor on points or switch to ticket-throughput KPIs.
 2. **Bus factor on flagship work.** BrightSignals, dbt agent, governance tools — all single-owner (Kuri). **Ask**: Q2-end pair-programming budget; Marwan into BrightSignals ops, Harbour into dbt.
-3. **Sprint 8 not formally closed in Jira.** Sprint 8 was supposed to end Apr 28 but is still active May 2. Sprint 9 work overlaps. Need to close S8, recompute carryover, align cadence.
+3. **Sprint 8 not formally closed in Jira.** Sprint 8 was supposed to end Apr 28 but is still active May 4. Sprint 9 fully overlaps Sprint 8 tail end + 6 days of post-Sprint 8 work. Need to close S8, recompute carryover, align cadence.
 4. **Branch naming compliance stuck at 1 of 4 engineers.** PR-ticket linkage caps at ~40% as a result. **Ask**: PR template + CI check for `BH-XXX` in branch.
 5. **3 untracked Q2 epics**: BrightSignals, Task Scheduler, Bedrock Converse migration are all flagship Q2 deliverables with **no epic-level Jira tickets**. Invisible to leadership in the Jira board.
 6. **Teams + Google integrations remain at 0%.** Slack consumed all integration capacity in Q1 + early Q2. Q3 sales motion may demand them.
@@ -395,4 +395,4 @@ A board-ready inventory of capabilities the team shipped.
 
 **End of Board Report**
 
-*Report generated May 2, 2026. Period: Oct 20, 2025 → May 2, 2026 (195 days, 6.5 months). Source data: 535 PRs in 7 core GitHub repos (brighthive org), ~150 BH-project Jira tickets, 9 sprints of structured release artifacts, 4-engineer team velocity. Author: Kuri (Tech Lead). Methodology: Jira API + GitHub gh CLI + sprint-release skill artifacts.*
+*Report generated May 4, 2026 (v2 update — extended cutoff from May 2 → May 4, +12 PRs, +10 retro tickets BH-443→452 all Done). Period: Oct 20, 2025 → May 4, 2026 (197 days, 6.5 months). Source data: 545+ PRs in 7 core GitHub repos (brighthive org), ~160 BH-project Jira tickets, 9 sprints of structured release artifacts, 4-engineer team velocity. Author: Kuri (Tech Lead). Methodology: Jira API + GitHub gh CLI + sprint-release skill artifacts.*
