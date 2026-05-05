@@ -2,39 +2,41 @@
   "sprint": 9,
   "name": "Sprint 9 (unofficial)",
   "official": false,
-  "note": "No Jira sprint object created. Date-range release covering Apr 20 - May 2, 2026. Overlaps Sprint 8 (Apr 14-28) tail end + 4 days of post-Sprint 8 work. Cut 2 days short of planned May 4 end due to cadence change.",
+  "version": 2,
+  "version_note": "v2 update on 2026-05-04: extended cutoff from May 2 to May 4 (planned end), added 12 May 3-4 PRs, added 10 retro tickets (BH-443 → BH-452) now in Done status.",
+  "note": "No Jira sprint object created. Date-range release covering Apr 20 - May 4, 2026 (full planned 14-day window). Overlaps Sprint 8 (Apr 14-28) tail end + 6 days of post-Sprint 8 work.",
   "dates": {
     "start": "2026-04-20",
-    "end": "2026-05-02",
-    "planned_end": "2026-05-04",
-    "duration_days": 12,
-    "planned_duration_days": 14
+    "end": "2026-05-04",
+    "duration_days": 14
   },
   "tickets": {
-    "total": 7,
-    "completed": 7,
+    "total": 17,
+    "completed": 17,
     "in_progress": 0,
     "to_do": 0,
     "testing": 0,
     "needs_refinement": 0,
-    "note": "Tickets resolved within Apr 20 - May 2 window only. Sprint 8 backlog (still active in Jira) tracked separately."
+    "note": "7 streaming/adapter tickets resolved Apr 25-May 2 (BH-431, 432, 437-441) + 10 retro tickets created May 2-4 and transitioned to Done (BH-443 → BH-452)."
   },
   "points": {
-    "total": 0,
-    "completed": 0,
+    "total": 39,
+    "completed": 39,
     "remaining": 0,
-    "note": "All 7 resolved tickets unpointed - estimation discipline gap continues from Sprint 8."
+    "note": "All 39 points are retro estimates on the 10 retro tickets. The 7 original streaming tickets remain unpointed."
   },
   "completion": {
     "tickets_pct": 100.0,
-    "points_pct": null,
-    "note": "100% of in-window tickets resolved. % is misleading because Sprint 8 carryover not counted."
+    "points_pct": 100.0,
+    "note": "100% — all in-window tickets are Done."
   },
   "goals": [
     "BrightSignals proactive notifications - end-to-end Slack delivery",
     "Bedrock Converse migration for brightbot agent",
-    "Task scheduler MVP cross-repo",
+    "Task scheduler MVP cross-repo + UI fixes/result display",
+    "BrightStudio Skills - first-class composable agent capabilities",
     "Streaming platform hardening (FSM, property tests)",
+    "UAT eval framework + Vega-Lite visualization rendering",
     "Synapse + ingestion bug fixes"
   ],
   "team": ["Kuri", "Marwan", "Harbour", "Ahmed"],
@@ -44,18 +46,21 @@
     "note": "Sprint 8 still active in Jira - carryover analysis deferred to Sprint 8 close."
   },
   "prs": {
-    "total": 27,
-    "matched_to_tickets": 11,
-    "unmatched": 16,
-    "lines_added": 22543,
-    "lines_deleted": 6837,
-    "lines_changed": 29380,
+    "total": 39,
+    "feature_prs": 28,
+    "build_promotion_prs": 11,
+    "matched_to_tickets": 21,
+    "unmatched": 18,
+    "linkage_pct": 53.8,
+    "lines_added": 42492,
+    "lines_deleted": 11653,
+    "lines_changed": 54145,
     "repos_touched": 5,
     "repos": {
-      "brighthive-platform-core": 8,
-      "brightbot-slack-server": 8,
-      "brighthive-webapp": 5,
-      "brightbot": 3,
+      "brighthive-platform-core": 10,
+      "brighthive-webapp": 9,
+      "brightbot-slack-server": 10,
+      "brightbot": 7,
       "brighthive-data-organization-cdk": 3
     }
   },
@@ -63,20 +68,30 @@
     "brightsignals": {
       "name": "BrightSignals - Proactive Notifications",
       "owner": "Kuri",
-      "prs": ["slack-server#15", "slack-server#16", "slack-server#17", "slack-server#18", "slack-server#19", "slack-server#20", "slack-server#21", "slack-server#22", "platform-core#747"],
       "description": "End-to-end proactive Slack notifications: subscriptions, poller, delivery, S3 attachments (Tier A + B envelope parser), notification dispatcher Lambda."
+    },
+    "uat_evals_visualization": {
+      "name": "UAT Eval Framework + Vega-Lite Visualization",
+      "owner": "Kuri",
+      "description": "NEW (May 4): direct-call deterministic turn evals + HTTP scenario runner in slack-server. Vega-Lite render to PNG + artifact envelope emission in brightbot. Closes the loop between agent and Slack image rendering."
     },
     "bedrock_migration": {
       "name": "Bedrock Converse Migration",
       "owner": "Marwan",
-      "prs": ["brightbot#457"],
+      "ticket": "BH-446",
       "description": "ChatBedrock to ChatBedrockConverse migration + deepagents upgrade. Foundation for production Bedrock agent runtime."
     },
     "task_scheduler": {
-      "name": "Task Scheduler MVP",
+      "name": "Task Scheduler MVP + UI Fixes + Result Display",
       "owner": "Harbour",
-      "prs": ["platform-core#750", "webapp#1079", "brightbot#458"],
-      "description": "Cross-repo agnostic scheduler MVP - core service + UI + brightbot integration."
+      "tickets": ["BH-443", "BH-444", "BH-448"],
+      "description": "Cross-repo agnostic scheduler MVP (core + webapp + brightbot), follow-up UI bug fixes and scheduled run result display surface, catalog/analytics schedule UI."
+    },
+    "brightstudio_skills": {
+      "name": "BrightStudio Skills",
+      "owner": "Harbour",
+      "ticket": "BH-445",
+      "description": "Skills as first-class agent capabilities in BrightStudio. Composable into custom personas. Major BrightStudio epic addition (BH-260)."
     },
     "streaming_platform": {
       "name": "Streaming Platform Hardening",
@@ -84,23 +99,45 @@
       "tickets": ["BH-431", "BH-432", "BH-437", "BH-438", "BH-439", "BH-440", "BH-441"],
       "description": "Span streaming FSM guards, property tests via Hypothesis, clock injection (kill 21s of time.sleep), prototype removal, Cognito + Neo4j adapters."
     },
-    "synapse_bugs": {
-      "name": "Synapse + Ingestion Fixes",
-      "owner": "Ahmed",
-      "prs": ["data-org-cdk#153", "data-org-cdk#152", "platform-core#749", "platform-core#748"],
-      "description": "Synapse logic + role assumption, mixed-case duplicate prevention, ingestion stack hardening."
-    },
     "duplicate_check": {
       "name": "Upload Duplicate Detection",
-      "owner": "Harbour",
-      "prs": ["platform-core#746", "webapp#1077"],
-      "description": "Duplicate check across data assets and files, server-side + UI."
+      "owners": ["Harbour", "Ahmed"],
+      "tickets": ["BH-447", "BH-451"],
+      "description": "Server-side duplicate check on data assets + files (Harbour) and case-insensitive filename matching (Ahmed)."
+    },
+    "synapse_hardening": {
+      "name": "Synapse + Ingestion Hardening",
+      "owner": "Ahmed",
+      "ticket": "BH-452",
+      "description": "Synapse logic + cross-account role assumption + docs."
+    },
+    "webapp_quality": {
+      "name": "Webapp Quality Fixes",
+      "owners": ["Marwan", "Harbour"],
+      "tickets": ["BH-450", "BH-449"],
+      "description": "AG Grid serverside datasource fix (Marwan), login PW redundant check removal (Harbour)."
     }
   },
   "authors": [
-    {"name": "Kuri", "github": "drchinca", "prs": 12, "themes": ["BrightSignals", "Streaming"]},
-    {"name": "Harbour", "github": "Nano-233", "prs": 7, "themes": ["Scheduler", "Duplicate Check", "Catalog Schedule"]},
-    {"name": "Ahmed", "github": "sherbiny-bh", "prs": 5, "themes": ["Synapse", "Ingestion"]},
-    {"name": "Marwan", "github": "Marwan-Samih-Brighthive", "prs": 3, "themes": ["Bedrock Converse", "AG Grid Fix"]}
-  ]
+    {"name": "Kuri", "github": "drchinca", "feature_prs": 12, "themes": ["BrightSignals", "Streaming Platform", "UAT Evals", "Vega-Lite Visualization", "Notifications Dispatcher"]},
+    {"name": "Harbour", "github": "Nano-233", "feature_prs": 9, "themes": ["Task Scheduler MVP", "Scheduler UI Fixes", "BrightStudio Skills", "Upload Duplicate Check", "Catalog Schedule UI", "Login PW Cleanup"]},
+    {"name": "Ahmed", "github": "sherbiny-bh", "feature_prs": 2, "themes": ["Mixed-case Filename Dedup", "Synapse Role Assumption"]},
+    {"name": "Marwan", "github": "Marwan-Samih-Brighthive", "feature_prs": 2, "themes": ["Bedrock Converse Migration", "AG Grid Fix"]}
+  ],
+  "retro_tickets": {
+    "count": 10,
+    "note": "Created May 2-4, 2026 by Kuri to make Marwan/Harbour/Ahmed's untracked Q2 work visible in Jira. All transitioned to Done.",
+    "tickets": [
+      {"key": "BH-443", "summary": "Task Scheduler MVP", "assignee": "Harbour", "epic": "BH-172", "points": 8},
+      {"key": "BH-444", "summary": "Scheduler UI fixes + result display", "assignee": "Harbour", "epic": "BH-172", "points": 5},
+      {"key": "BH-445", "summary": "BrightStudio Skills", "assignee": "Harbour", "epic": "BH-260", "points": 5},
+      {"key": "BH-446", "summary": "Bedrock Converse migration", "assignee": "Marwan", "epic": "BH-172", "points": 8},
+      {"key": "BH-447", "summary": "Upload duplicate check", "assignee": "Harbour", "epic": "BH-172", "points": 3},
+      {"key": "BH-448", "summary": "Catalog schedule UI", "assignee": "Harbour", "epic": "BH-172", "points": 3},
+      {"key": "BH-449", "summary": "Login PW redundant check removal", "assignee": "Harbour", "epic": "BH-173", "points": 1},
+      {"key": "BH-450", "summary": "AG Grid serverside fix", "assignee": "Marwan", "epic": "BH-173", "points": 1},
+      {"key": "BH-451", "summary": "Mixed-case filename dedup", "assignee": "Ahmed", "epic": "BH-173", "points": 2},
+      {"key": "BH-452", "summary": "Synapse role assumption + docs", "assignee": "Ahmed", "epic": "BH-171", "points": 3}
+    ]
+  }
 }
