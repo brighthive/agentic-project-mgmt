@@ -20,6 +20,7 @@
 | **Notion workspace page map** | `notion/pages.md` |
 | **System architecture** | `../platform-saas-ai-context/docs/architecture/ARCHITECTURE.md` |
 | **Bedrock migration strategy** | `../platform-saas-ai-context/docs/architecture/BEDROCK_MIGRATION_STRATEGY.md` |
+| **Claude Code via Bedrock (dev tooling)** | `../platform-saas-ai-context/docs/decisions/decisions.md` ADR-009 + [`brighthive-claude-bedrock-cdk`](https://github.com/brighthive/brighthive-claude-bedrock-cdk) |
 | **Bedrock AgentCore strategy** | `../platform-saas-ai-context/docs/architecture/BEDROCK_AGENTCORE_STRATEGY.md` |
 | **Production AI architecture** | `../platform-saas-ai-context/docs/architecture/PRODUCTION_AI_ARCHITECTURE.md` |
 | **Ingestion agent design** | `../platform-saas-ai-context/docs/architecture/INGESTION_AGENT_BRIGHTBOT.md` |
