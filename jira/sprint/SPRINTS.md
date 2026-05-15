@@ -1,8 +1,21 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 9 v2 (released May 4, unofficial) | **Sprint 8 🫐 active in Jira** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 10 (released May 15, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 10 — Unofficial Release (May 5 – May 15, 2026)
+- **Duration**: 11 days (date-range cut)
+- **Focus**: AgentCore migration epic BH-453 + 23-ticket plan, BrightStudio webapp IA (The Hive, Governance, Notifications Inbox, navigation restructure), BrightSignals unified drawer + spec, dbt multi-repo + Secrets Manager creds, scheduler webhook hardening, profiler agent foundations, production hotfixes
+- **Team**: Kuri, Marwan, Harbour, Ahmed (full team)
+- **PRs Merged**: 58 total (34 feature + 17 build/promotion + 7 revert/git-history, 5 repos)
+- **Lines Changed**: 246,430 (+161,890 / -84,540)
+- **Highlights**: AgentCore spec v2 + 23-ticket epic post 4-agent review, BrightStudio IA overhaul (~12K lines), dbt enhancement (+11990 lines), BrightSignals drawer + notifications spec, scheduler webhook fixes x4, Bedrock diary weeks 6-11 published to AWS
+- **Sprint Health**: Healthy production release muscle — 5/12 brightbot deploy-rollback-redeploy cycle within 24h, 5/15 same-day hotfix, 4 rounds of scheduler webhook hardening iterating to a stable MVP
+- **Note**: Jira not used as source of truth — engineering output measured by shipped PRs. AgentCore epic + 23 tickets in Jira are for AWS partnership visibility.
+- [Details →](./10/)
 
 ---
 
