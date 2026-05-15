@@ -1,0 +1,61 @@
+{
+  "sprint": 10,
+  "name": "Sprint 10 (unofficial)",
+  "official": false,
+  "note": "Date-range release covering May 5 - May 15, 2026 (11 calendar days). Jira is not used as the source of truth for sprint planning at BrightHive — GitHub PRs are. Headline themes: AgentCore migration epic landed (BH-453 + 23 child tickets), BrightStudio Hive/Governance/Navigation IA, BrightSignals unified drawer, dbt multi-repo + Secrets Manager credential storage, scheduler hardening, production hotfixes.",
+  "dates": {
+    "start": "2026-05-05",
+    "end": "2026-05-15",
+    "duration_days": 11
+  },
+  "delivery": {
+    "feature_prs": 34,
+    "total_prs_including_promotions_and_reverts": 58,
+    "repos_touched": 5,
+    "lines_added": 161890,
+    "lines_removed": 84540,
+    "lines_changed": 246430,
+    "contributors": 4
+  },
+  "goals": [
+    "AgentCore migration epic — write spec v2 (incorporating 4-agent review) + create 23-ticket child plan in Jira for visibility",
+    "BrightStudio webapp IA — navigation restructure, The Hive, Governance section, Notifications Inbox",
+    "BrightSignals — unified activity drawer (BH-409 notification spec follow-through)",
+    "dbt multi-repo support + Secrets Manager credential storage",
+    "Scheduler MVP webhook hardening (carryover from Sprint 9)",
+    "Production stability — hotfixes for Mem0/S3 streaming, project retrieval, AG Grid",
+    "Sprint 9 close + Bedrock migration diary catch-up (Weeks 6-11)"
+  ],
+  "team": ["Ahmed", "Harbour", "Kuri", "Marwan"],
+  "prs": {
+    "total": 58,
+    "feature_prs": 34,
+    "build_promotion_prs": 17,
+    "revert_or_git_history_prs": 7,
+    "lines_added": 161890,
+    "lines_removed": 84540,
+    "lines_changed": 246430,
+    "repos": {
+      "brightbot": { "total": 21, "feature": 9, "build": 5, "revert_git": 7 },
+      "brighthive-webapp": { "total": 17, "feature": 11, "build": 6 },
+      "brighthive-platform-core": { "total": 15, "feature": 10, "build": 5 },
+      "brighthive-data-organization-cdk": { "total": 2, "feature": 1, "build": 1 },
+      "agentic-project-mgmt": { "total": 3, "feature": 3 }
+    }
+  },
+  "themes": [
+    "AgentCore migration spec v2 + 23-ticket epic (BH-453 family)",
+    "BrightStudio webapp navigation IA + The Hive + Governance sections",
+    "BrightSignals unified activity drawer + Notifications Inbox UX",
+    "dbt multi-repo preview + Secrets Manager credential storage",
+    "Scheduler webhook hardening — task graph, payloads, state, langgraph webhook",
+    "Production hotfixes — Mem0/S3 streaming, project retrieval, AG Grid sidebar layout, duplicate data assets",
+    "Sprint 9 close + Bedrock migration diary catch-up (Weeks 6-11)",
+    "Local-dev quality_check stack with Postgres + LocalStack"
+  ],
+  "release_highlights": [
+    "5/12 brightbot Staging → Production (#480, +27785 lines) — fast detect-rollback-redeploy cycle (#481 revert, #482 re-apply within 24h). Healthy production muscle in action.",
+    "5/15 same-day hotfix (#483) for brightagent S3 streaming + Mem0 — tight detect-and-fix feedback loop.",
+    "Scheduler MVP webhook hardening x4 (brightbot #463, #469, #472, #474, platform-core #759) — iterative production firming, foundation for Sprint 11 Scheduler v1 (retry + cron + audit)."
+  ]
+}

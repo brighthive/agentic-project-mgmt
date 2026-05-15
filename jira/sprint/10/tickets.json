@@ -1,0 +1,456 @@
+[
+  {
+    "key": "BH-500",
+    "summary": "chore(webapp): open PR + land drchinca/BH-00/use-run-agent — workspace_id + data_profiler_agent in useRunAgent",
+    "status": "Done",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-111",
+    "resolved": "2026-05-12"
+  },
+  {
+    "key": "BH-502",
+    "summary": "test(profiler): end-to-end verification of data_profiler_agent across UI, manual route, and ingestion webhook",
+    "status": "Needs Refinement",
+    "assignee": "Ahmed",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-111"
+  },
+  {
+    "key": "BH-501",
+    "summary": "feat(platform-core): auto-trigger data_profiler_agent on ingestion in parallel with quality check",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-111"
+  },
+  {
+    "key": "BH-499",
+    "summary": "chore(brightbot): whitelist data_profiler_agent in /manage/agents/run",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-111"
+  },
+  {
+    "key": "BH-498",
+    "summary": "chore(brightbot): review + land PR #462 — data_profiler_agent + workspace-scoped runs",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-111"
+  },
+  {
+    "key": "BH-497",
+    "summary": "[Webapp] BrightAgent 'Session Error' masking Vite/MUI duplicate-React issue",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-496",
+    "summary": "[Settings] Phase 5 — UX polish, accessibility, mobile optimization",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-495",
+    "summary": "[Webapp] Add 'Coming Soon' preview states for broken pages or fake-data pages",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-494",
+    "summary": "[Settings] Phase 4 — Enterprise features (SSO, audit logs, API keys, billing)",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-493",
+    "summary": "[Settings] Phase 3 — IA restructure (Profile / Team / Enterprise)",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-492",
+    "summary": "[Settings] Phase 2 — Architecture unification (shared SettingsLayout, Tabs, Card)",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-491",
+    "summary": "[Settings] Phase 1 — Critical bug fixes (uncontrolled TextField, hardcoded names)",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-490",
+    "summary": "BUG: redshiftTableName not persisted across server restarts — seed script needed",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-489",
+    "summary": "UAT: Update scenario expected_agent values to match v2 routing reality",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Task"
+  },
+  {
+    "key": "BH-488",
+    "summary": "UAT: chart_kind assertion cannot detect chart type from current SSE span shape",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-487",
+    "summary": "ROUTING: SQL injection attempt routes to governance not retrieval",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-486",
+    "summary": "ROUTING: Top-N and JOIN aggregation queries route to analyst instead of retrieval",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-485",
+    "summary": "ROUTING: Orchestrator routes chart-creation questions to visualization not analyst",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-484",
+    "summary": "BUG: Empty SQL executes and returns 0 rows instead of graceful refusal",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-483",
+    "summary": "BUG: SQL generation omits ORDER BY / LIMIT on top-N ranking questions",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-482",
+    "summary": "BUG: SQL generation uses asset UUID as FROM-table when redshiftTableName is null",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-481",
+    "summary": "BUG: Internal server error during streaming on date-filtering retrieval queries",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Bug"
+  },
+  {
+    "key": "BH-480",
+    "summary": "UAT scenario runner — scripted smoke for POST /v1/chat/stream",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Story"
+  },
+  {
+    "key": "BH-479",
+    "summary": "OTel GenAI spans on code_execution path (LocalSubprocessSandbox + RecordingCodeSandbox)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Story"
+  },
+  {
+    "key": "BH-478",
+    "summary": "Sandbox debug transcripts — contract + LocalJSONLTranscriptStore + RecordingCodeSandbox",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Story"
+  },
+  {
+    "key": "BH-477",
+    "summary": "Local subprocess code sandbox service (LocalSubprocessSandbox)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Story"
+  },
+  {
+    "key": "BH-476",
+    "summary": "Drift detection — weekly cdk diff in CI + CloudWatch alarm on drift",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-475",
+    "summary": "VPC endpoint + egress lockdown — AgentCore cannot reach public internet",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-474",
+    "summary": "Load / soak test — 2× peak load for 4h against Staging AgentCore before 50% canary",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-473",
+    "summary": "DR — DynamoDB PITR + AWS Backup cross-region + S3 Object Lock + regional failover",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-472",
+    "summary": "Runbook + on-call handoff — AgentCore pager flows, trace-reading, escalation",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-471",
+    "summary": "Rollback gameday — deliberately break Staging AgentCore, measure recovery",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-470",
+    "summary": "Trace propagation contract + integration test — Slack → APIGW → AgentCore → MCP → Bedrock",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-469",
+    "summary": "brightbot: KB-ID resolver — workspace → Bedrock KB-ID lookup",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-468",
+    "summary": "platform-core: Cognito pre-token-generation Lambda — inject custom:workspace_id claim",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-467",
+    "summary": "brightbot: Checkpoint migration shim — dual-read from LangGraph Cloud → DynamoDB",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-466",
+    "summary": "Decommission — LangGraph Cloud + LangSmith + Mem0AI after 7 days at 100% canary",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-465",
+    "summary": "Cost observability — CloudWatch dashboard comparing AgentCore vs LangGraph Cloud cost",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-464",
+    "summary": "UAT parity — per-graph statistical gate (N≥200, 95% CI) + continuous shadow eval",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-463",
+    "summary": "webapp: BFF endpoint resolution flag — LangGraph Cloud URL vs API Gateway URL",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-462",
+    "summary": "slack-server: canary routing — salted sha256 workspace hash + kill-switch + metrics",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-461",
+    "summary": "CI/CD: GitHub Actions — match platform-core release-tag pattern + pre-deploy eval gate",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-460",
+    "summary": "platform-core: MCP ECS Fargate stack — {Env}-BPC-AgentCoreMCP (scale-to-zero, NOT Lambda)",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-459",
+    "summary": "platform-core: AgentCore runtime CDK stack — {Env}-BPC-AgentCore",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-458",
+    "summary": "brightbot: Replace http/app.py LangGraph Cloud ingress with API Gateway handler",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-457",
+    "summary": "brightbot: Remove langsmith + Mem0AI + audit langgraph-api + rewire auth_handler",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-456",
+    "summary": "brightbot: DynamoDB LangGraph checkpointer — composite PK, S3 spillover, PITR",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-455",
+    "summary": "brightbot: AgentCore entrypoint module — wrap 11 langgraph.json graphs",
+    "status": "Needs Refinement",
+    "assignee": "Unassigned",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-454",
+    "summary": "Spike: AgentCore region + reference architecture + streaming POC + MCP hosting + Mem0AI decision",
+    "status": "Needs Refinement",
+    "assignee": "Kuri",
+    "points": 0,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-453",
+    "summary": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore — remove LangGraph Cloud / LangSmith service dependency",
+    "status": "Needs Refinement",
+    "assignee": "Ahmed",
+    "points": 0,
+    "type": "Epic"
+  },
+  {
+    "key": "BH-387",
+    "summary": "feat: FastMCP server exposing 13 agent graphs as MCP tools",
+    "status": "Needs Refinement",
+    "assignee": "Marwan",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-260"
+  },
+  {
+    "key": "BH-347",
+    "summary": "feat(agent): on-demand governance context tools — schemas, glossary, policies",
+    "status": "To Do",
+    "assignee": "Marwan",
+    "points": 0,
+    "type": "Story",
+    "epic": "BH-172"
+  }
+]
