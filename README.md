@@ -70,30 +70,7 @@ agentic-project-mgmt/
 
 ---
 
-## Makefile — Key Targets
-
-Run `make help` for the full grouped list. Common targets:
-
-| Layer | Targets | Purpose |
-|---|---|---|
-| **0 — Install** | `make install-prereqs` | Install brew, aws, lpass, gh, python3 |
-| **0 — Install** | `make check-prereqs` | Verify all tools present (read-only) |
-| **0 — Install** | `make configure-aws-sso` | Print exact `aws configure sso` commands |
-| **1 — Creds** | `make check-creds` | Check AWS SSO + LastPass sessions |
-| **1 — Creds** | `make refresh-aws` | Run `aws sso login` for expired profiles |
-| **1 — Secrets** | `NAME=X make pull-secrets` | Copy vault exports into `secrets/` (24h TTL) |
-| **1 — Onboard** | `VAULT_PASSWORD=p make onboard NAME=matt` | Package vault → `mattlead-export.zip.enc` |
-| **1 — Onboard** | `VAULT_PASSWORD=p NAME=matt make unpack` | Decrypt package → `mattlead/` |
-| **1 — Env** | `NAME=X make env-brightbot-local` | Render `../brightbot/.env` from vault |
-| **1 — Env** | `NAME=X make env-webapp-staging` | Render `../brighthive-webapp/.env.local` |
-| **2 — Start** | `NAME=X make localstack` | Start core → brightbot → webapp in order |
-| **2 — Start** | `NAME=X make start-webapp` | Start webapp only (staging APIs) |
-| **2 — Start** | `NAME=X make start-core` | Start platform-core GraphQL API on :4040 |
-| **2 — Start** | `NAME=X make start-brightbot` | Start brightbot agent graph on :2024 |
-| **2 — Stop** | `make stopstack` | Stop all local services |
-| **2 — Status** | `make stackstatus` | Show running / down per service |
-| **Sprints** | `/sprint-release` (skill) | Close sprint — artifacts → Slack → Notion → git |
-| **Specs** | `/write-spec` (skill) | Write a spec before implementation |
+Run `make help` to see all available targets.
 
 ---
 
