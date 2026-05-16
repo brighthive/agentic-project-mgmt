@@ -19,12 +19,13 @@ state_touch() {
     local subpath="$1"
     local full="${STATE_DIR}/${subpath}"
     mkdir -p "$(dirname "$full")"
-    : > "$full"
     touch "$full"
 }
 
 # state_age_seconds <subpath>
 # Print the age of a sentinel in seconds, or "missing" if absent.
+# Handles both macOS (stat -f %m) and GNU/Linux (stat -c %Y).
+# If mtime cannot be determined, prints "missing" to avoid arithmetic explosion.
 state_age_seconds() {
     local subpath="$1"
     local full="${STATE_DIR}/${subpath}"
@@ -34,8 +35,11 @@ state_age_seconds() {
     fi
     local now mtime
     now=$(date +%s)
-    # macOS stat differs from GNU stat; try both
-    mtime=$(stat -f %m "$full" 2>/dev/null || stat -c %Y "$full" 2>/dev/null)
+    mtime=$(stat -f %m "$full" 2>/dev/null || stat -c %Y "$full" 2>/dev/null || echo "")
+    if [[ -z "$mtime" ]]; then
+        echo "missing"
+        return 0
+    fi
     echo "$((now - mtime))"
 }
 

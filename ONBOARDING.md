@@ -25,6 +25,33 @@ cp .env.example .env
 $EDITOR .env   # fill in your AWS profile names, LastPass user, GitHub token
 ```
 
+## Step 1b — Unpack the vault package (new leaders only, one-time)
+
+> **If you already have `kurilead/` from a previous setup, skip this step.**
+
+The `kurilead/` directory holds the raw vault export files (AWS Secrets Manager, LastPass, DynamoDB workspace configs). It is **gitignored** and never committed. For a brand-new engineering leader, a TechLead generates a secure handoff package:
+
+**TechLead generates the package** (run this once, share the file + password securely):
+```bash
+make package-kurilead
+# → produces kurilead-export.zip.enc
+# Share the file + the password via 1Password/LastPass secure note
+```
+
+**New leader unpacks it:**
+```bash
+# Set the path to the .zip.enc file you received
+KURILEAD_PACKAGE=/path/to/kurilead-export.zip.enc make unpack-kurilead
+# Prompts for decryption password
+```
+
+**Verify the package is complete:**
+```bash
+make verify-kurilead
+```
+
+After this, `kurilead/` will contain all the JSON vault exports that power `make pull-secrets`. Once your AWS SSO access is provisioned, you can refresh the package yourself with `make pull-aws-secrets` (which calls `kurilead/export_all.py` directly) — but for day-1 you don't need AWS access.
+
 ## Step 2 — Verify your credentials
 
 ```bash
@@ -66,6 +93,14 @@ This reads `config/env-templates/brightbot-local.env.tmpl`, resolves every `{{ s
 
 If the renderer encounters any unresolved `{{ source.key }}` token, it exits non-zero and lists which keys are missing — there is no silent empty substitution.
 
+## Step 4b — Materialize `brighthive-webapp/.env.local`
+
+```bash
+make env-webapp-local
+```
+
+This writes `../brighthive-webapp/.env.local` with the local GraphQL / BrightAgent endpoints plus the staging-backed API keys the webapp still needs locally (`STREAM_KEY`, LangGraph API key, etc.). It intentionally leaves `VITE_TOKEN_USER` blank — running `make local` inside `../brighthive-webapp` will generate a fresh local JWT and inject it for you.
+
 ## Step 5 — Verify brightbot accepts the env
 
 ```bash
@@ -91,7 +126,8 @@ Shows you the age of every sentinel — AWS sessions, LastPass session, each sec
 | `make localstack` — bring up all services pointed at local LocalStack (Layer 3) | Not yet | PR #6 |
 | `make stagingstack` — bring up all services pointed at Staging (Layer 3) | Not yet | PR #6 |
 | `make onboard` — full ceremony for fresh-clone setup (Layer 4) | Not yet | PR #7 |
-| Env templates for webapp, platform-core, slack-server | Not yet | PR #2-3 |
+| Webapp env templates (`make env-webapp-local`, `make env-webapp-staging`) |  ✓ | This PR |
+| Env templates for platform-core, slack-server | Not yet | PR #2-3 |
 | Sibling clone automation (`make clone-siblings`) is in PR #1 — try it now |  ✓ | This PR |
 
 For the design rationale and the full four-layer hierarchy, see [`docs/specs/onboarding-bootstrap.md`](docs/specs/onboarding-bootstrap.md).

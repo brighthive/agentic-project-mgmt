@@ -164,6 +164,10 @@ SIBLINGS_DIR            ?= ..
 SECRETS_CACHE_TTL       ?= 86400
 STATE_DIR               := .state
 SECRETS_DIR             := secrets
+KURILEAD_DIR            := kurilead
+
+# Python interpreter — require 3.11+; reject the macOS Xcode stub.
+PYTHON3 := $(shell command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3)
 
 # Source state helpers in every recipe via this prelude.
 STATE_HELPERS = . scripts/state.sh
@@ -171,7 +175,7 @@ STATE_HELPERS = . scripts/state.sh
 .PHONY: check-aws refresh-aws check-lastpass refresh-lastpass check-creds \
         check-siblings clone-siblings \
         pull-aws-secrets pull-lastpass pull-secrets \
-        env-brightbot-local \
+        env-brightbot-local env-webapp-local env-webapp-staging \
         status
 
 # ── Credentials ───────────────────────────────────────────────
@@ -270,16 +274,31 @@ pull-aws-secrets:  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h
 	@echo "── Pulling AWS Secrets Manager values ──"
 	@$(STATE_HELPERS); \
 		mkdir -p $(SECRETS_DIR)/aws; \
+		if [ ! -f "$(KURILEAD_DIR)/secrets-manager/main_secrets.json" ] || \
+		   [ ! -f "$(KURILEAD_DIR)/secrets-manager/stage_secrets.json" ] || \
+		   [ ! -f "$(KURILEAD_DIR)/secrets-manager/prod_secrets.json" ] || \
+		   [ "$${FORCE:-0}" = "1" ]; then \
+			echo "  → $(PYTHON3) $(KURILEAD_DIR)/export_all.py secrets"; \
+			$(PYTHON3) $(KURILEAD_DIR)/export_all.py secrets > /tmp/bh-agentic-aws-export.log 2>&1 || { \
+				tail -20 /tmp/bh-agentic-aws-export.log; \
+				exit 1; \
+			}; \
+		fi; \
 		for env in main staging production; do \
 			if state_skip_if_fresh "secrets/aws-$$env-pulled" "$(SECRETS_CACHE_TTL)" "secrets/aws/$$env.json"; then \
 				continue; \
 			fi; \
-			account=$$(echo "$$env" | tr 'a-z' 'A-Z'); \
-			[ "$$env" = "production" ] && account="PROD"; \
-			[ "$$env" = "staging"    ] && account="STAGE"; \
-			[ "$$env" = "main"       ] && account="MAIN"; \
-			echo "  → aws-secrets-vault export --account $$account → $(SECRETS_DIR)/aws/$$env.json"; \
-			./aws-secrets-vault/cli/secrets export --account "$$account" --output "$(SECRETS_DIR)/aws/$$env.json" 2>&1 | tail -3 || true; \
+			case "$$env" in \
+				main) source="$(KURILEAD_DIR)/secrets-manager/main_secrets.json" ;; \
+				staging) source="$(KURILEAD_DIR)/secrets-manager/stage_secrets.json" ;; \
+				production) source="$(KURILEAD_DIR)/secrets-manager/prod_secrets.json" ;; \
+			esac; \
+			if [ ! -f "$$source" ]; then \
+				echo "  ✗ missing AWS export: $$source"; \
+				exit 1; \
+			fi; \
+			echo "  → $$source → $(SECRETS_DIR)/aws/$$env.json"; \
+			cp "$$source" "$(SECRETS_DIR)/aws/$$env.json"; \
 			state_touch "secrets/aws-$$env-pulled"; \
 		done
 
@@ -290,22 +309,71 @@ pull-lastpass:  ## ③ Pull LastPass entries into secrets/lastpass.json (24h TTL
 		if state_skip_if_fresh "secrets/lastpass-pulled" "$(SECRETS_CACHE_TTL)" "secrets/lastpass.json"; then \
 			exit 0; \
 		fi; \
-		echo "  → lastpass-vault export → $(SECRETS_DIR)/lastpass.json"; \
-		./lastpass-vault/cli/secrets export --output "$(SECRETS_DIR)/lastpass.json" 2>&1 | tail -3 || true; \
+		if [ -f "$(KURILEAD_DIR)/lastpass-vault/lastpass_secrets.json" ] && [ "$${FORCE:-0}" != "1" ]; then \
+			echo "  → $(KURILEAD_DIR)/lastpass-vault/lastpass_secrets.json → $(SECRETS_DIR)/lastpass.json"; \
+			cp "$(KURILEAD_DIR)/lastpass-vault/lastpass_secrets.json" "$(SECRETS_DIR)/lastpass.json"; \
+		else \
+			echo "  → lastpass-vault sync"; \
+			./lastpass-vault/cli/secrets sync > /tmp/bh-agentic-lastpass-sync.log 2>&1 || { \
+				tail -20 /tmp/bh-agentic-lastpass-sync.log; \
+				exit 1; \
+			}; \
+			echo "  → lastpass-vault export → $(SECRETS_DIR)/lastpass.json"; \
+			./lastpass-vault/cli/secrets export --output "$(SECRETS_DIR)/lastpass.json" > /tmp/bh-agentic-lastpass-export.log 2>&1 || { \
+				tail -20 /tmp/bh-agentic-lastpass-export.log; \
+				exit 1; \
+			}; \
+		fi; \
 		state_touch "secrets/lastpass-pulled"
 
 pull-secrets: pull-aws-secrets pull-lastpass  ## ③ Pull all vault sources into ./secrets/
+
+# ── kurilead package (handoff to new engineering leaders) ─────
+
+.PHONY: package-kurilead unpack-kurilead verify-kurilead
+
+package-kurilead:  ## ③ Bundle kurilead/ vault exports into an encrypted zip for new-leader handoff
+	@echo "── Packaging kurilead/ vault exports ──"
+	@echo "  → output: kurilead-export.zip.enc"
+	@$(PYTHON3) scripts/package_kurilead.py package \
+		--output "${KURILEAD_PACKAGE_OUT:-kurilead-export.zip.enc}"
+
+unpack-kurilead:  ## ③ Decrypt + extract a kurilead package (new leaders run this once)
+	@echo "── Unpacking kurilead vault package ──"
+	@$(PYTHON3) scripts/package_kurilead.py unpack \
+		--input "${KURILEAD_PACKAGE:-kurilead-export.zip.enc}"
+
+verify-kurilead:  ## ③ Check that kurilead/ has all expected vault export files
+	@$(PYTHON3) scripts/package_kurilead.py verify
 
 # ── Env materialization ───────────────────────────────────────
 
 env-brightbot-local: pull-secrets  ## ④ Generate ../brightbot/.env from template + cached secrets
 	@echo "── Materializing brightbot local .env ──"
-	@python3 scripts/render_env.py \
+	@$(PYTHON3) scripts/render_env.py \
 		--template config/env-templates/brightbot-local.env.tmpl \
 		--output $(SIBLINGS_DIR)/brightbot/.env \
 		--secrets-dir $(SECRETS_DIR) \
 		--state-dir $(STATE_DIR) \
 		--key brightbot-local
+
+env-webapp-local: pull-aws-secrets  ## ④ Generate ../brighthive-webapp/.env.local for local dev
+	@echo "── Materializing brighthive-webapp local .env.local ──"
+	@$(PYTHON3) scripts/render_env.py \
+		--template config/env-templates/webapp-local.env.tmpl \
+		--output $(SIBLINGS_DIR)/brighthive-webapp/.env.local \
+		--secrets-dir $(SECRETS_DIR) \
+		--state-dir $(STATE_DIR) \
+		--key webapp-local
+
+env-webapp-staging: pull-aws-secrets  ## ④ Generate ../brighthive-webapp/.env.local for staging
+	@echo "── Materializing brighthive-webapp staging .env.local ──"
+	@$(PYTHON3) scripts/render_env.py \
+		--template config/env-templates/webapp-staging.env.tmpl \
+		--output $(SIBLINGS_DIR)/brighthive-webapp/.env.local \
+		--secrets-dir $(SECRETS_DIR) \
+		--state-dir $(STATE_DIR) \
+		--key webapp-staging
 
 # ── Status ────────────────────────────────────────────────────
 
