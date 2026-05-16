@@ -361,8 +361,9 @@ STATE_HELPERS = . scripts/state.sh
 .PHONY: check-aws refresh-aws check-lastpass refresh-lastpass check-creds \
         check-siblings clone-siblings \
         pull-aws-secrets pull-lastpass pull-secrets \
-        env-brightbot-local env-webapp-local env-webapp-staging \
-        start-webapp stop-webapp \
+        env-platform-core-local env-brightbot-local env-webapp-local env-webapp-staging \
+        start-webapp stop-webapp start-core stop-core start-brightbot stop-brightbot \
+        localstack stopstack stackstatus \
         status
 
 # ── Credentials ───────────────────────────────────────────────
@@ -583,6 +584,15 @@ verify-lead:  ## ③ Check that {NAME}lead/ has all expected vault export files
 
 # ── Env materialization ───────────────────────────────────────
 
+env-platform-core-local: pull-secrets  ## ④ Generate ../brighthive-platform-core/.env from template + cached secrets
+	@echo "── Materializing platform-core local .env ──"
+	@$(PYTHON3) scripts/render_env.py \
+		--template config/env-templates/platform-core-local.env.tmpl \
+		--output $(SIBLINGS_DIR)/brighthive-platform-core/.env \
+		--secrets-dir $(SECRETS_DIR) \
+		--state-dir $(STATE_DIR) \
+		--key platform-core-local
+
 env-brightbot-local: pull-secrets  ## ④ Generate ../brightbot/.env from template + cached secrets
 	@echo "── Materializing brightbot local .env ──"
 	@$(PYTHON3) scripts/render_env.py \
@@ -612,31 +622,52 @@ env-webapp-staging: pull-aws-secrets  ## ④ Generate ../brighthive-webapp/.env.
 
 # ── Status ────────────────────────────────────────────────────
 
-# ── Start webapp against staging ─────────────────────────────
+# ── Per-service start/stop (orchestrator wrappers) ────────────
 
-.PHONY: start-webapp stop-webapp
+.PHONY: start-webapp stop-webapp start-core stop-core start-brightbot stop-brightbot \
+        localstack stopstack stackstatus
 
-start-webapp: env-webapp-staging  ## ④ Start brighthive-webapp against staging (background, opens browser)
-	@echo "── Starting webapp (staging) ──"
-	@if [ ! -d "$(SIBLINGS_DIR)/brighthive-webapp" ]; then \
-		echo "  [ERROR] brighthive-webapp not found at $(SIBLINGS_DIR)/brighthive-webapp"; \
-		echo "  Run: make clone-siblings"; \
-		exit 1; \
+_check_sibling = \
+	@if [ ! -d "$(SIBLINGS_DIR)/$(1)" ]; then \
+		echo "  [ERROR] $(1) not found. Run: make clone-siblings"; exit 1; \
 	fi
-	@if [ ! -d "$(SIBLINGS_DIR)/brighthive-webapp/node_modules" ]; then \
-		echo "  → npm install (first run)..."; \
-		cd "$(SIBLINGS_DIR)/brighthive-webapp" && npm install --silent; \
-	fi
-	@$(MAKE) -C "$(SIBLINGS_DIR)/brighthive-webapp" staging-bg
+
+start-webapp:  ## ④ Start brighthive-webapp against staging (background)
+	$(call _check_sibling,brighthive-webapp)
+	@NAME=$(NAME) $(MAKE) -C "$(SIBLINGS_DIR)/brighthive-webapp" staging-bg
+	@echo "  → webapp  http://localhost:7420  (logs: /tmp/bh-webapp.log)"
+
+stop-webapp:  ## ④ Stop the webapp
+	@$(MAKE) -C "$(SIBLINGS_DIR)/brighthive-webapp" stop 2>/dev/null || true
+
+start-core:  ## ④ Start brighthive-platform-core GraphQL API on :4040 (background)
+	$(call _check_sibling,brighthive-platform-core)
+	@NAME=$(NAME) $(MAKE) -C "$(SIBLINGS_DIR)/brighthive-platform-core" local
+
+stop-core:  ## ④ Stop platform-core
+	@$(MAKE) -C "$(SIBLINGS_DIR)/brighthive-platform-core" stop 2>/dev/null || true
+
+start-brightbot:  ## ④ Start brightbot agent graph on :2024 (background)
+	$(call _check_sibling,brightbot)
+	@NAME=$(NAME) $(MAKE) -C "$(SIBLINGS_DIR)/brightbot" local
+
+stop-brightbot:  ## ④ Stop brightbot
+	@$(MAKE) -C "$(SIBLINGS_DIR)/brightbot" stop 2>/dev/null || true
+
+localstack: start-core start-brightbot start-webapp  ## ④ Start full local stack (core → brightbot → webapp)
 	@echo ""
-	@echo "  → webapp running at http://localhost:7420"
-	@echo "  → logs: tail -f /tmp/bh-webapp.log"
-	@echo "  → stop: make stop-webapp"
+	@printf "  %-20s %s\n" "platform-core" "http://localhost:4040/graphql"
+	@printf "  %-20s %s\n" "brightbot"     "http://127.0.0.1:2024"
+	@printf "  %-20s %s\n" "webapp"        "http://localhost:7420"
+	@echo ""
+	@echo "  Stop all: make stopstack"
 
-stop-webapp:  ## ④ Stop the webapp dev server
-	@$(MAKE) -C "$(SIBLINGS_DIR)/brighthive-webapp" stop 2>/dev/null || \
-		lsof -ti tcp:7420 2>/dev/null | xargs kill 2>/dev/null || true
-	@echo "  → webapp stopped"
+stopstack: stop-webapp stop-brightbot stop-core  ## ④ Stop all local services
+
+stackstatus:  ## ④ Show running status of all local services
+	@printf "  %-20s " "platform-core"; lsof -ti tcp:4040 >/dev/null 2>&1 && echo "running :4040" || echo "down"
+	@printf "  %-20s " "brightbot";     lsof -ti tcp:2024 >/dev/null 2>&1 && echo "running :2024" || echo "down"
+	@printf "  %-20s " "webapp";        lsof -ti tcp:7420 >/dev/null 2>&1 && echo "running :7420" || echo "down"
 
 # ── Status ────────────────────────────────────────────────────
 
@@ -668,7 +699,13 @@ help:  ## Show this help
 	@printf "\n  \033[1mLayer 1 — Onboarding primitives\033[0m  (idempotent, safe to re-run)\n"
 	@grep -E '^[a-zA-Z_-]+:.*## ①|^[a-zA-Z_-]+:.*## ②|^[a-zA-Z_-]+:.*## ③|^[a-zA-Z_-]+:.*## ④' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
-	@printf "\n  \033[1mLayer 2-4\033[0m  (coming soon: per-repo make local/staging/start, localstack, stagingstack, onboard)\n\n"
+	@printf "\n  \033[1mLayer 2 — Start services (all require NAME=)\033[0m\n"
+	@grep -E '^[a-zA-Z_-]+:.*## ④' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@printf "\n  \033[1mLayer 3 — Stack orchestration\033[0m  (coming soon: staging stack)\n"
+	@grep -E '^(localstack|stopstack|stackstatus):.*## ' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@printf "\n"
 	@printf "  \033[1mLegacy — Slack integration\033[0m\n"
 	@grep -E '^slack[a-zA-Z_-]*:.*## ' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
