@@ -1,0 +1,22 @@
+# BrightHive sibling repos.
+# One per line. Trailing `?` = optional (skip silently if missing).
+# Unmarked siblings warn loudly when missing.
+#
+# Each sibling is expected to live at $SIBLINGS_DIR/<name> (default: ../<name>).
+
+# Core runtime + UI
+brightbot
+brightbot-v2?
+brighthive-platform-core
+brighthive-webapp
+brightbot-slack-server
+
+# Infrastructure (CDK)
+brighthive-data-organization-cdk
+brighthive-data-workspace-cdk
+
+# Supporting services
+brighthive-jobs?
+brighthive-admin?
+brighthive-ibm-wxo
+brighthive-docs?

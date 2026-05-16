@@ -1,3 +1,8 @@
+# Onboarding bootstrap — local caches + state (never commit)
+/secrets/
+/.state/
+*.zip.enc
+
 # Virtual Environments
 .venv/
 venv/
