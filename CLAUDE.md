@@ -2,6 +2,54 @@
 
 ---
 
+## Onboarding Protocol
+
+**Trigger**: User says anything like "set me up", "onboard me", "help me get started", "I'm new", or asks why something isn't working and `make status` shows all sentinels missing.
+
+**What to do**: Follow `ONBOARDING.md` step by step. Do not summarize or paraphrase — execute. Each step has a command; run it, read the output, proceed or fix before moving on.
+
+### Execution order
+
+```
+make check-prereqs          → see what's missing
+make install-prereqs        → install only what's missing (idempotent)
+make configure-aws-sso      → print setup commands if AWS profiles not configured
+make check-creds            → verify AWS SSO + LastPass sessions
+# (fix any ✗ with make refresh-aws / make refresh-lastpass)
+NAME=<name> make unpack         → decrypt vault package into {name}lead/
+NAME=<name> make verify-lead    → confirm all vault files present
+NAME=<name> make pull-secrets   → populate secrets/ from vault
+NAME=<name> make env-brightbot-local   → write ../brightbot/.env
+NAME=<name> make env-webapp-local      → write ../brighthive-webapp/.env.local
+make check-siblings         → see which sibling repos exist
+make clone-siblings         → clone any missing
+make status                 → confirm all sentinels green
+```
+
+### Decision rules for Claude
+
+- **Ask for `NAME`** once at the start if the user hasn't mentioned it. It's their first name lowercased (e.g. `matt`, `kuri`, `ahmed`). Every `pull-*` and `env-*` command needs it.
+- **Ask for the vault package path** when the user reaches Step 3 and `{name}lead/` doesn't exist. They should have a `{name}lead-export.zip.enc` file from their TechLead. If they don't have it yet, pause and tell them to request it.
+- **Never fill in `.env` values for the user** — only tell them which fields need values and why.
+- **Stop on `[ERROR]`** — do not continue to the next step until the current error is resolved.
+- **Do not re-run steps that already show green** — `make status` is the ground truth.
+- **If a secret token is unresolved** in `make env-*`: run `FORCE=1 NAME=<name> make pull-secrets` first, then retry. If it still fails, the key doesn't exist in the vault — report the exact missing path and stop.
+
+### What Claude can do automatically vs. what needs the user
+
+| Automatic (Claude runs it) | Needs user |
+|---|---|
+| `make check-prereqs` | Filling in `.env` (AWS profiles, LastPass user, GitHub token) |
+| `make install-prereqs` | Running `aws configure sso` (interactive browser login) |
+| `make configure-aws-sso` (prints commands) | Running `make refresh-aws` / `make refresh-lastpass` (opens browser) |
+| `make check-siblings` | Providing the vault package + password |
+| `make clone-siblings` | |
+| `NAME=X make pull-secrets` | |
+| `NAME=X make env-*` | |
+| `make status` | |
+
+---
+
 ## Quick Answer Table
 
 | Question | Location |
@@ -87,7 +135,7 @@ agentic-project-mgmt/
 ### Creating Jira Tickets
 1. `jira/TICKET_TEMPLATE.md` — mandatory format
 2. ALL tickets must belong to an Epic via `parent: {key: 'BH-XXX'}`
-3. Key epics: BH-170 (SDLC), BH-171 (AWS), BH-172 (Features), BH-173 (Bugs), BH-196 (Partnerships)
+3. Look up the right epic at ticket-creation time via `mcp__jira__jira_get_epics(boardId=152, done=false)` — do **not** hardcode epic IDs in docs or rules (they age badly; we're already past BH-400)
 
 ### AWS Infrastructure
 1. `dynamo-vault/INFRASTRUCTURE.md` — accounts, tables, client configs
@@ -279,18 +327,11 @@ Q1 ended March 24, 2026 (Sprint 7 was the last). Q2 starts April 2026.
 
 **Q2 Strategic Priorities**:
 - Bedrock migration: Move BrightBot from LangGraph to AWS Bedrock AgentCore
-- BrightStudio: Custom agent builder (BH-260 epic)
+- BrightStudio: Custom agent builder (look up current epic in Jira)
 - IBM WXO partnership integration
 - Spec-driven development workflow (specs before code)
 
-**Q2 Epics** (carry-forward + new):
-- BH-170: SDLC & Code Quality
-- BH-171: AWS DevOps & Infrastructure
-- BH-172: Platform Features & Enhancements
-- BH-173: Bugs & Fixes
-- BH-196: Partnerships (IBM WXO)
-- BH-260: BrightStudio & Custom Agents
-- _New epics TBD for Bedrock migration and spec-driven dev_
+**Epics**: query Jira for the live list, don't copy IDs into this doc. `mcp__jira__jira_get_epics(boardId=152, done=false)` returns the current set. Specific IDs change — we're past BH-400 now and any list pasted here will age out in weeks.
 
 ---
 
@@ -322,4 +363,4 @@ This repo tracks the migration execution — sprint tickets, PRs, release notes.
 
 - **Jira Board**: https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152
 - **Board ID**: 152
-- **Key Epics**: BH-170 (SDLC), BH-171 (AWS), BH-172 (Features), BH-173 (Bugs), BH-196 (Partnerships), BH-260 (BrightStudio)
+- **Epics**: query live — `mcp__jira__jira_get_epics(boardId=152, done=false)`. Do not list IDs here; they change.
