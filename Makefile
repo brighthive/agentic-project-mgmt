@@ -362,6 +362,7 @@ STATE_HELPERS = . scripts/state.sh
         check-siblings clone-siblings \
         pull-aws-secrets pull-lastpass pull-secrets \
         env-brightbot-local env-webapp-local env-webapp-staging \
+        start-webapp stop-webapp \
         status
 
 # ── Credentials ───────────────────────────────────────────────
@@ -608,6 +609,34 @@ env-webapp-staging: pull-aws-secrets  ## ④ Generate ../brighthive-webapp/.env.
 		--secrets-dir $(SECRETS_DIR) \
 		--state-dir $(STATE_DIR) \
 		--key webapp-staging
+
+# ── Status ────────────────────────────────────────────────────
+
+# ── Start webapp against staging ─────────────────────────────
+
+.PHONY: start-webapp stop-webapp
+
+start-webapp: env-webapp-staging  ## ④ Start brighthive-webapp against staging (background, opens browser)
+	@echo "── Starting webapp (staging) ──"
+	@if [ ! -d "$(SIBLINGS_DIR)/brighthive-webapp" ]; then \
+		echo "  [ERROR] brighthive-webapp not found at $(SIBLINGS_DIR)/brighthive-webapp"; \
+		echo "  Run: make clone-siblings"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(SIBLINGS_DIR)/brighthive-webapp/node_modules" ]; then \
+		echo "  → npm install (first run)..."; \
+		cd "$(SIBLINGS_DIR)/brighthive-webapp" && npm install --silent; \
+	fi
+	@$(MAKE) -C "$(SIBLINGS_DIR)/brighthive-webapp" staging-bg
+	@echo ""
+	@echo "  → webapp running at http://localhost:7420"
+	@echo "  → logs: tail -f /tmp/bh-webapp.log"
+	@echo "  → stop: make stop-webapp"
+
+stop-webapp:  ## ④ Stop the webapp dev server
+	@$(MAKE) -C "$(SIBLINGS_DIR)/brighthive-webapp" stop 2>/dev/null || \
+		lsof -ti tcp:7420 2>/dev/null | xargs kill 2>/dev/null || true
+	@echo "  → webapp stopped"
 
 # ── Status ────────────────────────────────────────────────────
 
