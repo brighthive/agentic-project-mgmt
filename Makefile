@@ -164,7 +164,9 @@ SIBLINGS_DIR            ?= ..
 SECRETS_CACHE_TTL       ?= 86400
 STATE_DIR               := .state
 SECRETS_DIR             := secrets
-KURILEAD_DIR            := kurilead
+# The *lead/ vault directory for the current user.  Derived from NAME.
+# Override: NAME=matt  → LEAD_DIR=mattlead
+LEAD_DIR                := $(NAME)lead
 
 # Python interpreter — require 3.11+; reject the macOS Xcode stub.
 PYTHON3 := $(shell command -v python3.13 || command -v python3.12 || command -v python3.11 || command -v python3)
@@ -271,15 +273,21 @@ clone-siblings:  ## ② git clone any missing sibling repos
 # ── Secret cache ──────────────────────────────────────────────
 
 pull-aws-secrets:  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h TTL)
-	@echo "── Pulling AWS Secrets Manager values ──"
+	@echo "── Pulling AWS Secrets Manager values (NAME=$(NAME)) ──"
+	@if [ ! -d "$(LEAD_DIR)" ]; then \
+		echo "  [ERROR] $(LEAD_DIR)/ not found."; \
+		echo "  Ask your TechLead to run:  make onboard NAME=$(NAME)"; \
+		echo "  Then you run:              NAME=$(NAME) make unpack"; \
+		exit 1; \
+	fi
 	@$(STATE_HELPERS); \
 		mkdir -p $(SECRETS_DIR)/aws; \
-		if [ ! -f "$(KURILEAD_DIR)/secrets-manager/main_secrets.json" ] || \
-		   [ ! -f "$(KURILEAD_DIR)/secrets-manager/stage_secrets.json" ] || \
-		   [ ! -f "$(KURILEAD_DIR)/secrets-manager/prod_secrets.json" ] || \
+		if [ ! -f "$(LEAD_DIR)/secrets-manager/main_secrets.json" ] || \
+		   [ ! -f "$(LEAD_DIR)/secrets-manager/stage_secrets.json" ] || \
+		   [ ! -f "$(LEAD_DIR)/secrets-manager/prod_secrets.json" ] || \
 		   [ "$${FORCE:-0}" = "1" ]; then \
-			echo "  → $(PYTHON3) $(KURILEAD_DIR)/export_all.py secrets"; \
-			$(PYTHON3) $(KURILEAD_DIR)/export_all.py secrets > /tmp/bh-agentic-aws-export.log 2>&1 || { \
+			echo "  → $(PYTHON3) $(LEAD_DIR)/export_all.py secrets"; \
+			$(PYTHON3) $(LEAD_DIR)/export_all.py secrets > /tmp/bh-agentic-aws-export.log 2>&1 || { \
 				tail -20 /tmp/bh-agentic-aws-export.log; \
 				exit 1; \
 			}; \
@@ -289,9 +297,9 @@ pull-aws-secrets:  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h
 				continue; \
 			fi; \
 			case "$$env" in \
-				main) source="$(KURILEAD_DIR)/secrets-manager/main_secrets.json" ;; \
-				staging) source="$(KURILEAD_DIR)/secrets-manager/stage_secrets.json" ;; \
-				production) source="$(KURILEAD_DIR)/secrets-manager/prod_secrets.json" ;; \
+				main) source="$(LEAD_DIR)/secrets-manager/main_secrets.json" ;; \
+				staging) source="$(LEAD_DIR)/secrets-manager/stage_secrets.json" ;; \
+				production) source="$(LEAD_DIR)/secrets-manager/prod_secrets.json" ;; \
 			esac; \
 			if [ ! -f "$$source" ]; then \
 				echo "  ✗ missing AWS export: $$source"; \
@@ -303,15 +311,21 @@ pull-aws-secrets:  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h
 		done
 
 pull-lastpass:  ## ③ Pull LastPass entries into secrets/lastpass.json (24h TTL)
-	@echo "── Pulling LastPass secrets ──"
+	@echo "── Pulling LastPass secrets (NAME=$(NAME)) ──"
+	@if [ ! -d "$(LEAD_DIR)" ]; then \
+		echo "  [ERROR] $(LEAD_DIR)/ not found."; \
+		echo "  Ask your TechLead to run:  make onboard NAME=$(NAME)"; \
+		echo "  Then you run:              NAME=$(NAME) make unpack"; \
+		exit 1; \
+	fi
 	@$(STATE_HELPERS); \
 		mkdir -p $(SECRETS_DIR); \
 		if state_skip_if_fresh "secrets/lastpass-pulled" "$(SECRETS_CACHE_TTL)" "secrets/lastpass.json"; then \
 			exit 0; \
 		fi; \
-		if [ -f "$(KURILEAD_DIR)/lastpass-vault/lastpass_secrets.json" ] && [ "$${FORCE:-0}" != "1" ]; then \
-			echo "  → $(KURILEAD_DIR)/lastpass-vault/lastpass_secrets.json → $(SECRETS_DIR)/lastpass.json"; \
-			cp "$(KURILEAD_DIR)/lastpass-vault/lastpass_secrets.json" "$(SECRETS_DIR)/lastpass.json"; \
+		if [ -f "$(LEAD_DIR)/lastpass-vault/lastpass_secrets.json" ] && [ "$${FORCE:-0}" != "1" ]; then \
+			echo "  → $(LEAD_DIR)/lastpass-vault/lastpass_secrets.json → $(SECRETS_DIR)/lastpass.json"; \
+			cp "$(LEAD_DIR)/lastpass-vault/lastpass_secrets.json" "$(SECRETS_DIR)/lastpass.json"; \
 		else \
 			echo "  → lastpass-vault sync"; \
 			./lastpass-vault/cli/secrets sync > /tmp/bh-agentic-lastpass-sync.log 2>&1 || { \
@@ -328,23 +342,33 @@ pull-lastpass:  ## ③ Pull LastPass entries into secrets/lastpass.json (24h TTL
 
 pull-secrets: pull-aws-secrets pull-lastpass  ## ③ Pull all vault sources into ./secrets/
 
-# ── kurilead package (handoff to new engineering leaders) ─────
+# ── Vault package — onboard a new engineering leader ─────────
+#
+# Usage:
+#   make onboard NAME=matt          Package vault → mattlead-export.zip.enc
+#   make unpack  NAME=matt          Unpack into mattlead/ (new leader runs this)
+#   make verify-lead                Check that your *lead/ directory is complete
+#
+# NAME defaults to "kuri" (the current tech-lead's own vault).
 
-.PHONY: package-kurilead unpack-kurilead verify-kurilead
+.PHONY: onboard unpack verify-lead
 
-package-kurilead:  ## ③ Bundle kurilead/ vault exports into an encrypted zip for new-leader handoff
-	@echo "── Packaging kurilead/ vault exports ──"
-	@echo "  → output: kurilead-export.zip.enc"
+NAME ?= kuri
+
+onboard:  ## ③ Package vault exports → {NAME}lead-export.zip.enc for new-leader handoff
+	@echo "── Packaging vault for $(NAME) ──"
 	@$(PYTHON3) scripts/package_kurilead.py package \
-		--output "${KURILEAD_PACKAGE_OUT:-kurilead-export.zip.enc}"
+		--name "$(NAME)" \
+		--output "$(NAME)lead-export.zip.enc"
 
-unpack-kurilead:  ## ③ Decrypt + extract a kurilead package (new leaders run this once)
-	@echo "── Unpacking kurilead vault package ──"
+unpack:  ## ③ Decrypt + extract a vault package into {NAME}lead/ (new leaders run this)
+	@echo "── Unpacking vault for $(NAME) ──"
 	@$(PYTHON3) scripts/package_kurilead.py unpack \
-		--input "${KURILEAD_PACKAGE:-kurilead-export.zip.enc}"
+		--name "$(NAME)" \
+		--input "$(NAME)lead-export.zip.enc"
 
-verify-kurilead:  ## ③ Check that kurilead/ has all expected vault export files
-	@$(PYTHON3) scripts/package_kurilead.py verify
+verify-lead:  ## ③ Check that {NAME}lead/ has all expected vault export files
+	@$(PYTHON3) scripts/package_kurilead.py verify --name "$(NAME)"
 
 # ── Env materialization ───────────────────────────────────────
 

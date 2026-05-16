@@ -27,30 +27,32 @@ $EDITOR .env   # fill in your AWS profile names, LastPass user, GitHub token
 
 ## Step 1b — Unpack the vault package (new leaders only, one-time)
 
-> **If you already have `kurilead/` from a previous setup, skip this step.**
+> **If you already have your `{name}lead/` directory from a previous setup, skip this step.**
 
-The `kurilead/` directory holds the raw vault export files (AWS Secrets Manager, LastPass, DynamoDB workspace configs). It is **gitignored** and never committed. For a brand-new engineering leader, a TechLead generates a secure handoff package:
+The `{name}lead/` directory (e.g. `mattlead/`, `kurilead/`) holds your raw vault export files — AWS Secrets Manager, LastPass, DynamoDB workspace configs. It is **gitignored** and never committed. For a brand-new engineering leader, the TechLead packages it for you.
 
-**TechLead generates the package** (run this once, share the file + password securely):
+**TechLead: generate a handoff package for the new leader** (e.g. for "matt"):
 ```bash
-make package-kurilead
-# → produces kurilead-export.zip.enc
-# Share the file + the password via 1Password/LastPass secure note
+make onboard NAME=matt
+# → produces mattlead-export.zip.enc
+# Share the file + password securely via 1Password/LastPass secure note
 ```
 
-**New leader unpacks it:**
+**New leader: unpack it on your machine:**
 ```bash
-# Set the path to the .zip.enc file you received
-KURILEAD_PACKAGE=/path/to/kurilead-export.zip.enc make unpack-kurilead
-# Prompts for decryption password
+# Copy mattlead-export.zip.enc into the repo root, then:
+NAME=matt make unpack
+# Prompts for decryption password → creates mattlead/ directory
 ```
 
-**Verify the package is complete:**
+**Verify it's complete:**
 ```bash
-make verify-kurilead
+NAME=matt make verify-lead
 ```
 
-After this, `kurilead/` will contain all the JSON vault exports that power `make pull-secrets`. Once your AWS SSO access is provisioned, you can refresh the package yourself with `make pull-aws-secrets` (which calls `kurilead/export_all.py` directly) — but for day-1 you don't need AWS access.
+After unpacking, `mattlead/` contains all the JSON vault exports that power `make pull-secrets NAME=matt`. Once you have AWS SSO access provisioned, you can refresh your own vault with `FORCE=1 make pull-aws-secrets NAME=matt` — but for day-1 you don't need AWS access.
+
+> **Every `make pull-*` and `make env-*` command accepts `NAME=<your-name>`.** Your `{name}lead/` is your personal vault cache — no two engineers share a directory.
 
 ## Step 2 — Verify your credentials
 

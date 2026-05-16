@@ -221,13 +221,14 @@ def load_lastpass_export(path: Path) -> dict[str, Any]:
 def load_secrets(secrets_dir: Path) -> dict[str, Any]:
     """Merge all vault JSON exports into a single nested dict.
 
-    Layout expected:
+    Layout expected (all produced by `make pull-secrets`):
         secrets/aws/{env}.json       → secrets["aws"][env] = {...}
         secrets/lastpass.json        → secrets["lastpass"] = {...}
         secrets/dynamo/{env}.json    → secrets["dynamo"][env] = {...}
 
-    Fallback: if secrets/aws/ is empty, attempts to read from the kurilead/
-    personal vault directory (gitignored, present on developer workstations).
+    If secrets/ is empty, prints a [WARN] and returns an empty map — the
+    subsequent token-resolution step will fail loudly listing each missing key,
+    so the engineer knows exactly what to pull.  No silent fallbacks.
     """
     merged: dict[str, Any] = {"aws": {}, "lastpass": {}, "dynamo": {}}
 
@@ -256,30 +257,11 @@ def load_secrets(secrets_dir: Path) -> dict[str, Any]:
             except json.JSONDecodeError as e:
                 print(f"[WARN] {f}: invalid JSON ({e})", file=sys.stderr)
 
-    # Fallback: personal kurilead vault dump (gitignored, only on dev workstations).
-    # Used when secrets/aws/ was not populated by make pull-aws-secrets.
-    kurilead_dir = secrets_dir.parent / "kurilead"
-    if kurilead_dir.is_dir() and not merged["aws"]:
-        aws_exports = {
-            "dev": kurilead_dir / "secrets-manager" / "dev_secrets.json",
-            "main": kurilead_dir / "secrets-manager" / "main_secrets.json",
-            "staging": kurilead_dir / "secrets-manager" / "stage_secrets.json",
-            "production": kurilead_dir / "secrets-manager" / "prod_secrets.json",
-        }
-        for env, export_path in aws_exports.items():
-            if export_path.is_file():
-                try:
-                    merged["aws"][env] = load_aws_export(export_path)
-                except json.JSONDecodeError as e:
-                    print(f"[WARN] {export_path}: invalid JSON ({e})", file=sys.stderr)
-
-    if kurilead_dir.is_dir() and not merged["lastpass"]:
-        lp_fallback = kurilead_dir / "lastpass-vault" / "lastpass_secrets.json"
-        if lp_fallback.is_file():
-            try:
-                merged["lastpass"] = load_lastpass_export(lp_fallback)
-            except json.JSONDecodeError as e:
-                print(f"[WARN] {lp_fallback}: invalid JSON ({e})", file=sys.stderr)
+    # No silent fallbacks. If secrets/ is empty, the caller must run
+    # `make pull-secrets` (or `NAME=<you> make unpack` then `make pull-secrets`).
+    # Fail loudly on missing data so the engineer knows exactly what to fix.
+    if not merged["aws"]:
+        print("[WARN] secrets/aws/ is empty — run `make pull-aws-secrets`", file=sys.stderr)
 
     return merged
 

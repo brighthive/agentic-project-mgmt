@@ -2,25 +2,34 @@
 """Package or unpack the kurilead/ vault export directory.
 
 Commands:
-    package   Bundle kurilead/ into an encrypted zip for handoff to a new engineering leader.
-    unpack    Decrypt and extract a bundled package into kurilead/.
-    verify    Check that all expected files are present in kurilead/.
+    package   Bundle {name}lead/ into an encrypted zip for handoff to a new engineering leader.
+    unpack    Decrypt and extract a bundled package into {name}lead/.
+    verify    Check that all expected files are present in {name}lead/.
 
 Usage:
-    scripts/package_kurilead.py package [--output kurilead-export.zip.enc] [--password P]
-    scripts/package_kurilead.py unpack  [--input  kurilead-export.zip.enc] [--password P]
-    scripts/package_kurilead.py verify
+    make onboard NAME=matt           # packages mattlead-export.zip.enc
+    make unpack  NAME=matt           # extracts into mattlead/
+    make verify-lead NAME=matt       # checks mattlead/ completeness
+
+Or directly:
+    scripts/package_kurilead.py package --name matt [--output mattlead-export.zip.enc] [--password P]
+    scripts/package_kurilead.py unpack  --name matt [--input  mattlead-export.zip.enc] [--password P]
+    scripts/package_kurilead.py verify  --name matt
+
+The name determines:
+  - Source vault directory: {name}lead/  (e.g. mattlead/, kurilead/)
+  - Default output/input file: {name}lead-export.zip.enc
+  - Name defaults to "kuri" (the current tech-lead's vault)
 
 The package command:
-  1. Exports fresh vault data from kurilead/export_all.py (if --fresh flag given),
-     or uses whatever is already in kurilead/secrets-manager/ and kurilead/lastpass-vault/.
-  2. Creates a zip of the relevant JSON files.
-  3. Encrypts with AES-256-GCM using the provided password (or prompts).
+  1. Reads existing JSON exports from {name}lead/secrets-manager/ + lastpass-vault/ + dynamo-vault/.
+  2. Creates a zip of the relevant JSON files (warns about missing files, proceeds with present ones).
+  3. Encrypts with authenticated encryption (PBKDF2 + AES-CTR + HMAC-SHA256).
   4. Writes the encrypted package to the output path.
 
 The unpack command:
   1. Prompts for password (or uses --password).
-  2. Decrypts + extracts into kurilead/ without overwriting existing files
+  2. Decrypts + extracts into {name}lead/ without overwriting existing files
      unless --force is given.
 
 Encryption: AES-256-GCM with a random 96-bit nonce + PBKDF2-HMAC-SHA256 key derivation
@@ -53,9 +62,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-KURILEAD_DIR = REPO_ROOT / "kurilead"
 
-# Files to include in the package (relative to KURILEAD_DIR)
+# Files to include in / verify from any *lead/ directory (relative to the lead dir)
 PACKAGE_PATTERNS = [
     "secrets-manager/main_secrets.json",
     "secrets-manager/stage_secrets.json",
@@ -124,17 +132,28 @@ def decrypt_bytes(envelope: bytes, password: str) -> bytes:
     return _xor(ciphertext, keystream)
 
 
+def lead_dir(name: str) -> Path:
+    """Return the path to {name}lead/ under the repo root."""
+    return REPO_ROOT / f"{name}lead"
+
+
+def default_package_path(name: str) -> str:
+    return f"{name}lead-export.zip.enc"
+
+
 def cmd_package(args: argparse.Namespace) -> int:
-    if not KURILEAD_DIR.is_dir():
-        print(f"[ERROR] kurilead/ not found at {KURILEAD_DIR}", file=sys.stderr)
-        print("  Run `make pull-aws-secrets` with access to kurilead/ first.", file=sys.stderr)
+    name = args.name
+    src_dir = lead_dir(name)
+    if not src_dir.is_dir():
+        print(f"[ERROR] {src_dir.name}/ not found at {src_dir}", file=sys.stderr)
+        print(f"  Expected: {src_dir}", file=sys.stderr)
         return 1
 
     # Collect files to package
     files: list[tuple[str, Path]] = []
     missing: list[str] = []
     for pattern in PACKAGE_PATTERNS:
-        p = KURILEAD_DIR / pattern
+        p = src_dir / pattern
         if p.is_file():
             files.append((pattern, p))
         else:
@@ -179,16 +198,19 @@ def cmd_package(args: argparse.Namespace) -> int:
 
     print(f"[OK] Packaged {len(files)} vault files → {output} ({len(encrypted):,} bytes)")
     print(f"     Share {output.name} + the password securely with the new engineering leader.")
-    print(f"     They run: KURILEAD_PACKAGE={output} make unpack-kurilead")
+    print(f"     They run:  NAME={name} make unpack")
     return 0
 
 
 def cmd_unpack(args: argparse.Namespace) -> int:
+    name = args.name
     pkg = Path(args.input)
     if not pkg.is_file():
         print(f"[ERROR] package not found: {pkg}", file=sys.stderr)
-        print(f"  Set KURILEAD_PACKAGE=<path> or pass --input <path>", file=sys.stderr)
+        print(f"  Expected: {pkg}", file=sys.stderr)
+        print(f"  Ask your TechLead to run:  make onboard NAME={name}", file=sys.stderr)
         return 1
+    dest_dir = lead_dir(name)
 
     password = args.password or getpass.getpass("Decryption password: ")
     if not password:
@@ -202,53 +224,68 @@ def cmd_unpack(args: argparse.Namespace) -> int:
         return 1
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-        for name in zf.namelist():
-            if name == "PACKAGE_META.json":
+        for arc_name in zf.namelist():
+            if arc_name == "PACKAGE_META.json":
                 continue
-            dest = KURILEAD_DIR / name
+            dest = dest_dir / arc_name
             if dest.is_file() and not args.force:
-                print(f"  · skip {name} (exists — use --force to overwrite)")
+                print(f"  · skip {arc_name} (exists — use --force to overwrite)")
                 continue
             dest.parent.mkdir(parents=True, exist_ok=True)
-            dest.write_bytes(zf.read(name))
-            print(f"  [OK] unpacked {name}")
+            dest.write_bytes(zf.read(arc_name))
+            print(f"  [OK] unpacked {arc_name}")
 
-    print(f"\n[OK] kurilead/ populated. Run `make pull-secrets` to copy into secrets/.")
+    print(f"\n[OK] {dest_dir.name}/ populated. Run `make pull-secrets` to copy into secrets/.")
     return 0
 
 
-def cmd_verify(_args: argparse.Namespace) -> int:
+def cmd_verify(args: argparse.Namespace) -> int:
+    name = args.name
+    src_dir = lead_dir(name)
+    if not src_dir.is_dir():
+        print(f"[ERROR] {src_dir.name}/ not found at {src_dir}", file=sys.stderr)
+        print(f"  Run:  NAME={name} make unpack", file=sys.stderr)
+        return 1
     ok = True
     for pattern in PACKAGE_PATTERNS:
-        p = KURILEAD_DIR / pattern
+        p = src_dir / pattern
         if p.is_file():
             print(f"  [OK] {pattern}")
         else:
             print(f"  [MISSING] {pattern}", file=sys.stderr)
             ok = False
     if ok:
-        print("\n[OK] All expected files present in kurilead/.")
+        print(f"\n[OK] All expected files present in {src_dir.name}/.")
     else:
-        print("\n[WARN] Some files missing — run `make package-kurilead` to repopulate.", file=sys.stderr)
+        print(f"\n[ERROR] Some files missing in {src_dir.name}/.", file=sys.stderr)
+        print(f"  Ask TechLead to regenerate:  make onboard NAME={name}", file=sys.stderr)
     return 0 if ok else 1
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Package/unpack the kurilead/ vault export.")
+    ap = argparse.ArgumentParser(description="Package/unpack a *lead/ vault export directory.")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    p_pack = sub.add_parser("package", help="Bundle kurilead/ into an encrypted handoff zip")
-    p_pack.add_argument("--output", default="kurilead-export.zip.enc", help="Output path")
+    p_pack = sub.add_parser("package", help="Bundle {name}lead/ into an encrypted handoff zip")
+    p_pack.add_argument("--name", default="kuri", help="Lead name (e.g. matt → mattlead/)")
+    p_pack.add_argument("--output", default="", help="Output path (default: {name}lead-export.zip.enc)")
     p_pack.add_argument("--password", default="", help="Encryption password (omit to prompt)")
 
-    p_unpack = sub.add_parser("unpack", help="Decrypt and extract a kurilead package")
-    p_unpack.add_argument("--input", default=os.environ.get("KURILEAD_PACKAGE", "kurilead-export.zip.enc"))
+    p_unpack = sub.add_parser("unpack", help="Decrypt and extract into {name}lead/")
+    p_unpack.add_argument("--name", default="kuri", help="Lead name (e.g. matt → mattlead/)")
+    p_unpack.add_argument("--input", default="", help="Input path (default: {name}lead-export.zip.enc)")
     p_unpack.add_argument("--password", default="", help="Decryption password (omit to prompt)")
     p_unpack.add_argument("--force", action="store_true", help="Overwrite existing files")
 
-    p_verify = sub.add_parser("verify", help="Check kurilead/ completeness")
+    p_verify = sub.add_parser("verify", help="Check {name}lead/ completeness")
+    p_verify.add_argument("--name", default="kuri", help="Lead name (e.g. matt → mattlead/)")
 
     args = ap.parse_args()
+    # Apply name-derived defaults for output/input paths
+    if hasattr(args, "output") and not args.output:
+        args.output = default_package_path(args.name)
+    if hasattr(args, "input") and not args.input:
+        args.input = default_package_path(args.name)
     handlers = {"package": cmd_package, "unpack": cmd_unpack, "verify": cmd_verify}
     return handlers[args.cmd](args)
 
