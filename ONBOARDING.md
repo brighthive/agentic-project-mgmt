@@ -1,170 +1,151 @@
 # BrightHive — New Engineering Leader Onboarding
 
-> **Status (PR #1 / Phase 1 MVP)**: Layer 1 atomic primitives only. The full `make onboard` ceremony and `make localstack`/`make stagingstack` wrappers land in subsequent PRs. This document covers what works today.
-
 This repo is the **agentic project management hub**. It also holds the onboarding bootstrap that pulls all BrightHive secrets to your laptop and materializes per-repo `.env` files so you can run the platform locally.
 
-## What you need before starting
+**You need only `git` to start. Every other tool is installed by Step 1.**
 
-Just `git` and internet access. Everything else is installed by the bootstrap.
+---
 
-## Step 0 — Install prerequisites (one command)
+## Step 1 — Clone + install prerequisites
 
 ```bash
-# Clone the repo first (git must already be present)
 git clone git@github.com:brighthive/agentic-project-mgmt.git
 cd agentic-project-mgmt
 
-# Install everything else: Homebrew, AWS CLI, LastPass CLI, gh, Python 3.13
 make install-prereqs
 ```
 
-Each tool is checked first — if it's already installed it's skipped with `✓`. Re-running `make install-prereqs` on a fully-set-up machine does nothing.
+Installs Homebrew (macOS), AWS CLI, LastPass CLI, `gh`, Python 3.13, `git` — one by one, skipping anything already present. Re-running is safe.
 
-**What gets installed** (all idempotent):
-
-| Target | Tool | Installs via |
-|---|---|---|
-| `make install-brew` | Homebrew | official install script (macOS only) |
-| `make install-awscli` | `aws` CLI v2 | `brew` or official Linux installer |
-| `make install-lastpasscli` | `lpass` | `brew` or `apt-get` |
-| `make install-gh` | `gh` CLI | `brew` or GitHub apt repo |
-| `make install-python3` | Python 3.13 | `brew` or `apt-get` |
-| `make install-git` | `git` | `brew` or `apt-get` |
-
-Run `make check-prereqs` at any time to verify what's installed without installing anything.
-
-## Step 1 — Fill in your `.env`
+Verify afterwards:
 
 ```bash
-git clone git@github.com:brighthive/agentic-project-mgmt.git
-cd agentic-project-mgmt
+make check-prereqs   # read-only status check
+```
 
+---
+
+## Step 2 — Fill in your `.env`
+
+```bash
 cp .env.example .env
-$EDITOR .env   # fill in your AWS profile names, LastPass user, GitHub token
+$EDITOR .env
 ```
 
-## Step 1b — Unpack the vault package (new leaders only, one-time)
+Fill in your AWS SSO profile names, LastPass username, GitHub token. If you've never set up AWS SSO:
 
-> **If you already have your `{name}lead/` directory from a previous setup, skip this step.**
-
-The `{name}lead/` directory (e.g. `mattlead/`, `kurilead/`) holds your raw vault export files — AWS Secrets Manager, LastPass, DynamoDB workspace configs. It is **gitignored** and never committed. For a brand-new engineering leader, the TechLead packages it for you.
-
-**TechLead: generate a handoff package for the new leader** (e.g. for "matt"):
 ```bash
-make onboard NAME=matt
-# → produces mattlead-export.zip.enc
-# Share the file + password securely via 1Password/LastPass secure note
+make configure-aws-sso   # prints exact commands + BrightHive SSO URL
 ```
 
-**New leader: unpack it on your machine:**
+Follow the printed instructions, then come back here.
+
+---
+
+## Step 3 — Receive and unpack the vault package
+
+Your TechLead will send you a file called `mattlead-export.zip.enc` (where `matt` is your name) and a password via 1Password/LastPass secure note.
+
 ```bash
-# Copy mattlead-export.zip.enc into the repo root, then:
-NAME=matt make unpack
-# Prompts for decryption password → creates mattlead/ directory
+# Copy the .zip.enc file into the repo root, then:
+NAME=matt make unpack      # prompts for password → creates mattlead/
+NAME=matt make verify-lead # confirm all files present
 ```
 
-**Verify it's complete:**
-```bash
-NAME=matt make verify-lead
-```
+> **From this point forward, all `make pull-*` and `make env-*` commands need `NAME=<your-name>`.** Your `mattlead/` is your personal vault cache — no two engineers share one.
 
-After unpacking, `mattlead/` contains all the JSON vault exports that power `make pull-secrets NAME=matt`. Once you have AWS SSO access provisioned, you can refresh your own vault with `FORCE=1 make pull-aws-secrets NAME=matt` — but for day-1 you don't need AWS access.
+---
 
-> **Every `make pull-*` and `make env-*` command accepts `NAME=<your-name>`.** Your `{name}lead/` is your personal vault cache — no two engineers share a directory.
-
-## Step 2 — Verify your credentials
+## Step 4 — Verify credentials
 
 ```bash
 make check-creds
 ```
 
-You should see green ticks for `brighthive-main`, `brighthive-staging`, `brighthive-production`, and your LastPass session. Any red ✗ tells you exactly what to fix:
+Shows green ticks for AWS SSO (main/staging/production) and LastPass. Fix any red:
 
 ```bash
-make refresh-aws        # runs `aws sso login --profile X` for each expired session
-make refresh-lastpass   # runs `lpass login $LASTPASS_USER` if needed
+make refresh-aws         # runs `aws sso login --profile X` for each expired session
+make refresh-lastpass    # runs `lpass login $LASTPASS_USER` if needed
 ```
 
-`make check-creds` is **idempotent** — re-running it when everything is already valid completes in <2 seconds with all ticks.
+---
 
-## Step 3 — Pull cached vault secrets
+## Step 5 — Pull cached vault secrets
 
 ```bash
-make pull-secrets
+NAME=matt make pull-secrets
 ```
 
-This pulls AWS Secrets Manager values (main / staging / production) and the BrightHive LastPass vault into a local `./secrets/` directory (gitignored, never committed). It honors a 24-hour cache — re-running within that window skips with "cache fresh". Override with `FORCE=1`:
+Copies vault exports from `mattlead/` into `secrets/aws/` and `secrets/lastpass.json`. Honors a 24h cache — re-running within that window skips with "cached, expires in Xh". Force a refresh:
 
 ```bash
-FORCE=1 make pull-secrets
+FORCE=1 NAME=matt make pull-secrets
 ```
 
-## Step 4 — Materialize `brightbot/.env`
+---
+
+## Step 6 — Materialize `.env` files
 
 ```bash
-make env-brightbot-local
+NAME=matt make env-brightbot-local    # → ../brightbot/.env
+NAME=matt make env-webapp-local       # → ../brighthive-webapp/.env.local
 ```
 
-This reads `config/env-templates/brightbot-local.env.tmpl`, resolves every `{{ source.key }}` token against the cached vault data, and writes `../brightbot/.env`. It records a SHA-based audit trail in `.state/env/brightbot-local.meta` so subsequent runs can detect:
+If a token is unresolved, the renderer exits with a list of missing keys and a hint. Most commonly this means Step 5 hasn't been run, or the 24h cache is stale and a secret changed — use `FORCE=1 NAME=matt make pull-secrets` to refresh.
 
-- **Nothing changed** → skip silently
-- **You edited the file** → print diff and refuse to overwrite (use `FORCE=1` to overwrite)
-- **An unmanaged `.env` was already there** → refuse to overwrite (use `ADOPT=1` to take ownership without changing the file, or `FORCE=1` to overwrite)
+---
 
-If the renderer encounters any unresolved `{{ source.key }}` token, it exits non-zero and lists which keys are missing — there is no silent empty substitution.
-
-## Step 4b — Materialize `brighthive-webapp/.env.local`
+## Step 7 — Clone sibling repos + verify state
 
 ```bash
-make env-webapp-local
+make check-siblings    # shows which repos are present / missing
+make clone-siblings    # clones any missing repos
+
+make status            # shows age of every sentinel (sessions, caches, materialized envs)
 ```
 
-This writes `../brighthive-webapp/.env.local` with the local GraphQL / BrightAgent endpoints plus the staging-backed API keys the webapp still needs locally (`STREAM_KEY`, LangGraph API key, etc.). It intentionally leaves `VITE_TOKEN_USER` blank — running `make local` inside `../brighthive-webapp` will generate a fresh local JWT and inject it for you.
-
-## Step 5 — Verify brightbot accepts the env
-
-```bash
-cd ../brightbot
-python scripts/local_bootstrap.py
-```
-
-If brightbot starts without missing-env errors, the onboarding bootstrap worked.
-
-## Step 6 — Check your overall state
-
-```bash
-make status
-```
-
-Shows you the age of every sentinel — AWS sessions, LastPass session, each secrets-cache pull, each materialized `.env`. Tells you at a glance what's stale.
+---
 
 ## What's NOT here yet (coming in later PRs)
 
-| Feature | Status | PR |
-|---|---|---|
-| `make local` / `make staging` / `make start` in each sibling repo (Layer 2) | Not yet | PR #4-5 |
-| `make localstack` — bring up all services pointed at local LocalStack (Layer 3) | Not yet | PR #6 |
-| `make stagingstack` — bring up all services pointed at Staging (Layer 3) | Not yet | PR #6 |
-| `make onboard` — full ceremony for fresh-clone setup (Layer 4) | Not yet | PR #7 |
-| Webapp env templates (`make env-webapp-local`, `make env-webapp-staging`) |  ✓ | This PR |
-| Env templates for platform-core, slack-server | Not yet | PR #2-3 |
-| Sibling clone automation (`make clone-siblings`) is in PR #1 — try it now |  ✓ | This PR |
+| Feature | Status |
+|---|---|
+| `make local` / `make staging` / `make start` in each sibling repo | Not yet — Layer 2 |
+| `make localstack` / `make stagingstack` — bring up the full stack | Not yet — Layer 3 |
+| `make onboard` — full one-command ceremony | Not yet — Layer 4 |
+| Env templates for platform-core, slack-server | Not yet |
 
-For the design rationale and the full four-layer hierarchy, see [`docs/specs/onboarding-bootstrap.md`](docs/specs/onboarding-bootstrap.md).
+For the design spec, see [`docs/specs/onboarding-bootstrap.md`](docs/specs/onboarding-bootstrap.md).
+
+---
+
+## TechLead: create a vault package for a new hire
+
+```bash
+make onboard NAME=matt    # → mattlead-export.zip.enc
+# Share the file + password via 1Password/LastPass secure note to Matt
+```
+
+---
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| `make check-aws` reports `session expired` | `make refresh-aws` — opens browser for SSO |
-| `make pull-aws-secrets` prints "AccessDenied" | Your IAM role doesn't have `secretsmanager:GetSecretValue` on that account; talk to ops |
-| `make env-brightbot-local` exits 1 with "unresolved tokens" | A LastPass entry or AWS secret is missing/renamed; either fix the template or fix the vault |
-| `make env-brightbot-local` exits 3 with "Unmanaged file present" | Existing `.env` wasn't created by the bootstrap. Run `ADOPT=1 make env-brightbot-local` to take ownership (no overwrite) or `FORCE=1 make env-brightbot-local` to replace it. |
-| Renderer complains about a missing template path | Run from the repo root (`cd agentic-project-mgmt`) — paths are relative to it |
+| `make check-aws` shows `✗` | `make refresh-aws` or `make configure-aws-sso` if profiles not set up yet |
+| `make pull-aws-secrets` → `[ERROR] mattlead/ not found` | Haven't unpacked yet — see Step 3 |
+| `make env-brightbot-local` → `[ERROR] unresolved tokens` | Run `FORCE=1 NAME=matt make pull-secrets` first |
+| `[ERROR] secrets dir not found` | Haven't run `make pull-secrets` yet |
+| `[ERROR] User edits detected` | You edited the `.env` by hand. Use `FORCE=1 make env-X` to overwrite, or `ADOPT=1` to keep your edits as the baseline. |
+| `make pull-secrets` shows `cached, expires in 14h` but a secret changed | `FORCE=1 NAME=matt make pull-secrets` |
+| `NAME is required` error | Add `NAME=<your-name>` to the command: `NAME=matt make pull-secrets` |
+
+---
 
 ## See also
 
 - [`docs/specs/onboarding-bootstrap.md`](docs/specs/onboarding-bootstrap.md) — full four-layer spec
-- [`config/siblings.txt`](config/siblings.txt) — sibling repo list (mark optional with trailing `?`)
+- [`config/siblings.txt`](config/siblings.txt) — sibling repo list
 - [`config/env-templates/`](config/env-templates/) — per-repo per-env templates
+- `make help` — all available targets

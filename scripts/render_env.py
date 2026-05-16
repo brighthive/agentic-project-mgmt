@@ -38,6 +38,9 @@ from typing import Any
 
 TOKEN_RE = re.compile(r"\{\{\s*([\w.\[\]\-\"']+)\s*\}\}")
 
+# Repo root — used to anchor default paths so the script works regardless of CWD.
+_REPO_ROOT = Path(__file__).parent.parent
+
 # Compatibility aliases for legacy brightbot template key names.
 # Maps new normalized key → tuple of older names to register as well.
 # Uses setdefault so the canonical value always wins on collision.
@@ -312,11 +315,16 @@ def walk_path(data: Any, path: str) -> Any:
     for seg in segments:
         if seg == "":
             continue
+        # Normalize segment to match how vault keys are stored (lowercase snake_case).
+        # Allows templates to use {{ aws.staging.CognitoUserPoolId }} or the normalized form.
+        seg_norm = normalize_key(seg) if seg else seg
         if not isinstance(cur, dict):
             raise KeyError(f"cannot index non-dict at '{seg}' in path '{path}'")
-        if seg not in cur:
+        # Try normalized key first, fall back to the original segment (preserves raw-key access).
+        lookup = seg_norm if seg_norm in cur else seg
+        if lookup not in cur:
             raise KeyError(f"missing key '{seg}' in path '{path}'")
-        cur = cur[seg]
+        cur = cur[lookup]
     return cur
 
 
@@ -378,7 +386,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--template", required=True, type=Path)
     ap.add_argument("--output", required=True, type=Path)
-    ap.add_argument("--secrets-dir", default=Path("secrets"), type=Path)
+    ap.add_argument("--secrets-dir", default=_REPO_ROOT / "secrets", type=Path)
     ap.add_argument("--state-dir", default=Path(".state"), type=Path)
     ap.add_argument("--key", help="Meta-record key (e.g. brightbot-local). Defaults to template stem.")
     ap.add_argument("--dry-run", action="store_true", help="Render to stdout; do not write.")
@@ -409,6 +417,11 @@ def main() -> int:
         )
         for m in missing:
             print(f"    - {m}", file=sys.stderr)
+        print(
+            "  Hint: if secrets/aws/ is empty, run `make pull-secrets NAME=<you>` first.\n"
+            "  If it still fails, the key may not exist in AWS Secrets Manager for this env.",
+            file=sys.stderr,
+        )
         return 1
 
     rendered_sha = sha256_text(rendered)

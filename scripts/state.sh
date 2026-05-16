@@ -8,8 +8,9 @@
 #   state_skip_if_fresh aws/main 28800 "AWS main session" && return 0
 #
 # All sentinel files live under .state/ (gitignored).
-
-set -euo pipefail
+#
+# NOTE: No set -euo pipefail here — this is sourced as a library and must
+# not impose shell options on the caller's recipe shell.
 
 STATE_DIR="${STATE_DIR:-.state}"
 
@@ -68,10 +69,11 @@ state_skip_if_fresh() {
     fi
 
     if state_is_fresh "$subpath" "$ttl"; then
-        local age human
+        local age remaining human_remaining
         age=$(state_age_seconds "$subpath")
-        human=$(state_format_age "$age")
-        echo "  ✓ ${desc} (skipped — fresh, ${human} old)"
+        remaining=$((ttl - age))
+        human_remaining=$(state_format_age "$remaining")
+        echo "  ✓ ${desc} (skipped — cached, expires in ${human_remaining} — use FORCE=1 to refresh)"
         return 0
     fi
     return 1

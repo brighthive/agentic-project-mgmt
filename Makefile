@@ -151,7 +151,8 @@ slack-status:  ## Show branch and env mode for each repo
 # ══════════════════════════════════════════════════════════════
 
 .PHONY: install-brew install-awscli install-lastpasscli install-gh \
-        install-python3 install-git install-prereqs check-prereqs
+        install-python3 install-git install-prereqs check-prereqs \
+        configure-aws-sso
 
 # ── Homebrew (macOS only) ─────────────────────────────────────
 
@@ -170,19 +171,23 @@ install-brew:  ## ⓪ Install Homebrew if missing (macOS only)
 install-awscli:  ## ⓪ Install the AWS CLI if missing
 	@if command -v aws >/dev/null 2>&1; then \
 		echo "  ✓ aws $(shell aws --version 2>&1 | awk '{print $$1}' | cut -d/ -f2) (skipped)"; \
-	elif command -v brew >/dev/null 2>&1; then \
-		echo "  → brew install awscli"; \
-		brew install awscli; \
-	elif [[ "$(shell uname)" == "Linux" ]]; then \
-		echo "  → Installing AWS CLI v2 (Linux)..."; \
-		curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip; \
-		unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2; \
-		sudo /tmp/awscliv2/aws/install; \
-		rm -rf /tmp/awscliv2 /tmp/awscliv2.zip; \
 	else \
-		echo "  [ERROR] Cannot install AWS CLI automatically on this platform."; \
-		echo "  Manual install: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"; \
-		exit 1; \
+		brew_bin=$$(command -v brew 2>/dev/null || echo /opt/homebrew/bin/brew); \
+		if [[ "$$(uname)" == "Darwin" ]] && "$$brew_bin" --version >/dev/null 2>&1; then \
+			echo "  → brew install awscli"; \
+			"$$brew_bin" install awscli; \
+		elif [[ "$$(uname)" == "Linux" ]]; then \
+			arch=$$(uname -m); [[ "$$arch" == "aarch64" ]] && arch="aarch64" || arch="x86_64"; \
+			echo "  → Installing AWS CLI v2 for Linux/$$arch..."; \
+			curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$${arch}.zip" -o /tmp/awscliv2.zip; \
+			unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2; \
+			sudo /tmp/awscliv2/aws/install; \
+			rm -rf /tmp/awscliv2 /tmp/awscliv2.zip; \
+		else \
+			echo "  [ERROR] Cannot install AWS CLI automatically on this platform."; \
+			echo "  Manual: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"; \
+			exit 1; \
+		fi; \
 	fi
 
 # ── LastPass CLI ──────────────────────────────────────────────
@@ -190,16 +195,19 @@ install-awscli:  ## ⓪ Install the AWS CLI if missing
 install-lastpasscli:  ## ⓪ Install the LastPass CLI (lpass) if missing
 	@if command -v lpass >/dev/null 2>&1; then \
 		echo "  ✓ lpass $(shell lpass --version 2>/dev/null | awk '{print $$NF}') (skipped)"; \
-	elif command -v brew >/dev/null 2>&1; then \
-		echo "  → brew install lastpass-cli"; \
-		brew install lastpass-cli; \
-	elif command -v apt-get >/dev/null 2>&1; then \
-		echo "  → apt-get install lastpass-cli"; \
-		sudo apt-get install -y lastpass-cli; \
 	else \
-		echo "  [ERROR] Cannot install LastPass CLI automatically on this platform."; \
-		echo "  Manual install: https://github.com/lastpass/lastpass-cli#installation"; \
-		exit 1; \
+		brew_bin=$$(command -v brew 2>/dev/null || echo /opt/homebrew/bin/brew); \
+		if "$$brew_bin" --version >/dev/null 2>&1; then \
+			echo "  → brew install lastpass-cli"; \
+			"$$brew_bin" install lastpass-cli; \
+		elif command -v apt-get >/dev/null 2>&1; then \
+			echo "  → apt-get install lastpass-cli"; \
+			sudo apt-get install -y lastpass-cli; \
+		else \
+			echo "  [ERROR] Cannot install LastPass CLI automatically."; \
+			echo "  Manual: https://github.com/lastpass/lastpass-cli#installation"; \
+			exit 1; \
+		fi; \
 	fi
 
 # ── GitHub CLI ────────────────────────────────────────────────
@@ -207,20 +215,23 @@ install-lastpasscli:  ## ⓪ Install the LastPass CLI (lpass) if missing
 install-gh:  ## ⓪ Install the GitHub CLI (gh) if missing
 	@if command -v gh >/dev/null 2>&1; then \
 		echo "  ✓ gh $(shell gh --version 2>/dev/null | head -1 | awk '{print $$3}') (skipped)"; \
-	elif command -v brew >/dev/null 2>&1; then \
-		echo "  → brew install gh"; \
-		brew install gh; \
-	elif command -v apt-get >/dev/null 2>&1; then \
-		echo "  → Installing gh via apt..."; \
-		curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-			| sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg; \
-		echo "deb [arch=$(shell dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-			| sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null; \
-		sudo apt-get update -q && sudo apt-get install -y gh; \
 	else \
-		echo "  [ERROR] Cannot install gh automatically on this platform."; \
-		echo "  Manual install: https://github.com/cli/cli#installation"; \
-		exit 1; \
+		brew_bin=$$(command -v brew 2>/dev/null || echo /opt/homebrew/bin/brew); \
+		if "$$brew_bin" --version >/dev/null 2>&1; then \
+			echo "  → brew install gh"; \
+			"$$brew_bin" install gh; \
+		elif command -v apt-get >/dev/null 2>&1; then \
+			echo "  → Installing gh via apt..."; \
+			curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+				| sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg; \
+			echo "deb [arch=$$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+				| sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null; \
+			sudo apt-get update -q && sudo apt-get install -y gh; \
+		else \
+			echo "  [ERROR] Cannot install gh automatically on this platform."; \
+			echo "  Manual: https://github.com/cli/cli#installation"; \
+			exit 1; \
+		fi; \
 	fi
 
 # ── Python 3.11+ ──────────────────────────────────────────────
@@ -230,16 +241,19 @@ install-python3:  ## ⓪ Install Python 3.13 if no 3.11+ is found
 	    command -v python3.12 >/dev/null 2>&1 || \
 	    command -v python3.11 >/dev/null 2>&1; then \
 		echo "  ✓ python3 $$($(PYTHON3) --version 2>&1 | awk '{print $$2}') (skipped)"; \
-	elif command -v brew >/dev/null 2>&1; then \
-		echo "  → brew install python@3.13"; \
-		brew install python@3.13; \
-	elif command -v apt-get >/dev/null 2>&1; then \
-		echo "  → apt-get install python3.13"; \
-		sudo apt-get install -y python3.13; \
 	else \
-		echo "  [ERROR] Cannot install Python automatically on this platform."; \
-		echo "  Manual install: https://www.python.org/downloads/"; \
-		exit 1; \
+		brew_bin=$$(command -v brew 2>/dev/null || echo /opt/homebrew/bin/brew); \
+		if "$$brew_bin" --version >/dev/null 2>&1; then \
+			echo "  → brew install python@3.13"; \
+			"$$brew_bin" install python@3.13; \
+		elif command -v apt-get >/dev/null 2>&1; then \
+			echo "  → apt-get install python3.13"; \
+			sudo apt-get install -y python3.13; \
+		else \
+			echo "  [ERROR] Cannot install Python automatically on this platform."; \
+			echo "  Manual: https://www.python.org/downloads/"; \
+			exit 1; \
+		fi; \
 	fi
 
 # ── git ───────────────────────────────────────────────────────
@@ -247,16 +261,42 @@ install-python3:  ## ⓪ Install Python 3.13 if no 3.11+ is found
 install-git:  ## ⓪ Install git if missing
 	@if command -v git >/dev/null 2>&1; then \
 		echo "  ✓ git $(shell git --version | awk '{print $$3}') (skipped)"; \
-	elif command -v brew >/dev/null 2>&1; then \
-		echo "  → brew install git"; \
-		brew install git; \
-	elif command -v apt-get >/dev/null 2>&1; then \
-		echo "  → apt-get install git"; \
-		sudo apt-get install -y git; \
 	else \
-		echo "  [ERROR] Cannot install git automatically. Install from https://git-scm.com"; \
-		exit 1; \
+		brew_bin=$$(command -v brew 2>/dev/null || echo /opt/homebrew/bin/brew); \
+		if "$$brew_bin" --version >/dev/null 2>&1; then \
+			echo "  → brew install git"; \
+			"$$brew_bin" install git; \
+		elif command -v apt-get >/dev/null 2>&1; then \
+			echo "  → apt-get install git"; \
+			sudo apt-get install -y git; \
+		else \
+			echo "  [ERROR] Cannot install git automatically. Install from https://git-scm.com"; \
+			exit 1; \
+		fi; \
 	fi
+
+# ── AWS SSO profile setup ─────────────────────────────────────
+
+configure-aws-sso:  ## ⓪ Print exact commands to configure AWS SSO profiles (run once per machine)
+	@printf "\n  \033[1mAWS SSO profile setup\033[0m\n"
+	@printf "  Run each command below and follow the interactive prompts.\n"
+	@printf "  When asked for 'SSO session name' use the profile name shown.\n\n"
+	@printf "  \033[36maws configure sso --profile brighthive-main\033[0m\n"
+	@printf "    SSO session name: brighthive-main\n"
+	@printf "    SSO start URL:    https://brighthive.awsapps.com/start\n"
+	@printf "    SSO region:       us-east-1\n"
+	@printf "    Default output:   json\n\n"
+	@printf "  \033[36maws configure sso --profile brighthive-staging\033[0m\n"
+	@printf "    SSO session name: brighthive-staging\n"
+	@printf "    SSO start URL:    https://brighthive.awsapps.com/start\n"
+	@printf "    SSO region:       us-east-1\n"
+	@printf "    Default output:   json\n\n"
+	@printf "  \033[36maws configure sso --profile brighthive-production\033[0m\n"
+	@printf "    SSO session name: brighthive-production\n"
+	@printf "    SSO start URL:    https://brighthive.awsapps.com/start\n"
+	@printf "    SSO region:       us-east-1\n"
+	@printf "    Default output:   json\n\n"
+	@printf "  After setup, run: \033[36mmake refresh-aws\033[0m\n\n"
 
 # ── install-prereqs: all of the above ─────────────────────────
 
@@ -330,12 +370,12 @@ check-aws:  ## ① Verify AWS SSO sessions for main/staging/production
 	@echo "── Checking AWS SSO sessions ──"
 	@$(STATE_HELPERS); \
 		for p in $(AWS_MAIN_PROFILE) $(AWS_STAGING_PROFILE) $(AWS_PRODUCTION_PROFILE); do \
-			if aws sts get-caller-identity --profile "$$p" --query Account --output text >/dev/null 2>&1; then \
-				acct=$$(aws sts get-caller-identity --profile "$$p" --query Account --output text); \
+			if acct=$$(aws sts get-caller-identity --profile "$$p" --query Account --output text 2>/dev/null); then \
 				echo "  ✓ $$p (account $$acct)"; \
 				state_touch "aws/$$p"; \
 			else \
-				echo "  ✗ $$p (session expired or not configured — run: make refresh-aws)"; \
+				echo "  ✗ $$p (session expired or not configured)"; \
+				echo "    → run: make refresh-aws"; \
 			fi; \
 		done
 
@@ -416,8 +456,12 @@ clone-siblings:  ## ② git clone any missing sibling repos
 
 # ── Secret cache ──────────────────────────────────────────────
 
-pull-aws-secrets:  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h TTL)
+pull-aws-secrets: check-aws  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h TTL)
 	@echo "── Pulling AWS Secrets Manager values (NAME=$(NAME)) ──"
+	@if [ -z "$(NAME)" ]; then \
+		echo "  [ERROR] NAME is required. Example: NAME=matt make pull-aws-secrets"; \
+		exit 2; \
+	fi
 	@if [ ! -d "$(LEAD_DIR)" ]; then \
 		echo "  [ERROR] $(LEAD_DIR)/ not found."; \
 		echo "  Ask your TechLead to run:  make onboard NAME=$(NAME)"; \
@@ -456,6 +500,10 @@ pull-aws-secrets:  ## ③ Pull AWS Secrets Manager values into secrets/aws/ (24h
 
 pull-lastpass:  ## ③ Pull LastPass entries into secrets/lastpass.json (24h TTL)
 	@echo "── Pulling LastPass secrets (NAME=$(NAME)) ──"
+	@if [ -z "$(NAME)" ]; then \
+		echo "  [ERROR] NAME is required. Example: NAME=matt make pull-lastpass"; \
+		exit 2; \
+	fi
 	@if [ ! -d "$(LEAD_DIR)" ]; then \
 		echo "  [ERROR] $(LEAD_DIR)/ not found."; \
 		echo "  Ask your TechLead to run:  make onboard NAME=$(NAME)"; \
@@ -497,7 +545,9 @@ pull-secrets: pull-aws-secrets pull-lastpass  ## ③ Pull all vault sources into
 
 .PHONY: onboard unpack verify-lead
 
-NAME ?= kuri
+# NAME must be set by the caller: NAME=matt make pull-secrets
+# Leaving NAME empty causes an explicit error instead of silently using the wrong vault.
+NAME ?=
 
 onboard:  ## ③ Package vault exports → {NAME}lead-export.zip.enc for new-leader handoff
 	@echo "── Packaging vault for $(NAME) ──"
