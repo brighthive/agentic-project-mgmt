@@ -29,11 +29,13 @@ make status                 → confirm all sentinels green
 ### Decision rules for Claude
 
 - **Ask for `NAME`** once at the start if the user hasn't mentioned it. It's their first name lowercased (e.g. `matt`, `kuri`, `ahmed`). Every `pull-*` and `env-*` command needs it.
-- **Ask for the vault package path** when the user reaches Step 3 and `{name}lead/` doesn't exist. They should have a `{name}lead-export.zip.enc` file from their TechLead. If they don't have it yet, pause and tell them to request it.
+- **Ask for the vault package path and password** when the user reaches Step 3 and `{name}lead/` doesn't exist. They should have a `{name}lead-export.zip.enc` file + password from their TechLead. If they don't have it yet, pause and tell them to request it. Once they have both, run: `VAULT_PASSWORD=<password> NAME=<name> make unpack` (pass the password via env var — `make unpack` cannot prompt interactively inside Claude Code).
 - **Never fill in `.env` values for the user** — only tell them which fields need values and why.
 - **Stop on `[ERROR]`** — do not continue to the next step until the current error is resolved.
 - **Do not re-run steps that already show green** — `make status` is the ground truth.
 - **If a secret token is unresolved** in `make env-*`: run `FORCE=1 NAME=<name> make pull-secrets` first, then retry. If it still fails, the key doesn't exist in the vault — report the exact missing path and stop.
+- **If `make env-*` exits 3** ("Unmanaged file"): the `.env` was created before the bootstrap. Run `ADOPT=1 NAME=<name> make env-brightbot-local` to take ownership without overwriting. After adopt, subsequent runs are idempotent.
+- **MANUAL fields in the template** resolve to `FILL_FROM_ENV_STAGING` — tell the user to copy those values from `../brightbot/.env_staging` manually. These are API keys (ANTHROPIC, OPENAI, etc.) that live in LastPass as group folders, not flat secrets.
 
 ### What Claude can do automatically vs. what needs the user
 

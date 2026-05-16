@@ -551,15 +551,31 @@ NAME ?=
 
 onboard:  ## ③ Package vault exports → {NAME}lead-export.zip.enc for new-leader handoff
 	@echo "── Packaging vault for $(NAME) ──"
-	@$(PYTHON3) scripts/package_kurilead.py package \
-		--name "$(NAME)" \
-		--output "$(NAME)lead-export.zip.enc"
+	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: make onboard NAME=matt"; exit 2; fi
+	@if [ -n "$(VAULT_PASSWORD)" ]; then \
+		$(PYTHON3) scripts/package_kurilead.py package \
+			--name "$(NAME)" \
+			--output "$(NAME)lead-export.zip.enc" \
+			--password "$(VAULT_PASSWORD)"; \
+	else \
+		$(PYTHON3) scripts/package_kurilead.py package \
+			--name "$(NAME)" \
+			--output "$(NAME)lead-export.zip.enc"; \
+	fi
 
 unpack:  ## ③ Decrypt + extract a vault package into {NAME}lead/ (new leaders run this)
 	@echo "── Unpacking vault for $(NAME) ──"
-	@$(PYTHON3) scripts/package_kurilead.py unpack \
-		--name "$(NAME)" \
-		--input "$(NAME)lead-export.zip.enc"
+	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=matt make unpack"; exit 2; fi
+	@if [ -n "$(VAULT_PASSWORD)" ]; then \
+		$(PYTHON3) scripts/package_kurilead.py unpack \
+			--name "$(NAME)" \
+			--input "$(NAME)lead-export.zip.enc" \
+			--password "$(VAULT_PASSWORD)"; \
+	else \
+		$(PYTHON3) scripts/package_kurilead.py unpack \
+			--name "$(NAME)" \
+			--input "$(NAME)lead-export.zip.enc"; \
+	fi
 
 verify-lead:  ## ③ Check that {NAME}lead/ has all expected vault export files
 	@$(PYTHON3) scripts/package_kurilead.py verify --name "$(NAME)"
