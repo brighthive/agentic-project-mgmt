@@ -117,7 +117,7 @@ Run `make help` for the full grouped list. Common targets:
 
 | Member | GitHub | Role | Owned areas |
 |---|---|---|---|
-| Kuri (Hikuri Chinca) | `drchinca` | Tech Lead | Architecture, AgentCore migration, context engineering, onboarding |
+| Kuri | `drchinca` | Tech Lead | Architecture, AgentCore migration, context engineering, onboarding |
 | Marwan Samih | `Marwan-Samih-Brighthive` | Sr. Engineer | BrightAgent runtime, Bedrock migration, dbt, frontend |
 | Ahmed Elsherbiny | `sherbiny-bh` | Sr. Engineer | AWS CDK, DevOps, infrastructure, unstructured data, security |
 | Harbour Wang | `Nano-233` | Engineer | BrightStudio, Projects UI, scheduler, CDK |

@@ -1,5 +1,7 @@
 # BrightHive — New Engineering Leader Onboarding
 
+> **If you're using Claude Code:** just say **"set me up"** and Claude will walk you through every step automatically. You only need to answer three questions: your first name (used as `NAME=`), the vault package + password your TechLead sent you, and your `.env` values.
+
 This repo is the **agentic project management hub**. It also holds the onboarding bootstrap that pulls all BrightHive secrets to your laptop and materializes per-repo `.env` files so you can run the platform locally.
 
 **You need only `git` to start. Every other tool is installed by Step 1.**

@@ -304,12 +304,12 @@ gh pr list --repo brighthive/$REPO --state merged --search "merged:$START..$END"
 
 | Member | GitHub | Role | Ownership |
 |--------|--------|------|-----------|
-| Hikuri Chinca | `drchinca` | Tech Lead | Architecture, Slack integration, context engineering |
+| Kuri | `drchinca` | Tech Lead | Architecture, AgentCore migration, context engineering, onboarding |
 | Marwan Samih | `Marwan-Samih-Brighthive` | Sr. Engineer | BrightAgent, frontend, data quality |
 | Ahmed Elsherbiny | `ahmed-brighthive` | Sr. Engineer | Infrastructure, unstructured data, DevOps, security |
 | Harbour Wang | `Nano-233` | Engineer | Projects, BrightStudio, CDK, UI/UX |
 
-**Jira IDs**: Hikuri: `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264`
+**Jira IDs**: Kuri: `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264`
 
 ---
 
