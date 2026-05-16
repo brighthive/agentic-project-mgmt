@@ -6,16 +6,35 @@ This repo is the **agentic project management hub**. It also holds the onboardin
 
 ## What you need before starting
 
-| Item | Where to get it |
-|---|---|
-| AWS SSO profiles configured | `aws configure sso` for each: `brighthive-main`, `brighthive-staging`, `brighthive-production` (see `~/.aws/config`). Ask your manager for the SSO start URL if you don't have it. |
-| LastPass account on the BrightHive vault | `brew install lastpass-cli` (macOS), then `lpass login you@brighthive.io` |
-| GitHub access to the `brighthive` org | SSH key added to your GitHub account, org membership confirmed |
-| `python3` (3.11+) | `brew install python@3.13` |
-| `aws` CLI | `brew install awscli` |
-| `gh` CLI (optional, used in later PRs) | `brew install gh` |
+Just `git` and internet access. Everything else is installed by the bootstrap.
 
-## Step 1 — Clone this repo and fill in your `.env`
+## Step 0 — Install prerequisites (one command)
+
+```bash
+# Clone the repo first (git must already be present)
+git clone git@github.com:brighthive/agentic-project-mgmt.git
+cd agentic-project-mgmt
+
+# Install everything else: Homebrew, AWS CLI, LastPass CLI, gh, Python 3.13
+make install-prereqs
+```
+
+Each tool is checked first — if it's already installed it's skipped with `✓`. Re-running `make install-prereqs` on a fully-set-up machine does nothing.
+
+**What gets installed** (all idempotent):
+
+| Target | Tool | Installs via |
+|---|---|---|
+| `make install-brew` | Homebrew | official install script (macOS only) |
+| `make install-awscli` | `aws` CLI v2 | `brew` or official Linux installer |
+| `make install-lastpasscli` | `lpass` | `brew` or `apt-get` |
+| `make install-gh` | `gh` CLI | `brew` or GitHub apt repo |
+| `make install-python3` | Python 3.13 | `brew` or `apt-get` |
+| `make install-git` | `git` | `brew` or `apt-get` |
+
+Run `make check-prereqs` at any time to verify what's installed without installing anything.
+
+## Step 1 — Fill in your `.env`
 
 ```bash
 git clone git@github.com:brighthive/agentic-project-mgmt.git

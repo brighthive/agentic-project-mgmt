@@ -144,6 +144,150 @@ slack-status:  ## Show branch and env mode for each repo
 	@echo ""
 
 # ══════════════════════════════════════════════════════════════
+# LAYER 0 — Prerequisite installation
+# Each target checks first; installs only if missing.
+# All targets are idempotent — safe to re-run.
+# Requires: Homebrew on macOS, apt-get on Linux.
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: install-brew install-awscli install-lastpasscli install-gh \
+        install-python3 install-git install-prereqs check-prereqs
+
+# ── Homebrew (macOS only) ─────────────────────────────────────
+
+install-brew:  ## ⓪ Install Homebrew if missing (macOS only)
+	@if command -v brew >/dev/null 2>&1; then \
+		echo "  ✓ brew $(shell brew --version 2>/dev/null | head -1 | awk '{print $$2}') (skipped)"; \
+	elif [[ "$(shell uname)" == "Darwin" ]]; then \
+		echo "  → Installing Homebrew..."; \
+		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+	else \
+		echo "  · Homebrew is macOS-only; skipping on $(shell uname)"; \
+	fi
+
+# ── AWS CLI ───────────────────────────────────────────────────
+
+install-awscli:  ## ⓪ Install the AWS CLI if missing
+	@if command -v aws >/dev/null 2>&1; then \
+		echo "  ✓ aws $(shell aws --version 2>&1 | awk '{print $$1}' | cut -d/ -f2) (skipped)"; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "  → brew install awscli"; \
+		brew install awscli; \
+	elif [[ "$(shell uname)" == "Linux" ]]; then \
+		echo "  → Installing AWS CLI v2 (Linux)..."; \
+		curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip; \
+		unzip -q /tmp/awscliv2.zip -d /tmp/awscliv2; \
+		sudo /tmp/awscliv2/aws/install; \
+		rm -rf /tmp/awscliv2 /tmp/awscliv2.zip; \
+	else \
+		echo "  [ERROR] Cannot install AWS CLI automatically on this platform."; \
+		echo "  Manual install: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html"; \
+		exit 1; \
+	fi
+
+# ── LastPass CLI ──────────────────────────────────────────────
+
+install-lastpasscli:  ## ⓪ Install the LastPass CLI (lpass) if missing
+	@if command -v lpass >/dev/null 2>&1; then \
+		echo "  ✓ lpass $(shell lpass --version 2>/dev/null | awk '{print $$NF}') (skipped)"; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "  → brew install lastpass-cli"; \
+		brew install lastpass-cli; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		echo "  → apt-get install lastpass-cli"; \
+		sudo apt-get install -y lastpass-cli; \
+	else \
+		echo "  [ERROR] Cannot install LastPass CLI automatically on this platform."; \
+		echo "  Manual install: https://github.com/lastpass/lastpass-cli#installation"; \
+		exit 1; \
+	fi
+
+# ── GitHub CLI ────────────────────────────────────────────────
+
+install-gh:  ## ⓪ Install the GitHub CLI (gh) if missing
+	@if command -v gh >/dev/null 2>&1; then \
+		echo "  ✓ gh $(shell gh --version 2>/dev/null | head -1 | awk '{print $$3}') (skipped)"; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "  → brew install gh"; \
+		brew install gh; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		echo "  → Installing gh via apt..."; \
+		curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+			| sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg; \
+		echo "deb [arch=$(shell dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+			| sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null; \
+		sudo apt-get update -q && sudo apt-get install -y gh; \
+	else \
+		echo "  [ERROR] Cannot install gh automatically on this platform."; \
+		echo "  Manual install: https://github.com/cli/cli#installation"; \
+		exit 1; \
+	fi
+
+# ── Python 3.11+ ──────────────────────────────────────────────
+
+install-python3:  ## ⓪ Install Python 3.13 if no 3.11+ is found
+	@if command -v python3.13 >/dev/null 2>&1 || \
+	    command -v python3.12 >/dev/null 2>&1 || \
+	    command -v python3.11 >/dev/null 2>&1; then \
+		echo "  ✓ python3 $$($(PYTHON3) --version 2>&1 | awk '{print $$2}') (skipped)"; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "  → brew install python@3.13"; \
+		brew install python@3.13; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		echo "  → apt-get install python3.13"; \
+		sudo apt-get install -y python3.13; \
+	else \
+		echo "  [ERROR] Cannot install Python automatically on this platform."; \
+		echo "  Manual install: https://www.python.org/downloads/"; \
+		exit 1; \
+	fi
+
+# ── git ───────────────────────────────────────────────────────
+
+install-git:  ## ⓪ Install git if missing
+	@if command -v git >/dev/null 2>&1; then \
+		echo "  ✓ git $(shell git --version | awk '{print $$3}') (skipped)"; \
+	elif command -v brew >/dev/null 2>&1; then \
+		echo "  → brew install git"; \
+		brew install git; \
+	elif command -v apt-get >/dev/null 2>&1; then \
+		echo "  → apt-get install git"; \
+		sudo apt-get install -y git; \
+	else \
+		echo "  [ERROR] Cannot install git automatically. Install from https://git-scm.com"; \
+		exit 1; \
+	fi
+
+# ── install-prereqs: all of the above ─────────────────────────
+
+install-prereqs: install-brew install-git install-awscli install-lastpasscli install-gh install-python3  ## ⓪ Install ALL prerequisites (idempotent — only installs what's missing)
+	@echo ""
+	@echo "  All prerequisites installed. Run \`make check-prereqs\` to verify."
+
+# ── check-prereqs: verify without installing ──────────────────
+
+check-prereqs:  ## ⓪ Check all prerequisites are installed (read-only, no installs)
+	@echo "── Checking prerequisites ──"
+	@ok=1; \
+	for tool in brew git aws lpass gh; do \
+		if command -v "$$tool" >/dev/null 2>&1; then \
+			printf "  ✓ %-16s %s\n" "$$tool" "$$($$tool --version 2>&1 | head -1)"; \
+		else \
+			printf "  ✗ %-16s NOT FOUND — run: make install-$$tool\n" "$$tool" >&2; \
+			ok=0; \
+		fi; \
+	done; \
+	py="$(PYTHON3)"; \
+	if [[ -n "$$py" ]]; then \
+		printf "  ✓ %-16s %s\n" "python3" "$$("$$py" --version 2>&1)"; \
+	else \
+		printf "  ✗ %-16s NOT FOUND — run: make install-python3\n" "python3" >&2; \
+		ok=0; \
+	fi; \
+	[[ "$$ok" == "1" ]] && echo "" && echo "  All prerequisites present." || \
+		{ echo ""; echo "  Run \`make install-prereqs\` to install missing tools."; exit 1; }
+
+# ══════════════════════════════════════════════════════════════
 # ONBOARDING — Layer 1 atomic primitives
 # (Each target is idempotent. Re-running on a fully-set-up
 #  workstation does nothing except verify state.)
@@ -423,7 +567,10 @@ status:  ## Show onboarding state at a glance
 help:  ## Show this help
 	@printf "\n  BrightHive Engineering-Leader Onboarding\n"
 	@printf "  ─────────────────────────────────────────\n\n"
-	@printf "  \033[1mLayer 1 — Onboarding primitives\033[0m  (idempotent, safe to re-run)\n"
+	@printf "  \033[1mLayer 0 — Install prerequisites\033[0m  (idempotent — skips already-installed tools)\n"
+	@grep -E '^[a-zA-Z_-]+:.*## ⓪' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@printf "\n  \033[1mLayer 1 — Onboarding primitives\033[0m  (idempotent, safe to re-run)\n"
 	@grep -E '^[a-zA-Z_-]+:.*## ①|^[a-zA-Z_-]+:.*## ②|^[a-zA-Z_-]+:.*## ③|^[a-zA-Z_-]+:.*## ④' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mLayer 2-4\033[0m  (coming soon: per-repo make local/staging/start, localstack, stagingstack, onboard)\n\n"
