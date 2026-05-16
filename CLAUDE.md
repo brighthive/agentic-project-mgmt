@@ -56,6 +56,12 @@ make status                 → confirm all sentinels green
 
 | Question | Location |
 |----------|----------|
+| **New leader setup (full walkthrough)** | `ONBOARDING.md` |
+| **Makefile targets reference** | `make help` |
+| **Env template for brightbot** | `config/env-templates/brightbot-local.env.tmpl` |
+| **Env template for webapp** | `config/env-templates/webapp-staging.env.tmpl` |
+| **Env template for platform-core** | `config/env-templates/platform-core-local.env.tmpl` |
+| **Sibling repo list** | `config/siblings.txt` |
 | **Sprint velocity / stats** | `jira/sprint/SPRINTS.md` |
 | **Sprint N tickets & metrics** | `jira/sprint/N/stats.json` + `tickets.json` |
 | **Sprint N analysis** | `jira/sprint/N/SUMMARY.md` |
@@ -68,6 +74,8 @@ make status                 → confirm all sentinels green
 | **DynamoDB workspace configs** | `dynamo-vault/cli/secrets` |
 | **AWS Secrets Manager inventory** | `aws-secrets-vault/cli/secrets` |
 | **Notion workspace page map** | `notion/pages.md` |
+| **AgentCore migration spec** | `docs/specs/agentcore-deployment-migration.md` |
+| **Onboarding bootstrap spec** | `docs/specs/onboarding-bootstrap.md` |
 | **System architecture** | `../platform-saas-ai-context/docs/architecture/ARCHITECTURE.md` |
 | **Bedrock migration strategy** | `../platform-saas-ai-context/docs/architecture/BEDROCK_MIGRATION_STRATEGY.md` |
 | **Claude Code via Bedrock (dev tooling)** | `../platform-saas-ai-context/docs/decisions/decisions.md` ADR-009 + [`brighthive-claude-bedrock-cdk`](https://github.com/brighthive/brighthive-claude-bedrock-cdk) |
@@ -91,32 +99,54 @@ make status                 → confirm all sentinels green
 
 ```
 agentic-project-mgmt/
-├── .mcp.json                     # Notion MCP server config
-├── Makefile                      # Multi-repo dev orchestrator (slack integration)
+├── Makefile                      # All orchestration — run `make help`
+├── ONBOARDING.md                 # New-leader setup walkthrough (7 steps)
+├── CLAUDE.md                     # This file — navigation contract
+├── AGENTS.md                     # Agent contract (scope rules, cross-repo nav)
+├── README.md                     # Entry point — overview + quick-start
+├── .env.example                  # Fill in your AWS profiles + LastPass user
+│
+├── config/
+│   ├── siblings.txt              # Canonical list of sibling repos (? = optional)
+│   └── env-templates/            # Per-repo .env templates rendered by make env-*
+│       ├── brightbot-local.env.tmpl
+│       ├── platform-core-local.env.tmpl
+│       ├── webapp-local.env.tmpl
+│       └── webapp-staging.env.tmpl
+│
+├── scripts/
+│   ├── render_env.py             # Template materializer — resolves {{ vault.key }} tokens
+│   ├── state.sh                  # Sentinel-file helpers for idempotent targets
+│   └── package_kurilead.py       # Vault packager — make onboard NAME=matt
+│
 ├── jira/                         # Sprint data & tracking
-│   ├── TICKET_TEMPLATE.md       # Canonical ticket format
-│   ├── CLAUDE.md                # Sprint data format spec
+│   ├── TICKET_TEMPLATE.md        # Canonical Jira ticket format
+│   ├── CLAUDE.md                 # Sprint data schema + release artifact spec
 │   └── sprint/
-│       ├── SPRINTS.md           # Master velocity table
-│       ├── Q1_ROADMAP_SCORECARD.md  # Q1 delivery scorecard
-│       ├── 1/ ... 7/            # stats.json, tickets.json, SUMMARY.md, RELEASE_NOTES.md, etc.
+│       ├── SPRINTS.md            # Master velocity table (all sprints)
+│       ├── Q1_ROADMAP_SCORECARD.md
+│       └── {1..10}/              # Per-sprint: stats.json, tickets.json, SUMMARY.md, etc.
+│
 ├── docs/                         # Documentation & strategy hub
-│   ├── specs/                   # Context generation specs (write before code)
-│   ├── features/                # Product showcase + user manuals
-│   │   └── assets/              # Screenshots, diagrams per feature
-│   ├── bedrock/                 # Insider migration engineering diary
-│   │   └── INDEX.md             # Topic + chronological index
-│   └── pocs/                    # Comparative experiments with qualifying numbers
+│   ├── CLAUDE.md                 # Spec/feature/POC workflow guide
+│   ├── specs/                    # Implementation specs (write before code)
+│   │   ├── SPEC_TEMPLATE.md
+│   │   ├── agentcore-deployment-migration.md
+│   │   ├── onboarding-bootstrap.md
+│   │   └── ...                   # (10 active specs)
+│   ├── features/                 # Shipped feature docs
+│   ├── bedrock/                  # LangGraph → Bedrock migration diary
+│   │   └── INDEX.md
+│   └── pocs/                     # Comparative experiments with numbers
+│
 ├── notion/
-│   └── pages.md                 # Notion workspace structure & page IDs
+│   └── pages.md                  # Notion workspace structure & page IDs
 ├── aws-secrets-vault/            # CLI: Secrets Manager across 4 AWS accounts
 ├── dynamo-vault/                 # CLI: DynamoDB workspace configs
-│   └── INFRASTRUCTURE.md        # AWS accounts, tables, client registry
+│   └── INFRASTRUCTURE.md         # AWS accounts, tables, client registry
 ├── lastpass-vault/               # CLI: LastPass credential vault
-├── archive/                      # Completed sprint data, old specs
-├── kurilead/                     # Personal vault dump (gitignored)
-├── CLAUDE.md                     # This file
-└── README.md                     # Entry point
+├── archive/                      # Completed sprints, old specs (read-only)
+└── kurilead/                     # Personal vault dump (gitignored)
 ```
 
 ---

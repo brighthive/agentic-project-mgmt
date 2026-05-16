@@ -1,49 +1,176 @@
 # Agentic Project Management
 
-Agentic replacement for traditional project managers and scrum masters. Claude Code skills, agents, and automation manage BrightHive's sprint lifecycle, release notes, Jira operations, infrastructure inventory, and stakeholder communication.
+BrightHive's agentic hub for sprint management, release automation, onboarding, and multi-repo coordination. Claude Code skills, agents, and vault-driven tooling replace traditional project management ceremony.
 
-For permanent architectural knowledge, see: [`platform-saas-ai-context`](../platform-saas-ai-context)
+For permanent platform architecture, see [`../platform-saas-ai-context`](../platform-saas-ai-context).
+
+---
+
+## Quick Start — New Engineering Leader
+
+```bash
+git clone git@github.com:brighthive/agentic-project-mgmt.git
+cd agentic-project-mgmt
+make install-prereqs        # install brew, aws, lpass, gh, python3
+cp .env.example .env        # fill in AWS profiles + LastPass user
+make configure-aws-sso      # prints exact `aws configure sso` commands
+make check-creds            # verify all sessions green
+NAME=<you> make unpack      # decrypt vault package → {name}lead/
+NAME=<you> make pull-secrets
+NAME=<you> make localstack  # starts platform-core :4040 · brightbot :2024 · webapp :7420
+```
+
+See `ONBOARDING.md` for the full 7-step walkthrough.
 
 ---
 
 ## Repository Structure
 
 ```
-jira/                    Sprint data, ticket template, velocity tracking
-  sprint/{1..7}/         Per-sprint stats, tickets, summaries, release notes
-  sprint/SPRINTS.md      Master velocity table
-  TICKET_TEMPLATE.md     Canonical Jira ticket format
-docs/                    Documentation & strategy
-  specs/                 Feature/migration specs (write before code)
-  features/              Platform feature docs & changelogs
-  bedrock/               Bedrock migration execution tracking
-  pocs/                  Proof-of-concept write-ups
-notion/                  Notion workspace reference (page IDs, structure)
-aws-secrets-vault/       CLI: AWS Secrets Manager inventory across 4 accounts
-dynamo-vault/            CLI: DynamoDB workspace config scanner
-lastpass-vault/          CLI: LastPass credential vault
-archive/                 Completed sprints, old specs (read-only)
+agentic-project-mgmt/
+├── Makefile                      # All orchestration — see `make help`
+├── ONBOARDING.md                 # New-leader setup walkthrough (7 steps)
+├── CLAUDE.md                     # Navigation contract for Claude Code
+├── AGENTS.md                     # Agent contract (scope rules, cross-repo nav)
+├── .env.example                  # Template: fill in your AWS profiles + LastPass user
+│
+├── config/
+│   ├── siblings.txt              # Canonical list of sibling repos
+│   └── env-templates/            # Per-repo .env templates (rendered by make env-*)
+│       ├── brightbot-local.env.tmpl
+│       ├── platform-core-local.env.tmpl
+│       ├── webapp-local.env.tmpl
+│       └── webapp-staging.env.tmpl
+│
+├── scripts/
+│   ├── render_env.py             # Template materializer — resolves {{ vault.key }} tokens
+│   ├── state.sh                  # Sentinel-file helpers for idempotent Makefile targets
+│   └── package_kurilead.py       # Vault packager — make onboard NAME=matt
+│
+├── jira/                         # Sprint data & Jira tooling
+│   ├── TICKET_TEMPLATE.md        # Canonical Jira ticket format
+│   ├── CLAUDE.md                 # Sprint data schema + release artifact spec
+│   └── sprint/
+│       ├── SPRINTS.md            # Master velocity table (all sprints)
+│       └── {1..10}/              # Per-sprint: stats, tickets, release notes, Slack post
+│
+├── docs/                         # Documentation & strategy hub
+│   ├── CLAUDE.md                 # Spec/feature/POC workflow guide
+│   ├── specs/                    # Implementation specs (written before code)
+│   ├── features/                 # Shipped feature documentation
+│   ├── bedrock/                  # Bedrock migration diary
+│   └── pocs/                     # Proof-of-concept experiments
+│
+├── aws-secrets-vault/            # CLI: enumerate Secrets Manager across 4 AWS accounts
+├── dynamo-vault/                 # CLI: DynamoDB workspace config scanner
+├── lastpass-vault/               # CLI: LastPass credential vault
+├── notion/                       # Notion workspace page map
+└── archive/                      # Historical sprints + old specs (read-only)
 ```
+
+---
+
+## Makefile — Key Targets
+
+Run `make help` for the full grouped list. Common targets:
+
+| Layer | Targets | Purpose |
+|---|---|---|
+| **0 — Install** | `make install-prereqs` | Install brew, aws, lpass, gh, python3 |
+| **0 — Install** | `make check-prereqs` | Verify all tools present (read-only) |
+| **0 — Install** | `make configure-aws-sso` | Print exact `aws configure sso` commands |
+| **1 — Creds** | `make check-creds` | Check AWS SSO + LastPass sessions |
+| **1 — Creds** | `make refresh-aws` | Run `aws sso login` for expired profiles |
+| **1 — Secrets** | `NAME=X make pull-secrets` | Copy vault exports into `secrets/` (24h TTL) |
+| **1 — Onboard** | `VAULT_PASSWORD=p make onboard NAME=matt` | Package vault → `mattlead-export.zip.enc` |
+| **1 — Onboard** | `VAULT_PASSWORD=p NAME=matt make unpack` | Decrypt package → `mattlead/` |
+| **1 — Env** | `NAME=X make env-brightbot-local` | Render `../brightbot/.env` from vault |
+| **1 — Env** | `NAME=X make env-webapp-staging` | Render `../brighthive-webapp/.env.local` |
+| **2 — Start** | `NAME=X make localstack` | Start core → brightbot → webapp in order |
+| **2 — Start** | `NAME=X make start-webapp` | Start webapp only (staging APIs) |
+| **2 — Start** | `NAME=X make start-core` | Start platform-core GraphQL API on :4040 |
+| **2 — Start** | `NAME=X make start-brightbot` | Start brightbot agent graph on :2024 |
+| **2 — Stop** | `make stopstack` | Stop all local services |
+| **2 — Status** | `make stackstatus` | Show running / down per service |
+| **Sprints** | `/sprint-release` (skill) | Close sprint — artifacts → Slack → Notion → git |
+| **Specs** | `/write-spec` (skill) | Write a spec before implementation |
+
+---
+
+## Skills (Claude Code)
+
+| Skill | What it does |
+|---|---|
+| `/sprint-release` | Close sprint — generate all artifacts, post to Slack, update Notion, commit |
+| `/write-spec` | Generate implementation spec from conversation / Jira context |
+| `/write-feature-doc` | Document a shipped feature — publishes to Notion |
+| `/bedrock-journal` | Create weekly Bedrock migration diary entry in Google Drive |
+| `/write-poc` | Document a proof-of-concept experiment |
+| `/create-jira-ticket` | Generate technical notes from conversation for Jira |
+| `/bh-auth` | Generate BrightHive Cognito JWT for dev/staging/prod |
+| `/aws-auth` | AWS SSO login + credential refresh across accounts |
+| `/scrum-master` | Sprint planning assistant |
+
+---
 
 ## Team
 
-| Member | Focus |
-|--------|-------|
-| Hikuri | Tech Lead — Architecture, Slack, context engineering |
-| Ahmed | Sr. Engineer — Infrastructure, DevOps, security |
-| Marwan | Sr. Engineer — BrightAgent, frontend, data quality |
-| Harbour | Engineer — BrightStudio, CDK, UI/UX |
+| Member | GitHub | Role | Owned areas |
+|---|---|---|---|
+| Kuri (Hikuri Chinca) | `drchinca` | Tech Lead | Architecture, AgentCore migration, context engineering, onboarding |
+| Marwan Samih | `Marwan-Samih-Brighthive` | Sr. Engineer | BrightAgent runtime, Bedrock migration, dbt, frontend |
+| Ahmed Elsherbiny | `sherbiny-bh` | Sr. Engineer | AWS CDK, DevOps, infrastructure, unstructured data, security |
+| Harbour Wang | `Nano-233` | Engineer | BrightStudio, Projects UI, scheduler, CDK |
+
+---
+
+## AWS Accounts
+
+| Account | ID | Profile | Used for |
+|---|---|---|---|
+| Main / Payer | `396527728813` | `brighthive-main` | Consolidated billing, org root |
+| Production | `104403016368` | `brighthive-production` | Live customer traffic |
+| Staging | `873769991712` | `brighthive-staging` | Pre-prod testing, developer default |
+| DEV | `531731217746` | `brighthive-development` | Spikes, POCs (workflow_dispatch only) |
+
+---
 
 ## Key Integrations
 
 | Tool | Purpose |
-|------|---------|
-| Jira (Board 152) | Sprint tracking, tickets, epics |
-| GitHub (brighthive org) | 7 core + 10 infra + 7 Airbyte connectors |
-| Slack (`#releases`) | Sprint release posts via bot token |
-| Notion | Sprint pages, roadmap, CEO reports |
-| AWS (4 accounts) | Secrets Manager, DynamoDB configs |
+|---|---|
+| Jira Board 152 | Sprint tracking, epics, tickets |
+| GitHub `brighthive` org | Source across 7 core + 10 infra + 7 Airbyte repos |
+| Slack `#releases` (`C0AJXPYGJJ0`) | Sprint release posts via bot token |
+| Notion (Sprint Planning parent `142bbca0...`) | Sprint pages, roadmap, CEO reports |
+| AWS Secrets Manager | Per-account secret inventory via `aws-secrets-vault/cli/secrets` |
+| LastPass | Developer credential vault via `lastpass-vault/cli/secrets` |
+| DynamoDB | Per-workspace platform configs via `dynamo-vault/cli/secrets` |
+| Google Drive (CoBuild AWS folder) | Weekly Bedrock migration diary for AWS partnership |
 
 ---
 
-**Jira Board**: [BH Board](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152)
+## Sibling Repos
+
+All repos are expected at `../` relative to this repo. `config/siblings.txt` is the canonical list.
+
+| Repo | Local path | Role |
+|---|---|---|
+| `brightbot` | `../brightbot` | LangGraph → Bedrock agent runtime |
+| `brighthive-webapp` | `../brighthive-webapp` | React frontend + BrightStudio |
+| `brighthive-platform-core` | `../brighthive-platform-core` | GraphQL API, Neo4j, auth |
+| `brightbot-slack-server` | `../brightbot-slack-server` | Slack OAuth + workspace resolution |
+| `brighthive-data-organization-cdk` | `../brighthive-data-organization-cdk` | Step Functions, Lambda, Glue pipelines |
+| `brighthive-data-workspace-cdk` | `../brighthive-data-workspace-cdk` | Per-workspace AWS infra |
+| `brighthive-ibm-wxo` | `../brighthive-ibm-wxo` | IBM watsonx Orchestrate partnership |
+| `brighthive-admin` | `../brighthive-admin` | Admin dashboard (optional) |
+
+---
+
+## Key References
+
+- **Jira Board**: https://brighthiveio.atlassian.net/jira/software/projects/BH/boards/152
+- **AgentCore Epic**: [BH-453](https://brighthiveio.atlassian.net/browse/BH-453) — BrightAgent → AWS Bedrock runtime migration
+- **Sprint velocity**: `jira/sprint/SPRINTS.md`
+- **Architecture**: `../platform-saas-ai-context/docs/architecture/`
+- **Bedrock diary (AWS-facing)**: [CoBuild AWS Drive](https://drive.google.com/drive/folders/1fvLR8a160KK4-wuDk4JW0WIdgiqTxRV2)
