@@ -2,6 +2,16 @@
   "mcpServers": {
     "notion": {
       "url": "https://mcp.notion.com/mcp"
+    },
+    "jira": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-jira-cloud"],
+      "env": {
+        "JIRA_BASE_URL": "${JIRA_BASE}",
+        "JIRA_EMAIL": "${JIRA_USER}",
+        "JIRA_API_TOKEN": "${JIRA_TOKEN}"
+      }
     }
   }
 }

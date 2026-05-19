@@ -98,6 +98,23 @@ If a token is unresolved, the renderer exits with a list of missing keys and a h
 
 ---
 
+## Step 6.5 — Jira ticket creation (Claude Code)
+
+The repo ships the `/create-jira-ticket` skill and a Jira MCP server entry in `.mcp.json`. Both auto-load when you open this directory in Claude Code — no install step. You just need to provide your own Atlassian credentials:
+
+1. Generate an API token at https://id.atlassian.com/manage-profile/security/api-tokens.
+2. Add to `~/.zshrc`:
+   ```bash
+   export JIRA_BASE="https://brighthiveio.atlassian.net"
+   export JIRA_USER="you@brighthive.io"
+   export JIRA_TOKEN="<paste the API token>"
+   ```
+3. Reload your shell and reopen Claude Code so the MCP server picks up the env.
+
+Then ask Claude: *"make me a ticket for X under epic BH-XXX"* — the skill builds the technical notes, the MCP creates the issue with the right shape (Task, parent epic, BrightHive template). See `jira/TICKET_TEMPLATE.md` for the rules.
+
+---
+
 ## Step 7 — Clone sibling repos + verify state
 
 ```bash
