@@ -85,6 +85,21 @@ Links to specs, designs, screenshots, related PRs.
 
 ---
 
+## How to Create a Ticket (CLI — any team member, plain terminal)
+
+For users outside Claude Code: the repo ships a Python CLI under `bin/jira-cli` that enforces every rule above and uses the same template. One-time setup in [`ONBOARDING.md` Step 6.5](../ONBOARDING.md). Then:
+
+```bash
+make epics                                              # list open epics live
+make ticket EPIC=BH-260 TITLE="feat(studio): X"         # opens $EDITOR with skeleton
+make my-tickets                                          # your open tickets
+make transition KEY=BH-12345 STATE="In Progress"
+```
+
+The CLI mirrors the MCP-backed flow below — same template, same invariants, same output shape. Spec: `docs/specs/jira-cli-onboarding.md`.
+
+---
+
 ## How to Create a Ticket (via Claude)
 
 Three steps. Claude does them all if you say "make me a ticket for X":

@@ -685,6 +685,83 @@ status:  ## Show onboarding state at a glance
 		done
 
 # ══════════════════════════════════════════════════════════════
+# Jira CLI — universal ticket flow (any team member)
+# Spec: docs/specs/jira-cli-onboarding.md
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: install-jira-cli check-jira ticket my-tickets transition epics
+
+install-jira-cli:  ## ⑤ Install Jira CLI Python deps into the local .venv
+	@echo "── Installing Jira CLI deps ──"
+	@if [[ ! -d ".venv" ]]; then \
+		python3 -m venv .venv; \
+		echo "  Created .venv"; \
+	fi; \
+	. .venv/bin/activate && \
+		pip install --quiet --upgrade pip && \
+		pip install --quiet -r scripts/jira_cli/requirements.txt && \
+		echo "  ✓ httpx installed in .venv"
+	@echo ""
+	@echo "  Next: export JIRA_USER/JIRA_TOKEN/JIRA_BASE in ~/.zshrc, then \`make check-jira\`."
+
+check-jira:  ## ⑤ Verify Jira CLI env vars + token validity
+	@echo "── Checking Jira CLI ──"
+	@missing=0; \
+	for var in JIRA_USER JIRA_TOKEN JIRA_BASE; do \
+		val="$${!var:-}"; \
+		if [[ -z "$$val" ]]; then \
+			printf "  ✗ %-12s NOT SET — see ONBOARDING.md step 6.5\n" "$$var" >&2; \
+			missing=1; \
+		else \
+			if [[ "$$var" == "JIRA_TOKEN" ]]; then \
+				printf "  ✓ %-12s (set, %d chars)\n" "$$var" "$${#val}"; \
+			else \
+				printf "  ✓ %-12s %s\n" "$$var" "$$val"; \
+			fi; \
+		fi; \
+	done; \
+	if [[ "$$missing" == "1" ]]; then exit 1; fi
+	@echo ""
+	@out="$$(mktemp)"; \
+	trap 'rm -f "$$out"' EXIT; \
+	if bin/jira-cli whoami > "$$out" 2>&1; then \
+		printf "  ✓ jira-cli authenticated as %s\n" "$$(cut -f2 "$$out")"; \
+	else \
+		echo "  ✗ jira-cli whoami failed:" >&2; \
+		cat "$$out" >&2; \
+		exit 1; \
+	fi
+
+ticket:  ## ⑤ Create a Task — EPIC=BH-XXX TITLE="..." [PRIORITY=High LABELS=a,b ASSIGNEE=me]
+	@if [[ -z "$${EPIC:-}" ]] || [[ -z "$${TITLE:-}" ]]; then \
+		echo "Usage: make ticket EPIC=BH-XXX TITLE=\"summary\" [PRIORITY=High] [LABELS=a,b] [ASSIGNEE=me]" >&2; \
+		exit 2; \
+	fi
+	@bin/jira-cli create \
+		--epic "$(EPIC)" \
+		--title "$(TITLE)" \
+		--priority "$${PRIORITY:-Medium}" \
+		--labels "$${LABELS:-}" \
+		--assignee "$${ASSIGNEE:-}"
+
+my-tickets:  ## ⑤ List my open tickets [STATUS="To Do,In Progress"]
+	@bin/jira-cli my --status "$${STATUS:-}"
+
+transition:  ## ⑤ Transition a ticket — KEY=BH-XXX STATE="In Progress"
+	@if [[ -z "$${KEY:-}" ]] || [[ -z "$${STATE:-}" ]]; then \
+		echo "Usage: make transition KEY=BH-XXX STATE=\"In Progress\"" >&2; \
+		exit 2; \
+	fi
+	@bin/jira-cli transition "$(KEY)" "$(STATE)"
+
+epics:  ## ⑤ List open epics on board 152 [ALL=1]
+	@if [[ "$${ALL:-}" == "1" ]]; then \
+		bin/jira-cli epics --all; \
+	else \
+		bin/jira-cli epics; \
+	fi
+
+# ══════════════════════════════════════════════════════════════
 # Help
 # ══════════════════════════════════════════════════════════════
 
@@ -704,6 +781,9 @@ help:  ## Show this help
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mLayer 3 — Stack orchestration\033[0m  (coming soon: staging stack)\n"
 	@grep -E '^(localstack|stopstack|stackstatus):.*## ' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@printf "\n  \033[1mLayer 5 — Jira CLI\033[0m  (universal ticket flow — any team member)\n"
+	@grep -E '^[a-zA-Z_-]+:.*## ⑤' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n"
 	@printf "  \033[1mLegacy — Slack integration\033[0m\n"

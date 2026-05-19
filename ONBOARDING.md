@@ -98,6 +98,54 @@ If a token is unresolved, the renderer exits with a list of missing keys and a h
 
 ---
 
+## Step 6.5 — Jira CLI (universal ticket flow)
+
+Every team member files tickets. The MCP-backed `/create-jira-ticket` skill works inside Claude Code; this step adds a plain-terminal CLI so the same flow works from any shell, CI, or pre-commit hook.
+
+### 1. Generate an Atlassian API token
+
+Go to https://id.atlassian.com/manage-profile/security/api-tokens → **Create API token** → label it `jira-cli-<your-laptop>`. Copy the token now — you can't see it again.
+
+### 2. Export the three env vars in `~/.zshrc`
+
+```bash
+# Jira CLI
+export JIRA_USER="you@brighthive.io"        # the email tied to your Atlassian account
+export JIRA_BASE="https://brighthiveio.atlassian.net"
+export JIRA_TOKEN="<paste-the-api-token>"
+```
+
+Then `source ~/.zshrc` (or open a new terminal).
+
+### 3. Install deps + verify
+
+```bash
+make install-jira-cli   # installs httpx into ./.venv
+make check-jira         # verifies env + hits /myself
+```
+
+Green output looks like:
+
+```
+✓ JIRA_USER    you@brighthive.io
+✓ JIRA_BASE    https://brighthiveio.atlassian.net
+✓ JIRA_TOKEN   (set, 24 chars)
+✓ jira-cli authenticated as Your Name
+```
+
+### 4. Try it
+
+```bash
+make epics                                              # list open epics on board 152
+make ticket EPIC=BH-170 TITLE="docs: add my-feature"    # opens $EDITOR with the template
+make my-tickets                                          # your open tickets
+make transition KEY=BH-12345 STATE="In Progress"
+```
+
+All commands enforce the rules in `jira/TICKET_TEMPLATE.md`: `issueType=Task` only, `parentKey=BH-XXX` required, project=BH, live epic lookup before create. See `docs/specs/jira-cli-onboarding.md` for the full contract.
+
+---
+
 ## Step 7 — Clone sibling repos + verify state
 
 ```bash
