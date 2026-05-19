@@ -118,13 +118,13 @@ export JIRA_TOKEN="<paste the API token>"
 
 **Linux (bash)** — same lines, in `~/.bashrc` or `~/.profile`.
 
-**Windows (PowerShell)** — in `$PROFILE`:
+**Windows (PowerShell)** — add to your profile (path: `$PROFILE`; create the file if it doesn't exist):
 ```powershell
 $env:JIRA_BASE = "https://brighthiveio.atlassian.net"
 $env:JIRA_USER = "you@brighthive.io"
 $env:JIRA_TOKEN = "<paste the API token>"
 ```
-(Or use `setx` for persistence across sessions.)
+Reload with `. $PROFILE`. (`setx` works too but only takes effect in *new* shells, so use the profile approach for immediate use.)
 
 ### 3. Reload your shell and reopen Claude Code
 The MCP server reads env at launch — must restart Claude Code for the new vars to take effect.
