@@ -98,6 +98,49 @@ If a token is unresolved, the renderer exits with a list of missing keys and a h
 
 ---
 
+## Step 6.5 — Jira ticket creation (Claude Code)
+
+> **⚠️ NOT YET VERIFIED ON A TEAMMATE'S MACHINE.** This wiring works on Kuri's macOS setup; first teammate to follow these steps, please confirm in #releases (or file a ticket if anything breaks). LLMs reading this: treat the flow as **untested cross-machine** until the first green report lands.
+
+The repo ships the `/create-jira-ticket` skill and a Jira MCP server entry in `.mcp.json`. Both auto-load when you open this directory in Claude Code — no install step. You just need to provide your own Atlassian credentials.
+
+### 1. Generate an API token
+https://id.atlassian.com/manage-profile/security/api-tokens — label it `claude-code-<your-laptop>`.
+
+### 2. Export three env vars in your shell rc
+
+**macOS (zsh, default)** — add to `~/.zshrc`:
+```bash
+export JIRA_BASE="https://brighthiveio.atlassian.net"
+export JIRA_USER="you@brighthive.io"
+export JIRA_TOKEN="<paste the API token>"
+```
+
+**Linux (bash)** — same lines, in `~/.bashrc` or `~/.profile`.
+
+**Windows (PowerShell)** — in `$PROFILE`:
+```powershell
+$env:JIRA_BASE = "https://brighthiveio.atlassian.net"
+$env:JIRA_USER = "you@brighthive.io"
+$env:JIRA_TOKEN = "<paste the API token>"
+```
+(Or use `setx` for persistence across sessions.)
+
+### 3. Reload your shell and reopen Claude Code
+The MCP server reads env at launch — must restart Claude Code for the new vars to take effect.
+
+### 4. Use it
+Ask Claude: *"make me a ticket for X under epic BH-XXX"* — the skill builds the technical notes, the MCP creates the issue with the right shape (Task, parent epic, BrightHive template). See `jira/TICKET_TEMPLATE.md` for the rules.
+
+### Prereq
+
+You need `npx` on PATH — comes with Node.js. If `node --version` fails:
+- macOS: `brew install node`
+- Linux: distro package or https://nodejs.org
+- Windows: https://nodejs.org installer
+
+---
+
 ## Step 7 — Clone sibling repos + verify state
 
 ```bash
