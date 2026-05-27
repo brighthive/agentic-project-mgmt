@@ -92,21 +92,23 @@ Persist rule definitions ourselves in Neo4j; use Great Expectations purely as a 
 
 | Area | Repo | Impact |
 |------|------|--------|
-| BrightBot | `brightbot` | New Neo4j nodes, REST CRUD, agent reads rules from library, per-rule execution fanout, template seed |
-| Platform Core | `brighthive-platform-core` | GraphQL types and resolvers proxying brightbot REST |
+| Platform Core | `brighthive-platform-core` | Neo4j OGM node type definitions (the schema), plus GraphQL types and resolvers proxying brightbot REST |
+| BrightBot | `brightbot` | REST CRUD, agent reads rules from library, per-rule execution fanout, template seed, Pydantic models and OGM query strings |
 | Web App | `brighthive-webapp` | Quality Rules page wired to live data, editor sheet, history drawer; depends on BH-517 navAccess |
 
 ## Interface Contract
 
-### Neo4j nodes (brightbot)
+### Neo4j nodes — OGM type definitions (platform-core)
 
-`QualityRuleNode` — id, name, description, expectation_type (string matching GE name), expectation_params (JSON), target_asset_id, target_column (nullable), severity (critical | warning | info), status (draft | active | deprecated), workspace_id, created_at, updated_at, created_by.
+Important: brightbot does not define Neo4j schema in Python. The Neo4j schema is declared as Neo4j GraphQL type definitions in `brighthive-platform-core/src/graphql/ogm/typedefs.ts` (the `@node`/`@relationship`/`@id` directive style). brightbot reaches these nodes by sending GraphQL queries to the OGM server over HTTP via `OGMAPISession`. So node definitions live in platform-core; brightbot holds only Pydantic business models and OGM query strings. Shipped in BH-505.
 
-`QualityRuleExecutionNode` — id, rule_id, run_id, evaluated_count, success_count, partial_unexpected_count, passed (bool), evaluated_at, sample_size.
+`QualityRuleNode` — id, name, description, expectationType (string matching GE name), expectationParams (JSON string), targetColumn (nullable), severity (CRITICAL | WARNING | INFO), status (DRAFT | ACTIVE | DEPRECATED), createdAt, modifiedAt, createdBy. Scoped to a workspace and asset via relationships below.
 
-`QualityRuleTemplateNode` (global, not workspace-scoped) — id, name, description, category, expectation_type, default_params (JSON), suggested_severity, tags.
+`QualityRuleExecutionNode` — id, runId, evaluatedCount, successCount, partialUnexpectedCount, passed (bool), sampleSize, evaluatedAt.
 
-Relationships: `(DataAsset)-[:HAS_QUALITY_RULE]->(QualityRuleNode)`; `(QualityRuleNode)-[:HAS_EXECUTION]->(QualityRuleExecutionNode)`; `(Workspace)-[:OWNS]->(QualityRuleNode)`.
+`QualityRuleTemplateNode` (global, not workspace-scoped) — id, name, description, category, expectationType, defaultParams (JSON string), suggestedSeverity, tags, createdAt, modifiedAt.
+
+Relationships: `(DataAssetNode)-[:HAS_QUALITY_RULE]->(QualityRuleNode)`; `(WorkspaceNode)-[:OWNS_QUALITY_RULE]->(QualityRuleNode)`; `(QualityRuleNode)-[:HAS_EXECUTION]->(QualityRuleExecutionNode)`. Workspace scoping is via the OWNS_QUALITY_RULE edge (not a denormalized workspace_id field).
 
 ### REST (brightbot)
 
@@ -179,7 +181,7 @@ navAccess.ts `quality-rules: [Admin, Collaborator, Viewer]` matches the read row
 | Ticket | Summary | Points | Epic |
 |--------|---------|--------|------|
 | BH-504 | Spec (this doc) | 2 | BH-503 |
-| BH-505 | QualityRuleNode + QualityRuleExecutionNode OGM | 3 | BH-503 |
+| BH-505 | OGM node typedefs in platform-core (QualityRule, Execution, Template) | 3 | BH-503 |
 | BH-506 | REST CRUD endpoints | 3 | BH-503 |
 | BH-507 | Agent reads rules from library | 3 | BH-503 |
 | BH-508 | Per-rule execution fanout + aggregation | 2 | BH-503 |
