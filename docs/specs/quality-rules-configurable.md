@@ -2,8 +2,9 @@
 title: "Configurable Quality Agent — workspace rule library, curation, and history"
 epic: "BH-503"
 author: "drchinca"
-status: "Draft"
+status: "Ready"
 created: "2026-05-16"
+last_reviewed: "2026-05-24"
 generates: "tickets"
 tags: [quality, governance, great-expectations, brightbot, platform-core, webapp]
 related:
@@ -80,6 +81,27 @@ Persist rule definitions ourselves in Neo4j; use Great Expectations purely as a 
 
 **Architectural decision: GE is a stateless engine.** We do NOT use GE native suite persistence (GE Cloud or filestore), which is version-fragile. We store rule definitions (name plus params) as `QualityRuleNode` in Neo4j and rebuild an ephemeral GE suite on every run through the existing `_convert_expectation_to_gx` bridge. This makes BH-507 a low-risk change: feed the bridge our stored rules instead of LLM output.
 
+### Rule Lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> DRAFT: create / clone-from-template
+    DRAFT --> ACTIVE: admin activates
+    ACTIVE --> DRAFT: admin deactivates (explicit reverse flag)
+    ACTIVE --> DEPRECATED: admin deletes (soft delete)
+    DRAFT --> DEPRECATED: admin deletes (soft delete)
+    DEPRECATED --> [*]
+    note right of DRAFT
+        Not executed by agent.
+        No passRate chip in UI.
+        lastRun shown as "Never".
+    end note
+    note right of ACTIVE
+        Executed on every agent run.
+        passRate computed over rolling window.
+    end note
+```
+
 ### Alternatives Considered
 
 | Approach | Pros | Cons | Why Not |
@@ -142,14 +164,93 @@ Types: QualityRule, QualityRuleExecution, QualityRuleTemplate, enums QualityRule
 11. expectation_type SHALL be one of the GE expectation names enumerated in EXPECTATION_NAMES; unknown types SHALL be rejected at create time.
 12. Cloning a template SHALL create a QualityRuleNode in draft status, never active.
 
+## Correctness Properties
+
+### Property 1: Workspace isolation is absolute
+
+*For any* rule R owned by workspace W, *for any* caller C in workspace W' ≠ W, *the* server SHALL respond to read or mutate of R with not-found — never forbidden, never partial data, never an empty list with HTTP 200.
+
+**Validates: §Invariants 1, §AC Scenario "Viewer attempts to mutate a rule" (cross-workspace variant)**
+
+### Property 2: FSM monotonicity
+
+*For any* rule R, *the* status transition graph SHALL be `DRAFT → ACTIVE → DEPRECATED`. *For any* reverse transition (`ACTIVE → DRAFT`, `DEPRECATED → ACTIVE`, etc.), *the* server SHALL require an explicit `force_reverse: true` flag on the PATCH and SHALL log the override.
+
+**Validates: §Invariants 2, §AC Scenario "Admin activates a draft rule"**
+
+### Property 3: Execution fanout exactness
+
+*For any* agent run that evaluates N active rules against an asset, *the* system SHALL create exactly N `QualityRuleExecutionNode` records with `passed`, `evaluatedCount`, and `successCount` populated. *No* `AgentCapabilityExecutionNode` SHALL be written as a JSON blob for that run.
+
+**Validates: §Invariants 5, §AC Scenario "Agent run produces per-rule executions"**
+
+### Property 4: Zero-rules is not silent regeneration
+
+*For any* asset with zero active rules at run time, *the* agent SHALL return `{empty: true, suggestion: "propose-from-profile"}` and SHALL NOT call any LLM expectation-generation tool.
+
+**Validates: §Invariants 3, 4, §AC Scenario "Zero active rules"**
+
+### Property 5: Mutate permission enforced server-side
+
+*For any* request to create, update, delete, or run a quality rule from a Viewer or Collaborator role, *the* REST handler AND the GraphQL resolver SHALL return 403 Forbidden before reaching persistence. Nav hiding (`navAccess.ts`) is presentational only and SHALL NOT be relied upon.
+
+**Validates: §Invariants 7, 8, §AC Scenario "Viewer attempts to mutate a rule"**
+
 ## Acceptance Criteria
 
-- [ ] Workspace admin can view, create, edit, activate, deactivate, and delete rules
-- [ ] Viewer and Collaborator see rules read-only; mutate attempts return forbidden server-side
-- [ ] Quality agent executes only active rules for the target asset
-- [ ] Zero-active-rules path returns an empty state and suggests propose-from-profile
-- [ ] Each rule shows real passRate and lastRun from execution history
-- [ ] A run with N rules creates exactly N execution nodes
+```gherkin
+Feature: Configurable Quality Rules
+
+  Scenario: Admin creates and activates a rule
+    Given an Admin viewing a workspace asset
+    When they create a rule from explicit params
+    Then the rule is persisted in DRAFT status
+    And the rule does not appear in the next agent run
+
+  Scenario: Admin activates a draft rule
+    Given a rule in DRAFT status
+    When the Admin activates it
+    Then the rule transitions to ACTIVE
+    And the next agent run for that asset executes it exactly once
+
+  Scenario: Viewer attempts to mutate a rule
+    Given a Viewer in the workspace
+    When they POST/PATCH/DELETE on a quality rule
+    Then the server returns 403 Forbidden
+    And no rule state changes
+
+  Scenario: Agent run produces per-rule executions
+    Given an asset with N active rules
+    When the quality agent runs against the asset
+    Then exactly N QualityRuleExecutionNodes are created
+    And no AgentCapabilityExecutionNode is written as a JSON blob
+
+  Scenario: Zero active rules
+    Given an asset with no active rules
+    When the quality agent runs
+    Then the response is an explicit empty state
+    And no LLM regeneration occurs
+    And the UI suggests propose-from-profile
+
+  Scenario: Cloning a template
+    Given a QualityRuleTemplate in the global catalog
+    When an Admin clones it for an asset
+    Then a new QualityRuleNode is created in DRAFT status
+    And the clone is not auto-activated
+
+  Scenario: Draft rule rendering
+    Given a rule in DRAFT status with zero executions
+    When the Quality Rules page renders the rule card
+    Then no passRate chip is shown
+    And lastRun is shown as "Never"
+
+  Scenario: passRate window label
+    Given a rule with execution history
+    When the rule card renders the passRate chip
+    Then the chip label includes the rolling window (e.g. "30-day pass rate")
+```
+
+- [ ] All scenarios above pass as integration tests
 - [ ] At least 20 templates seeded across categories; clone creates a draft rule
 - [ ] Webapp page renders live data, PreviewBanner removed
 - [ ] Detail drawer shows a 30-day trend chart
@@ -167,6 +268,32 @@ Types: QualityRule, QualityRuleExecution, QualityRuleTemplate, enums QualityRule
 
 navAccess.ts `quality-rules: [Admin, Collaborator, Viewer]` matches the read row. Mutations are NOT expressible in navAccess (it only hides tabs) and MUST be enforced in the REST handlers and GraphQL resolvers.
 
+## Observability Contract
+
+Spans (OTel GenAI conventions where applicable):
+
+- **`quality_rule.crud`** — REST handler span for create/update/delete/clone
+  - Attributes: `workspace.id`, `quality_rule.id`, `quality_rule.operation` (create|update|delete|clone), `quality_rule.severity`, `quality_rule.status`, `actor.role`
+- **`quality_rule.execute`** — per-rule execution span (one per `QualityRuleExecutionNode`)
+  - Attributes: `workspace.id`, `quality_rule.id`, `quality_rule.expectation_type`, `data_asset.id`, `quality_rule.passed` (bool), `quality_rule.evaluated_count`, `quality_rule.sample_size`, `quality_rule.duration_ms`
+- **`quality_agent.run`** — parent span for the agent invocation
+  - Attributes: `workspace.id`, `data_asset.id`, `quality_agent.rules_evaluated` (count), `quality_agent.rules_passed`, `quality_agent.rules_failed`, `quality_agent.zero_active_rules` (bool)
+
+Log events (structured):
+
+- `quality_rule.created`, `quality_rule.updated`, `quality_rule.deleted`, `quality_rule.cloned_from_template`
+- `quality_rule.status_transitioned` — includes `from`, `to`, `force_reverse` flag
+- `quality_rule.forbidden` — emitted on 403 from REST or GraphQL (audit signal)
+- `quality_rule.execution.passed`, `quality_rule.execution.failed`
+- `quality_agent.zero_active_rules` — emitted when an asset has no active rules at run time
+- `quality_rule.unknown_expectation_type` — rejected at create time (invariant 11)
+
+Metrics:
+
+- `brighthive.quality_rule.executions_total{passed, severity}` counter
+- `brighthive.quality_rule.pass_rate{workspace_id, asset_id}` gauge — 30-day rolling
+- `brighthive.quality_rule.active_count{workspace_id}` gauge
+
 ## Dependencies
 
 | Dependency | Type | Status |
@@ -175,6 +302,35 @@ navAccess.ts `quality-rules: [Admin, Collaborator, Viewer]` matches the read row
 | BH-376 nav restructure merged | Blocking for webapp ticket | In review (PR 1100) |
 | brightbot OGM (BH-505) | Blocking for all backend | Not started |
 | Great Expectations 1.9 round-trip | Validated | Confirmed in this spec |
+
+## Template Catalog (BH-511 scope)
+
+Minimum 20 templates seeded across these categories. Each maps to a Great Expectations expectation name from `EXPECTATION_NAMES`.
+
+| Category | Template name | GE expectation | Default params | Suggested severity |
+|---|---|---|---|---|
+| **Completeness** | Column not null > 95% | `expect_column_values_to_not_be_null` | `mostly=0.95` | CRITICAL |
+| | Column not null > 99% | `expect_column_values_to_not_be_null` | `mostly=0.99` | CRITICAL |
+| | Required columns present | `expect_table_columns_to_match_set` | column_list per asset | CRITICAL |
+| **Uniqueness** | No duplicate primary keys | `expect_column_values_to_be_unique` | — | CRITICAL |
+| | Compound key uniqueness | `expect_compound_columns_to_be_unique` | column_list | CRITICAL |
+| **Range / Validity** | Numeric within bounds | `expect_column_values_to_be_between` | `min_value`, `max_value` | WARNING |
+| | Percentage 0–100 | `expect_column_values_to_be_between` | `min_value=0, max_value=100` | WARNING |
+| | Positive amounts only | `expect_column_values_to_be_between` | `min_value=0` | WARNING |
+| **Type / Format** | Type matches catalog | `expect_column_values_to_be_in_type_list` | `type_list` | WARNING |
+| | Email format valid | `expect_column_values_to_match_regex` | RFC 5322 simplified | WARNING |
+| | UUID format valid | `expect_column_values_to_match_regex` | UUID v4 pattern | WARNING |
+| | ISO 8601 date | `expect_column_values_to_match_strftime_format` | `%Y-%m-%d` | WARNING |
+| **Categorical** | Value in allowed set | `expect_column_values_to_be_in_set` | `value_set` | WARNING |
+| | Status enum valid | `expect_column_values_to_be_in_set` | `value_set` | CRITICAL |
+| **Distribution** | Row count within range | `expect_table_row_count_to_be_between` | `min_value`, `max_value` | INFO |
+| | Mean within bounds | `expect_column_mean_to_be_between` | `min_value`, `max_value` | INFO |
+| | Median within bounds | `expect_column_median_to_be_between` | `min_value`, `max_value` | INFO |
+| **Freshness** | Max timestamp within N hours | `expect_column_max_to_be_between` | `min_value=now()-Nh` | WARNING |
+| **PII / Governance** | PII column tagged | custom check via catalog metadata | catalog tag presence | CRITICAL |
+| **Schema** | No schema drift | `expect_table_columns_to_match_ordered_list` | column_list snapshot | WARNING |
+
+Tags drive filtering in the webapp: `completeness`, `uniqueness`, `range`, `type`, `format`, `categorical`, `distribution`, `freshness`, `pii`, `schema`. Categories double as the section headers in the template-picker drawer.
 
 ## Ticket Breakdown
 
@@ -186,8 +342,8 @@ navAccess.ts `quality-rules: [Admin, Collaborator, Viewer]` matches the read row
 | BH-507 | Agent reads rules from library | 3 | BH-503 |
 | BH-508 | Per-rule execution fanout + aggregation | 2 | BH-503 |
 | BH-509 | platform-core GraphQL types + resolvers | 2 | BH-503 |
-| BH-510 | webapp page wire-up + editor + history drawer | 3 | BH-503 |
-| BH-511 | Seed library of 20+ templates | 2 | BH-503 |
+| BH-510 | webapp page wire-up + editor + history drawer (+ extract preview seed to `brighthive-webapp/src/mock-data/qualityRules.ts`) | 3 | BH-503 |
+| BH-511 | Seed library of 20+ templates per catalog above (+ test fixtures in platform-core/brightbot, demo seed in testing-infra-cdk) | 2 | BH-503 |
 
 ## Related
 
