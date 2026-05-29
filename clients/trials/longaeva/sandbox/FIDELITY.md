@@ -3,8 +3,9 @@
 > What's high-fidelity vs. thin in our Longaeva POC simulation, and what we're closing next.
 > Updated as work lands. Source of truth for "are we trial-ready?"
 
-**Last updated**: 2026-05-29
-**Overall fidelity**: ~40% end-to-end / ~80% for `SnowflakeConnection` + introspection + semantic-view-DDL surface
+**Last updated**: 2026-05-29 (post-meeting alignment + F8/F9/F10/F11 closed)
+**Overall fidelity**: ~55% end-to-end / ~90% for `SnowflakeConnection` + introspection + semantic-view-DDL + RBAC surfaces
+**Pipeline test**: `./test_pipeline.sh` — 17/17 passing (connection, DDL, strip-and-emit, semantic view, RBAC matrix)
 
 ## Snapshot
 
@@ -12,17 +13,21 @@
 |---|---|---|---|
 | Snowflake account + role + warehouse | ✅ Live | High | Real account `bfddsko-dua97555`; not mocked |
 | BRONZE / SILVER / GOLD / REF / SEMANTIC schemas | ✅ Live | High | 12 tables; canonical time-series shape |
-| Semantic view DDL (compile path) | ✅ Live | High | `sv_daily_portfolio_exposure` compiles cleanly |
+| Semantic view DDL (compile path) | ✅ Live | High | `sv_daily_portfolio_exposure` compiles + queryable |
+| **YAML strip-and-emit pipeline** | ✅ Live | High | `strip_and_emit.py`: extended YAML → strip SDK fields → Snowflake DDL → `snow sql` apply → compile success. Mirrors Grant's deploy flow exactly (per 2026-05-29 meeting). |
+| **Extended YAML format** | ✅ Live | High | Explicit `spec:` / `sdk_extensions:` strip boundary; baseline_expectations block (validation harness layer 3); lineage + access_control hooks |
+| **RBAC: scoped agent role** | ✅ Live | High | `LONGAEVA_AGENT_ROLE` boundary verified: queries semantic view ✓, blocked on BRONZE/SILVER/share/writes ✓ (in strict mode with `USE SECONDARY ROLES NONE`) |
+| **End-to-end pipeline test** | ✅ Live | High | `test_pipeline.sh` — 17 assertions covering connection, schemas, stages, strip-and-emit round-trip, semantic-view query, RBAC matrix |
 | Reference data (fiscal cal, identifier map, geo, classification) | ✅ Schema | Medium | Tables exist; **no rows yet** |
 | Two-DB topology (warehouse + share-sim) | ✅ Live | Medium | Cross-DB grant ≠ real Data Share provisioning |
-| Synthetic seed data (~5M rows) | ⏳ Open | — | **Highest-ROI gap**. Without data, semantic-view query correctness can't be validated. |
+| Synthetic seed data (~5M rows) | ⏳ Open | — | **Highest-ROI gap**. Without data, baseline_expectations + query correctness can't be validated. |
 | dbt project skeleton | ⏳ Open | — | Scaffolder emits `sources.yml` but has nothing to merge into |
 | Real S3 external stage (vs. internal stage stand-in) | ⏳ Open | — | `COPY INTO` semantics identical; IAM + storage integration differ |
 | Real Snowflake Data Share (vs. simulated DB) | ⏳ Open | — | Same query shape, different provisioning flow |
 | Dagster + OpenLineage | ⏳ Open | — | Self-healing reads Dagster logs; we have none |
 | Great Expectations init | ⏳ Open | — | Quality contracts theoretical until GX wired |
 | GitHub Enterprise base_url config | ⏳ Open | — | One of six BH-526 gaps; trivially testable once GHE creds arrive |
-| Longaeva's *actual* extended YAML spec | ⏳ Blocked | — | We invented a representative spec; theirs lands Day 3 |
+| Longaeva's *actual* extended YAML spec | ⏳ Blocked | — | Our placeholder is structurally aligned post-meeting; Grant to share theirs by 2026-06-08 |
 | Vendor file shapes (real schemas) | ⏳ Blocked | — | Guessed columns; real samples Day 4–5 |
 | Their internal MCP server | ⏳ Blocked | — | Item 3 of POC; their provisioning Day 1–2 |
 
@@ -76,3 +81,7 @@ Track each item as a discrete PR off `drchinca/BH-526/snowflake-sandbox-ddl` so 
 | 2026-05-29 | Internal stage stand-in for S3 | Avoid S3 credentials/IAM until needed; `COPY INTO` semantics are identical |
 | 2026-05-29 | Cross-DB grant simulates Data Share | Real shares need provider-side configuration we don't run unilaterally |
 | 2026-05-29 | YAML spec invented (representative, not Longaeva's actual) | Their spec lands Day 3; placeholder is good enough for scaffolder grammar testing |
+| 2026-05-29 | YAML restructured into `spec:` / `sdk_extensions:` | Per Grant's meeting: their pipeline strips SDK keywords before Snowflake DDL; the strip boundary must be explicit, not buried in a comment |
+| 2026-05-29 | `baseline_expectations` block added | Per Grant's validation harness layer 3 ("auto validation… continue running checks post data refresh"); supports universal invariants + author-supplied dbt-test-style assertions |
+| 2026-05-29 | RBAC strict-mode requires `USE SECONDARY ROLES NONE` | KURICHINCA holds ACCOUNTADMIN; without disabling secondary-role auto-activation, the agent boundary is silently bypassed. Test script enforces this; MCP must do the same. |
+| 2026-05-29 | `LONGAEVA_AGENT_ROLE` is read-only on GOLD + REF + SEMANTIC | Implements Grant's "scoped subset of user perms" model; agents can serve queries through semantic view but never see BRONZE/SILVER/share or write anything |

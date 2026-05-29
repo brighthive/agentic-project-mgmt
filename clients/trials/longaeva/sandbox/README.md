@@ -70,20 +70,28 @@ Idempotent: every statement uses `CREATE ... IF NOT EXISTS` or `CREATE OR REPLAC
 
 ## Verification
 
+Run the end-to-end smoke test:
+
+```bash
+./test_pipeline.sh
+# Expect: 17/17 passing
+```
+
+Covers: connection defaults, all 14 tables, stages, full strip-and-emit round-trip
+(YAML → strip SDK fields → emit DDL → apply → compile success), semantic-view
+queryability, and the RBAC agent-boundary matrix (5 sub-tests in strict mode).
+
+Manual spot-checks:
+
 ```bash
 snow sql -q "SELECT CURRENT_ROLE(), CURRENT_WAREHOUSE(), CURRENT_DATABASE();"
 # Expect: LONGAEVA_POC_ROLE / POC_WH / LONGAEVA_POC
 
-snow sql -q "
-  SELECT table_schema, table_name
-  FROM LONGAEVA_POC.information_schema.tables
-  WHERE table_schema IN ('BRONZE','SILVER','GOLD','REF')
-  ORDER BY 1,2;
-"
-# Expect: 12 tables
-
 snow sql -q "DESCRIBE SEMANTIC VIEW LONGAEVA_POC.SEMANTIC.sv_daily_portfolio_exposure;"
-# Expect: dimensions, facts, metrics, relationships rendered
+
+# Re-emit + apply DDL from YAML (matches Longaeva's deploy pipeline exactly)
+uv run --with pyyaml python semantic/strip_and_emit.py \
+  semantic/sv_daily_portfolio_exposure.yaml --apply
 ```
 
 ## Mapping to POC scorecard
