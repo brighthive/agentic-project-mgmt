@@ -4,32 +4,57 @@ slug: "longaeva"
 stage: "trial"
 champion: "Grant Langseth"
 champion_email: ""
-trial_start: "2026-05-26"
-trial_end: "2026-06-09"
-decision_date: "2026-06-09"
+trial_start: "2026-06-TBD"
+trial_end: "2026-06-TBD+14d"
+decision_date: "2026-06-TBD+14d"
 jira_epic: "BH-526"
 notion_page: ""
 workspace_id: ""
 aws_account: ""
-status: "active"
+status: "pre-trial"
 tags: [financial-services, snowflake, dbt, dagster, github-enterprise, mcp]
+last_reviewed: "2026-05-29"
 ---
 
 # Longaeva Partners LP — Trial
 
 ## What They Need (Their Words)
 
-Longaeva has four questions:
+Longaeva's POC scope (full text in `artifacts/poc-scope-from-client.md`):
 
-1. **Ingestion** — Given credentials and a schema, can Brighthive scaffold the full pipeline (Snowflake stage config, dbt source, quality contracts) for three vendor patterns: S3, REST API, Snowflake Data Share?
+### Core (gating evaluation criteria)
 
-2. **Semantic Enrollment** — Can Brighthive reduce the friction of enrolling a curated Silver table into their Snowflake semantic view layer — handling YAML scaffolding, reference join detection, and validation?
+1. **Ingestion — 3 source patterns**
+   - **S3 vendor bucket** — given S3 creds + sample schema, scaffold Snowflake external stage + dbt source. Files: CSV/Parquet, daily-partitioned, 10K–100M rows.
+   - **REST API** — paginated, date-partitioned, batched ID lookups against their 20-30k instrument universe; parallel download; retry; dbt source wiring.
+   - **Snowflake Data Share** — given share DB name + target schema, scaffold dbt source + staging model + DQ contracts.
 
-3. **MCP Validation** — After enrollment, can Brighthive confirm the semantic view is queryable through their internal MCP server and surface any gaps in the definition?
+2. **Snowflake Semantic View Enrollment** — scaffold YAML against their **custom-extended schema** (extends Snowflake's spec with metric-store wiring, named reusable filter presets, plain-language agent context instructions, verified query examples). Specific reference-data joins required:
+   - **Fiscal calendar tables** — for non-standard fiscal year alignment
+   - **Identifier mapping** — LEI / FIGI → their internal issuer ID
+   - **Geographic + classification code tables**
+   - Brighthive must auto-detect when joins are needed and emit correct relationship definitions.
 
-4. **Automated Maintenance** — Schema drift detection, auto-generated quality tests, longitudinal anomaly monitoring, and Slack-native triage + interaction.
+3. **MCP Feedback Loop** — after enrollment, validate the semantic view is **queryable through their internal MCP server** (not ours). Confirm measures/dimensions/time-dimensions surface; run representative queries (filtered, aggregated, multi-dim slice); identify gaps that would degrade agent quality (missing sample values, missing examples, missing instructions).
 
-Full capability map: `../../../../platform-saas-ai-context/clients/longaeva/capability-map.md`
+4. **Automated Maintenance** — explicit in-scope, evaluation criteria:
+   - **Self-healing pipelines** — autonomously diagnose + open scoped surgical PR for these failure modes: schema drift from a vendor, missing partition, broken external stage, dbt model failing a contract.
+   - **Longitudinal anomaly monitoring** — track over time, not pass/fail: row-count vs historical, dimension cardinality breakdowns, distributional skew in numeric metrics, unexpected nulls in well-populated columns.
+   - **Slack alerting** — pipeline health, DQ violations, anomaly detections delivered to Slack channels with enough context (dataset, issue nature, severity, PR/run-log link) to triage without leaving Slack.
+   - **Slack bidirectional** — engineers/data scientists can talk to BrightAgent in Slack to ask pipeline state, request re-runs, trigger scaffolding workflows.
+
+### Bonus (non-gating but valued)
+
+- **B.1 Unified vendor + dataset registry** — active contracts, team consumption, pipeline health/SLA, consolidation opportunities, lightweight vendor CRM layer (contacts, comms history, renewal dates).
+- **B.2 Agentic governance** — how agents inherit permissions vs scoped subsets; runaway query prevention; consistent access semantics across warehouse + transactional + 3rd-party APIs; data contract / lineage enforcement when agents (not humans) initiate operations.
+- **B.3 Hosted semantic layer + knowledge graph** — how Brighthive's managed graph instance complements their early-stage internal KG efforts. Specifically: enterprise ontology establishment + enrichment, grafting their entity subgraphs (instruments, counterparties, vendors) onto the base model, exposing the graph via MCP so other agents in their orchestration layer can consume it. Key eval criterion: **does this compress months of in-house infra work into immediately production-ready deployment?**
+- **B.4 Rapid DQ test construction at scale** — beyond trial, continuously enforce quality across their full vendor portfolio (auto-generating + maintaining test suites as datasets evolve), not manual authoring per source.
+
+### Participants
+
+5 people: Grant + 1-2 data engineers + 1-2 data scientists.
+
+Full honest capability map: `../../../../platform-saas-ai-context/clients/longaeva/capability-map.md`
 
 ## Contacts
 
@@ -107,24 +132,46 @@ Day 3 has five Longaeva-owned items. Schedule a joint working session — not an
 
 ## Success Criteria
 
-### Ingestion
-- [ ] S3: dbt source YAML + Airbyte connection generated, merge-ready with ≤1 revision
-- [ ] REST API: Airbyte connector handles 20-30k instrument universe, pagination, retry
-- [ ] Data Share: staging model SQL + GX contracts pass first validation
+### 1. Ingestion (3 source types)
+- [ ] **S3**: Snowflake external stage SQL + dbt `sources.yml` generated; merge-ready with ≤1 revision
+- [ ] **REST API**: connector handles their 20-30k instrument universe — pagination, batched ID lookups, parallel download, retry; dbt source wired
+- [ ] **Snowflake Data Share**: dbt source + staging model SQL + DQ contracts generated; staging model passes first validation
 
-### Semantic Enrollment
-- [ ] YAML scaffold infers ≥80% of dimensions and metrics (with engineer iteration)
-- [ ] At least one reference join (fiscal calendar or identifier mapping) detected and surfaced
-- [ ] Generated definition compiles against Snowflake within ≤3 revision cycles
+### 2. Semantic View Enrollment
+- [ ] YAML scaffold infers ≥80% of dimensions, time-dimensions, facts, metrics from Silver schema + plain-language description
+- [ ] Custom metadata blocks (metric-store wiring, filter presets, agent instructions, verified queries) populated against Longaeva's extended schema
+- [ ] Reference joins auto-detected — at least 2 of 3 types: **fiscal calendar**, **LEI/FIGI → internal issuer ID**, **geographic codes**
+- [ ] Generated definition compiles + executes against Snowflake's semantic view engine within ≤3 revision cycles
+- [ ] Compilation errors surface with actionable remediation messages
 
-### MCP Validation *(contingent on MCP client confirmation)*
-- [ ] Enrolled semantic view queryable through Longaeva's MCP interface
-- [ ] Representative queries return correct results
-- [ ] Gaps surfaced automatically and included in the PR
+### 3. MCP Validation *(via Longaeva's internal MCP server)*
+- [ ] All measures, dimensions, time-dimensions queryable through their MCP interface
+- [ ] Representative query suite passes — filtered, aggregated, multi-dimension slice
+- [ ] Quality gaps detected automatically: missing sample values, absent query examples, missing plain-language instructions — surfaced in the enrollment PR
 
-### Automated Maintenance
-- [ ] Schema drift event triggers detection and fix PR in the same pipeline run cycle
-- [ ] Slack alert has dataset, severity, and PR link — triageable without leaving Slack
+### 4. Automated Maintenance
+
+#### 4a. Self-Healing — must demonstrate on all 4 failure modes:
+- [ ] **Schema drift** from vendor changing delivery format → diagnosed + surgical fix PR (not a rewrite)
+- [ ] **Missing partition** → detected + fix PR with plain-language explanation
+- [ ] **Broken external stage** → root cause identified + corrected DDL in PR
+- [ ] **dbt contract failure** → contract analyzed + model or contract update PR
+
+#### 4b. Longitudinal Anomaly Monitoring — track over time, not pass/fail:
+- [ ] **Row count drift** vs historical baseline (specific window TBD with Grant)
+- [ ] **Cardinality breakdown** on key dimensions (e.g. sudden drop in distinct geographies)
+- [ ] **Distributional skew** in numeric metrics vs trailing window
+- [ ] **Unexpected nulls** in typically-well-populated columns
+
+#### 4c. Slack
+- [ ] Alerts include dataset, issue nature, severity, PR/run-log link — triageable without leaving Slack
+- [ ] Bidirectional: engineer can `@brightagent` to ask pipeline state, request re-run, trigger scaffolding workflow
+
+### Bonus (optional; pursued only if core finishes early)
+- [ ] **B.1** Vendor + dataset registry demo against ≥3 active datasets
+- [ ] **B.2** Agentic governance: agent permission model walkthrough vs human inheritance
+- [ ] **B.3** Hosted KG: subgraph grafting demo with their instruments/counterparties; MCP exposure verified
+- [ ] **B.4** Rapid DQ test construction at scale demo
 
 ## Milestone Tracker
 
@@ -145,14 +192,20 @@ Status: 🔲 Pending / 🔄 In Progress / ✅ Done / ⚠️ Blocked
 
 ## Open Blockers
 
-| # | Blocker | Owner | Raised |
-|---|---|---|---|
-| 1 | Jira epic not created | Kuri | 2026-05-28 |
-| 2 | Snowflake connectivity layer — engineering sprint required | Brighthive eng | 2026-05-28 |
-| 3 | MCP client-side implementation status — confirm or scope sprint | Brighthive eng | 2026-05-28 |
-| 4 | GitHub Enterprise host config — 1-day task before any PR creation | Brighthive eng | 2026-05-28 |
-| 5 | GX output format — 2-3 day task to write YAML to repo | Brighthive eng | 2026-05-28 |
-| 6 | Grant's email not confirmed | Kuri | 2026-05-28 |
+| # | Blocker | Owner | Raised | Status |
+|---|---|---|---|---|
+| 1 | Confirm exact June trial start date with Grant | Kuri | 2026-05-29 | 🚧 Open |
+| 2 | Snowflake connectivity layer — `SnowflakeConnection` factory class | Brighthive eng | 2026-05-28 | 🚧 BH-526 |
+| 3 | MCP client config for Longaeva's MCP server — confirm protocol, scope | Brighthive eng | 2026-05-28 | 🚧 BH-526 |
+| 4 | GitHub Enterprise host config (`base_url`) — 1 day | Brighthive eng | 2026-05-28 | 🚧 BH-526 |
+| 5 | GX output: YAML to repo, not Markdown to S3 — 2-3 days | Brighthive eng | 2026-05-28 | 🚧 BH-526 |
+| 6 | Snowflake semantic view YAML scaffold tool — 1 sprint | Brighthive eng | 2026-05-28 | 🚧 BH-526 |
+| 7 | dbt schema.yml test generation — currently absent in dbt agent | Brighthive eng | 2026-05-29 | 🆕 |
+| 8 | Schema drift detection for self-healing PR loop — currently a Gap | Brighthive eng | 2026-05-29 | 🆕 |
+| 9 | Longitudinal anomaly monitoring — quality agent is stateless today | Brighthive eng | 2026-05-29 | 🆕 |
+| 10 | Dagster integration (vendor uses Dagster, not Airflow) — zero code refs | Brighthive eng | 2026-05-29 | 🆕 |
+| 11 | Grant's email not confirmed | Kuri | 2026-05-28 | 🚧 Open |
+| 12 | Trial-user list (the 1-2 DE + 1-2 DS) — to confirm with Grant | Kuri | 2026-05-29 | 🚧 Open |
 
 ## Decision
 
