@@ -74,6 +74,14 @@ make status                 → confirm all sentinels green
 | **DynamoDB workspace configs** | `dynamo-vault/cli/secrets` |
 | **AWS Secrets Manager inventory** | `aws-secrets-vault/cli/secrets` |
 | **Notion workspace page map** | `notion/pages.md` |
+| **All leads, trials, active clients** | `clients/README.md` |
+| **Active trials & scorecards** | `clients/trials/` |
+| **Longaeva POC overview** | `clients/trials/longaeva/overview.md` |
+| **Longaeva milestone scorecard** | `clients/trials/longaeva/scorecard.md` |
+| **Longaeva full POC response doc** | `clients/trials/longaeva/artifacts/poc-response-plan.md` |
+| **Trial template** | `clients/_templates/TRIAL.md` |
+| **Client architecture profiles** | `../platform-saas-ai-context/clients/` |
+| **Longaeva stack + capability map** | `../platform-saas-ai-context/clients/longaeva/` |
 | **AgentCore migration spec** | `docs/specs/agentcore-deployment-migration.md` |
 | **Onboarding bootstrap spec** | `docs/specs/onboarding-bootstrap.md` |
 | **System architecture** | `../platform-saas-ai-context/docs/architecture/ARCHITECTURE.md` |
