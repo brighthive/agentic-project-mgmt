@@ -1,11 +1,10 @@
 """DynamoDB client for scanning workspace configuration tables."""
 
 import logging
-from typing import Optional
 
 import boto3
 
-from config import AWS_ACCOUNTS, AWS_REGION, AWS_PROFILES, WORKSPACE_TABLES
+from config import ACCOUNT_REGISTRY, AWS_REGION, PROFILE_REGISTRY, WORKSPACE_TABLES
 from models import WorkspaceConfig, EntityType
 
 logger = logging.getLogger(__name__)
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def get_session(account_name: str) -> boto3.Session:
     """Create boto3 session for the given account."""
-    profile = AWS_PROFILES.get(account_name)
+    profile = PROFILE_REGISTRY.get(account_name)
     if not profile:
         raise ValueError(f"Unknown account: {account_name}")
     return boto3.Session(profile_name=profile, region_name=AWS_REGION)
@@ -52,7 +51,7 @@ def scan_table(account_name: str, table_name: str) -> list[dict]:
     return items
 
 
-def _extract_uuid(item: dict) -> Optional[str]:
+def _extract_uuid(item: dict) -> str | None:
     """Extract UUID primary key from an item."""
     for key in ("UUID", "uuid", "Id", "id"):
         if key in item:
@@ -92,11 +91,13 @@ def _safe_list(val) -> list:
 
 def build_workspace_index(
     account_name: str,
-    tables: Optional[list[str]] = None,
+    tables: list[str] | None = None,
 ) -> list[WorkspaceConfig]:
     """Scan workspace tables and merge into WorkspaceConfig objects by UUID."""
     tables = tables or WORKSPACE_TABLES
-    account_id = AWS_ACCOUNTS[account_name]
+    if account_name not in ACCOUNT_REGISTRY:
+        raise ValueError(f"Unknown account: {account_name}")
+    account_id = ACCOUNT_REGISTRY[account_name]
 
     admin_items = {}
     platform_items = {}
@@ -201,7 +202,7 @@ def search_workspaces(
 def get_workspace_by_name(
     account_name: str,
     workspace_name: str,
-) -> Optional[WorkspaceConfig]:
+) -> WorkspaceConfig | None:
     """Fetch a single workspace by exact or partial name match."""
     all_ws = build_workspace_index(account_name=account_name)
     # Exact match first

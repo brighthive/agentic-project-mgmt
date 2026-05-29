@@ -13,10 +13,12 @@ if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
 
 from shared.accounts import (  # noqa: E402
+    ACCOUNT_REGISTRY,
     AWS_ACCOUNTS,
     AWS_PROFILES,
     AWS_REGION,
     PLATFORM_ACCOUNTS,
+    PROFILE_REGISTRY,
     TEST_DEMO_ACCOUNTS,
     get_accounts_for_env,
 )
