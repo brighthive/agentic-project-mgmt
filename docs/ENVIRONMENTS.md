@@ -197,3 +197,61 @@ Amplify App: `arn:aws:amplify:us-east-1:396527728813:apps/d1dk6ngojdo9gg`
 | **Prod Test** | Controlled changes only. Active UAT with partners. |
 | **Staging Demo** | Mirror of prod. Update intentionally for demo prep. |
 | **Staging Test** | Break things here. All new CDK changes go here first. |
+
+---
+
+## Webapp (brighthive-webapp) Deployment
+
+**Amplify app ID**: `d1dk6ngojdo9gg` (AWS account: `brighthive-main`, `396527728813`)
+
+| Branch | Environment | URL | Auto-deploy |
+|--------|-------------|-----|-------------|
+| `staging` | Staging | [staging.brighthive.io](https://staging.brighthive.io) | Webhook only — manual `RELEASE` job via boto3 |
+| `production` | Prod | [app.brighthive.io](https://app.brighthive.io) | Webhook only |
+
+**To trigger a build manually** (AWS CLI won't parse JSON env vars — use boto3):
+```python
+# /Users/bado/iccha/brighthive/agentic-project-mgmt/.venv/bin/python3
+import boto3
+session = boto3.Session(profile_name='brighthive-main')
+client = session.client('amplify', region_name='us-east-1')
+client.start_job(appId='d1dk6ngojdo9gg', branchName='staging', jobType='RELEASE', jobReason='...')
+```
+
+**To update env vars** (must use boto3 not AWS CLI — CLI parser rejects JSON values):
+```python
+client.update_branch(appId='d1dk6ngojdo9gg', branchName='staging', environmentVariables={...})
+```
+
+### Feature Flag: VITE_ROUTE_VISIBILITY_CONFIG
+
+Controls route visibility per workspace. Set in Amplify env vars per branch.
+
+| Route | Default | Notes |
+|-------|---------|-------|
+| `Files` | Hidden | Whitelist-only |
+| `Sessions` | Hidden | Whitelist-only |
+| `Ingestion` | Hidden | Whitelist-only |
+| `Glossary` | Hidden | Whitelist-only |
+| All others | Visible | Use `disabledRoutes` to hide |
+
+**Staging value** (as of 2026-05-27):
+```json
+{
+  "*": {"disabledRoutes": [], "enabledRoutes": ["Files","Sessions","Ingestion","Glossary"]},
+  "4d7ffd13-73d0-4f14-8f0e-63bfddceca7c": {"disabledRoutes": [], "enabledRoutes": ["Files","Sessions","Ingestion","Glossary"]},
+  "1c7cb12e-6d1a-4922-98a8-cff4de70f24d": {"disabledRoutes": [], "enabledRoutes": ["Files","Sessions","Ingestion","Glossary"]}
+}
+```
+
+Full docs: `brighthive-webapp/docs/FEATURE_FLAGS.md`
+
+### Webapp Merge Flow
+
+```
+feature-branch → develop → release/staging-* → staging → production
+```
+
+- Amplify does NOT auto-deploy on push — trigger manually or via boto3
+- Conflicts between develop and staging: keep `src/routes/index.tsx` from develop (nav restructure owns it)
+- `CustomAgents/index.tsx` cherry-pick pattern causes duplicate imports — always dedup `useGetUserRole` and `canAccessFiles` props
