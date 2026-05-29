@@ -105,13 +105,26 @@ These deliver real value with zero engineering pre-work:
 
 | Task | Effort | Blocks | Status |
 |---|---|---|---|
-| `SnowflakeConnection` in warehouse factory (plumbing exists, factory missing) | 1-2 days | Sections 1 + 2 | 🔲 |
+| Snowflake sandbox account + medallion DDL + semantic view (target environment) | done 2026-05-29 | All trial workstreams | ✅ [PR #17](https://github.com/brighthive/agentic-project-mgmt/pull/17) — see [`sandbox/`](sandbox/) |
+| `SnowflakeConnection` in warehouse factory (plumbing exists, factory missing) | 1-2 days | Sections 1 + 2 | 🔲 — sandbox is the real target now |
 | Snowflake schema introspection via INFORMATION_SCHEMA | 2-3 days | 1.1, 1.3, 2.3 | 🔲 |
-| Snowflake semantic view YAML scaffolding tool | 1 sprint | Section 2 | 🔲 |
+| Snowflake semantic view YAML scaffolding tool | 1 sprint | Section 2 | 🔲 — golden reference at [`sandbox/semantic/sv_daily_portfolio_exposure.yaml`](sandbox/semantic/sv_daily_portfolio_exposure.yaml) |
 | dbt sources.yml generation from scratch (not just update) | 3-4 days | 1.1, 1.3 | 🔲 |
 | GX output: write YAML to repo branch, not Markdown to S3 | 2-3 days | 1.3, 4.2 | 🔲 |
 | GitHub Enterprise `base_url` config (one param) | 1 day | All PR creation | 🔲 |
 | MCP client status — confirm or scope sprint | Confirm first | Section 3.1 | 🔲 |
+
+## Snowflake Sandbox
+
+A live Snowflake account that mirrors the topology Longaeva will provision Days 1–2 — built so engineering can develop and self-validate against real Snowflake objects before Day 1.
+
+- **Path**: [`sandbox/`](sandbox/) — DDL, semantic-view YAML, source-pattern stubs
+- **Topology**: see [`sandbox/README.md`](sandbox/README.md)
+- **Fidelity tracker** (live): [`sandbox/FIDELITY.md`](sandbox/FIDELITY.md) — what's high-fidelity vs. thin, prioritized closure roadmap
+- **Account**: `bfddsko-dua97555` · **Role**: `LONGAEVA_POC_ROLE` · **Warehouse**: `POC_WH` · **Databases**: `LONGAEVA_POC`, `LONGAEVA_VENDOR_SHARE_SIM`
+- **Credentials**: LastPass entry `Snowflake/Longaeva POC Sandbox`
+- **CLI**: `snow sql -q "..." -c brighthive` (defaults to `LONGAEVA_POC_ROLE` / `POC_WH` / `LONGAEVA_POC`)
+- **Open fidelity gaps to close** (in priority order): synthetic seed → dbt project skeleton → GHE config → GX init → real S3 → Dagster → real Data Share. See [`FIDELITY.md`](sandbox/FIDELITY.md) for details.
 
 ## Context Setup (Days 1-5)
 

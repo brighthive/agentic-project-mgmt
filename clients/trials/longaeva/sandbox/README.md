@@ -6,6 +6,8 @@ DDL only — no seed data. Seeding waits for Longaeva's actual sample files duri
 
 Tracked under epic **BH-526** (pre-trial engineering gaps).
 
+> **Fidelity tracker**: see [`FIDELITY.md`](FIDELITY.md) for what's high-fidelity vs. thin in this simulation, and the prioritized list of gaps we're closing next. Update it as work lands.
+
 ## Topology
 
 ```
