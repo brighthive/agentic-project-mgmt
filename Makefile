@@ -694,23 +694,22 @@ help:  ## Show this help
 	@printf "\n  BrightHive Engineering-Leader Onboarding\n"
 	@printf "  ─────────────────────────────────────────\n\n"
 	@printf "  \033[1mLayer 0 — Install prerequisites\033[0m  (idempotent — skips already-installed tools)\n"
-	@grep -E '^[a-zA-Z_-]+:.*## ⓪' $(MAKEFILE_LIST) | \
+	@grep -hE '^[a-zA-Z_-]+:.*## ⓪' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
-	@printf "\n  \033[1mLayer 1 — Onboarding primitives\033[0m  (idempotent, safe to re-run)\n"
-	@grep -E '^[a-zA-Z_-]+:.*## ①|^[a-zA-Z_-]+:.*## ②|^[a-zA-Z_-]+:.*## ③|^[a-zA-Z_-]+:.*## ④' $(MAKEFILE_LIST) | \
+	@printf "\n  \033[1mLayer 1 — Credentials, repos, secrets\033[0m  (idempotent, safe to re-run)\n"
+	@grep -hE '^[a-zA-Z_-]+:.*## (①|②|③)' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
-	@printf "\n  \033[1mLayer 2 — Start services (all require NAME=)\033[0m\n"
-	@grep -E '^[a-zA-Z_-]+:.*## ④' $(MAKEFILE_LIST) | \
+	@printf "\n  \033[1mLayer 2 — Env files & service control\033[0m  (all require NAME=)\n"
+	@grep -hE '^[a-zA-Z_-]+:.*## ④' Makefile | grep -vE '^(localstack|stopstack|stackstatus):' | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mLayer 3 — Stack orchestration\033[0m  (coming soon: staging stack)\n"
-	@grep -E '^(localstack|stopstack|stackstatus):.*## ' $(MAKEFILE_LIST) | \
+	@grep -hE '^(localstack|stopstack|stackstatus):.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
-	@printf "\n"
-	@printf "  \033[1mLegacy — Slack integration\033[0m\n"
-	@grep -E '^slack[a-zA-Z_-]*:.*## ' $(MAKEFILE_LIST) | \
+	@printf "\n  \033[1mLegacy — Slack integration\033[0m\n"
+	@grep -hE '^slack[a-zA-Z_-]*:.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mUtilities\033[0m\n"
-	@grep -E '^(status|help):.*## ' $(MAKEFILE_LIST) | \
+	@grep -hE '^(status|help):.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  See ONBOARDING.md for the linear new-leader walkthrough.\n\n"
 
