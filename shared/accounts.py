@@ -7,6 +7,7 @@ All accounts use AWS SSO. See /aws-auth skill for SSO details.
 import os
 from dataclasses import dataclass
 from enum import Enum
+from types import MappingProxyType
 
 
 class AccountType(Enum):
@@ -123,7 +124,7 @@ STAGE_DEMO_ORG = AWSAccount(
 DEMO_ENV = AWSAccount(
     account_id="783764595475",
     profile="demo-env",
-    name="BrighthiveDemoEnvironment",
+    name="StageDemoEnvironment",
     account_type=AccountType.DEMO,
     entity_type=EntityType.WORKSPACE,
     parent_env="STAGE",
@@ -162,9 +163,39 @@ TEST_DEMO_ACCOUNTS: list[AWSAccount] = [
 ]
 ALL_ACCOUNTS: list[AWSAccount] = PLATFORM_ACCOUNTS + TEST_DEMO_ACCOUNTS + [SECURITY, DEPLOYMENT]
 
-# Backwards-compatible dicts — drop-in replacement for old config.py
-AWS_ACCOUNTS: dict[str, str] = {acct.name: acct.account_id for acct in PLATFORM_ACCOUNTS}
-AWS_PROFILES: dict[str, str] = {acct.name: acct.profile for acct in PLATFORM_ACCOUNTS}
+# Fail loudly on duplicate names — registries are keyed by name, so collisions
+# silently drop accounts from the sweep. Catch at module load, not at runtime.
+_names_seen: dict[str, str] = {}
+for _acct in ALL_ACCOUNTS:
+    if _acct.name in _names_seen:
+        raise ValueError(
+            f"Duplicate account name '{_acct.name}': "
+            f"{_names_seen[_acct.name]} vs {_acct.account_id}"
+        )
+    _names_seen[_acct.name] = _acct.account_id
+del _names_seen, _acct
+
+# Backwards-compatible dicts — drop-in replacement for old config.py.
+# AWS_ACCOUNTS / AWS_PROFILES stay scoped to PLATFORM_ACCOUNTS so existing
+# callers (aws-secrets-vault, dynamo-vault) keep their narrow default.
+# Callers that need the full sweep (e.g. kurilead/export_all.py) opt in
+# explicitly via ALL_ACCOUNTS_MAP / ALL_PROFILES_MAP.
+AWS_ACCOUNTS: MappingProxyType[str, str] = MappingProxyType(
+    {acct.name: acct.account_id for acct in PLATFORM_ACCOUNTS}
+)
+AWS_PROFILES: MappingProxyType[str, str] = MappingProxyType(
+    {acct.name: acct.profile for acct in PLATFORM_ACCOUNTS}
+)
+
+# Registry used for individual account lookups by name. Covers every known
+# account (platform + workspace + security/deployment). Distinct from
+# AWS_ACCOUNTS, which intentionally stays narrow for default iteration.
+ACCOUNT_REGISTRY: MappingProxyType[str, str] = MappingProxyType(
+    {acct.name: acct.account_id for acct in ALL_ACCOUNTS}
+)
+PROFILE_REGISTRY: MappingProxyType[str, str] = MappingProxyType(
+    {acct.name: acct.profile for acct in ALL_ACCOUNTS}
+)
 AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
 
 

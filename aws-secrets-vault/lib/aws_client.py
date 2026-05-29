@@ -6,9 +6,8 @@ import boto3
 import json
 import logging
 from datetime import datetime
-from typing import Optional, List
 
-from config import AWS_ACCOUNTS, AWS_REGION, AWS_PROFILES
+from config import ACCOUNT_REGISTRY, AWS_REGION, PROFILE_REGISTRY
 from models import Secret, SecretMetadata
 
 logger = logging.getLogger(__name__)
@@ -18,25 +17,18 @@ class AWSSecretsManager:
     """Client for fetching secrets from AWS Secrets Manager."""
 
     def __init__(
-        self, account_name: str, region: str = AWS_REGION, profile: Optional[str] = None
-    ):
-        """
-        Initialize AWS Secrets Manager client.
-
-        Args:
-            account_name: Account name (DEV, STAGE, PROD, MAIN)
-            region: AWS region
-            profile: AWS CLI profile (defaults from config or None for default credentials)
-        """
+        self, account_name: str, region: str = AWS_REGION, profile: str | None = None
+    ) -> None:
+        """Initialize boto3 Secrets Manager client for the given account (resolved via PROFILE_REGISTRY)."""
         self.account_name = account_name
-        self.account_id = AWS_ACCOUNTS.get(account_name)
+        self.account_id = ACCOUNT_REGISTRY.get(account_name)
         self.region = region
 
         if not self.account_id:
             raise ValueError(f"Unknown account: {account_name}")
 
-        # Use provided profile, or get from config (which may be None for default)
-        profile = profile if profile is not None else AWS_PROFILES.get(account_name)
+        # Use provided profile, or get from registry (which may be None for default)
+        profile = profile if profile is not None else PROFILE_REGISTRY.get(account_name)
 
         try:
             # If profile is None, boto3 uses default credentials from environment/~/.aws/credentials
@@ -49,7 +41,7 @@ class AWSSecretsManager:
             )
             raise
 
-    def list_all_secrets(self) -> List[str]:
+    def list_all_secrets(self) -> list[str]:
         """
         List all secret names in account.
 
@@ -73,7 +65,7 @@ class AWSSecretsManager:
             )
             raise
 
-    def get_secret_metadata(self, secret_name: str) -> Optional[SecretMetadata]:
+    def get_secret_metadata(self, secret_name: str) -> SecretMetadata | None:
         """
         Get metadata for a specific secret.
 
@@ -104,7 +96,7 @@ class AWSSecretsManager:
             logger.error(f"[AWS] Failed to get metadata for {secret_name}: {str(e)}")
             return None
 
-    def get_secret_value(self, secret_name: str) -> Optional[str]:
+    def get_secret_value(self, secret_name: str) -> str | None:
         """
         Get the value of a secret (for classification).
 
@@ -134,7 +126,7 @@ class AWSSecretsManager:
             logger.warning(f"[AWS] Failed to get value for {secret_name}: {str(e)}")
             return None
 
-    def fetch_all_secrets(self) -> List[Secret]:
+    def fetch_all_secrets(self) -> list[Secret]:
         """
         Fetch all secrets with metadata from account.
 
