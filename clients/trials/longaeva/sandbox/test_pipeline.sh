@@ -53,11 +53,13 @@ assert "default database is LONGAEVA_POC" \
 
 echo
 echo "==> 2. All schemas + tables exist"
-# 12 seeded tables + 4 dbt-built tables (3 marts in GOLD, 1 intermediate in SILVER)
+# 12 seeded base tables + 4 dbt-built base tables (3 marts in GOLD, 1 intermediate
+# in SILVER). dbt staging *views* (stg_vendor_*) are excluded — count BASE TABLE only
+# so adding views never perturbs this assertion.
 EXPECTED_TABLES_POC=16
 EXPECTED_TABLES_SHARE=2
 
-POC_COUNT=$(snow sql --format JSON -q "SELECT COUNT(*) AS C FROM LONGAEVA_POC.information_schema.tables WHERE table_schema IN ('BRONZE','SILVER','GOLD','REF');" -c brighthive 2>/dev/null | grep -oE '"C":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo 0)
+POC_COUNT=$(snow sql --format JSON -q "SELECT COUNT(*) AS C FROM LONGAEVA_POC.information_schema.tables WHERE table_schema IN ('BRONZE','SILVER','GOLD','REF') AND table_type = 'BASE TABLE';" -c brighthive 2>/dev/null | grep -oE '"C":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo 0)
 SHARE_COUNT=$(snow sql --format JSON -q "SELECT COUNT(*) AS C FROM LONGAEVA_VENDOR_SHARE_SIM.information_schema.tables WHERE table_schema = 'SHARED';" -c brighthive 2>/dev/null | grep -oE '"C":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo 0)
 
 assert "LONGAEVA_POC has $EXPECTED_TABLES_POC tables across BRONZE/SILVER/GOLD/REF" \

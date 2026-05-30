@@ -202,6 +202,13 @@ have sandbox stand-ins so BrightHive development is unblocked until they arrive.
 cd clients/trials/longaeva/sandbox
 ./test_pipeline.sh      # infra/DDL/dbt/RBAC — 27/27
 ./validate_poc.sh       # every PoC use case — 10/10
+
+# Full ELT orchestration (Dagster asset graph, all 7 assets):
+(cd sources/rest-stub && uv run --with fastapi --with uvicorn python -m uvicorn main:app --port 8000 &)
+cd orchestration && DAGSTER_HOME=$(mktemp -d) uv run --python 3.12 \
+  --with 'dagster>=1.7,<1.9' --with dbt-snowflake --with snowflake-connector-python \
+  --with httpx --with pyyaml \
+  dagster asset materialize --select '*' -m longaeva_dagster.definitions
 ```
 
 See [`sandbox/FIDELITY.md`](sandbox/FIDELITY.md) for the build journal and
