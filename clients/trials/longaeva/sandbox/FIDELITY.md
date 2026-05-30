@@ -3,9 +3,10 @@
 > What's high-fidelity vs. thin in our Longaeva POC simulation, and what we're closing next.
 > Updated as work lands. Source of truth for "are we trial-ready?"
 
-**Last updated**: 2026-05-30 (F2 dbt project producing derived data products)
-**Overall fidelity**: ~80% end-to-end / ~95% on Snowflake + dbt + semantic-view + RBAC + data-correctness surfaces
-**Pipeline test**: `./test_pipeline.sh` — **27/27 passing** (connection, DDL, strip-and-emit, seed validation, dbt build with 34 tests, RBAC matrix)
+**Last updated**: 2026-05-30 (all POC use cases F12–F19 closed)
+**Overall fidelity**: ~90% end-to-end — every POC scorecard criterion resolves against the live sandbox
+**Pipeline test**: `./test_pipeline.sh` — 27/27 passing (infra/DDL/strip-and-emit/seed/dbt/RBAC)
+**PoC use-case suite**: `./validate_poc.sh` — **10/10 passing** (3 ingestion patterns, semantic enrollment, MCP, self-healing ×4, anomaly monitoring ×4, dbt quality, governance)
 
 ## Snapshot
 
