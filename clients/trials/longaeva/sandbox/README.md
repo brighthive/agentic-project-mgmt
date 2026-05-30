@@ -44,11 +44,21 @@ sandbox/
 │   └── sv_daily_portfolio_exposure.yaml   Longaeva-extended YAML spec
 ├── seed/
 │   └── seed.py                            ← synthetic data loader (~450k rows)
-└── sources/
-    ├── s3-vendor-market-data/README.md    Source Type 1 (S3 stage stand-in)
-    ├── rest-stub/README.md                Source Type 2 (paginated REST)
-    └── snowflake-data-share/README.md     Source Type 3 (Data Share sim)
+├── sources/
+│   ├── s3-vendor-market-data/             Source Type 1: ingest.py (PUT/COPY/flag)
+│   ├── rest-stub/                         Source Type 2: main.py (FastAPI) + ingest.py
+│   └── snowflake-data-share/              Source Type 3: seed_share.sql + dbt staging
+├── self_healing/
+│   └── failure_modes.py                   4 failure modes: detect→diagnose→surgical fix
+├── monitoring/
+│   ├── 00_monitoring_ddl.sql              metric_history + anomaly_events tables
+│   └── monitor.py                         longitudinal anomaly detection (4 families)
+├── test_pipeline.sh                       infra/DDL/dbt/RBAC smoke test (27/27)
+└── validate_poc.sh                        every PoC use case mapped to scorecard (10/10)
 ```
+
+The semantic/ dir also holds `strip_and_emit.py` (YAML→DDL), `validate.py`
+(3-layer harness), and `mcp_check.py` (queryability + gap detection).
 
 ## Seeding
 

@@ -63,17 +63,41 @@ Legend: ✅ done · ⏳ open (in our court) · ⏳ blocked (waiting on Longaeva)
 | B2 | **Vendor file shapes** (real columns) | Day 4–5 — sample datasets milestone |
 | B3 | **Their internal MCP server** access | Day 1–2 — system access provisioned milestone |
 
-## Closure roadmap (in priority order)
+## Closure roadmap
 
-1. ~~**F1 — Synthetic seed**~~ ✅ done 2026-05-30 — sandbox is now end-to-end verifiable; baseline_expectations enforced
-2. **F2 — dbt project skeleton** (1 d) — `dbt init`, project pointed at sandbox, committed under `sandbox/dbt/`; turns scaffolder output into mergeable artifacts
-3. **F3 — GHE config flag** (1 h) — cheap close on a BH-526 gap
-4. **F4 — GX init** (0.5 d) — makes POC 4.2 demonstrable pre-trial
-5. **F5 — Real S3 storage integration** (1 d) — only if S3 ingestion must be merge-ready before Day 1
-6. **F7 — Dagster compose** (2 d) — only if self-healing must demo pre-trial; otherwise unit-test the agent path
-7. **F6 — Real Data Share** (1 d) — defer to trial unless provisioning becomes critical
+### Done (sandbox now resolves all 10 PoC use cases)
 
-Track each item as a discrete PR off `drchinca/BH-526/snowflake-sandbox-ddl` so the buildout is incremental and reviewable.
+| ID | Item | Closed |
+|---|---|---|
+| F1 | Synthetic seed (~450k rows) | ✅ 2026-05-30 |
+| F2 | dbt project — intermediate + 3 GOLD data products | ✅ 2026-05-30 |
+| F8/F9 | YAML strip-boundary + baseline_expectations | ✅ 2026-05-30 |
+| F10 | strip-and-emit (YAML → DDL) | ✅ 2026-05-30 |
+| F11 | RBAC scoped agent role | ✅ 2026-05-30 |
+| F12 | S3 ingestion (PUT/COPY/completion-flag) | ✅ 2026-05-30 |
+| F13 | REST API stub + chunked ingestion | ✅ 2026-05-30 |
+| F14 | Data Share ingestion + dbt staging | ✅ 2026-05-30 |
+| F15 | 3-layer validation harness | ✅ 2026-05-30 |
+| F16 | MCP queryability check | ✅ 2026-05-30 |
+| F17 | Self-healing fixtures (4 modes) | ✅ 2026-05-30 |
+| F18 | Longitudinal anomaly monitoring (4 families) | ✅ 2026-05-30 |
+| F19 | Unified PoC validation suite (`validate_poc.sh`) | ✅ 2026-05-30 |
+
+### Remaining (deferrable to trial / blocked on Longaeva)
+
+| ID | Item | Why deferrable | ETA |
+|---|---|---|---|
+| F5 | Real S3 external stage + storage integration | Internal-stage stand-in has identical `COPY INTO` semantics; swap is 1-line DDL | 1 d, at trial |
+| F6 | Real Snowflake Data Share | Cross-DB grant gives identical query shape; real share needs provider-side setup | 1 d, at trial |
+| F7 | Dagster + OpenLineage | Self-healing/monitoring agent logic is testable without the orchestrator; fixtures encode the signatures | 2 d, optional |
+| B1 | Longaeva's actual YAML spec | **Blocked** — Grant delivers ≤ June 8; our golden YAML is structurally aligned | reconcile on arrival |
+| B2 | Real vendor file shapes | **Blocked** — sample files Day 4–5 | at trial |
+| B3 | Longaeva's MCP server access | **Blocked** — provisioned Day 1–2; `mcp_check.py` is the stand-in | at trial |
+
+**The remaining items are no longer on the critical path.** They are either
+trivial swaps (F5/F6), optional infra (F7), or owned by Longaeva (B1/B2/B3).
+The PoC-winning work is now on the **BrightHive product side** — see
+[`../BRIGHTHIVE_GAPS.md`](../BRIGHTHIVE_GAPS.md).
 
 ## Decision log
 

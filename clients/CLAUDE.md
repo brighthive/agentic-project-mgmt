@@ -19,6 +19,8 @@
 | Longaeva full POC response plan | `trials/longaeva/artifacts/poc-response-plan.md` |
 | Longaeva Snowflake sandbox | `trials/longaeva/sandbox/` |
 | Longaeva sandbox fidelity tracker | `trials/longaeva/sandbox/FIDELITY.md` |
+| Longaeva PoC use-case validator | `trials/longaeva/sandbox/validate_poc.sh` (10/10) |
+| Longaeva BrightHive gap analysis | `trials/longaeva/BRIGHTHIVE_GAPS.md` |
 | Longaeva tech stack | `../platform-saas-ai-context/clients/longaeva/stack.md` |
 | Longaeva capability map | `../platform-saas-ai-context/clients/longaeva/capability-map.md` |
 
