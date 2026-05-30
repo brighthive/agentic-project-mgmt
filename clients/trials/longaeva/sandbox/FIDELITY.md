@@ -3,10 +3,11 @@
 > What's high-fidelity vs. thin in our Longaeva POC simulation, and what we're closing next.
 > Updated as work lands. Source of truth for "are we trial-ready?"
 
-**Last updated**: 2026-05-30 (all POC use cases F12–F19 closed)
-**Overall fidelity**: ~90% end-to-end — every POC scorecard criterion resolves against the live sandbox
+**Last updated**: 2026-05-30 (F7 Dagster orchestration added — ELT layer now real)
+**Overall fidelity**: ~95% end-to-end — full Snowflake + dbt + Dagster ELT stack, every POC use case resolves
 **Pipeline test**: `./test_pipeline.sh` — 27/27 passing (infra/DDL/strip-and-emit/seed/dbt/RBAC)
-**PoC use-case suite**: `./validate_poc.sh` — **10/10 passing** (3 ingestion patterns, semantic enrollment, MCP, self-healing ×4, anomaly monitoring ×4, dbt quality, governance)
+**PoC use-case suite**: `./validate_poc.sh` — **10/10 passing**
+**Orchestration**: `orchestration/` — Dagster asset graph drives the full ELT pipeline; all 7 assets materialize in dependency order (verified RUN_SUCCESS)
 
 ## Snapshot
 
@@ -89,7 +90,7 @@ Legend: ✅ done · ⏳ open (in our court) · ⏳ blocked (waiting on Longaeva)
 |---|---|---|---|
 | F5 | Real S3 external stage + storage integration | Internal-stage stand-in has identical `COPY INTO` semantics; swap is 1-line DDL | 1 d, at trial |
 | F6 | Real Snowflake Data Share | Cross-DB grant gives identical query shape; real share needs provider-side setup | 1 d, at trial |
-| F7 | Dagster + OpenLineage | Self-healing/monitoring agent logic is testable without the orchestrator; fixtures encode the signatures | 2 d, optional |
+| ~~F7~~ | ~~Dagster + OpenLineage~~ | ✅ **done 2026-05-30** — `orchestration/` drives the full ELT as a Dagster asset graph; OpenLineage wired via env. All 7 assets materialize RUN_SUCCESS. | — |
 | B1 | Longaeva's actual YAML spec | **Blocked** — Grant delivers ≤ June 8; our golden YAML is structurally aligned | reconcile on arrival |
 | B2 | Real vendor file shapes | **Blocked** — sample files Day 4–5 | at trial |
 | B3 | Longaeva's MCP server access | **Blocked** — provisioned Day 1–2; `mcp_check.py` is the stand-in | at trial |

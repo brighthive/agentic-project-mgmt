@@ -48,6 +48,8 @@ sandbox/
 │   ├── s3-vendor-market-data/             Source Type 1: ingest.py (PUT/COPY/flag)
 │   ├── rest-stub/                         Source Type 2: main.py (FastAPI) + ingest.py
 │   └── snowflake-data-share/              Source Type 3: seed_share.sql + dbt staging
+├── orchestration/
+│   └── longaeva_dagster/                  Dagster asset graph over the full ELT pipeline
 ├── self_healing/
 │   └── failure_modes.py                   4 failure modes: detect→diagnose→surgical fix
 ├── monitoring/
