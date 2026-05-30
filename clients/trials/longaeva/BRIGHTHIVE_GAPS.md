@@ -48,9 +48,10 @@ the golden reference / test target for that piece of agent work.
 | **BrightHive gap** | `brightbot/brightbot/tools/warehouse_connections.py:484` — `CONNECTION_CLASSES` has `redshift`, `azure_synapse`, `postgres`. **No `snowflake`.** `SnowflakeConnectionParams` is modeled in `query_retrieval.py:64` but never wired to a connection class, so any Snowflake SQL raises `ValueError`. |
 | **brightagent-v2** | `bright_contracts/warehouse.py:20` `Warehouse` Protocol names Snowflake, but only the Redshift adapter/spec exists (`SPEC-SERVICE-redshift.md`). A `SnowflakeAdapter` is needed there too if the trial runs on v2/CEMAF. |
 | **Work** | Implement `SnowflakeConnection(WarehouseConnection)` mirroring `RedshiftConnection`/`SynapseConnection`; register in `CONNECTION_CLASSES`. Use `snowflake-connector-python`. Honor SELECT-only enforcement that the other connections have. |
-| **Effort** | 1–2 days (plumbing exists, factory entry + connector + tests) |
+| **✅ Reference exists** | `sandbox/brighthive_adapter/snowflake_connection.py` — a **validated, parity implementation** of the `WarehouseConnection` ABC, self-tested against live `LONGAEVA_POC` (connects, queries the semantic view, SELECT-guard blocks DELETE, INFORMATION_SCHEMA introspection). The brightbot PR is now a **mechanical drop-in** with zero design risk — copy the class, register it, run multi-agent review. Promotion steps in `sandbox/brighthive_adapter/README.md`. |
+| **Effort** | ~1 day (drop in proven class + register + review; was 1–2d) |
 | **Owner** | Marwan / Ahmed |
-| **Test target** | Point it at `LONGAEVA_POC` with the `~/.snowflake/config.toml` `brighthive` connection; run the existing warehouse scenario tests against it. |
+| **Test target** | `sandbox/brighthive_adapter/snowflake_connection.py` self-test already passes against `LONGAEVA_POC`; promote and run the existing warehouse scenario tests. |
 
 ### GAP-2 — Snowflake schema introspection via INFORMATION_SCHEMA
 
@@ -58,6 +59,7 @@ the golden reference / test target for that piece of agent work.
 |---|---|
 | **Sandbox proves** | `LONGAEVA_POC.INFORMATION_SCHEMA.{TABLES,COLUMNS}` returns the full medallion shape; the sandbox seeds 16 tables across BRONZE/SILVER/GOLD/REF + MONITORING. |
 | **BrightHive gap** | Introspection today targets Redshift/Synapse system tables. Needs a Snowflake `INFORMATION_SCHEMA` path (and `SHOW ... IN SCHEMA` for stages/semantic views). |
+| **✅ Reference exists** | The adapter self-test (GAP-1) already runs `INFORMATION_SCHEMA.TABLES` introspection against `LONGAEVA_POC` and returns the GOLD base tables — the query path is proven; remaining work is mapping to the metadata model. |
 | **Work** | Add Snowflake introspection queries; map to the existing metadata model the Ingestion + Engineering agents consume. |
 | **Effort** | 2–3 days |
 | **Owner** | Marwan |

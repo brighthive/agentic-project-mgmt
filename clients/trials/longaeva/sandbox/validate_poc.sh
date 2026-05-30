@@ -141,6 +141,17 @@ fi
 
 # ---------------------------------------------------------------------------
 echo
+echo "## 5. BrightHive integration — does our product plug into the sandbox?"
+
+ADAPTER_OUT=$(cd brighthive_adapter && uv run --quiet --with snowflake-connector-python python snowflake_connection.py 2>&1)
+if echo "$ADAPTER_OUT" | grep -q "PASS — BrightHive interface connects"; then
+  ok "5.1 SnowflakeConnection adapter (GAP-1): BrightHive ABC connects + queries + SELECT-guard + introspection"
+else
+  bad "5.1 SnowflakeConnection adapter failed to connect"
+fi
+
+# ---------------------------------------------------------------------------
+echo
 echo "############################################################"
 echo "# Results: $PASS passed, $FAIL failed, $SKIP skipped"
 echo "############################################################"

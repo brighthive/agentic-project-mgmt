@@ -6,8 +6,9 @@
 **Last updated**: 2026-05-30 (F7 Dagster orchestration added — ELT layer now real)
 **Overall fidelity**: ~95% end-to-end — full Snowflake + dbt + Dagster ELT stack, every POC use case resolves
 **Pipeline test**: `./test_pipeline.sh` — 27/27 passing (infra/DDL/strip-and-emit/seed/dbt/RBAC)
-**PoC use-case suite**: `./validate_poc.sh` — **10/10 passing**
+**PoC use-case suite**: `./validate_poc.sh` — **11/11 passing** (now includes BrightHive integration)
 **Orchestration**: `orchestration/` — Dagster asset graph drives the full ELT pipeline; all 7 assets materialize in dependency order (verified RUN_SUCCESS)
+**BrightHive plugs in**: `brighthive_adapter/snowflake_connection.py` — BrightHive's `WarehouseConnection` ABC connects to the live sandbox (GAP-1 reference, self-test passes)
 
 ## Snapshot
 
