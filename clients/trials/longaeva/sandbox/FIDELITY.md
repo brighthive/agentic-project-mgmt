@@ -3,9 +3,9 @@
 > What's high-fidelity vs. thin in our Longaeva POC simulation, and what we're closing next.
 > Updated as work lands. Source of truth for "are we trial-ready?"
 
-**Last updated**: 2026-05-30 (F1 seed loaded, baseline_expectations validated)
-**Overall fidelity**: ~70% end-to-end / ~95% for `SnowflakeConnection` + introspection + semantic-view-DDL + RBAC + data-correctness surfaces
-**Pipeline test**: `./test_pipeline.sh` — **23/23 passing** (connection, DDL, strip-and-emit, semantic view returns real data, baseline_expectations enforced, RBAC matrix)
+**Last updated**: 2026-05-30 (F2 dbt project producing derived data products)
+**Overall fidelity**: ~80% end-to-end / ~95% on Snowflake + dbt + semantic-view + RBAC + data-correctness surfaces
+**Pipeline test**: `./test_pipeline.sh` — **27/27 passing** (connection, DDL, strip-and-emit, seed validation, dbt build with 34 tests, RBAC matrix)
 
 ## Snapshot
 
@@ -20,8 +20,9 @@
 | **End-to-end pipeline test** | ✅ Live | High | `test_pipeline.sh` — 17 assertions covering connection, schemas, stages, strip-and-emit round-trip, semantic-view query, RBAC matrix |
 | Reference data (fiscal cal, identifier map, geo, classification) | ✅ Live | High | 25 geo + 14 classification + 24 fiscal periods (2 cohorts × FY24-26) + 200 issuers with LEI/FIGI/CUSIP/ISIN/cohort triples |
 | **Synthetic seed data (~450k rows)** | ✅ Live | High | 1y daily; 200 instruments × 252 trading days prices, 30 portfolios × 252d × 15-35 holdings exposure mart, fiscal-aware. Random-walk prices, deterministic seed (RNG_SEED=42). Loader: `seed/seed.py --reset` |
+| **dbt project (intermediate + data products)** | ✅ Live | High | `int_enriched_holdings` (SILVER, joined) + 3 derived data products in GOLD: regional exposure daily, top-50 issuers daily, fiscal-quarter exposure. 34 tests passing. Custom singular tests mirror YAML's baseline_expectations. Run: `cd dbt && source set_env.sh && dbt build` |
 | Two-DB topology (warehouse + share-sim) | ✅ Live | Medium | Cross-DB grant ≠ real Data Share provisioning |
-| dbt project skeleton | ⏳ Open | — | Scaffolder emits `sources.yml` but has nothing to merge into |
+| ~~dbt project skeleton~~ | ✅ Live | — | Done 2026-05-30; see row above |
 | Real S3 external stage (vs. internal stage stand-in) | ⏳ Open | — | `COPY INTO` semantics identical; IAM + storage integration differ |
 | Real Snowflake Data Share (vs. simulated DB) | ⏳ Open | — | Same query shape, different provisioning flow |
 | Dagster + OpenLineage | ⏳ Open | — | Self-healing reads Dagster logs; we have none |

@@ -1,0 +1,36 @@
+name: longaeva_sandbox
+version: 1.0.0
+config-version: 2
+
+profile: longaeva_sandbox
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# All models materialize into the LONGAEVA_POC database. Within that:
+#   intermediate/  -> SILVER schema   (joined / cleaned, not yet aggregated)
+#   marts/         -> GOLD schema    (aggregated data products)
+#
+# The seed-loaded GOLD.mart_daily_portfolio_exposure stays as the upstream
+# table the semantic view reads from. dbt-built marts are NEW derived data
+# products downstream of that contract.
+models:
+  longaeva_sandbox:
+    +materialized: table
+    intermediate:
+      +schema: SILVER
+    marts:
+      +schema: GOLD
+
+vars:
+  # Used by tests derived from baseline_expectations
+  min_distinct_issuers_per_day: 30
+  cardinality_drop_tolerance_pct: 20

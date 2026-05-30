@@ -53,7 +53,8 @@ assert "default database is LONGAEVA_POC" \
 
 echo
 echo "==> 2. All schemas + tables exist"
-EXPECTED_TABLES_POC=12
+# 12 seeded tables + 4 dbt-built tables (3 marts in GOLD, 1 intermediate in SILVER)
+EXPECTED_TABLES_POC=16
 EXPECTED_TABLES_SHARE=2
 
 POC_COUNT=$(snow sql --format JSON -q "SELECT COUNT(*) AS C FROM LONGAEVA_POC.information_schema.tables WHERE table_schema IN ('BRONZE','SILVER','GOLD','REF');" -c brighthive 2>/dev/null | grep -oE '"C":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+' || echo 0)
@@ -179,7 +180,51 @@ else
 fi
 
 echo
-echo "==> 7. RBAC: agent role boundary (strict mode, no secondary-role leak)"
+echo "==> 7. dbt: build derived data products + run tests"
+DBT_OUT=$(cd dbt && source ./set_env.sh >/dev/null 2>&1 && DBT_PROFILES_DIR=. uv run --quiet --with 'dbt-snowflake' dbt build 2>&1)
+DBT_EXIT=$?
+if [ $DBT_EXIT -eq 0 ] && echo "$DBT_OUT" | grep -qE "ERROR=0"; then
+  PASS_COUNT=$(echo "$DBT_OUT" | grep -oE "PASS=[0-9]+" | head -1 | grep -oE "[0-9]+")
+  echo "  ✅ dbt build clean ($PASS_COUNT passing tests, 0 errors)"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  dbt build clean")
+else
+  echo "  ❌ dbt build had errors"
+  echo "$DBT_OUT" | tail -10 | sed 's/^/     /'
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  dbt build")
+fi
+
+# Verify the three derived data products exist in GOLD
+DP_TABLES=$(count "SELECT COUNT(*) AS C FROM LONGAEVA_POC.information_schema.tables WHERE table_schema = 'GOLD' AND table_name LIKE 'DP\\\\_%' ESCAPE '\\\\';")
+if [ "${DP_TABLES:-0}" -ge 3 ]; then
+  echo "  ✅ 3 derived data products materialized in GOLD"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  data products in GOLD")
+else
+  echo "  ❌ only ${DP_TABLES:-0} data products in GOLD"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  data products in GOLD")
+fi
+
+# Intermediate joined model in SILVER
+INT_TABLES=$(count "SELECT COUNT(*) AS C FROM LONGAEVA_POC.information_schema.tables WHERE table_schema = 'SILVER' AND table_name = 'INT_ENRICHED_HOLDINGS';")
+if [ "${INT_TABLES:-0}" -eq 1 ]; then
+  echo "  ✅ int_enriched_holdings materialized in SILVER"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  int model in SILVER")
+else
+  echo "  ❌ int_enriched_holdings missing"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  int model in SILVER")
+fi
+
+# Data product is queryable and non-empty
+DP_REGIONS=$(count "SELECT COUNT(DISTINCT region) AS C FROM LONGAEVA_POC.GOLD.dp_regional_exposure_daily;")
+if [ "${DP_REGIONS:-0}" -ge 4 ]; then
+  echo "  ✅ dp_regional_exposure_daily has 4 regions"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  dp_regional_exposure_daily populated")
+else
+  echo "  ❌ dp_regional_exposure_daily only has ${DP_REGIONS:-0} regions"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  dp_regional_exposure_daily populated")
+fi
+
+echo
+echo "==> 8. RBAC: agent role boundary (strict mode, no secondary-role leak)"
 STRICT="USE ROLE LONGAEVA_AGENT_ROLE; USE SECONDARY ROLES NONE;"
 
 AGENT_OUT=$(snow sql -q "$STRICT SELECT * FROM SEMANTIC_VIEW(LONGAEVA_POC.SEMANTIC.sv_daily_portfolio_exposure DIMENSIONS region METRICS total_exposure_usd) LIMIT 1;" -c brighthive 2>&1)

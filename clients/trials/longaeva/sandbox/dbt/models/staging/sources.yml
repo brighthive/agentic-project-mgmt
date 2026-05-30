@@ -1,0 +1,57 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: LONGAEVA_POC
+    schema: BRONZE
+    description: Raw vendor landing tables
+    tables:
+      - name: raw_market_prices
+        description: Daily OHLCV from S3 vendor drops
+      - name: raw_rest_holdings
+        description: Paginated REST API holdings landings
+      - name: raw_corporate_actions
+        description: Corporate actions from S3 drops
+
+  - name: ref
+    database: LONGAEVA_POC
+    schema: REF
+    description: Reference data; loaded by seed/seed.py
+    tables:
+      - name: identifier_map
+        description: Industry IDs (LEI/FIGI/CUSIP/ISIN) -> internal_issuer_id
+        columns:
+          - name: internal_issuer_id
+            tests: [not_null, unique]
+      - name: fiscal_calendar
+        description: Fiscal calendar with non-Jan-Dec cohort support
+        columns:
+          - name: fiscal_period_id
+            tests: [not_null, unique]
+      - name: geo_codes
+        description: ISO countries + Longaeva regional groupings
+        columns:
+          - name: country_code
+            tests: [not_null, unique]
+      - name: classification_codes
+        description: Sector / industry / asset-class hierarchy
+        columns:
+          - name: classification_id
+            tests: [not_null, unique]
+
+  - name: silver_seeded
+    database: LONGAEVA_POC
+    schema: SILVER
+    description: Tables loaded by seed/seed.py — read by intermediate models
+    tables:
+      - name: stg_security_prices
+      - name: stg_holdings_snapshot
+      - name: stg_corporate_actions
+
+  - name: gold_seeded
+    database: LONGAEVA_POC
+    schema: GOLD
+    description: Marts loaded by seed.py — semantic view reads from these
+    tables:
+      - name: mart_daily_portfolio_exposure
+      - name: mart_issuer_risk_summary
