@@ -42,10 +42,23 @@ sandbox/
 │   └── 60_semantic.sql                    Snowflake Semantic View
 ├── semantic/
 │   └── sv_daily_portfolio_exposure.yaml   Longaeva-extended YAML spec
+├── seed/
+│   └── seed.py                            ← synthetic data loader (~450k rows)
 └── sources/
     ├── s3-vendor-market-data/README.md    Source Type 1 (S3 stage stand-in)
     ├── rest-stub/README.md                Source Type 2 (paginated REST)
     └── snowflake-data-share/README.md     Source Type 3 (Data Share sim)
+```
+
+## Seeding
+
+```bash
+uv run --with 'snowflake-connector-python[pandas]' --with pandas --with numpy \
+  python seed/seed.py --reset
+# ~30s; deterministic (RNG_SEED=42)
+# Generates: 25 countries, 14 classifications, 24 fiscal periods, 200 issuers,
+#   50,400 prices, 174,384 holdings + exposures, 100 corp actions, 49,392 risk rows
+# Total: ~450k rows
 ```
 
 ## Run order

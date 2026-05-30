@@ -3,9 +3,9 @@
 > What's high-fidelity vs. thin in our Longaeva POC simulation, and what we're closing next.
 > Updated as work lands. Source of truth for "are we trial-ready?"
 
-**Last updated**: 2026-05-29 (post-meeting alignment + F8/F9/F10/F11 closed)
-**Overall fidelity**: ~55% end-to-end / ~90% for `SnowflakeConnection` + introspection + semantic-view-DDL + RBAC surfaces
-**Pipeline test**: `./test_pipeline.sh` — 17/17 passing (connection, DDL, strip-and-emit, semantic view, RBAC matrix)
+**Last updated**: 2026-05-30 (F1 seed loaded, baseline_expectations validated)
+**Overall fidelity**: ~70% end-to-end / ~95% for `SnowflakeConnection` + introspection + semantic-view-DDL + RBAC + data-correctness surfaces
+**Pipeline test**: `./test_pipeline.sh` — **23/23 passing** (connection, DDL, strip-and-emit, semantic view returns real data, baseline_expectations enforced, RBAC matrix)
 
 ## Snapshot
 
@@ -18,9 +18,9 @@
 | **Extended YAML format** | ✅ Live | High | Explicit `spec:` / `sdk_extensions:` strip boundary; baseline_expectations block (validation harness layer 3); lineage + access_control hooks |
 | **RBAC: scoped agent role** | ✅ Live | High | `LONGAEVA_AGENT_ROLE` boundary verified: queries semantic view ✓, blocked on BRONZE/SILVER/share/writes ✓ (in strict mode with `USE SECONDARY ROLES NONE`) |
 | **End-to-end pipeline test** | ✅ Live | High | `test_pipeline.sh` — 17 assertions covering connection, schemas, stages, strip-and-emit round-trip, semantic-view query, RBAC matrix |
-| Reference data (fiscal cal, identifier map, geo, classification) | ✅ Schema | Medium | Tables exist; **no rows yet** |
+| Reference data (fiscal cal, identifier map, geo, classification) | ✅ Live | High | 25 geo + 14 classification + 24 fiscal periods (2 cohorts × FY24-26) + 200 issuers with LEI/FIGI/CUSIP/ISIN/cohort triples |
+| **Synthetic seed data (~450k rows)** | ✅ Live | High | 1y daily; 200 instruments × 252 trading days prices, 30 portfolios × 252d × 15-35 holdings exposure mart, fiscal-aware. Random-walk prices, deterministic seed (RNG_SEED=42). Loader: `seed/seed.py --reset` |
 | Two-DB topology (warehouse + share-sim) | ✅ Live | Medium | Cross-DB grant ≠ real Data Share provisioning |
-| Synthetic seed data (~5M rows) | ⏳ Open | — | **Highest-ROI gap**. Without data, baseline_expectations + query correctness can't be validated. |
 | dbt project skeleton | ⏳ Open | — | Scaffolder emits `sources.yml` but has nothing to merge into |
 | Real S3 external stage (vs. internal stage stand-in) | ⏳ Open | — | `COPY INTO` semantics identical; IAM + storage integration differ |
 | Real Snowflake Data Share (vs. simulated DB) | ⏳ Open | — | Same query shape, different provisioning flow |
@@ -63,7 +63,7 @@ Legend: ✅ done · ⏳ open (in our court) · ⏳ blocked (waiting on Longaeva)
 
 ## Closure roadmap (in priority order)
 
-1. **F1 — Synthetic seed** (0.5 d) — turns sandbox from "shape-only" to "actually verifiable end-to-end"
+1. ~~**F1 — Synthetic seed**~~ ✅ done 2026-05-30 — sandbox is now end-to-end verifiable; baseline_expectations enforced
 2. **F2 — dbt project skeleton** (1 d) — `dbt init`, project pointed at sandbox, committed under `sandbox/dbt/`; turns scaffolder output into mergeable artifacts
 3. **F3 — GHE config flag** (1 h) — cheap close on a BH-526 gap
 4. **F4 — GX init** (0.5 d) — makes POC 4.2 demonstrable pre-trial
@@ -85,3 +85,6 @@ Track each item as a discrete PR off `drchinca/BH-526/snowflake-sandbox-ddl` so 
 | 2026-05-29 | `baseline_expectations` block added | Per Grant's validation harness layer 3 ("auto validation… continue running checks post data refresh"); supports universal invariants + author-supplied dbt-test-style assertions |
 | 2026-05-29 | RBAC strict-mode requires `USE SECONDARY ROLES NONE` | KURICHINCA holds ACCOUNTADMIN; without disabling secondary-role auto-activation, the agent boundary is silently bypassed. Test script enforces this; MCP must do the same. |
 | 2026-05-29 | `LONGAEVA_AGENT_ROLE` is read-only on GOLD + REF + SEMANTIC | Implements Grant's "scoped subset of user perms" model; agents can serve queries through semantic view but never see BRONZE/SILVER/share or write anything |
+| 2026-05-30 | Seed: 1y x 200 issuers x 30 portfolios (~450k rows), not 2y x more | Hits XSMALL warehouse cost ceiling; covers fiscal-quarter trends across 2 cohorts (CALENDAR + NONCAL Apr-Mar); enough rows for cardinality drift testing |
+| 2026-05-30 | Seed prices are pure random-walk, not market-correlated | Ingestion + semantic view + RBAC tests don't need realistic correlations; faster to generate; deterministic via RNG_SEED=42 |
+| 2026-05-30 | Seed loader uses `snowflake-connector-python.write_pandas` not COPY INTO | Direct table-load is fastest path for our row counts; COPY INTO is exercised separately by the S3 ingestion pattern test |

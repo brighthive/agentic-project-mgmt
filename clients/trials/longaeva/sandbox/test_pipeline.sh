@@ -114,7 +114,72 @@ assert "DESCRIBE SEMANTIC VIEW returns dimensions" \
   "DIMENSION"
 
 echo
-echo "==> 6. RBAC: agent role boundary (strict mode, no secondary-role leak)"
+echo "==> 6. Seed data + baseline_expectations enforcement"
+
+# Helper for COUNT-style asserts
+count() { snow sql --format JSON -q "$1" -c brighthive 2>/dev/null | grep -oE '"C":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+'; }
+
+EXP_COUNT=$(count "SELECT COUNT(*) AS C FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure;")
+if [ "${EXP_COUNT:-0}" -gt 100000 ]; then
+  echo "  ✅ exposure mart has $EXP_COUNT rows (>100k)"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  exposure mart populated")
+else
+  echo "  ❌ exposure mart only has ${EXP_COUNT:-0} rows"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  exposure mart populated")
+fi
+
+# Baseline expectation 1: as_of_date NOT NULL
+NULL_DATES=$(count "SELECT COUNT(*) AS C FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure WHERE as_of_date IS NULL;")
+if [ "${NULL_DATES:-1}" -eq 0 ]; then
+  echo "  ✅ baseline_expectation: as_of_date_not_null"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  baseline as_of_date_not_null")
+else
+  echo "  ❌ baseline_expectation as_of_date_not_null: $NULL_DATES nulls"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  baseline as_of_date_not_null")
+fi
+
+# Baseline expectation 2: portfolio_id NOT NULL
+NULL_PIDS=$(count "SELECT COUNT(*) AS C FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure WHERE portfolio_id IS NULL;")
+if [ "${NULL_PIDS:-1}" -eq 0 ]; then
+  echo "  ✅ baseline_expectation: portfolio_id_not_null"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  baseline portfolio_id_not_null")
+else
+  echo "  ❌ portfolio_id has ${NULL_PIDS} nulls"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  baseline portfolio_id_not_null")
+fi
+
+# Baseline expectation 3: total_exposure_usd >= 0
+NEG_EXP=$(count "SELECT COUNT(*) AS C FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure WHERE exposure_amount_usd < 0;")
+if [ "${NEG_EXP:-1}" -eq 0 ]; then
+  echo "  ✅ baseline_expectation: total_exposure_usd_non_negative"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  baseline non_negative_exposure")
+else
+  echo "  ❌ ${NEG_EXP} negative exposure rows"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  baseline non_negative_exposure")
+fi
+
+# Baseline expectation 4: distinct issuers per day >= 30
+LOW_ISSUER_DAYS=$(count "SELECT COUNT(*) AS C FROM (SELECT as_of_date, COUNT(DISTINCT internal_issuer_id) AS n FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure GROUP BY as_of_date HAVING n < 30);")
+if [ "${LOW_ISSUER_DAYS:-1}" -eq 0 ]; then
+  echo "  ✅ baseline_expectation: distinct_issuers_minimum_30 (per day)"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  baseline distinct_issuers_minimum_30")
+else
+  echo "  ❌ ${LOW_ISSUER_DAYS} days with <30 distinct issuers"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  baseline distinct_issuers_minimum_30")
+fi
+
+# Semantic view returns real (non-empty) results post-seed
+SV_REGIONS=$(snow sql --format JSON -q "SELECT COUNT(*) AS C FROM SEMANTIC_VIEW(LONGAEVA_POC.SEMANTIC.sv_daily_portfolio_exposure DIMENSIONS region METRICS total_exposure_usd);" -c brighthive 2>/dev/null | grep -oE '"C":[[:space:]]*[0-9]+' | head -1 | grep -oE '[0-9]+')
+if [ "${SV_REGIONS:-0}" -ge 4 ]; then
+  echo "  ✅ semantic view returns real data ($SV_REGIONS regions)"
+  PASS=$((PASS + 1)); RESULTS+=("PASS  semantic view returns real data")
+else
+  echo "  ❌ semantic view returned only ${SV_REGIONS:-0} regions"
+  FAIL=$((FAIL + 1)); RESULTS+=("FAIL  semantic view returns real data")
+fi
+
+echo
+echo "==> 7. RBAC: agent role boundary (strict mode, no secondary-role leak)"
 STRICT="USE ROLE LONGAEVA_AGENT_ROLE; USE SECONDARY ROLES NONE;"
 
 AGENT_OUT=$(snow sql -q "$STRICT SELECT * FROM SEMANTIC_VIEW(LONGAEVA_POC.SEMANTIC.sv_daily_portfolio_exposure DIMENSIONS region METRICS total_exposure_usd) LIMIT 1;" -c brighthive 2>&1)
