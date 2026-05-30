@@ -29,3 +29,34 @@ models:
         tests:
           - not_null:
               severity: warn
+
+  - name: stg_vendor_security_master
+    description: >-
+      Canonicalized security master from the inbound Data Share. Vendor field
+      names mapped to Longaeva conventions; inactive issuers filtered out.
+    columns:
+      - name: external_security_id
+        tests: [not_null, unique]
+      - name: country_code
+        tests: [not_null]
+      - name: asset_class_code
+        tests:
+          - accepted_values:
+              values: ['EQUITY', 'BOND', 'FX', 'DERIV']
+      - name: is_active
+        tests: [not_null]
+
+  - name: stg_vendor_ratings
+    description: Canonicalized ratings from the Data Share, with a numeric scale.
+    columns:
+      - name: external_security_id
+        tests: [not_null]
+      - name: rating_agency
+        tests:
+          - accepted_values:
+              values: ['MOODYS', 'SP']
+      - name: rating_numeric
+        tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 99]
+              quote: false

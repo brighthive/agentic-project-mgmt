@@ -55,3 +55,19 @@ sources:
     tables:
       - name: mart_daily_portfolio_exposure
       - name: mart_issuer_risk_summary
+
+  - name: vendor_share
+    database: LONGAEVA_VENDOR_SHARE_SIM
+    schema: SHARED
+    description: >-
+      Simulated inbound Snowflake Data Share (Source Type 3). In production this
+      database name is the real share; swap it here, no model changes needed.
+    tables:
+      - name: vendor_security_master
+        columns:
+          - name: vendor_security_id
+            tests: [not_null, unique]
+      - name: vendor_ratings
+        columns:
+          - name: vendor_security_id
+            tests: [not_null]
