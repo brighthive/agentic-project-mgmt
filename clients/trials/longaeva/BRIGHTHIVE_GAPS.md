@@ -22,8 +22,9 @@ have validated that the target is real and every use case is solvable. The
 remaining work is wiring BrightHive's agents to *produce* the artifacts the
 sandbox proves are valid.
 
-- **Sandbox status**: ✅ 10/10 PoC use cases resolve (`./sandbox/validate_poc.sh`)
-- **BrightHive readiness**: 🔲 6 pre-trial gaps (BH-526), of which **1 is the
+- **Sandbox status**: ✅ 10/10 PoC use cases resolve (`./sandbox/validate_poc.sh`),
+  full ELT stack live (Snowflake + dbt + **Dagster orchestration**), ~95% fidelity
+- **BrightHive readiness**: 🔲 9 product gaps (GAP-1…9 below), of which **1 is the
   critical path** (Snowflake connectivity) and the rest are scoped wiring.
 - **Confidence to win**: HIGH *if* the critical path + 3 P1 items land before
   June 15. The sandbox de-risks everything downstream because we can now
