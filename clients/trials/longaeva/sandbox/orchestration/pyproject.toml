@@ -1,0 +1,20 @@
+[project]
+name = "longaeva-dagster"
+version = "0.1.0"
+description = "Dagster orchestration for the Longaeva PoC sandbox ELT pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "dagster>=1.7",
+    "dagster-webserver>=1.7",
+]
+
+[tool.dagster]
+module_name = "longaeva_dagster.definitions"
+code_location_name = "longaeva_dagster"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["longaeva_dagster"]

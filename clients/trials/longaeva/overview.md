@@ -4,9 +4,9 @@ slug: "longaeva"
 stage: "trial"
 champion: "Grant Langseth"
 champion_email: ""
-trial_start: "2026-06-TBD"
-trial_end: "2026-06-TBD+14d"
-decision_date: "2026-06-TBD+14d"
+trial_start: "2026-06-15"
+trial_end: "2026-06-29"
+decision_date: "2026-06-29"
 jira_epic: "BH-526"
 notion_page: ""
 workspace_id: ""
@@ -105,13 +105,27 @@ These deliver real value with zero engineering pre-work:
 
 | Task | Effort | Blocks | Status |
 |---|---|---|---|
-| `SnowflakeConnection` in warehouse factory (plumbing exists, factory missing) | 1-2 days | Sections 1 + 2 | 🔲 |
+| Snowflake sandbox account + medallion DDL + semantic view (target environment) | done 2026-05-29 | All trial workstreams | ✅ [PR #17](https://github.com/brighthive/agentic-project-mgmt/pull/17) — see [`sandbox/`](sandbox/) |
+| `SnowflakeConnection` in warehouse factory (plumbing exists, factory missing) | 1-2 days | Sections 1 + 2 | 🔲 — sandbox is the real target now |
 | Snowflake schema introspection via INFORMATION_SCHEMA | 2-3 days | 1.1, 1.3, 2.3 | 🔲 |
-| Snowflake semantic view YAML scaffolding tool | 1 sprint | Section 2 | 🔲 |
+| Snowflake semantic view YAML scaffolding tool | 1 sprint | Section 2 | 🔲 — golden reference at [`sandbox/semantic/sv_daily_portfolio_exposure.yaml`](sandbox/semantic/sv_daily_portfolio_exposure.yaml) |
 | dbt sources.yml generation from scratch (not just update) | 3-4 days | 1.1, 1.3 | 🔲 |
 | GX output: write YAML to repo branch, not Markdown to S3 | 2-3 days | 1.3, 4.2 | 🔲 |
 | GitHub Enterprise `base_url` config (one param) | 1 day | All PR creation | 🔲 |
 | MCP client status — confirm or scope sprint | Confirm first | Section 3.1 | 🔲 |
+
+## Snowflake Sandbox
+
+A live Snowflake account that mirrors the topology Longaeva will provision Days 1–2 — built so engineering can develop and self-validate against real Snowflake objects before Day 1.
+
+- **Path**: [`sandbox/`](sandbox/) — DDL, semantic-view YAML, source-pattern stubs
+- **Topology**: see [`sandbox/README.md`](sandbox/README.md)
+- **Fidelity tracker** (live): [`sandbox/FIDELITY.md`](sandbox/FIDELITY.md) — what's high-fidelity vs. thin, prioritized closure roadmap
+- **Account**: `bfddsko-dua97555` · **Role**: `LONGAEVA_POC_ROLE` · **Warehouse**: `POC_WH` · **Databases**: `LONGAEVA_POC`, `LONGAEVA_VENDOR_SHARE_SIM`
+- **Credentials**: LastPass entry `Snowflake/Longaeva POC Sandbox`
+- **CLI**: `snow sql -q "..." -c brighthive` (defaults to `LONGAEVA_POC_ROLE` / `POC_WH` / `LONGAEVA_POC`)
+- **Sandbox status**: all 11 PoC use cases resolve against live Snowflake — run [`sandbox/validate_poc.sh`](sandbox/validate_poc.sh). Start at [`sandbox/README.md`](sandbox/README.md) (DX), see [`sandbox/ARCHITECTURE.md`](sandbox/ARCHITECTURE.md) for diagrams and [`sandbox/FIDELITY.md`](sandbox/FIDELITY.md) for the build journal.
+- **BrightHive-side gaps + next-sprint plan**: [`BRIGHTHIVE_GAPS.md`](BRIGHTHIVE_GAPS.md) — what BrightHive's product must do to plug into the sandbox and win, with a sequenced BH-526 ticket set.
 
 ## Context Setup (Days 1-5)
 

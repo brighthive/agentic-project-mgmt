@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: int_enriched_holdings
+    description: >-
+      Holdings joined with issuer, geo, and fiscal-period reference data.
+      Canonical join layer downstream marts read from. Schema mirrors what
+      the semantic view's RELATIONSHIPS clause assumes.
+    columns:
+      - name: portfolio_id
+        tests: [not_null]
+      - name: internal_issuer_id
+        tests: [not_null]
+      - name: instrument_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: market_value_usd
+        tests: [not_null]
+      - name: country_code
+        tests: [not_null]
+      - name: region
+        tests:
+          - accepted_values:
+              values: ['AMERICAS', 'EMEA', 'APAC', 'AFRICA']
+      - name: fiscal_period_id
+        # Some holdings dates fall outside our seeded fiscal coverage;
+        # left join + accept-as-warning on null.
+        tests:
+          - not_null:
+              severity: warn
+
+  - name: stg_vendor_security_master
+    description: >-
+      Canonicalized security master from the inbound Data Share. Vendor field
+      names mapped to Longaeva conventions; inactive issuers filtered out.
+    columns:
+      - name: external_security_id
+        tests: [not_null, unique]
+      - name: country_code
+        tests: [not_null]
+      - name: asset_class_code
+        tests:
+          - accepted_values:
+              values: ['EQUITY', 'BOND', 'FX', 'DERIV']
+      - name: is_active
+        tests: [not_null]
+
+  - name: stg_vendor_ratings
+    description: Canonicalized ratings from the Data Share, with a numeric scale.
+    columns:
+      - name: external_security_id
+        tests: [not_null]
+      - name: rating_agency
+        tests:
+          - accepted_values:
+              values: ['MOODYS', 'SP']
+      - name: rating_numeric
+        tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 99]
+              quote: false

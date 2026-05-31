@@ -1,0 +1,18 @@
+# Reads the same Snowflake credentials we use for `snow sql -c brighthive`,
+# pulled from ~/.snowflake/config.toml at dbt-run time via env-var indirection.
+#
+# Run `source ./set_env.sh` (or set the vars manually) before `dbt build`.
+longaeva_sandbox:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      password: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+      role: LONGAEVA_POC_ROLE
+      warehouse: POC_WH
+      database: LONGAEVA_POC
+      schema: SILVER          # default; per-model override sets GOLD/etc
+      threads: 4
+      client_session_keep_alive: false

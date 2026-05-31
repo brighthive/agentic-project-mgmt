@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: dp_regional_exposure_daily
+    description: Daily regional exposure rollup. Time-series primitive for downstream compute.
+    columns:
+      - name: as_of_date
+        tests: [not_null]
+      - name: region
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['AMERICAS', 'EMEA', 'APAC', 'AFRICA']
+      - name: total_exposure_usd
+        tests:
+          - not_null
+
+  - name: dp_top_issuers_daily
+    description: Daily top-50 issuers by exposure (materializes the YAML filter preset).
+    columns:
+      - name: as_of_date
+        tests: [not_null]
+      - name: exposure_rank
+        tests: [not_null]
+      - name: internal_issuer_id
+        tests: [not_null]
+
+  - name: dp_fiscal_quarter_exposure
+    description: Per-fiscal-quarter exposure trend respecting cohort boundaries.
+    columns:
+      - name: fiscal_year
+        tests: [not_null]
+      - name: fiscal_quarter
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4]
+              quote: false
+      - name: issuer_cohort
+        tests:
+          - accepted_values:
+              values: ['CALENDAR', 'NONCAL']
+      - name: total_exposure_usd
+        tests:
+          - not_null

@@ -1,0 +1,253 @@
+# Longaeva-style extended semantic view spec.
+#
+# Two sections, separated by an explicit strip boundary:
+#
+#   spec:                 ← maps 1:1 to Snowflake CREATE SEMANTIC VIEW DDL
+#                           (https://docs.snowflake.com/en/user-guide/views-semantic/semantic-view-yaml-spec)
+#
+#   sdk_extensions:       ← Longaeva SDK keywords; STRIPPED before DDL emit.
+#                           Drives MCP routing, agent context, validation, RBAC.
+#
+# Rule: any field outside `spec:` is non-Snowflake and must be removed before the
+# CREATE SEMANTIC VIEW system call. See sandbox/semantic/strip_and_emit.py.
+
+# =============================================================================
+# spec — Snowflake-native (compiles to DDL)
+# =============================================================================
+spec:
+  name: sv_daily_portfolio_exposure
+  schema: LONGAEVA_POC.SEMANTIC
+  description: >-
+    Daily portfolio exposure facts joined to issuer reference data (geo, sector,
+    fiscal calendar, identifier map). Built on GOLD.mart_daily_portfolio_exposure.
+
+  base_table: LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure
+
+  relationships:
+    - name: rel_issuer
+      type: many_to_one
+      join:
+        base: internal_issuer_id
+        target: LONGAEVA_POC.REF.identifier_map.internal_issuer_id
+
+    - name: rel_geo
+      type: many_to_one
+      join:
+        base: country_code
+        target: LONGAEVA_POC.REF.geo_codes.country_code
+
+    - name: rel_fiscal_period
+      type: many_to_one
+      join:
+        base: fiscal_period_id
+        target: LONGAEVA_POC.REF.fiscal_calendar.fiscal_period_id
+
+  dimensions:
+    - {name: portfolio_id,        expr: portfolio_id,                description: Internal portfolio identifier}
+    - {name: internal_issuer_id,  expr: internal_issuer_id,          description: Longaeva internal issuer ID}
+    - {name: instrument_id,       expr: instrument_id,               description: Internal instrument ID}
+    - {name: country_name,        expr: rel_geo.country_name,        description: Issuer primary country}
+    - {name: region,              expr: rel_geo.region,              description: AMERICAS / EMEA / APAC}
+    - {name: sector_code,         expr: sector_code,                 description: Issuer sector}
+    - {name: asset_class_code,    expr: asset_class_code,            description: EQUITY / BOND / FX / DERIV}
+    - {name: issuer_name,         expr: rel_issuer.issuer_name,      description: Issuer legal name}
+    - {name: lei,                 expr: rel_issuer.lei,              description: ISO 17442}
+    - {name: figi,                expr: rel_issuer.figi,             description: OpenFIGI}
+
+  time_dimensions:
+    - {name: as_of_date,     expr: as_of_date,                       grain: day,     description: Calendar as-of date}
+    - {name: fiscal_quarter, expr: rel_fiscal_period.fiscal_quarter, grain: quarter, description: Issuer fiscal quarter}
+    - {name: fiscal_year,    expr: rel_fiscal_period.fiscal_year,    grain: year,    description: Issuer fiscal year}
+
+  facts:
+    - {name: exposure_amount_usd, expr: exposure_amount_usd, data_type: NUMBER(20,6)}
+    - {name: position_count,      expr: position_count,      data_type: NUMBER}
+    - {name: weight_pct,          expr: weight_pct,          data_type: NUMBER(10,6)}
+
+  metrics:
+    - name: total_exposure_usd
+      expr: SUM(exposure_amount_usd)
+      description: Sum of USD exposure across positions
+    - name: avg_exposure_per_position_usd
+      expr: AVG(exposure_amount_usd)
+      description: Mean USD exposure per position
+    - name: position_count_distinct_issuers
+      expr: COUNT(DISTINCT internal_issuer_id)
+      description: Distinct issuers contributing exposure
+    - name: avg_weight_pct
+      expr: AVG(weight_pct)
+      description: Average position weight percentage
+
+# =============================================================================
+# STRIP BOUNDARY  (everything below is removed before CREATE SEMANTIC VIEW)
+# =============================================================================
+
+sdk_extensions:
+
+  # ---- Metric store wiring ----------------------------------------------------
+  metric_store:
+    namespace: longaeva.exposure
+    register:
+      - total_exposure_usd
+      - avg_exposure_per_position_usd
+      - position_count_distinct_issuers
+    reuse_from: []
+
+  # ---- Named filter presets (surfaced through MCP) ----------------------------
+  filter_presets:
+    - name: us_equities_only
+      description: US-domiciled equity positions
+      expr: country_name = 'United States' AND asset_class_code = 'EQUITY'
+    - name: emerging_markets
+      description: APAC + EMEA emerging markets exposure
+      expr: rel_geo.longaeva_grouping IN ('EM_APAC', 'EM_EMEA')
+    - name: current_fiscal_quarter
+      description: Restrict to issuer current fiscal quarter
+      expr: rel_fiscal_period.is_current = TRUE
+    - name: top_50_issuers
+      description: Top 50 issuers by exposure (analyst convention)
+      expr: |-
+        internal_issuer_id IN (
+          SELECT internal_issuer_id
+          FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure
+          QUALIFY ROW_NUMBER() OVER (
+            PARTITION BY as_of_date
+            ORDER BY exposure_amount_usd DESC
+          ) <= 50
+        )
+
+  # ---- Plain-language guidance for downstream agents --------------------------
+  agent_instructions: |-
+    This semantic view exposes daily portfolio exposure at the position grain.
+    When users ask about "exposure", default to total_exposure_usd unless they
+    specify weight or position count.
+
+    When users mention a quarter without specifying calendar vs fiscal, prefer
+    fiscal_quarter — Longaeva's issuer cohort uses non-Jan-Dec fiscal years.
+
+    When users ask about "concentration", combine total_exposure_usd with
+    position_count_distinct_issuers to reason about diversification.
+
+    Always filter by as_of_date when the user asks "today" / "now" — the latest
+    as_of_date is the most recent close.
+
+  # ---- Hand-verified queries (LLM grounding) ----------------------------------
+  verified_query_examples:
+    - title: Top 10 issuers by exposure on a given date
+      nl_question: What were our top 10 issuers by USD exposure on 2026-05-28?
+      sql: |
+        SELECT issuer_name, total_exposure_usd
+        FROM SEMANTIC_VIEW(
+          sv_daily_portfolio_exposure
+          DIMENSIONS issuer_name
+          METRICS total_exposure_usd
+          WHERE as_of_date = '2026-05-28'
+        )
+        ORDER BY total_exposure_usd DESC
+        LIMIT 10
+
+    - title: Regional breakdown for a portfolio
+      nl_question: What's portfolio P-001's exposure by region this week?
+      sql: |
+        SELECT region, total_exposure_usd
+        FROM SEMANTIC_VIEW(
+          sv_daily_portfolio_exposure
+          DIMENSIONS region
+          METRICS total_exposure_usd
+          WHERE portfolio_id = 'P-001'
+            AND as_of_date >= DATEADD(day, -7, CURRENT_DATE())
+        )
+        ORDER BY total_exposure_usd DESC
+
+    - title: Fiscal-quarter exposure trend
+      nl_question: How has our APAC exposure trended over the last four fiscal quarters?
+      sql: |
+        SELECT fiscal_year, fiscal_quarter, total_exposure_usd
+        FROM SEMANTIC_VIEW(
+          sv_daily_portfolio_exposure
+          DIMENSIONS region, fiscal_year, fiscal_quarter
+          METRICS total_exposure_usd
+          WHERE region = 'APAC'
+        )
+        ORDER BY fiscal_year DESC, fiscal_quarter DESC
+        LIMIT 4
+
+  # ---- Baseline expectations (validation harness layer 3) ---------------------
+  # dbt-test-style assertions checked pre-deploy AND post-refresh (continuous
+  # contract). Per Grant 2026-05-29: "you can have like an auto validation
+  # sort of like run. And then additionally, once it's deployed, we can
+  # continue running some suite of checks post data refresh."
+  baseline_expectations:
+    # Universal invariants — must always hold for any data refresh
+    universal:
+      - name: as_of_date_not_null
+        target: dimensions.as_of_date
+        rule: not_null
+        severity: error
+      - name: portfolio_id_not_null
+        target: dimensions.portfolio_id
+        rule: not_null
+        severity: error
+      - name: total_exposure_usd_non_negative
+        target: metrics.total_exposure_usd
+        rule: greater_than_or_equal
+        value: 0
+        severity: error
+      - name: weight_pct_in_range
+        target: facts.weight_pct
+        rule: between
+        min: 0
+        max: 1
+        severity: warning
+
+    # Author-supplied expectations — reflect domain knowledge
+    author_supplied:
+      - name: exposure_present_every_business_day
+        description: Every business day must have at least one exposure row
+        sql: |-
+          SELECT as_of_date
+          FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure
+          WHERE DAYOFWEEK(as_of_date) BETWEEN 1 AND 5
+          GROUP BY as_of_date
+          HAVING COUNT(*) = 0
+        expected_rows: 0
+        severity: error
+
+      - name: distinct_issuers_minimum_30
+        description: A healthy portfolio holds at least 30 distinct issuers
+        sql: |-
+          SELECT as_of_date, COUNT(DISTINCT internal_issuer_id) AS issuer_count
+          FROM LONGAEVA_POC.GOLD.mart_daily_portfolio_exposure
+          GROUP BY as_of_date
+          HAVING issuer_count < 30
+        expected_rows: 0
+        severity: warning
+
+      - name: cardinality_country_name_stable
+        description: Distinct country count should not drop >20% between refreshes
+        cardinality_check:
+          dimension: dimensions.country_name
+          window: trailing_7_days
+          tolerance_drop_pct: 20
+        severity: warning
+
+  # ---- Lineage / cardinality probes (hooks for self-healing + monitoring) -----
+  lineage:
+    high_cardinality_dimensions:
+      - dimensions.instrument_id
+      - dimensions.internal_issuer_id
+    upstream_models:
+      - LONGAEVA_POC.SILVER.stg_holdings_snapshot
+      - LONGAEVA_POC.SILVER.stg_security_prices
+      - LONGAEVA_POC.REF.identifier_map
+      - LONGAEVA_POC.REF.fiscal_calendar
+      - LONGAEVA_POC.REF.geo_codes
+
+  # ---- Access control (consumed by MCP) ---------------------------------------
+  # Per Grant 2026-05-29: agents get a SUBSET of the user's permissions, not
+  # full inheritance. MCP enforces this at query time.
+  access_control:
+    user_role:  LONGAEVA_POC_ROLE
+    agent_role: LONGAEVA_AGENT_ROLE      # see sandbox/snowflake/70_rbac.sql
+    sensitive_dimensions: []              # none in this view yet
+    sensitive_metrics: []
