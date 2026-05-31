@@ -124,7 +124,7 @@ A live Snowflake account that mirrors the topology Longaeva will provision Days 
 - **Account**: `bfddsko-dua97555` · **Role**: `LONGAEVA_POC_ROLE` · **Warehouse**: `POC_WH` · **Databases**: `LONGAEVA_POC`, `LONGAEVA_VENDOR_SHARE_SIM`
 - **Credentials**: LastPass entry `Snowflake/Longaeva POC Sandbox`
 - **CLI**: `snow sql -q "..." -c brighthive` (defaults to `LONGAEVA_POC_ROLE` / `POC_WH` / `LONGAEVA_POC`)
-- **Sandbox status**: all 10 PoC use cases resolve against live Snowflake — run [`sandbox/validate_poc.sh`](sandbox/validate_poc.sh). See [`FIDELITY.md`](sandbox/FIDELITY.md) for the build journal.
+- **Sandbox status**: all 11 PoC use cases resolve against live Snowflake — run [`sandbox/validate_poc.sh`](sandbox/validate_poc.sh). Start at [`sandbox/README.md`](sandbox/README.md) (DX), see [`sandbox/ARCHITECTURE.md`](sandbox/ARCHITECTURE.md) for diagrams and [`sandbox/FIDELITY.md`](sandbox/FIDELITY.md) for the build journal.
 - **BrightHive-side gaps + next-sprint plan**: [`BRIGHTHIVE_GAPS.md`](BRIGHTHIVE_GAPS.md) — what BrightHive's product must do to plug into the sandbox and win, with a sequenced BH-526 ticket set.
 
 ## Context Setup (Days 1-5)

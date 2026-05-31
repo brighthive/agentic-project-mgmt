@@ -1,133 +1,157 @@
-# Longaeva POC — Snowflake sandbox
+# Longaeva PoC Sandbox
 
-Pre-trial sandbox that mirrors the shape Longaeva will provision on Days 1–2 of the [POC](../overview.md). Lets Brighthive's `SnowflakeConnection` factory, schema introspection, semantic-view scaffolder, and dbt-source generator get exercised against real Snowflake objects **before** the trial starts.
+A complete, runnable recreation of Longaeva Partners' data stack — **Snowflake +
+dbt + Dagster + a custom semantic-view/MCP layer** — built so BrightHive's agents
+can be developed and validated against a known-good target **before** the 14-day
+trial (epic [BH-526](https://brighthiveio.atlassian.net/browse/BH-526), starts
+2026-06-15).
 
-DDL only — no seed data. Seeding waits for Longaeva's actual sample files during the trial.
+> **Status**: all 11 PoC use cases resolve against live Snowflake.
+> `./validate_poc.sh` → **11/11**. `./test_pipeline.sh` → **27/27**.
+> See [`ARCHITECTURE.md`](ARCHITECTURE.md) for diagrams, [`FIDELITY.md`](FIDELITY.md)
+> for the build journal, [`../BRIGHTHIVE_GAPS.md`](../BRIGHTHIVE_GAPS.md) for the
+> next-sprint plan.
 
-Tracked under epic **BH-526** (pre-trial engineering gaps).
+## Why this exists
 
-> **Fidelity tracker**: see [`FIDELITY.md`](FIDELITY.md) for what's high-fidelity vs. thin in this simulation, and the prioritized list of gaps we're closing next. Update it as work lands.
+The sandbox is the **target**; BrightHive is the **agent that must hit it**. By
+proving every PoC use case is resolvable here, the BrightHive product work
+becomes "make the agent emit what the sandbox already validated" instead of
+"figure out what correct looks like." That collapses trial risk.
+
+## Quick start
+
+Prereqs: `snow` CLI with a `brighthive` connection in `~/.snowflake/config.toml`
+(account `bfddsko-dua97555`, role `LONGAEVA_POC_ROLE`, wh `POC_WH`, db
+`LONGAEVA_POC`), `uv`, and network access to Snowflake.
+
+```bash
+cd clients/trials/longaeva/sandbox
+
+# 1. (one-time) build the environment — idempotent
+snow sql -f snowflake/00_account.sql -c brighthive          # ACCOUNTADMIN: wh + role + DBs
+for f in snowflake/{10,20,30,40,50,60}_*.sql; do snow sql -f "$f" -c brighthive; done
+snow sql -f snowflake/70_rbac.sql -c brighthive             # scoped agent role
+snow sql -f monitoring/00_monitoring_ddl.sql -c brighthive  # monitoring tables
+
+# 2. seed ~450k synthetic rows (deterministic, ~30s)
+uv run --with 'snowflake-connector-python[pandas]' --with pandas --with numpy \
+  python seed/seed.py --reset
+
+# 3. prove it — every PoC use case
+./validate_poc.sh        # 11/11
+
+# 4. infra/contract smoke test
+./test_pipeline.sh       # 27/27
+```
+
+## What's inside
+
+```
+sandbox/
+├── README.md            ← you are here (DX entry point)
+├── ARCHITECTURE.md      ← Mermaid diagrams: data flow, deploy, orchestration
+├── FIDELITY.md          ← build journal + what's high-fidelity vs deferred
+│
+├── snowflake/           medallion DDL (00 account → 70 rbac)
+├── seed/                synthetic data loader (~450k rows, RNG_SEED=42)
+├── semantic/            extended YAML + strip_and_emit + validate (3-layer) + mcp_check
+├── dbt/                 intermediate join + 3 GOLD data products + 41 tests
+├── sources/             3 ingestion patterns: s3 / rest-stub / snowflake-data-share
+├── orchestration/       Dagster asset graph over the full ELT pipeline
+├── self_healing/        4 failure modes: detect → diagnose → surgical fix
+├── monitoring/          longitudinal anomaly detection (4 families)
+├── brighthive_adapter/  GAP-1 drop-in: BrightHive's WarehouseConnection ABC → live sandbox
+│
+├── validate_poc.sh      every PoC scorecard use case (11/11)
+└── test_pipeline.sh     infra / DDL / strip-and-emit / dbt / RBAC (27/27)
+```
 
 ## Topology
 
 ```
 ACCOUNT bfddsko-dua97555
-├── ROLE        LONGAEVA_POC_ROLE
-├── WAREHOUSE   POC_WH (XSMALL, auto-suspend 60s)
+├── ROLE  LONGAEVA_POC_ROLE   ·   AGENT ROLE  LONGAEVA_AGENT_ROLE (scoped subset)
+├── WAREHOUSE  POC_WH (XSMALL, auto-suspend 60s)
 │
 ├── DATABASE LONGAEVA_POC
-│   ├── BRONZE   raw_market_prices, raw_rest_holdings, raw_corporate_actions
-│   │            + @s3_vendor_market_data, @s3_vendor_corp_actions stages
-│   ├── SILVER   stg_security_prices, stg_holdings_snapshot, stg_corporate_actions
-│   ├── GOLD     mart_daily_portfolio_exposure, mart_issuer_risk_summary
-│   ├── REF      fiscal_calendar, identifier_map, geo_codes, classification_codes
-│   └── SEMANTIC sv_daily_portfolio_exposure
+│   ├── BRONZE     raw_market_prices · raw_rest_holdings · raw_corporate_actions + @stages
+│   ├── SILVER     stg_* (seeded) + int_enriched_holdings (dbt) + stg_vendor_* (dbt views)
+│   ├── GOLD       mart_* (seeded) + dp_* data products (dbt)
+│   ├── REF        fiscal_calendar · identifier_map · geo_codes · classification_codes
+│   ├── SEMANTIC   sv_daily_portfolio_exposure
+│   └── MONITORING metric_history · anomaly_events
 │
 └── DATABASE LONGAEVA_VENDOR_SHARE_SIM
-    └── SHARED   vendor_security_master, vendor_ratings
+    └── SHARED     vendor_security_master · vendor_ratings
 ```
 
-## Layout
-
-```
-sandbox/
-├── README.md                              ← this file
-├── snowflake/                             ← idempotent DDL (run in order)
-│   ├── 00_account.sql                     ACCOUNTADMIN: warehouse + role + DBs
-│   ├── 10_bronze.sql                      stages, file formats, raw landing
-│   ├── 20_silver.sql                      canonical time-series tables
-│   ├── 30_gold.sql                        marts (semantic-view foundation)
-│   ├── 40_ref.sql                         security master + calendar + codes
-│   ├── 50_share_sim.sql                   simulated inbound Data Share DB
-│   └── 60_semantic.sql                    Snowflake Semantic View
-├── semantic/
-│   └── sv_daily_portfolio_exposure.yaml   Longaeva-extended YAML spec
-├── seed/
-│   └── seed.py                            ← synthetic data loader (~450k rows)
-├── sources/
-│   ├── s3-vendor-market-data/             Source Type 1: ingest.py (PUT/COPY/flag)
-│   ├── rest-stub/                         Source Type 2: main.py (FastAPI) + ingest.py
-│   └── snowflake-data-share/              Source Type 3: seed_share.sql + dbt staging
-├── brighthive_adapter/
-│   └── snowflake_connection.py            GAP-1 drop-in: BrightHive ABC → live sandbox
-├── orchestration/
-│   └── longaeva_dagster/                  Dagster asset graph over the full ELT pipeline
-├── self_healing/
-│   └── failure_modes.py                   4 failure modes: detect→diagnose→surgical fix
-├── monitoring/
-│   ├── 00_monitoring_ddl.sql              metric_history + anomaly_events tables
-│   └── monitor.py                         longitudinal anomaly detection (4 families)
-├── test_pipeline.sh                       infra/DDL/dbt/RBAC smoke test (27/27)
-└── validate_poc.sh                        every PoC use case mapped to scorecard (10/10)
-```
-
-The semantic/ dir also holds `strip_and_emit.py` (YAML→DDL), `validate.py`
-(3-layer harness), and `mcp_check.py` (queryability + gap detection).
-
-## Seeding
+## Run individual capabilities
 
 ```bash
-uv run --with 'snowflake-connector-python[pandas]' --with pandas --with numpy \
-  python seed/seed.py --reset
-# ~30s; deterministic (RNG_SEED=42)
-# Generates: 25 countries, 14 classifications, 24 fiscal periods, 200 issuers,
-#   50,400 prices, 174,384 holdings + exposures, 100 corp actions, 49,392 risk rows
-# Total: ~450k rows
-```
-
-## Run order
-
-```bash
-# Account-level (one-time, ACCOUNTADMIN)
-snow sql -f snowflake/00_account.sql -c brighthive
-
-# Then update ~/.snowflake/config.toml [connections.brighthive] with:
-#   role = "LONGAEVA_POC_ROLE"
-#   warehouse = "POC_WH"
-#   database = "LONGAEVA_POC"
-#   schema = "SILVER"
-
-# Layer DDL (run with the role-bound connection)
-for f in snowflake/{10,20,30,40,50,60}_*.sql; do
-  snow sql -f "$f" -c brighthive
-done
-```
-
-Idempotent: every statement uses `CREATE ... IF NOT EXISTS` or `CREATE OR REPLACE`. Re-runs are safe.
-
-## Verification
-
-Run the end-to-end smoke test:
-
-```bash
-./test_pipeline.sh
-# Expect: 17/17 passing
-```
-
-Covers: connection defaults, all 14 tables, stages, full strip-and-emit round-trip
-(YAML → strip SDK fields → emit DDL → apply → compile success), semantic-view
-queryability, and the RBAC agent-boundary matrix (5 sub-tests in strict mode).
-
-Manual spot-checks:
-
-```bash
-snow sql -q "SELECT CURRENT_ROLE(), CURRENT_WAREHOUSE(), CURRENT_DATABASE();"
-# Expect: LONGAEVA_POC_ROLE / POC_WH / LONGAEVA_POC
-
-snow sql -q "DESCRIBE SEMANTIC VIEW LONGAEVA_POC.SEMANTIC.sv_daily_portfolio_exposure;"
-
-# Re-emit + apply DDL from YAML (matches Longaeva's deploy pipeline exactly)
+# Semantic view: YAML → strip SDK → DDL → apply
 uv run --with pyyaml python semantic/strip_and_emit.py \
   semantic/sv_daily_portfolio_exposure.yaml --apply
+
+# 3-layer validation harness (syntax / correctness / baseline_expectations)
+uv run --with pyyaml --with snowflake-connector-python \
+  python semantic/validate.py semantic/sv_daily_portfolio_exposure.yaml
+
+# MCP queryability + gap detection
+uv run --with pyyaml --with snowflake-connector-python \
+  python semantic/mcp_check.py semantic/sv_daily_portfolio_exposure.yaml
+
+# Ingestion — S3 (generate drops + COPY)
+(cd sources/s3-vendor-market-data && uv run --with snowflake-connector-python \
+  python ingest.py --generate --days 3 && \
+  uv run --with snowflake-connector-python python ingest.py --load --lookback 7)
+
+# Ingestion — REST (start stub, then load)
+(cd sources/rest-stub && uv run --with fastapi --with uvicorn \
+  python -m uvicorn main:app --port 8000 &)
+(cd sources/rest-stub && uv run --with httpx --with snowflake-connector-python \
+  python ingest.py --as-of-date 2026-05-29 --max-ids 1000 --truncate)
+
+# dbt — build data products + tests
+(cd dbt && source ./set_env.sh && DBT_PROFILES_DIR=. \
+  uv run --with dbt-snowflake dbt build)
+
+# Self-healing — all 4 failure modes
+(cd self_healing && uv run --with snowflake-connector-python \
+  python failure_modes.py run-all)
+
+# Monitoring — anomaly simulation (4 families)
+(cd monitoring && uv run --with snowflake-connector-python \
+  python monitor.py simulate)
+
+# Dagster — full ELT asset graph (UI on :3000)
+(cd orchestration && DAGSTER_HOME=$(mktemp -d) uv run --python 3.12 \
+  --with 'dagster>=1.7,<1.9' --with dagster-webserver --with dbt-snowflake \
+  --with snowflake-connector-python --with httpx --with pyyaml \
+  dagster dev -m longaeva_dagster.definitions)
+
+# BrightHive adapter — does our product plug in?
+(cd brighthive_adapter && uv run --with snowflake-connector-python \
+  python snowflake_connection.py)
 ```
 
-## Mapping to POC scorecard
+## Mapping to the PoC scorecard
 
-| POC scope | Sandbox artifact |
-|---|---|
-| 1.1 Ingestion — S3 | `BRONZE.@s3_vendor_market_data` + `raw_market_prices` |
-| 1.2 Ingestion — REST | `BRONZE.raw_rest_holdings` + `REF.identifier_map` (20–30k capacity) |
-| 1.3 Ingestion — Data Share | `LONGAEVA_VENDOR_SHARE_SIM.SHARED.*` |
-| 2.x Semantic view enrollment | `semantic/sv_daily_portfolio_exposure.yaml` + `snowflake/60_semantic.sql` (golden reference) |
-| 3.x MCP feedback loop | Out of scope here — needs Longaeva's MCP. Compile success is the prerequisite. |
-| 4.x Self-healing / monitoring | Out of scope here — runs in BrightAgent. Sandbox provides the substrate. |
+| PoC use case | Sandbox artifact | Validated |
+|---|---|---|
+| 1.1 S3 ingestion | `sources/s3-vendor-market-data/ingest.py` | ✅ |
+| 1.2 REST ingestion | `sources/rest-stub/` | ✅ |
+| 1.3 Snowflake Data Share | `sources/snowflake-data-share/` + `dbt/` staging | ✅ |
+| 2.x Semantic view enrollment | `semantic/` (YAML + validate) | ✅ |
+| 3.x MCP feedback loop | `semantic/mcp_check.py` (stand-in for theirs) | ✅ |
+| 4.1 Self-healing | `self_healing/failure_modes.py` | ✅ |
+| 4.2 Quality tests | `dbt/` test suite | ✅ |
+| 4.3 Anomaly monitoring | `monitoring/monitor.py` | ✅ |
+| 4.x Governance (RBAC) | `snowflake/70_rbac.sql` | ✅ |
+| GAP-1 BrightHive integration | `brighthive_adapter/` | ✅ |
+
+## Notes
+
+- **Idempotent**: all DDL uses `CREATE ... IF NOT EXISTS` / `CREATE OR REPLACE`; seed uses `--reset`; ingestion COPY is load-metadata-aware.
+- **Cost**: XSMALL warehouse, 60s auto-suspend. Seed + full validate is a few cents.
+- **Deferred (not critical path)**: real S3 external stage and real Data Share are 1-line swaps from the internal-stage / second-DB stand-ins; Dagster is wired but OpenLineage export needs a backend URL. See [`FIDELITY.md`](FIDELITY.md).
