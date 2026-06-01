@@ -1,0 +1,763 @@
+# Sanitized Semantic View YAML Examples for POC Vendors
+# -----------------------------------------------------------------------------
+# Purpose:
+#   These examples illustrate the Longaeva semantic-view definition pattern used
+#   by the Atlas metric-store SDK. They are sanitized and are intended for vendor
+#   enablement / POC scoping, not production deployment.
+#
+# Notes for vendors:
+#   - Each YAML document below is a standalone semantic-view definition.
+#   - Top-level `atlas` metadata is Longaeva-specific and is stripped before
+#     Snowflake semantic-view DDL generation.
+#   - Field-level `atlas.target` bindings map semantic-view columns into the
+#     Longaeva metric-store / agent context layer.
+#   - Field-level `atlas.metric.aggregations` can promote raw facts into
+#     Snowflake semantic-view metrics during DDL generation.
+#   - `custom_instructions`, `sample_values`, `filters`, and `verified_queries`
+#     are critical for downstream AI-agent query quality.
+
+# ---
+# Example 1: Single-table vendor panel with multiple grains, reusable filters,
+# custom agent instructions, fact-to-metric promotion, and verified queries.
+# Pattern based on the consumer-card unified-spend example from PR #2128.
+name: SVW__EXAMPLE_RETAIL_PANEL__UNIFIED_SPEND
+
+description: >-
+  Sanitized example of unified retail transaction spending across multiple data
+  providers and aggregation grains. Each row is a single
+  (grain × entity_desc × data_source × channel × period_type × period_start_date)
+  observation. Pre-computed growth metrics avoid requiring prior-year self-joins
+  at query time.
+
+custom_instructions: >-
+  GRAIN: Two grains coexist. Always filter GRAIN to one of:
+    - 'category' — ENTITY_DESC is a normalized retail category name; ENTITY_CODE is NULL.
+    - 'merchant_code' — ENTITY_DESC is a merchant-code description; ENTITY_CODE is the raw code.
+
+  Do not roll up across grains. Cross-grain comparisons should pick one grain and
+  use it consistently.
+
+  CHANNEL: Filter CHANNEL to avoid double-counting:
+    - 'total'   — online and offline combined; use for headline metrics.
+    - 'online'  — online transactions only.
+    - 'offline' — offline / in-store transactions only.
+  Total = online + offline by construction. Always filter to one channel unless
+  explicitly comparing channels.
+
+  PERIODS:
+  - PERIOD_TYPE = 'Month' or 'Week'. Monthly is the preferred grain for
+    cross-source comparisons.
+  - Weekly boundary conventions can vary by provider. Do not mix weekly sources
+    unless the week-boundary convention has been validated.
+
+  MEASURES:
+  - SPEND_AMT is additive and may be summed via TOTAL_SPEND.
+  - SPEND_YOY_PCT and AVG_TICKET_SIZE are pre-computed and should not be summed.
+
+  STANDARD QUERY:
+    WHERE GRAIN = 'category'
+      AND DATA_SOURCE = 'provider_alpha'
+      AND CHANNEL = 'total'
+      AND PERIOD_TYPE = 'Month'
+
+tables:
+  - name: UNIFIED_SPEND
+    description: >-
+      Sanitized retail spending panel in wide format. One row per grain, entity,
+      provider, channel, period type, and period start date.
+    base_table:
+      database: PREP_SANDBOX
+      schema: RETAIL_PANEL
+      table: INT__EXAMPLE_RETAIL_PANEL__UNIFIED_SPEND
+    primary_key:
+      columns:
+        - GRAIN
+        - ENTITY_DESC
+        - DATA_SOURCE
+        - CHANNEL
+        - PERIOD_TYPE
+        - PERIOD_START_DATE
+    dimensions:
+      - name: GRAIN
+        description: Aggregation grain. 'category' = normalized category; 'merchant_code' = raw merchant code.
+        expr: GRAIN
+        data_type: VARCHAR
+        sample_values: ["category", "merchant_code"]
+      - name: ENTITY_DESC
+        description: Human-readable entity label at the selected grain.
+        expr: ENTITY_DESC
+        data_type: VARCHAR
+        atlas:
+          target: entity_name
+        sample_values: ["Grocery", "Restaurants", "Apparel"]
+      - name: ENTITY_CODE
+        description: Raw merchant/category code where available; NULL at normalized category grain.
+        expr: ENTITY_CODE
+        data_type: VARCHAR
+        sample_values: ["5411", "5812"]
+      - name: DATA_SOURCE
+        description: Sanitized provider identifier.
+        expr: DATA_SOURCE
+        data_type: VARCHAR
+        sample_values: ["provider_alpha", "provider_beta", "provider_gamma"]
+      - name: CHANNEL
+        description: Transaction channel. Use 'total' for headline metrics.
+        expr: CHANNEL
+        data_type: VARCHAR
+        sample_values: ["total", "online", "offline"]
+      - name: PERIOD_TYPE
+        description: Aggregation period.
+        expr: PERIOD_TYPE
+        data_type: VARCHAR
+        atlas:
+          target: period_type
+        sample_values: ["Month", "Week"]
+    time_dimensions:
+      - name: PERIOD_START_DATE
+        description: First day of the observation period.
+        expr: PERIOD_START_DATE
+        data_type: DATE
+        atlas:
+          target: period_start_date
+      - name: PERIOD_END_DATE
+        description: Last day of the observation period.
+        expr: PERIOD_END_DATE
+        data_type: DATE
+        atlas:
+          target: period_end_date
+    facts:
+      - name: SPEND_AMT
+        description: Raw spend amount in reporting currency for the period.
+        expr: SPEND_AMT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: total_spend
+      - name: SPEND_YOY_PCT
+        description: Pre-computed year-over-year percentage change in spend.
+        expr: SPEND_YOY_PCT
+        data_type: FLOAT
+      - name: AVG_TICKET_SIZE
+        description: Pre-computed average transaction size.
+        expr: AVG_TICKET_SIZE
+        data_type: FLOAT
+    filters:
+      - name: CATEGORY_GRAIN
+        description: Restrict to normalized category rows.
+        expr: GRAIN = 'category'
+      - name: MERCHANT_CODE_GRAIN
+        description: Restrict to merchant-code rows.
+        expr: GRAIN = 'merchant_code'
+      - name: TOTAL_CHANNEL
+        description: Total spend across online and offline.
+        expr: CHANNEL = 'total'
+      - name: MONTHLY
+        description: Monthly period type.
+        expr: PERIOD_TYPE = 'Month'
+      - name: WEEKLY
+        description: Weekly period type.
+        expr: PERIOD_TYPE = 'Week'
+
+verified_queries:
+  - name: category_monthly_yoy_by_source
+    question: Pull monthly total-channel YoY spend for Grocery across all providers, last 12 months.
+    sql: >-
+      SELECT
+        PERIOD_START_DATE,
+        DATA_SOURCE,
+        SPEND_YOY_PCT
+      FROM SEMANTIC_VIEW(
+        PREP_SANDBOX.RETAIL_PANEL.SVW__EXAMPLE_RETAIL_PANEL__UNIFIED_SPEND
+        DIMENSIONS
+          UNIFIED_SPEND.PERIOD_START_DATE,
+          UNIFIED_SPEND.DATA_SOURCE
+        FACTS
+          UNIFIED_SPEND.SPEND_YOY_PCT
+        WHERE UNIFIED_SPEND.GRAIN = 'category'
+          AND UNIFIED_SPEND.ENTITY_DESC = 'Grocery'
+          AND UNIFIED_SPEND.CHANNEL = 'total'
+          AND UNIFIED_SPEND.PERIOD_TYPE = 'Month'
+          AND UNIFIED_SPEND.PERIOD_START_DATE >= DATEADD('month', -12, CURRENT_DATE())
+      )
+      ORDER BY PERIOD_START_DATE, DATA_SOURCE
+
+atlas:
+  dataset_key: example.retail_panel_unified_spend
+  display_name: "Example Retail Panel | Unified Spend"
+  owners:
+    - "team:example-data"
+  entities:
+    primary: entity_name
+  defaults:
+    metric_type: Feature
+    growth_type: Level
+    period_type: Month
+  dagster_dep: ["dbt", "int__example_retail_panel__unified_spend"]
+  owners:
+    - "team:example-data"
+
+# ---
+# Example 2: App / web usage style table with richer Atlas column bindings,
+# metric attributes, multiple fact aggregations, and data-version metadata.
+# Pattern based on the SensorTower app-data example from PR #2128.
+name: SVW__EXAMPLE_DIGITAL_USAGE__UNIFIED_METRICS
+
+description: >-
+  Sanitized example of digital usage, engagement, and monetization metrics for
+  public companies and their applications. Each row is a single
+  (issuer × app × platform × geography × period_type × period_start_date)
+  observation.
+
+custom_instructions: >-
+  PLATFORM: Use PLATFORM = 'unified' for company-level totals to avoid double-counting
+  across iOS and Android. Use platform-specific rows only when comparing platforms.
+
+  APP ROLLUP: APP_NAME = 'All Apps' is the issuer-level rollup across all apps for
+  that issuer. Use it for company-level questions unless the user asks for a
+  specific app.
+
+  GEOGRAPHY: Use GEOGRAPHY = 'WW' and GEOGRAPHY_TYPE = 'REGION' for worldwide totals.
+  Use GEOGRAPHY_TYPE = 'COUNTRY' for country-level analysis.
+
+  PERIODS: PERIOD_TYPE may be 'Day', 'Week', 'Month', or 'Fiscal Quarter'. For
+  time-series trends, always order by PERIOD_START_DATE.
+
+  METRICS: Downloads and revenue are additive. Active-user measures are averages
+  over the period and should be aggregated with AVG rather than SUM.
+
+tables:
+  - name: UNIFIED_METRICS
+    description: >-
+      Sanitized digital usage metrics in wide format. Some metrics may be NULL at
+      grains where the source provider does not report them.
+    base_table:
+      database: PREP_SANDBOX
+      schema: DIGITAL_USAGE
+      table: INT__EXAMPLE_DIGITAL_USAGE__UNIFIED_METRICS
+    primary_key:
+      columns:
+        - LNGV_ISSUER_ID
+        - APP_ID
+        - APP_NAME
+        - PLATFORM
+        - GEOGRAPHY
+        - GEOGRAPHY_TYPE
+        - PERIOD_TYPE
+        - PERIOD_START_DATE
+    dimensions:
+      - name: LNGV_ISSUER_ID
+        description: Internal issuer identifier.
+        expr: LNGV_ISSUER_ID
+        data_type: VARCHAR
+        atlas:
+          target: lngv_issuer_id
+        sample_values:
+          - "LNGV-exampleissuer000000000000000001"
+          - "LNGV-exampleissuer000000000000000002"
+      - name: BLOOMBERG_TICKER
+        description: Bloomberg ticker, where available.
+        expr: BLOOMBERG_TICKER
+        data_type: VARCHAR
+        atlas:
+          target: bloomberg_ticker
+        sample_values: ["EXMPL US", "SAMPLE US"]
+      - name: APP_ID
+        description: Sanitized provider app identifier. NULL for issuer-level rollup rows.
+        expr: APP_ID
+        data_type: VARCHAR
+        atlas:
+          target: metric_attributes.dataset_attributes.app_id
+      - name: APP_NAME
+        description: App name. 'All Apps' indicates issuer-level rollup.
+        expr: APP_NAME
+        data_type: VARCHAR
+        atlas:
+          target: metric_attributes.dataset_attributes.app_name
+        sample_values: ["All Apps", "Example App", "Sample App"]
+      - name: PLATFORM
+        description: App platform.
+        expr: PLATFORM
+        data_type: VARCHAR
+        atlas:
+          target: metric_attributes.dataset_attributes.platform
+        sample_values: ["unified", "ios", "android"]
+      - name: GEOGRAPHY
+        description: Region or country code.
+        expr: GEOGRAPHY
+        data_type: VARCHAR
+        atlas:
+          target: metric_attributes.geography.region
+        sample_values: ["WW", "US", "GB", "Europe"]
+      - name: GEOGRAPHY_TYPE
+        description: Geography grain.
+        expr: GEOGRAPHY_TYPE
+        data_type: VARCHAR
+        sample_values: ["REGION", "COUNTRY"]
+      - name: PERIOD_TYPE
+        description: Time aggregation period.
+        expr: PERIOD_TYPE
+        data_type: VARCHAR
+        atlas:
+          target: period_type
+        sample_values: ["Day", "Week", "Month", "Fiscal Quarter"]
+    time_dimensions:
+      - name: PERIOD_START_DATE
+        description: Start date of the measurement period.
+        expr: PERIOD_START_DATE
+        data_type: DATE
+        atlas:
+          target: period_start_date
+      - name: PERIOD_END_DATE
+        description: End date of the measurement period.
+        expr: PERIOD_END_DATE
+        data_type: DATE
+        atlas:
+          target: period_end_date
+      - name: DATA_KNOWLEDGE_TS
+        description: Timestamp when the dataset row became known to the platform.
+        expr: DATA_KNOWLEDGE_TS
+        data_type: TIMESTAMP_LTZ
+        atlas:
+          target: data_knowledge_ts
+    facts:
+      - name: DOWNLOADS
+        description: App installs from the source provider.
+        expr: DOWNLOADS
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations: [sum]
+      - name: REVENUE_USD
+        description: Estimated app revenue in USD.
+        expr: REVENUE_USD
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations: [sum, avg]
+      - name: DAILY_ACTIVE_USERS
+        description: Daily active users. At higher grains, represents average daily active users over the period.
+        expr: DAILY_ACTIVE_USERS
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: avg
+                name: avg_daily_active_users
+      - name: TOTAL_SESSIONS
+        description: Total app sessions across all users.
+        expr: TOTAL_SESSIONS
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations: [sum]
+      - name: AVG_SESSION_DURATION_SECONDS
+        description: Average session duration in seconds.
+        expr: AVG_SESSION_DURATION_SECONDS
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: avg
+                name: avg_session_duration_seconds
+    metrics:
+      - name: DISTINCT_APP_COUNT
+        description: Number of distinct apps represented in the result set.
+        expr: COUNT(DISTINCT APP_ID)
+        data_type: NUMBER
+    filters:
+      - name: UNIFIED_PLATFORM
+        description: Unified platform only.
+        expr: PLATFORM = 'unified'
+      - name: WORLDWIDE
+        description: Worldwide total rows.
+        expr: GEOGRAPHY = 'WW' AND GEOGRAPHY_TYPE = 'REGION'
+      - name: COUNTRY_LEVEL
+        description: Country-level geography rows.
+        expr: GEOGRAPHY_TYPE = 'COUNTRY'
+      - name: ALL_APPS_ROLLUP
+        description: Issuer-level all-app rollup rows.
+        expr: APP_NAME = 'All Apps'
+      - name: MONTHLY
+        description: Monthly grain.
+        expr: PERIOD_TYPE = 'Month'
+      - name: STANDARD_COMPANY_TOTALS
+        description: Standard filter for issuer-level global totals.
+        expr: PLATFORM = 'unified' AND GEOGRAPHY = 'WW' AND GEOGRAPHY_TYPE = 'REGION' AND APP_NAME = 'All Apps'
+
+verified_queries:
+  - name: issuer_monthly_downloads_revenue
+    question: Pull monthly worldwide downloads and revenue for a sample issuer.
+    sql: >-
+      SELECT
+        PERIOD_START_DATE,
+        DOWNLOADS,
+        REVENUE_USD
+      FROM SEMANTIC_VIEW(
+        PREP_SANDBOX.DIGITAL_USAGE.SVW__EXAMPLE_DIGITAL_USAGE__UNIFIED_METRICS
+        DIMENSIONS
+          UNIFIED_METRICS.PERIOD_START_DATE
+        FACTS
+          UNIFIED_METRICS.DOWNLOADS,
+          UNIFIED_METRICS.REVENUE_USD
+        WHERE UNIFIED_METRICS.BLOOMBERG_TICKER = 'EXMPL US'
+          AND UNIFIED_METRICS.PLATFORM = 'unified'
+          AND UNIFIED_METRICS.GEOGRAPHY = 'WW'
+          AND UNIFIED_METRICS.GEOGRAPHY_TYPE = 'REGION'
+          AND UNIFIED_METRICS.APP_NAME = 'All Apps'
+          AND UNIFIED_METRICS.PERIOD_TYPE = 'Month'
+          AND UNIFIED_METRICS.PERIOD_START_DATE >= '2025-01-01'
+      )
+      ORDER BY PERIOD_START_DATE
+
+atlas:
+  dataset_key: example.digital_usage_unified_metrics
+  display_name: "Example Digital Usage | Unified Metrics"
+  owners:
+    - "team:example-data"
+  entities:
+    primary: bloomberg_ticker
+  defaults:
+    metric_type: Feature
+    growth_type: Level
+    period_type: Month
+  dagster_dep: ["dbt", "int__example_digital_usage__unified_metrics"]
+  warehouse_size: L
+
+# ---
+# Example 3: Multi-table raw-metrics semantic view with table-specific grains,
+# table-specific metrics, query-priority instructions, and cross-table context.
+# Pattern based on the IQVIA raw-metrics example from PR #2128, but sanitized.
+name: SVW__EXAMPLE_HEALTHCARE_PANEL__RAW_METRICS
+
+description: >-
+  Sanitized example of a multi-table semantic view for a healthcare-style data
+  provider. The view exposes prescription, sales, and switching-style raw metric
+  tables with shared product classification dimensions but table-specific facts.
+
+custom_instructions: >-
+  TABLE SELECTION:
+  - Use ACTIVITY_RAW for prescription / activity volume questions.
+  - Use SALES_RAW for dollar sales and package / unit volume questions.
+  - Use SWITCHING_RAW only when the question specifically involves patient or
+    customer switching / new-to-brand style metrics.
+
+  SHARED DIMENSIONS: Product, manufacturer, classification, channel, and date
+  fields are intentionally aligned across tables where possible. When joining
+  across tables, align on the shared dimensions and confirm compatible period grains.
+
+  PERIODS:
+  - ACTIVITY_RAW supports 'Day', 'Week', and 'Month'.
+  - SALES_RAW supports 'Week' and 'Month'.
+  - SWITCHING_RAW supports 'Week' and 'Month'.
+  For time-series trends, always order by PERIOD_END_DATE or PERIOD_START_DATE.
+
+  METRIC RULES:
+  - Volume and dollar metrics use SUM.
+  - Price and rate metrics use AVG or should be treated as non-additive.
+  - Do not sum percentage, rate, or average columns unless they have been explicitly
+    modeled as additive metrics.
+
+tables:
+  - name: ACTIVITY_RAW
+    description: Sanitized raw activity metrics across daily, weekly, and monthly grains.
+    base_table:
+      database: PREP_SANDBOX
+      schema: HEALTHCARE_PANEL
+      table: INT__EXAMPLE_HEALTHCARE_PANEL__ACTIVITY_RAW
+    primary_key:
+      columns:
+        - PERIOD_TYPE
+        - CHANNEL
+        - PRODUCT_CLASS
+        - MANUFACTURER
+        - PRODUCT_NAME
+        - PRODUCT_FORM
+        - PERIOD_END_DATE
+    dimensions:
+      - name: PERIOD_TYPE
+        description: Source time grain for activity metrics.
+        expr: PERIOD_TYPE
+        data_type: VARCHAR
+        atlas:
+          target: period_type
+        sample_values: ["Day", "Week", "Month"]
+      - name: PRODUCT_CLASS
+        description: Sanitized product classification.
+        expr: PRODUCT_CLASS
+        data_type: VARCHAR
+        sample_values: ["Class A", "Class B"]
+      - name: MANUFACTURER
+        description: Sanitized manufacturer or provider name.
+        expr: MANUFACTURER
+        data_type: VARCHAR
+        sample_values: ["Manufacturer A", "Manufacturer B"]
+      - name: PRODUCT_NAME
+        description: Sanitized product name.
+        expr: PRODUCT_NAME
+        data_type: VARCHAR
+        atlas:
+          target: entity_name
+        sample_values: ["Product Alpha", "Product Beta"]
+      - name: CHANNEL
+        description: Distribution or reporting channel.
+        expr: CHANNEL
+        data_type: VARCHAR
+        sample_values: ["Retail", "Mail", "Institutional"]
+      - name: PRODUCT_FORM
+        description: Product form or packaging classification.
+        expr: PRODUCT_FORM
+        data_type: VARCHAR
+    time_dimensions:
+      - name: PERIOD_START_DATE
+        description: Start of the activity observation period.
+        expr: PERIOD_START_DATE
+        data_type: DATE
+        atlas:
+          target: period_start_date
+      - name: PERIOD_END_DATE
+        description: End of the activity observation period.
+        expr: PERIOD_END_DATE
+        data_type: DATE
+        atlas:
+          target: period_end_date
+    facts:
+      - name: TOTAL_ACTIVITY_COUNT
+        description: Total activity count for the period.
+        expr: TOTAL_ACTIVITY_COUNT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: activity_count
+      - name: NEW_ACTIVITY_COUNT
+        description: New activity count for the period.
+        expr: NEW_ACTIVITY_COUNT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: new_activity_count
+    filters:
+      - name: ACTIVITY_WEEK_GRAIN
+        description: Weekly activity rows only.
+        expr: PERIOD_TYPE = 'Week'
+      - name: ACTIVITY_MONTH_GRAIN
+        description: Monthly activity rows only.
+        expr: PERIOD_TYPE = 'Month'
+
+  - name: SALES_RAW
+    description: Sanitized raw sales metrics across weekly and monthly grains.
+    base_table:
+      database: PREP_SANDBOX
+      schema: HEALTHCARE_PANEL
+      table: INT__EXAMPLE_HEALTHCARE_PANEL__SALES_RAW
+    primary_key:
+      columns:
+        - PERIOD_TYPE
+        - CHANNEL
+        - PRODUCT_CLASS
+        - MANUFACTURER
+        - PRODUCT_NAME
+        - PRODUCT_FORM
+        - PERIOD_END_DATE
+    dimensions:
+      - name: PERIOD_TYPE
+        description: Source time grain for sales metrics.
+        expr: PERIOD_TYPE
+        data_type: VARCHAR
+        sample_values: ["Week", "Month"]
+      - name: PRODUCT_CLASS
+        description: Sanitized product classification.
+        expr: PRODUCT_CLASS
+        data_type: VARCHAR
+      - name: MANUFACTURER
+        description: Sanitized manufacturer or provider name.
+        expr: MANUFACTURER
+        data_type: VARCHAR
+      - name: PRODUCT_NAME
+        description: Sanitized product name.
+        expr: PRODUCT_NAME
+        data_type: VARCHAR
+        atlas:
+          target: entity_name
+      - name: CHANNEL
+        description: Distribution or reporting channel.
+        expr: CHANNEL
+        data_type: VARCHAR
+      - name: PRODUCT_FORM
+        description: Product form or packaging classification.
+        expr: PRODUCT_FORM
+        data_type: VARCHAR
+    time_dimensions:
+      - name: PERIOD_START_DATE
+        description: Start of the sales observation period.
+        expr: PERIOD_START_DATE
+        data_type: DATE
+      - name: PERIOD_END_DATE
+        description: End of the sales observation period.
+        expr: PERIOD_END_DATE
+        data_type: DATE
+    facts:
+      - name: SALES_USD
+        description: Sales dollars in USD.
+        expr: SALES_USD
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: sales_usd
+      - name: UNIT_COUNT
+        description: Unit volume for the period.
+        expr: UNIT_COUNT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: unit_count
+      - name: AVG_UNIT_PRICE
+        description: Average unit price; non-additive.
+        expr: AVG_UNIT_PRICE
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: avg
+                name: avg_unit_price
+    filters:
+      - name: SALES_WEEK_GRAIN
+        description: Weekly sales rows only.
+        expr: PERIOD_TYPE = 'Week'
+      - name: SALES_MONTH_GRAIN
+        description: Monthly sales rows only.
+        expr: PERIOD_TYPE = 'Month'
+
+  - name: SWITCHING_RAW
+    description: Sanitized switching / new-to-product metrics across weekly and monthly grains.
+    base_table:
+      database: PREP_SANDBOX
+      schema: HEALTHCARE_PANEL
+      table: INT__EXAMPLE_HEALTHCARE_PANEL__SWITCHING_RAW
+    primary_key:
+      columns:
+        - PERIOD_TYPE
+        - CHANNEL
+        - PRODUCT_CLASS
+        - MANUFACTURER
+        - PRODUCT_NAME
+        - PRODUCT_FORM
+        - PERIOD_END_DATE
+    dimensions:
+      - name: PERIOD_TYPE
+        description: Source time grain for switching metrics.
+        expr: PERIOD_TYPE
+        data_type: VARCHAR
+        sample_values: ["Week", "Month"]
+      - name: PRODUCT_CLASS
+        description: Sanitized product classification.
+        expr: PRODUCT_CLASS
+        data_type: VARCHAR
+      - name: MANUFACTURER
+        description: Sanitized manufacturer or provider name.
+        expr: MANUFACTURER
+        data_type: VARCHAR
+      - name: PRODUCT_NAME
+        description: Sanitized product name.
+        expr: PRODUCT_NAME
+        data_type: VARCHAR
+        atlas:
+          target: entity_name
+      - name: CHANNEL
+        description: Distribution or reporting channel.
+        expr: CHANNEL
+        data_type: VARCHAR
+      - name: PRODUCT_FORM
+        description: Product form or packaging classification.
+        expr: PRODUCT_FORM
+        data_type: VARCHAR
+    time_dimensions:
+      - name: PERIOD_START_DATE
+        description: Start of the switching observation period.
+        expr: PERIOD_START_DATE
+        data_type: DATE
+      - name: PERIOD_END_DATE
+        description: End of the switching observation period.
+        expr: PERIOD_END_DATE
+        data_type: DATE
+    facts:
+      - name: NEW_TO_PRODUCT_COUNT
+        description: Count of new-to-product observations.
+        expr: NEW_TO_PRODUCT_COUNT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: new_to_product_count
+      - name: SWITCH_ADD_COUNT
+        description: Count of switch/add observations.
+        expr: SWITCH_ADD_COUNT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: switch_add_count
+      - name: CONTINUATION_COUNT
+        description: Count of continuation observations.
+        expr: CONTINUATION_COUNT
+        data_type: FLOAT
+        atlas:
+          metric:
+            aggregations:
+              - fn: sum
+                name: continuation_count
+    filters:
+      - name: SWITCHING_WEEK_GRAIN
+        description: Weekly switching rows only.
+        expr: PERIOD_TYPE = 'Week'
+      - name: SWITCHING_MONTH_GRAIN
+        description: Monthly switching rows only.
+        expr: PERIOD_TYPE = 'Month'
+
+verified_queries:
+  - name: product_monthly_activity_sales
+    question: Pull monthly activity and sales metrics for Product Alpha since 2025.
+    sql: >-
+      SELECT
+        PERIOD_END_DATE,
+        PRODUCT_NAME,
+        TOTAL_ACTIVITY_COUNT,
+        NEW_ACTIVITY_COUNT
+      FROM SEMANTIC_VIEW(
+        PREP_SANDBOX.HEALTHCARE_PANEL.SVW__EXAMPLE_HEALTHCARE_PANEL__RAW_METRICS
+        DIMENSIONS
+          ACTIVITY_RAW.PERIOD_END_DATE,
+          ACTIVITY_RAW.PRODUCT_NAME
+        FACTS
+          ACTIVITY_RAW.TOTAL_ACTIVITY_COUNT,
+          ACTIVITY_RAW.NEW_ACTIVITY_COUNT
+        WHERE ACTIVITY_RAW.PRODUCT_NAME = 'Product Alpha'
+          AND ACTIVITY_RAW.PERIOD_TYPE = 'Month'
+          AND ACTIVITY_RAW.PERIOD_END_DATE >= '2025-01-01'
+      )
+      ORDER BY PERIOD_END_DATE
+
+atlas:
+  dataset_key: example.healthcare_panel_raw_metrics
+  display_name: "Example Healthcare Panel | Raw Metrics"
+  owners:
+    - "team:example-data"
+  entities:
+    primary: entity_name
+  defaults:
+    metric_type: Feature
+    growth_type: Level
+    period_type: Week
+  dagster_dep: ["dbt", "int__example_healthcare_panel__activity_raw"]
+  warehouse_size: L
