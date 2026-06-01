@@ -5,6 +5,8 @@ author: "drchinca"
 status: "Ready"
 created: "2026-06-01"
 last_reviewed: "2026-06-01"
+amended:
+  - "2026-06-01 — ingested Longaeva Atlas YAML examples; BH-531 contract now grounded in real client artifacts (atlas-semantic-view-spec.md)"
 generates: "epic"
 tags: [warehouse, snowflake, byow, ingestion, destination, longaeva]
 related:
@@ -178,6 +180,48 @@ elif warehouse_type == "snowflake":
         # optional: private_key for JWT auth (Phase 2)
     }
 ```
+
+### BrightBot — Snowflake Semantic View YAML scaffolding tool (BH-531, Layer 5)
+
+Authoritative input: **Longaeva's Atlas YAML contract**, distilled from the sanitized examples the client shared 2026-06-01. Reference docs:
+
+- Raw examples: `clients/trials/longaeva/artifacts/atlas-semantic-view-examples.yaml`
+- Distilled spec: `clients/trials/longaeva/artifacts/atlas-semantic-view-spec.md`
+
+The scaffolding tool MUST emit a YAML matching the Atlas contract — top-level `name`, `description`, `custom_instructions`, `tables[]`, `verified_queries[]`, and `atlas:` block. The `atlas:*` keys are stripped by the Atlas SDK before Snowflake DDL generation; the scaffolding tool emits them and Atlas owns the DDL step.
+
+Key shape requirements (full detail in the distilled spec):
+
+| Block | Required content |
+|---|---|
+| `name` | `SVW__<DOMAIN>__<SUBJECT>` (uppercase) |
+| `custom_instructions` | Multi-line natural-language guidance — GRAIN / CHANNEL / PERIODS / MEASURES sections. **Empty placeholders degrade agent quality directly** — flag for human review when LLM-inferred. |
+| `tables[].primary_key.columns` | Explicit grain — required, never inferred silently |
+| `dimensions[].sample_values` | LLM context for query generation — populate from `SELECT DISTINCT col LIMIT N` against the Silver table |
+| `facts[].atlas.metric.aggregations` | Either shorthand `[sum]` or full `[{fn: sum, name: total_spend}]` — both forms valid |
+| `filters[]` | Named reusable WHERE predicates (e.g. `MONTHLY`, `STANDARD_COMPANY_TOTALS`) |
+| `verified_queries[]` | At least one golden query per major use case — use Snowflake `SEMANTIC_VIEW(...)` table-function syntax with `DIMENSIONS`/`FACTS`/`METRICS` sections |
+| `atlas.dataset_key` | `<namespace>.<dataset_slug>` (2-level namespace observed in all 3 examples) |
+| `atlas.entities.primary` | Points to a dimension's `atlas.target` value — names which column is the row's primary entity |
+| `atlas.dagster_dep` | Tuple `[orchestrator, dep_name]` — orchestrator is `"dbt"` in all examples; dep is the upstream dbt model. **BrightHive does not drive Dagster** — just writes the dep tuple correctly. |
+
+Atlas target inference (auto-detect from Silver column names):
+
+| Column pattern | Suggested `atlas.target` |
+|---|---|
+| `LNGV_*ISSUER*`, `*_INTERNAL_ISSUER_ID` | `lngv_issuer_id` (their internal issuer ID — the LEI/FIGI mapping target) |
+| `BLOOMBERG_TICKER`, `BB_TICKER` | `bloomberg_ticker` |
+| `ENTITY_*`, `*_NAME` (when row-level primary entity) | `entity_name` |
+| `PERIOD_TYPE` | `period_type` |
+| `PERIOD_START_DATE`, `*_START_DATE` (time dim) | `period_start_date` |
+| `PERIOD_END_DATE`, `*_END_DATE` (time dim) | `period_end_date` |
+| `DATA_KNOWLEDGE_TS`, `*_KNOWLEDGE_TS` | `data_knowledge_ts` |
+| `GEOGRAPHY`, `REGION`, `COUNTRY` | `metric_attributes.geography.<key>` (region/country) |
+| `APP_ID` / `APP_NAME` / `PLATFORM` | `metric_attributes.dataset_attributes.<key>` |
+
+When no match: emit the dimension without `atlas.target` and flag in the scaffold report.
+
+**Important re: reference joins (clarifying the trial scope)**: the §2.2 reference-join requirement (fiscal calendar, LEI/FIGI, geographic codes) is realized in practice as **column-population from upstream dbt joins, not runtime semantic-view joins**. The Atlas YAML inherits both `BLOOMBERG_TICKER` and `LNGV_ISSUER_ID` as parallel dimensions on the same row. The "detection" the tool must do is: **bind the right `atlas.target` when an upstream Silver column matches a known reference identifier**. Simpler problem than originally scoped.
 
 ### Platform-Core — OMD ingestion source config (Layer 3)
 

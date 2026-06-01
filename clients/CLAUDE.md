@@ -17,6 +17,9 @@
 | Longaeva POC overview | `trials/longaeva/overview.md` |
 | Longaeva milestone scorecard | `trials/longaeva/scorecard.md` |
 | Longaeva full POC response plan | `trials/longaeva/artifacts/poc-response-plan.md` |
+| Longaeva client POC scope (verbatim) | `trials/longaeva/artifacts/poc-scope-from-client.md` |
+| Longaeva Atlas semantic-view YAML examples (client-provided) | `trials/longaeva/artifacts/atlas-semantic-view-examples.yaml` |
+| Longaeva Atlas YAML contract (distilled spec) | `trials/longaeva/artifacts/atlas-semantic-view-spec.md` |
 | Longaeva Snowflake sandbox (DX README) | `trials/longaeva/sandbox/README.md` |
 | Longaeva sandbox architecture diagrams | `trials/longaeva/sandbox/ARCHITECTURE.md` |
 | Longaeva sandbox fidelity tracker | `trials/longaeva/sandbox/FIDELITY.md` |
