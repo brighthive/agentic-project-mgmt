@@ -63,7 +63,7 @@ Per `warehouse-agnostic-architecture.md` (BH-172, Approved), a new warehouse mus
 | 3 | OMD Ingestion Source Config | **Gap** | `openmetadata_ingestion_lambda/config_loader.py` has `@register_source("synapse", ...)` (lines 156-209) but **no equivalent for Snowflake**. `main.py:38` service-type map has no `"snowflake"` entry. | Add `SnowflakeSourceConfig` class with `@register_source("snowflake", ...)`. Mirror Synapse structure. |
 | 4 | OMD Service Type Mapping | **Shipped** | `warehouse-service.ts:145` translates `AZURE_SYNAPSE` → `Mssql`. Snowflake passes through unchanged (Snowflake's OMD service-type IS `Snowflake`). | None. |
 | 5 | Brightbot Connection + Dialect | **Gap (critical — blocks Longaeva)** | (a) `tools/warehouse_connections.py:484-488` `CONNECTION_CLASSES` dict missing `"snowflake"` entry. (b) No `SnowflakeConnection(WarehouseConnection)` class. (c) `prompts/retrieval_agent_prompts.py:10` dialect rule is one-liner placeholder. (d) `prompts/retrieval_agent_prompts.py:14-41` `DIALECT_EXAMPLES` has no Snowflake entry — falls back to Redshift. (e) `utils/warehouse.py:351-359` Snowflake branch reads env vars only, no `warehouse_config` path. | Full set: new `SnowflakeConnection` class, factory registration, fleshed-out dialect rules + examples, `warehouse_config` parsing path. |
-| 6 | Webapp Registry | **Unknown — not audited this pass** | Needs separate webapp audit. `WarehouseServiceProvider` enum already includes `SNOWFLAKE` in `gql-types.ts:3624` so dropdown likely shows it. Form-field validation may already exist. | TBD — short audit ticket. |
+| 6 | Webapp Registry | **Shipped (verified 2026-06-01)** | Snowflake form is already wired. `AddWarehouse.tsx:61` lists Snowflake in the dropdown, `AddWarehouseConfig.tsx:42-72` defines fields (`accountId`, `username`, `password`, `apiEndpoint=Warehouse Name`, `apiKey=Role`). No UI changes needed. **Caveat — generic-field naming**: webapp posts the GraphQL `WarehouseConfigInput` shape (`accountId`, `apiKey`, `apiEndpoint`) and the destination handler at `destination_service/snowflake.ts:32-38` reads `config.account_id`, `config.warehouse`, `config.role`. The mapping `accountId→account_id`, `apiKey→role`, `apiEndpoint→warehouse` lives in platform-core validators. Brightbot's secret-store reader at `secrets_manager.py` expects already-translated `account` field (uppercase casing). **Document this mapping in `warehouse-agnostic-architecture.md`** so the next warehouse contributor doesn't reinvent it. | None for UI; doc-only follow-up. |
 | 7 | Org CDK Ingestion Pipeline | **Shipped (but pattern-drift)** | `snowflake_ingestion.py` full stack with JWT lambda, parse API GW lambda, ~470 lines. Registered in `app.py:329` `{"SNOWFLAKE": snowflake_ingestion.snowflake_state_machine}`. S3 role wired in `post_deployment_scripts/update_s3_role.py:41,222-265`. | **Pattern drift**: Snowflake ingestion predates the workspace-secret-store pattern Synapse migrated to. Stack reads from deprecated Datapiary instead of `workspace_secret_store/{workspaceId}`. Optional migration to align both warehouses on the same source-of-truth. |
 
 ### Hard Limitations (today, before this work)
@@ -305,14 +305,14 @@ All Phase 1 tickets ride under parent epic **BH-526** (Longaeva pre-trial execut
 
 | Ticket | Summary | Points | Layer | Status |
 |---|---|---|---|---|
-| **BH-527** | feat(brightbot): SnowflakeConnection class + factory registration | 3 | 5 |
-| **BH-528** | feat(brightbot): Snowflake SQL dialect rules + examples | 1 | 5 |
-| **BH-549** | feat(brightbot): warehouse_config-aware Snowflake branch in warehouse.py | 1 | 5 |
-| **BH-550** | test(brightbot): tests/unit/test_snowflake_warehouse.py mirror of Synapse tests | 2 | 5 |
-| **BH-551** | feat(platform-core): SnowflakeSourceConfig in OMD ingestion lambda | 2 | 3 |
-| **BH-552** | audit(webapp): confirm Snowflake dropdown + form fields render | 1 | 6 |
-| **BH-553** | feat(brightbot): data_profiler Snowflake-specific branches (verify; likely no-op) | 1 | 5 |
-| **BH-554** | refactor(org-cdk): SnowflakeIngestionStack reads workspace_secret_store, not Datapiary | 3 | 7 |
+| **BH-527** | feat(brightbot): SnowflakeConnection class + factory registration | 3 | 5 | ✅ PR #488 |
+| **BH-528** | feat(brightbot): Snowflake SQL dialect rules + examples | 1 | 5 | ✅ PR #488 |
+| **BH-549** | feat(brightbot): warehouse_config-aware Snowflake branch in warehouse.py | 1 | 5 | ✅ PR #488 |
+| **BH-550** | test(brightbot): tests/unit/test_snowflake_warehouse.py mirror of Synapse tests | 2 | 5 | ✅ PR #488 |
+| **BH-551** | feat(platform-core): SnowflakeSourceConfig in OMD ingestion lambda | 2 | 3 | ✅ PR #777 |
+| **BH-552** | audit(webapp): confirm Snowflake dropdown + form fields render | 1 | 6 | ✅ Shipped (no UI changes needed; verified `AddWarehouseConfig.tsx:42-72`) |
+| **BH-553** | feat(brightbot): data_profiler Snowflake-specific branches (verify; likely no-op) | 1 | 5 | ✅ PR #488 (verified Redshift default path works) |
+| **BH-554** | refactor(org-cdk): SnowflakeIngestionStack reads workspace_secret_store, not Datapiary | 3 | 7 | 🚧 In flight |
 
 **Phase 1 total: 14 points** — all 8 tickets parented under BH-526.
 
