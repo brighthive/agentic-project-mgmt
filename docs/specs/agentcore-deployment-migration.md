@@ -2,9 +2,9 @@
 title: "Migrate BrightAgent Runtime to Amazon Bedrock AgentCore"
 epic: "BH-453"
 author: "Kuri Chinca"
-status: "Review (v2 post review)"
+status: "Review (v3 — per-sub-agent architecture)"
 created: "2026-05-08"
-revised: "2026-05-08"
+revised: "2026-05-27"
 generates: "epic"
 tags: ["bedrock", "agentcore", "deployment", "infrastructure", "migration", "aws-native"]
 related:
@@ -15,7 +15,11 @@ related:
 
 # Migrate BrightAgent Runtime to Amazon Bedrock AgentCore
 
-> **v2 revision (2026-05-08)** — incorporates review feedback from Solutions Architect, DevOps, AWS best-practices, and BrightHive-AWS reviewers. Key changes: MCP servers move to ECS Fargate (not Lambda); repo placement corrected to `brighthive-platform-core` (platform account, not workspace); 2-environment flow (Staging + Production — `develop` is dead); streaming path resolved; cross-account Bedrock KB pattern reuses existing `brightagent-kb-access-role-{acct-id}`; checkpoint-migration shim added; salted canary hash; statistical UAT gate.
+> **v3 revision (2026-05-27)** — architecture model corrected from implementation learnings on the `agentcore-migration` branch (4 sub-agent runtimes live in Staging). **BrightAgent is NOT a monolith fronted by one API Gateway.** The **LangGraph Deep Agent (supervisor) remains the orchestration runtime**; **leaf sub-agents deploy as independent AgentCore Container runtimes**, invoked supervisor→sub-agent via the `bedrock-agentcore` **SDK (SigV4)** — not through API Gateway. This removes, as unnecessary, the inter-agent API Gateway HTTP API, the Lambda authorizer on the agent runtime, and the API-Gateway streaming-timeout workaround. Retained from v2: VPC networking + egress lockdown, durable DynamoDB state, MCP on ECS Fargate, platform-core CDK ownership, 2-env release flow, salted canary, statistical UAT gate.
+>
+> **What v3 deletes vs. v2** (the path we're taking makes these moot for the agent runtime): inter-agent API Gateway HTTP API ingress; Lambda authorizer in front of AgentCore; the "29s timeout / response-stream" ingress decision; reframing "all 11 graphs as AgentCore endpoints" (only leaf sub-agents become runtimes).
+>
+> **v2 revision (2026-05-08)** — incorporated Solutions Architect, DevOps, AWS best-practices, and BrightHive-AWS review: MCP on ECS Fargate (not Lambda); platform-core repo placement; 2-env flow; cross-account KB reuse; salted canary; statistical UAT gate.
 
 ## Problem
 
@@ -37,11 +41,9 @@ As of Week 10 (May 1, 2026), canonical **AWS Bedrock Converse API** adoption com
 **Success**: BrightAgent's entire agent runtime is hosted on AWS, deployed to Amazon Bedrock AgentCore, observable through Amazon CloudWatch + AWS X-Ray, authenticated through Amazon Cognito, with zero runtime dependency on LangGraph Cloud, LangSmith, or Mem0AI's hosted services.
 
 **End state**:
-- All 11 graphs from `langgraph.json` run on Amazon Bedrock AgentCore runtime
-- AWS API Gateway **HTTP API** (v2) fronts the HTTP layer with **Lambda authorizer** (not bare JWT authorizer — we need `workspace_id` claim enforcement)
-- Streaming delivered via **AgentCore native invoke response-stream** (or Lambda Function URL `InvokeWithResponseStream`) — NOT API Gateway REST (29s timeout + buffering breaks streams)
+- **Leaf sub-agents** (retrieval, analyst, governance, dbt, …) each run as an independent Amazon Bedrock AgentCore Container runtime in the platform accounts
+- The **LangGraph Deep Agent (supervisor)** orchestrates and invokes those runtimes **supervisor→sub-agent via the `bedrock-agentcore` SDK (SigV4)** — no API Gateway, no Lambda authorizer between agents; IAM is the trust boundary
 - Observability emits OpenTelemetry via **AWS Distro for OpenTelemetry (ADOT)** Collector to Amazon CloudWatch Logs (Embedded Metric Format for metrics) + AWS X-Ray (traces)
-- Workspace auth through the existing Platform + Internal Cognito pools with a new `custom:workspace_id` claim injected via **pre-token-generation Lambda trigger**
 - Secrets retrieval through AWS Secrets Manager (reuse existing per-env patterns)
 - Agent-thread persistence on Amazon DynamoDB (checkpoints) + Amazon S3 (large-payload spillover) with **PITR**, **cross-region backup**, and **S3 Object Lock**
 - **MCP servers on Amazon ECS Fargate (scale-to-zero)** — not Lambda (MCP is stdio-persistent, Lambda cannot hold stdio sessions; GraphQL Forge npm payload exceeds Lambda size comfortably)
@@ -121,8 +123,8 @@ flowchart LR
 
 ### Gaps
 
-- No AgentCore-compatible entrypoint (AgentCore expects a Python `Runtime` callable; our graphs are `CompiledGraph` objects with LangGraph-specific serve semantics).
-- No AWS-native streaming ingress (REST API Gateway is not viable — 29s timeout + response buffering).
+- No AgentCore-compatible entrypoint (AgentCore expects a Python `Runtime` callable; our graphs are `CompiledGraph` objects with LangGraph-specific serve semantics). *(Addressed on `agentcore-migration` branch: per-sub-agent `app/<agent>/main.py` entrypoints.)*
+- ~~No AWS-native streaming ingress (REST API Gateway not viable — 29s timeout).~~ **Resolved by design in v3**: supervisor→sub-agent uses SDK invoke; no API Gateway ingress for the runtime.
 - No AWS-native LangGraph checkpointer (LangGraph Cloud managed today). Need Amazon DynamoDB `BaseCheckpointSaver` with S3 spillover, PITR, cross-region backup.
 - No checkpoint-migration shim for in-flight threads when traffic flips from LangGraph Cloud to AgentCore.
 - No OpenTelemetry → CloudWatch export pipeline (LangSmith still emitting).
@@ -138,25 +140,25 @@ flowchart LR
 
 ### Recommended Approach
 
-**Target architecture**: Amazon Bedrock AgentCore (in platform accounts) hosts the agent runtime. AWS API Gateway HTTP API + Lambda authorizer front HTTP. Streaming uses AgentCore native response-stream. Amazon DynamoDB + Amazon S3 persist agent state. ADOT Collector exports OpenTelemetry to Amazon CloudWatch + AWS X-Ray. MCP servers deploy as Amazon ECS Fargate services with scale-to-zero. LangChain and LangGraph remain as Python library deps — no runtime call leaves to LangChain services.
+**Target architecture**: The LangGraph **Deep Agent (supervisor)** orchestrates and invokes **leaf sub-agents**, each hosted as an independent Amazon Bedrock AgentCore Container runtime in the platform accounts. Supervisor→sub-agent calls use the `bedrock-agentcore` **SDK (SigV4)** — no API Gateway or Lambda authorizer between agents. Each runtime runs in **`networkMode: VPC`** with egress restricted to VPC endpoints. Amazon DynamoDB + Amazon S3 persist agent state. ADOT Collector exports OpenTelemetry to Amazon CloudWatch + AWS X-Ray. MCP servers deploy as Amazon ECS Fargate services with scale-to-zero. LangChain and LangGraph remain as Python library deps — no runtime call leaves to LangChain services.
 
 ```mermaid
 flowchart LR
     GH[brightbot GitHub repo] -->|release tag:<br/>pre-release → Staging<br/>release → Production| OIDC[GitHub OIDC → AWS IAM]
-    OIDC -->|push| ECR[Amazon ECR]
-    ECR -->|image| AC[Amazon Bedrock AgentCore<br/>Runtime]
-    Client[Slack / Webapp] -->|HTTPS| APIGW[AWS API Gateway HTTP API]
-    APIGW -->|Lambda authorizer<br/>validates workspace_id claim| AC
-    AC -->|streaming response| Client
+    OIDC -->|push| ECR[Amazon ECR per sub-agent]
+    Client[Slack / Webapp] -->|HTTPS| SUP[LangGraph Deep Agent<br/>supervisor]
+    SUP -->|SigV4 SDK invoke<br/>response-stream| AC[Amazon Bedrock AgentCore<br/>sub-agent runtimes<br/>retrieval · analyst · governance · dbt]
+    ECR -->|image| AC
+    SUP -->|checkpoints| DDB[Amazon DynamoDB<br/>+ PITR + cross-region backup]
+    DDB -->|large payload| S3[Amazon S3<br/>Object Lock + versioning]
     AC -->|ChatBedrockConverse| BR[Amazon Bedrock Converse]
     AC -->|STS assume brightagent-kb-access-role| BKB[Amazon Bedrock KB<br/>per-workspace account]
-    AC -->|checkpoints| DDB[Amazon DynamoDB<br/>+ PITR + cross-region backup]
-    DDB -->|large payload| S3[Amazon S3<br/>Object Lock + versioning]
     AC -->|traces + metrics via ADOT| CW[Amazon CloudWatch<br/>+ AWS X-Ray]
     AC -->|Secrets| SM[AWS Secrets Manager]
     AC -->|MCP calls via VPC endpoint| ECS[Amazon ECS Fargate<br/>MCP servers scale-to-zero]
-    APIGW -.->|JWT from Platform Pool<br/>with custom:workspace_id| COG[Amazon Cognito]
 ```
+
+> **Open question (resolve in BH-454):** where the **supervisor** itself runs once LangGraph Cloud is removed — its own AgentCore runtime, ECS Fargate, or co-located. v3 fixes the sub-agent topology; the supervisor's host is not yet decided and gates AC-3 (zero LangGraph-Cloud egress).
 
 **Repo placement correction (v2)**:
 - AgentCore runtime stack lives in **`brighthive-platform-core`** (NEW subfolder `infra/agentcore/`) alongside the existing `{Env}-BPC-*` CDK stacks. Same CDK app, same release workflow.
@@ -169,13 +171,13 @@ flowchart LR
 - Workflows: `release.yml` (tag generation on main push), `deploy-staging.yml` (triggered by prerelease tag → push image to ECR, update AgentCore runtime version in account `873769991712`), `deploy-production.yml` (triggered by release tag → account `104403016368`). No `deploy-dev.yml`.
 - CDK stack names: `Staging-BPC-AgentCore*`, `Prod-BPC-AgentCore*`.
 
-**Streaming path decision (v2)**: AgentCore's native invoke endpoint returns a response-stream. API Gateway HTTP API (v2) can pass this through if using Lambda integration with response-streaming enabled OR direct ALB to AgentCore. **Decision**: validate in BH-454 POC; default to **Lambda Function URL with `InvokeWithResponseStream`** in front of AgentCore if HTTP API streaming has any limit issues.
+**Streaming path (v3)**: supervisor→sub-agent uses the `bedrock-agentcore` SDK invoke response-stream directly — no API Gateway, so the 29s-timeout / response-buffering problem does not apply to the agent runtime. Client-edge streaming (Slack/webapp → supervisor) is unchanged from today's path and out of scope for the runtime migration.
 
 **Migration strategy**: **Parallel run with salted-hash canary routing** at both Slack-server and webapp BFF. 1% → 10% → 50% → 100% over ~2 weeks. Stable routing via `sha256(workspace_id + canary_salt) % 100` — salt rotation enables re-bucketing if the 1% bucket is all low-volume tenants.
 
 **Checkpoint-migration shim**: DynamoDB checkpointer with a LangGraph Cloud fallback layer. On `get_tuple` cache miss for `thread_id` created before cutover T0, attempt to fetch from LangGraph Cloud's checkpoint API, translate the payload, write into DynamoDB. Fallback removed in BH-466 final decommission.
 
-**Tenant isolation**: Cognito pre-token-generation Lambda trigger injects `custom:workspace_id` from the user's Neo4j membership. API Gateway Lambda authorizer validates the claim. AgentCore execution role uses `aws:PrincipalTag` session tags derived from the claim to scope `bedrock:Retrieve*` to the right KB per request.
+**Tenant isolation (v3)**: the supervisor resolves `workspace_id` from the authenticated client session (existing path) and passes it into each sub-agent invocation payload. The sub-agent's AgentCore execution role applies `aws:PrincipalTag` session tags derived from `workspace_id` to scope `bedrock:Retrieve*` to the right KB per request. No API Gateway Lambda authorizer is introduced for the agent runtime; isolation is enforced at the supervisor boundary plus IAM session tags. (Cognito `custom:workspace_id` injection remains useful for the client edge but is no longer on the agent-runtime critical path — see BH-468 rescoped.)
 
 ### Alternatives Considered
 
@@ -193,20 +195,20 @@ flowchart LR
 | Area | Repo | Impact |
 |------|------|--------|
 | BrightBot | `brightbot` | AgentCore entrypoints module, DynamoDB checkpointer + migration shim, ADOT exporter, remove `langsmith` runtime calls, remove/replace Mem0AI, rewire `auth_handler.py`, release-tag deploy workflows matching platform-core |
-| **Platform Core (infra)** | `brighthive-platform-core` | **NEW `infra/agentcore/` + `infra/agentcore-mcp/` CDK stacks** in the existing CDK app: IAM execution role, ECR repo, AgentCore runtime, API Gateway HTTP API, Lambda authorizer, Cognito pre-token-generation Lambda, DynamoDB + S3, ECS Fargate MCP cluster. Stacks named `{Env}-BPC-AgentCore*` matching existing `{Env}-BPC-*` convention. Reuses existing release/deploy-staging/deploy-production workflows. |
+| **Platform Core (infra)** | `brighthive-platform-core` | **AgentCore CDK owned here** (mechanism may be the AgentCore CLI / `@aws/agentcore-cdk` L3 constructs): per-sub-agent IAM execution role, per-sub-agent ECR repo, AgentCore Container runtimes in **`networkMode: VPC`**, DynamoDB + S3 state, ECS Fargate MCP cluster. **No API Gateway / Lambda authorizer for the agent runtime.** Stacks owned + release-deployed by the platform team (target naming `{Env}-BPC-AgentCore*`). Reuses existing release/deploy-staging/deploy-production workflows. |
 | Slack Server | `brightbot-slack-server` | Edge canary routing via salted-hash workspace_id; reuse existing `PlatformAccountsTable.ApiUrls` pattern to resolve agent URL per workspace; per-backend metric emission |
 | Webapp | `brighthive-webapp` | BFF endpoint URL resolution via same canary flag |
-| Platform Core (app) | `brighthive-platform-core` | Cognito pre-token Lambda trigger implementation (reads Neo4j workspace membership, injects `custom:workspace_id`); no agent-layer changes |
+| Platform Core (app) | `brighthive-platform-core` | (Rescoped) Cognito pre-token `custom:workspace_id` injection is client-edge only — no longer required on the agent-runtime critical path |
 | Data Organization CDK | `brighthive-data-organization-cdk` | No change — existing workspace-account ingestion stays |
 | Data Workspace CDK | `brighthive-data-workspace-cdk` | No change — existing per-workspace Bedrock KB + unstructured data stays |
 
 ## Acceptance Criteria
 
-- [ ] **AC-1** All 11 `langgraph.json` graphs execute on Amazon Bedrock AgentCore via integration tests hitting each endpoint.
+- [ ] **AC-1** Each leaf sub-agent (retrieval, analyst, governance, dbt, …) executes as its own AgentCore runtime, invoked by the supervisor via SDK; integration test per sub-agent. The spec lists which `langgraph.json` graphs are sub-agent runtimes vs. supervisor-internal nodes.
 - [ ] **AC-2** UAT parity run passes: **per-graph** pass rate (N≥200 eval runs per graph), bootstrap 95% CI on delta from LangGraph Cloud baseline, fail if CI upper bound < baseline − 2% on any graph; p95 latency budget met.
 - [ ] **AC-3** Egress audit: zero runtime network calls from production AgentCore reach `api.smith.langchain.com`, `eu.smith.langchain.com`, `api.mem0.ai`, or any `*.langchain.com`/`*.mem0.ai` endpoint. `langsmith`, `langgraph-api` Python package audit shows zero runtime imports/calls.
 - [ ] **AC-4** DynamoDB checkpointer stores and resumes agent state across AgentCore container restarts. **Migration shim** transparently fetches pre-T0 threads from LangGraph Cloud during canary.
-- [ ] **AC-5** AWS API Gateway HTTP API fronts all agent HTTP endpoints with **Lambda authorizer** validating Cognito JWT + `custom:workspace_id` claim membership. Streaming path verified end-to-end from Bedrock → AgentCore → client.
+- [ ] **AC-5** Supervisor→sub-agent invocation is **SigV4 (SDK)** with per-sub-agent IAM execution roles; no API Gateway or Lambda authorizer on the agent runtime. All sub-agent runtimes run `networkMode: VPC`. Streaming verified end-to-end via SDK response-stream (supervisor ← sub-agent).
 - [ ] **AC-6** Canary routing at Slack-server and webapp BFF: 1%/10%/50%/100% with `sha256(workspace_id + salt) % 100` stable hashing; **kill-switch** (force-0%) tested; salt rotation supported.
 - [ ] **AC-7** MCP servers (GraphQL Forge, OpenMetadata MCP, dbt MCP) run on Amazon ECS Fargate with scale-to-zero, invocable by AgentCore via VPC endpoint with **separate IAM roles per MCP** (no shared execution role). `aws:SourceVpce` condition on resource policies.
 - [ ] **AC-8** GitHub Actions follows platform-core pattern: `release.yml` on main push generates `vX.Y.Z.W-pre-release` and `vX.Y.Z.W-release` tags; `deploy-staging.yml` on prerelease → account `873769991712`; `deploy-production.yml` on release → account `104403016368`. No develop-branch auto-deploy. **Pre-deploy eval gate** runs UAT scenario subset; deploy blocked on regression.
@@ -244,11 +246,11 @@ Parent epic: **BH-453**. Child tickets **BH-454 → BH-476** (23 total, v2).
 | Ticket | Summary | Points | Key changes in v2 |
 |--------|---------|--------|-------------------|
 | BH-454 | Spike: AgentCore region/availability + reference architecture walkthrough with AWS SA | **5** | Split from 2pts. Added: streaming path POC, MCP hosting decision confirmation, Mem0AI replacement path, checkpointer POC against LangGraph Cloud thread compatibility |
-| BH-455 | brightbot: AgentCore entrypoint module — wrap 11 graphs | 5 | No change |
+| BH-455 | brightbot: per-sub-agent AgentCore entrypoints + supervisor SDK-invoke client (`agentcore_client.py`, `agentcore_subagents.py`) | 3 | **v3**: not "wrap 11 graphs" — package leaf sub-agents as runtimes + supervisor SigV4 invoke. Base already on `agentcore-migration` branch. |
 | BH-456 | brightbot: Amazon DynamoDB checkpointer | **8** | Was 5pts. Scope expanded to include serialization compatibility, hot-partition avoidance (composite PK `thread_id` + SK `checkpoint_ts`), PITR, and contract tests against LangGraph 1.0.x serialization |
 | BH-457 | brightbot: Remove langsmith + Mem0AI + langgraph-api audit — OTel + ADOT → CloudWatch + X-Ray | **5** | Was langsmith-only. Now includes Mem0AI egress audit + `langgraph-api` import audit + `auth_handler.py` rewire |
-| BH-458 | brightbot: Replace http/app.py LangGraph Cloud ingress with AWS streaming-compatible handler | 5 | Streaming path per BH-454 POC (Function URL + InvokeWithResponseStream OR HTTP API response streaming) |
-| BH-459 | **platform-core:** AgentCore runtime CDK stack — `{Env}-BPC-AgentCore` (NOT data-workspace-cdk) | 8 | **Repo placement corrected**. Reuses existing release workflow. Cross-account STS for workspace Bedrock KB. PITR + Backup + S3 Object Lock. Provisioned concurrency config. |
+| BH-458 | ~~Replace http/app.py LangGraph Cloud ingress with API Gateway streaming handler~~ | — | **v3: descoped for the agent runtime** (no API Gateway between agents). Reduces to the supervisor-hosting decision tracked in BH-454. |
+| BH-459 | **platform-core:** AgentCore CDK ownership — per-sub-agent runtimes in `networkMode: VPC` | 5 | **v3**: was 8. CLI/`@aws/agentcore-cdk` allowed as mechanism; scope is platform-core ownership + VPC networking + cross-account STS for KB. No API Gateway/authorizer. Move CDK out of brightbot. |
 | BH-460 | **platform-core:** MCP ECS Fargate stack — `{Env}-BPC-AgentCoreMCP` (NOT Lambda) | **8** | **Hosting decision corrected**. Scale-to-zero. Per-MCP IAM roles. VPC endpoints. Container images in ECR. |
 | BH-461 | CI/CD: GitHub Actions matching platform-core pattern (release → pre-release → release tags) | **5** | Was 3. Adds pre-deploy eval gate, ECR image scanning + signing, no develop-branch auto-deploy |
 | BH-462 | slack-server: canary routing with **salted-hash** workspace_id + **kill-switch** + metrics | 3 | Salt rotation, kill-switch, stable stickiness |
@@ -262,7 +264,8 @@ Parent epic: **BH-453**. Child tickets **BH-454 → BH-476** (23 total, v2).
 | Ticket | Summary | Points |
 |--------|---------|--------|
 | BH-467 | **Checkpoint migration shim**: dual-read from LangGraph Cloud with translation layer into DynamoDB | 5 |
-| BH-468 | **Cognito pre-token-generation Lambda**: inject `custom:workspace_id` claim from Neo4j membership | 3 |
+| BH-468 | **Cognito pre-token-generation Lambda** — inject `custom:workspace_id`. **v3: descoped off agent-runtime critical path** (client-edge only; isolation now via supervisor + IAM session tags) | 3 |
+| BH-521 | **Thread-id propagation contract** — supervisor→sub-agent payload carries `thread_id`; sub-agent sets it on RunnableConfig so artifact S3 path is deterministic (fixes current fallback). Owner: Marwan | 2 |
 | BH-469 | **KB-ID resolver service**: workspace → KB-ID lookup for AgentCore (reuse workspace_id resolver Lambda pattern from data-org-cdk #134) | 3 |
 | BH-470 | **Trace-propagation contract + integration test** — Slack→APIGW→AgentCore→Fargate MCP→Bedrock | 5 |
 | BH-471 | **Rollback gameday** — deliberately break staging AgentCore, measure recovery, document runbook | 3 |
@@ -272,7 +275,11 @@ Parent epic: **BH-453**. Child tickets **BH-454 → BH-476** (23 total, v2).
 | BH-475 | **VPC endpoint + egress lockdown** — egress-deny AgentCore → public internet; only Bedrock/DDB/S3/Secrets/Fargate via VPC endpoints | 3 |
 | BH-476 | **Drift detection** — `cdk diff` in CI weekly, CloudWatch alarm on drift | 2 |
 
-**Total**: ~96 points across 23 tickets. 2-sprint execution window (48-point sprints) to hit June 1.
+**Total (v3)**: reduced from v2 — BH-458 descoped, BH-455/BH-459 points down, BH-468 off critical path, BH-477 added (+2). The API Gateway / Lambda-authorizer / streaming-ingress work is removed from the agent-runtime path.
+
+## Decision Record
+
+**DR-AC-1 (2026-05-27): Per-sub-agent runtime model adopted; monolithic API-Gateway ingress dropped.** The LangGraph Deep Agent (supervisor) stays as the orchestrator; leaf sub-agents become independent AgentCore runtimes invoked via SigV4 SDK. Rationale: independent scale/deploy per sub-agent; SDK invoke handles streaming natively, so the API Gateway 29s-timeout problem never arises on the high-frequency inter-agent path; auth simplifies to IAM. **Supersedes v2's monolithic-ingress assumption.** Consequences: API Gateway HTTP API + Lambda authorizer + streaming-ingress shim removed from the agent runtime (BH-458 descoped); Cognito `custom:workspace_id` injection no longer on the agent-runtime critical path (BH-468 client-edge only). **Open**: supervisor's own host post-LangGraph-Cloud (BH-454). **Retained as hard requirements**: VPC networking + egress lockdown (BH-475), durable DynamoDB state (AC-4), MCP on Fargate (AC-7), platform-core CDK ownership (BH-459).
 
 ## Related
 
