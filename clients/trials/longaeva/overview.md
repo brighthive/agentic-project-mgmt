@@ -13,7 +13,9 @@ workspace_id: ""
 aws_account: ""
 status: "pre-trial"
 tags: [financial-services, snowflake, dbt, dagster, github-enterprise, mcp]
-last_reviewed: "2026-05-29"
+last_reviewed: "2026-06-01"
+amended:
+  - "2026-06-01 — Atlas YAML contract received from client; §2 Semantic View Enrollment scope grounded in real artifacts"
 ---
 
 # Longaeva Partners LP — Trial
@@ -29,11 +31,11 @@ Longaeva's POC scope (full text in `artifacts/poc-scope-from-client.md`):
    - **REST API** — paginated, date-partitioned, batched ID lookups against their 20-30k instrument universe; parallel download; retry; dbt source wiring.
    - **Snowflake Data Share** — given share DB name + target schema, scaffold dbt source + staging model + DQ contracts.
 
-2. **Snowflake Semantic View Enrollment** — scaffold YAML against their **custom-extended schema** (extends Snowflake's spec with metric-store wiring, named reusable filter presets, plain-language agent context instructions, verified query examples). Specific reference-data joins required:
+2. **Snowflake Semantic View Enrollment** — scaffold YAML against their **Atlas metric-store contract** (custom YAML that wraps Snowflake's native semantic-view spec; full schema received from client 2026-06-01 — see `artifacts/atlas-semantic-view-examples.yaml` raw and `artifacts/atlas-semantic-view-spec.md` distilled). The Atlas SDK strips `atlas:*` keys before Snowflake DDL generation — BrightHive emits Atlas-shaped YAML, never DDL. Specific reference-data binding requirements:
    - **Fiscal calendar tables** — for non-standard fiscal year alignment
-   - **Identifier mapping** — LEI / FIGI → their internal issuer ID
+   - **Identifier mapping** — `LEI` / `FIGI` → `LNGV_ISSUER_ID` (their concrete internal-issuer-ID column name)
    - **Geographic + classification code tables**
-   - Brighthive must auto-detect when joins are needed and emit correct relationship definitions.
+   - **Clarified from real examples**: the "joins" aren't runtime semantic-view joins — Atlas inherits parallel columns (`BLOOMBERG_TICKER` + `LNGV_ISSUER_ID`) populated upstream in dbt. BrightHive's job: bind the right `atlas.target` (`bloomberg_ticker`, `lngv_issuer_id`, `metric_attributes.geography.*`, etc.) when columns match known identifiers. Inference table in the distilled spec.
 
 3. **MCP Feedback Loop** — after enrollment, validate the semantic view is **queryable through their internal MCP server** (not ours). Confirm measures/dimensions/time-dimensions surface; run representative queries (filtered, aggregated, multi-dim slice); identify gaps that would degrade agent quality (missing sample values, missing examples, missing instructions).
 
@@ -134,13 +136,14 @@ This is the most important prep work of the trial after pre-trial engineering is
 
 | What | Why it matters | Owner | By |
 |---|---|---|---|
-| Longaeva's custom YAML schema spec | Agent generates to their extended spec, not base Snowflake spec | Longaeva | Day 3 |
-| Fiscal calendar table schema + sample rows | Fiscal join detection | Longaeva | Day 3 |
-| LEI / FIGI → internal issuer ID mapping schemas | Identifier join detection | Longaeva | Day 3 |
-| Existing dbt project structure + naming conventions | Generated artifacts match their conventions | Longaeva | Day 3 |
-| Dagster lineage (OpenLineage export or direct) | Observability Agent reads failures in context | Longaeva | Day 4 |
+| **Atlas YAML contract examples** (✅ received 2026-06-01) | Agent generates to Atlas spec, not base Snowflake spec | Longaeva | ✅ `artifacts/atlas-semantic-view-examples.yaml` |
+| **Atlas YAML distilled spec** (✅ authored 2026-06-01) | Inference table + naming conventions for BH-531 | BrightHive | ✅ `artifacts/atlas-semantic-view-spec.md` |
+| Fiscal calendar table schema + sample rows | Pattern for `atlas.target` binding when fiscal-alignment columns appear | Longaeva | Day 3 |
+| LEI / FIGI → `LNGV_ISSUER_ID` mapping output (parallel columns in Silver) | Confirms the atlas-target binding for `lngv_issuer_id` and `bloomberg_ticker` | Longaeva | Day 3 |
+| Existing dbt project structure + naming conventions (sanitized examples already show `INT__<DOMAIN>__<SUBJECT>` + `SVW__<DOMAIN>__<SUBJECT>`) | Generated artifacts match their conventions | Longaeva | Day 3 |
+| Dagster lineage (OpenLineage export or direct) | Observability Agent reads failures in context; the Atlas YAML only needs the `dagster_dep` tuple | Longaeva | Day 4 |
 | Sample vendor datasets (one per source type) | Ingestion scaffolding reference | Longaeva | Day 5 |
-| 2 existing production semantic view definitions | Style examples for YAML generation | Longaeva | Day 5 |
+| Production semantic view definitions (un-sanitized analogues of the 3 examples) | Validate the scaffold tool against production naming | Longaeva | Day 5 |
 
 Day 3 has five Longaeva-owned items. Schedule a joint working session — not an async handoff.
 
@@ -151,12 +154,16 @@ Day 3 has five Longaeva-owned items. Schedule a joint working session — not an
 - [ ] **REST API**: connector handles their 20-30k instrument universe — pagination, batched ID lookups, parallel download, retry; dbt source wired
 - [ ] **Snowflake Data Share**: dbt source + staging model SQL + DQ contracts generated; staging model passes first validation
 
-### 2. Semantic View Enrollment
-- [ ] YAML scaffold infers ≥80% of dimensions, time-dimensions, facts, metrics from Silver schema + plain-language description
-- [ ] Custom metadata blocks (metric-store wiring, filter presets, agent instructions, verified queries) populated against Longaeva's extended schema
-- [ ] Reference joins auto-detected — at least 2 of 3 types: **fiscal calendar**, **LEI/FIGI → internal issuer ID**, **geographic codes**
-- [ ] Generated definition compiles + executes against Snowflake's semantic view engine within ≤3 revision cycles
-- [ ] Compilation errors surface with actionable remediation messages
+### 2. Semantic View Enrollment (grounded in Atlas YAML contract)
+- [ ] YAML scaffold infers ≥80% of dimensions, time-dimensions, facts from Silver schema + plain-language description
+- [ ] Atlas custom blocks populated: `dataset_key` (2-level namespace), `entities.primary`, `defaults` (metric_type/growth_type/period_type), `dagster_dep` tuple, `owners`
+- [ ] `atlas.target` binding auto-inferred — at least 2 of: `lngv_issuer_id` (from `LNGV_*` columns), `bloomberg_ticker`, `period_*`, `metric_attributes.geography.*`
+- [ ] `atlas.metric.aggregations` defaulted per fact-name heuristic (counts → sum, prices → avg, percentages → raw)
+- [ ] `custom_instructions` block produced from description + sample_values (not empty placeholder); flagged for human review on LLM inference
+- [ ] At least one `verified_queries[]` entry in Snowflake `SEMANTIC_VIEW(...)` syntax with `DIMENSIONS`/`FACTS` sections
+- [ ] Atlas-shaped YAML round-trips through PyYAML and is accepted by the Atlas SDK (no DDL emission)
+- [ ] Validation by running a `verified_query` end-to-end through MCP (replaces "Snowflake DDL execution" — Atlas owns DDL)
+- [ ] Compilation / validation errors surface with actionable remediation messages
 
 ### 3. MCP Validation *(via Longaeva's internal MCP server)*
 - [ ] All measures, dimensions, time-dimensions queryable through their MCP interface

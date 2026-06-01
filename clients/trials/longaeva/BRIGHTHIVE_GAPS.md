@@ -4,7 +4,9 @@ client: longaeva
 jira_epic: BH-526
 trial_start: "2026-06-15"
 author: kuri
-last_reviewed: "2026-05-30"
+last_reviewed: "2026-06-01"
+amended:
+  - "2026-06-01 — GAP-3 (semantic view scaffolder) blocker resolved: Atlas YAML examples received from client; spec distilled at artifacts/atlas-semantic-view-spec.md"
 status: pre-trial
 ---
 
@@ -73,13 +75,16 @@ the golden reference / test target for that piece of agent work.
 
 | | |
 |---|---|
-| **Sandbox proves** | `sandbox/semantic/sv_daily_portfolio_exposure.yaml` is the **golden reference**: a Longaeva-extended YAML with the explicit `spec:` / `sdk_extensions:` strip boundary, `baseline_expectations`, `metric_store`, `filter_presets`, `agent_instructions`, `verified_query_examples`. `strip_and_emit.py` proves it round-trips to valid `CREATE SEMANTIC VIEW` DDL. |
-| **BrightHive gap** | No tool today emits this YAML from a Silver table + plain-language description. This is the **headline PoC capability** (use case 2.1). |
-| **Work** | New Engineering-agent tool: read Silver schema (via GAP-2) + reference schemas, infer dimensions/time-dims/facts/metrics, populate the extended metadata blocks, emit YAML matching Longaeva's spec. Then call `strip_and_emit`-equivalent to validate compile. |
-| **Effort** | ~1 sprint |
+| **Sandbox proves** | `sandbox/semantic/sv_daily_portfolio_exposure.yaml` is a structurally-aligned reference (`spec:` / `sdk_extensions:` strip boundary, `baseline_expectations`, `metric_store`, `filter_presets`, etc.). `strip_and_emit.py` proves it round-trips. |
+| **✅ Real client contract received** | Grant delivered the **Atlas YAML examples** 2026-06-01 (3 sanitized semantic views — retail, digital usage, healthcare). Authoritative artifacts: `artifacts/atlas-semantic-view-examples.yaml` (raw) + `artifacts/atlas-semantic-view-spec.md` (distilled inference rules + naming conventions). **Blocker resolved.** |
+| **Naming reconciliation** | Their actual conventions: `name: SVW__<DOMAIN>__<SUBJECT>`, Silver table `INT__<DOMAIN>__<SUBJECT>`, top-level `atlas:` block (not `sdk_extensions:`), field-level `atlas.target` bindings + `atlas.metric.aggregations` for fact-to-metric promotion. The sandbox's `sv_daily_portfolio_exposure.yaml` is structurally close but uses different block names — reconcile before final scaffolding tests. |
+| **DDL ownership** | **BrightHive does NOT emit `CREATE SEMANTIC VIEW`** — the Atlas SDK strips `atlas:*` and owns DDL. Our tool emits Atlas-shaped YAML; validation is by running a `verified_query` end-to-end through MCP. |
+| **BrightHive gap** | No tool today emits Atlas-shaped YAML from a Silver table + description. This is the **headline PoC capability** (use case 2.1). |
+| **Work** | New Engineering-agent tool: read Silver schema (via `SnowflakeConnection`, BH-527 ✅ merged) + the Atlas inference table from spec, populate all Atlas blocks (`dataset_key`, `entities.primary`, `defaults`, `dagster_dep`, `owners`, field-level `atlas.target` + `atlas.metric.aggregations`), generate ≥1 `verified_query` in Snowflake `SEMANTIC_VIEW(...)` syntax, emit. |
+| **Effort** | 1 sprint (5 pts — bumped from 3 with the concrete scope from real examples) |
 | **Owner** | Marwan + AI/ML |
-| **Test target** | Scaffold from `LONGAEVA_POC.SILVER.int_enriched_holdings`; diff against the golden YAML; must infer ≥90% of dims/metrics and compile clean (the `validate.py` layer-1 gate). |
-| **⚠️ Blocker** | Needs **Longaeva's actual YAML spec** (Grant to deliver ≤ June 8). Our golden reference is structurally aligned but invented — reconcile when theirs lands. |
+| **Ticket** | BH-531 (description rewritten 2026-06-01 with the concrete contract) |
+| **Test target** | Scaffold from `LONGAEVA_POC.SILVER.int_enriched_holdings`; YAML must validate against the Atlas contract (PyYAML round-trip + all required blocks present) and round-trip a `verified_query` through MCP. |
 
 ### GAP-4 — dbt `sources.yml` + staging model generation from scratch
 
