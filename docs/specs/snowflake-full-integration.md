@@ -297,31 +297,38 @@ Metrics:
 
 ## Ticket Breakdown
 
-### Phase 1 — Critical (blocks Longaeva, ~2 weeks)
+All Phase 1 tickets ride under parent epic **BH-526** (Longaeva pre-trial execution). Phase 2 is post-trial work that would live under a separate refactor epic.
 
-| Ticket | Summary | Points | Layer | Owner candidate |
+**Auth scope decision**: Phase 1 ships **username/password** auth only. JWT/key-pair lands in Phase 2 (or sooner if Longaeva requests it). Matches `secrets_manager.py:307` validation (`["username","password"]`).
+
+### Phase 1 — Critical (blocks Longaeva, ~2.5 weeks)
+
+| Ticket | Summary | Points | Layer | Status |
 |---|---|---|---|---|
-| **BH-SF1** | feat(brightbot): SnowflakeConnection class + factory registration | 3 | 5 | Marwan or Ahmed |
-| **BH-SF2** | feat(brightbot): Snowflake dialect rules + examples in retrieval agent prompts | 1 | 5 | Marwan |
-| **BH-SF3** | feat(brightbot): warehouse_config-aware Snowflake branch in warehouse.py | 1 | 5 | Marwan |
-| **BH-SF4** | test(brightbot): tests/unit/test_snowflake_warehouse.py mirror of Synapse tests | 2 | 5 | QA / Marwan |
-| **BH-SF5** | feat(platform-core): SnowflakeSourceConfig in OMD ingestion lambda | 2 | 3 | Ahmed |
-| **BH-SF6** | audit(webapp): confirm Snowflake dropdown + form fields render | 1 | 6 | Harbour |
-| **BH-SF7** | feat(brightbot): data_profiler Snowflake-specific branches if any needed (likely no-op) | 1 | 5 | Marwan |
+| **BH-527** | feat(brightbot): SnowflakeConnection class + factory registration | 3 | 5 |
+| **BH-528** | feat(brightbot): Snowflake SQL dialect rules + examples | 1 | 5 |
+| **BH-549** | feat(brightbot): warehouse_config-aware Snowflake branch in warehouse.py | 1 | 5 |
+| **BH-550** | test(brightbot): tests/unit/test_snowflake_warehouse.py mirror of Synapse tests | 2 | 5 |
+| **BH-551** | feat(platform-core): SnowflakeSourceConfig in OMD ingestion lambda | 2 | 3 |
+| **BH-552** | audit(webapp): confirm Snowflake dropdown + form fields render | 1 | 6 |
+| **BH-553** | feat(brightbot): data_profiler Snowflake-specific branches (verify; likely no-op) | 1 | 5 |
+| **BH-554** | refactor(org-cdk): SnowflakeIngestionStack reads workspace_secret_store, not Datapiary | 3 | 7 |
 
-**Phase 1 total: 11 points**
+**Phase 1 total: 14 points** — all 8 tickets parented under BH-526.
 
-### Phase 2 — Symmetric refactors (post-Longaeva, ~1.5 weeks)
+### Phase 2 — Symmetric refactors (post-Longaeva, ~1 week)
 
-| Ticket | Summary | Points | Layer |
+To create under a separate refactor epic after trial. Not yet ticketed.
+
+| Placeholder | Summary | Points | Layer |
 |---|---|---|---|
-| **BH-SF8** | refactor(platform-core): returnSnowflakeAdminSecrets helper for symmetry | 2 | 1 |
-| **BH-SF9** | refactor(org-cdk): SnowflakeIngestionStack reads workspace_secret_store, not Datapiary | 3 | 7 |
-| **BH-SF10** | docs(spec): update warehouse-agnostic-architecture.md to mark Snowflake fully aligned | 1 | — |
+| **TBC-A** | refactor(platform-core): returnSnowflakeAdminSecrets helper for symmetry | 2 | 1 |
+| **TBC-B** | feat(brightbot): JWT/key-pair auth for SnowflakeConnection (production-grade) | 2 | 5 |
+| **TBC-C** | docs(spec): update warehouse-agnostic-architecture.md to mark Snowflake fully aligned | 1 | — |
 
-**Phase 2 total: 6 points**
+**Phase 2 total: 5 points**
 
-**Grand total: 17 points across 10 tickets**
+**Grand total: 19 points across 11 tickets** (8 ticketed today under BH-526, 3 placeholder for post-trial)
 
 ## Risks
 
