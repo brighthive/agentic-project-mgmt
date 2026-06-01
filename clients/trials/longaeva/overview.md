@@ -8,7 +8,7 @@ trial_start: "2026-06-15"
 trial_end: "2026-06-29"
 decision_date: "2026-06-29"
 jira_epic: "BH-526"
-notion_page: ""
+notion_page: "37202437-dde4-81ba-89eb-c1583e6b23c1"  # Longaeva PoC Command Center (under GTM)
 workspace_id: ""
 aws_account: ""
 status: "pre-trial"
