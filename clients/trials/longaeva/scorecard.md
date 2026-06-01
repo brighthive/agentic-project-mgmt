@@ -2,7 +2,7 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "pre-trial"
-updated: "2026-05-29"
+updated: "2026-06-01"
 ---
 
 # Longaeva — Trial Scorecard
@@ -42,14 +42,17 @@ Filled at Day 13 evaluation (Milestone 9). 17 criteria across 4 core workstreams
 | 1.2 REST API — 20-30k instrument universe, pagination, batched IDs, parallel, retry | dbt source wired correctly | — | — |
 | 1.3 Snowflake Data Share — dbt source + staging + DQ contracts | Passes validation on first run | — | — |
 
-### 2. Semantic View Enrollment
+### 2. Semantic View Enrollment (grounded in Atlas YAML contract — `artifacts/atlas-semantic-view-spec.md`)
 | Criterion | Target | Result | Pass |
 |---|---|---|---|
-| 2.1 YAML dimension/time-dim/fact/metric inference | ≥80% correct first scaffold | — | — |
-| 2.2 Custom metadata blocks populated (metric-store, filters, instructions, examples) | Against Longaeva's extended spec | — | — |
-| 2.3 Reference join auto-detection | ≥2 of 3 types: fiscal calendar / LEI-FIGI / geo | — | — |
-| 2.4 Compile + execute on Snowflake semantic engine | ≤3 revision cycles | — | — |
-| 2.5 Errors surface with actionable remediation | All errors human-readable | — | — |
+| 2.1 YAML dimension/time-dim/fact inference from Silver schema | ≥80% correct first scaffold | — | — |
+| 2.2 Atlas custom blocks populated (`dataset_key`, `entities.primary`, `defaults`, `dagster_dep`, `owners`, `custom_instructions`) | All required blocks present + non-empty `custom_instructions` | — | — |
+| 2.3 `atlas.target` binding auto-inference | ≥2 of: `lngv_issuer_id`, `bloomberg_ticker`, `period_*`, `metric_attributes.geography.*` | — | — |
+| 2.4 `atlas.metric.aggregations` defaulted from fact-name heuristics | counts→sum, prices→avg, percentages→raw | — | — |
+| 2.5 `verified_queries[]` in Snowflake `SEMANTIC_VIEW(...)` syntax | ≥1 query per major use case | — | — |
+| 2.6 YAML accepted by Atlas SDK (round-trips PyYAML; no DDL emission) | Accepted on first pass | — | — |
+| 2.7 Validation via running a `verified_query` end-to-end through MCP | ≤3 revision cycles | — | — |
+| 2.8 Errors surface with actionable remediation | All errors human-readable | — | — |
 
 ### 3. MCP Validation (Longaeva's internal MCP server)
 | Criterion | Target | Result | Pass |
@@ -130,12 +133,12 @@ _Filled at Day 13._
 | Workstream | Criteria Met | Total | Pass Rate |
 |---|---|---|---|
 | 1. Ingestion | — | 3 | — |
-| 2. Semantic Enrollment | — | 5 | — |
+| 2. Semantic Enrollment | — | 8 | — |
 | 3. MCP Validation | — | 3 | — |
 | 4a. Self-Healing | — | 4 | — |
 | 4b. Anomaly Monitoring | — | 4 | — |
 | 4c. Slack | — | 2 | — |
-| **Core total** | — | **21** | — |
+| **Core total** | — | **24** | — |
 | Bonus | — | 4 | — |
 
 **Recommendation**: Won / Lost / Extended — _rationale here_
