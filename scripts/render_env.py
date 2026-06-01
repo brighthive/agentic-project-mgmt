@@ -93,6 +93,11 @@ def normalize_nested_keys(value: Any) -> Any:
     return value
 
 
+def _values_equal(a: Any, b: Any) -> bool:
+    """Deep-equality check for normalized vault values (handles dict/list/scalar)."""
+    return a == b
+
+
 def set_aws_key(env_data: dict[str, Any], key: str, value: Any) -> None:
     """Store a flattened AWS secret key plus any compatibility aliases.
 
@@ -112,13 +117,26 @@ def set_aws_key(env_data: dict[str, Any], key: str, value: Any) -> None:
 def flatten_aws_export(entries: list[dict[str, Any]]) -> dict[str, Any]:
     """Flatten kurilead-style Secrets Manager exports into a template-friendly map.
 
-    Each entry has the shape: {"name": "...", "value_parsed": {...}, "value": "..."}
-    Parsed dicts are flattened one level so their fields become top-level keys.
-    Collisions on primary keys are last-write-wins (with a stderr warning).
-    Alias keys are first-write-wins (via setdefault) so canonical values win.
+    Each entry has shape {"name": "...", "value_parsed": {...}, "value": "..."}.
+
+    Result layout:
+        flattened[<normalized_secret_name>] = {<inner key>: <value>, ...}
+            — always populated, allows namespaced template refs like
+              aws.staging["staging_platform_neo4j_credentials"].neo4j_uri
+        flattened[<inner_key>] = <value>
+            — only populated when the inner key is UNIQUE across all entries
+              (i.e. exactly one secret defines it). Colliding keys are dropped
+              from the flat namespace so templates fail loudly with an
+              unresolved-token error rather than silently picking whichever
+              value won the last-write race.
+
+    Colliding keys are reported once in a single summary line, not per-pair.
     """
     flattened: dict[str, Any] = {}
-    seen_keys: dict[str, str] = {}  # key → first secret name that set it (for warnings)
+
+    # First pass: store each secret under its namespaced key and count
+    # how many secrets contribute each inner key.
+    inner_key_owners: dict[str, list[tuple[str, Any]]] = {}
 
     for entry in entries:
         if not isinstance(entry, dict):
@@ -137,27 +155,44 @@ def flatten_aws_export(entries: list[dict[str, Any]]) -> dict[str, Any]:
                 nk = normalize_key(str(raw_key))
                 if not nk:
                     continue
-                nv = normalize_nested_keys(raw_value)
-                if nk in seen_keys and nk in flattened:
-                    print(
-                        f"[WARN] key collision: '{nk}' set by both "
-                        f"'{seen_keys[nk]}' and '{raw_name}' — last value wins",
-                        file=sys.stderr,
-                    )
-                seen_keys[nk] = raw_name
-                set_aws_key(flattened, nk, nv)
+                inner_key_owners.setdefault(nk, []).append(
+                    (raw_name, normalize_nested_keys(raw_value))
+                )
             continue
 
         raw_value = entry.get("value")
         if normalized_name and raw_value not in (None, ""):
-            if normalized_name in seen_keys:
-                print(
-                    f"[WARN] key collision: '{normalized_name}' set by both "
-                    f"'{seen_keys[normalized_name]}' and '{raw_name}' — last value wins",
-                    file=sys.stderr,
-                )
-            seen_keys[normalized_name] = raw_name
-            flattened[normalized_name] = raw_value
+            inner_key_owners.setdefault(normalized_name, []).append(
+                (raw_name, raw_value)
+            )
+
+    # Second pass: promote keys to the flat namespace when either:
+    #   - exactly one secret defines it, OR
+    #   - multiple secrets define it with the same value (redundant copies).
+    # Real value-divergence collisions are skipped — templates must use
+    # namespaced refs to disambiguate.
+    colliding: dict[str, list[str]] = {}
+    for nk, owners in inner_key_owners.items():
+        values = [v for _, v in owners]
+        all_same = all(_values_equal(values[0], v) for v in values[1:])
+        if all_same:
+            set_aws_key(flattened, nk, values[0])
+        else:
+            colliding[nk] = [name for name, _ in owners]
+
+    if colliding:
+        print(
+            f"[INFO] {len(colliding)} key(s) skipped due to collision — "
+            f"use namespaced refs (e.g. aws.<env>['<secret-name>'].<key>) "
+            f"instead of bare keys. Colliding keys:",
+            file=sys.stderr,
+        )
+        for nk in sorted(colliding):
+            owners = colliding[nk]
+            preview = ", ".join(owners[:3])
+            if len(owners) > 3:
+                preview += f", … (+{len(owners) - 3} more)"
+            print(f"    - {nk}  ({preview})", file=sys.stderr)
 
     return flattened
 

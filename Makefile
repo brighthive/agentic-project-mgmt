@@ -625,6 +625,8 @@ env-webapp-staging: pull-aws-secrets  ## ④ Generate ../brighthive-webapp/.env.
 # ── Per-service start/stop (orchestrator wrappers) ────────────
 
 .PHONY: start-webapp stop-webapp start-core stop-core start-brightbot stop-brightbot \
+        start-slack-server stop-slack-server \
+        start-localstack stop-localstack localstack-infra \
         localstack stopstack stackstatus
 
 _check_sibling = \
@@ -654,19 +656,102 @@ start-brightbot:  ## ④ Start brightbot agent graph on :2024 (background)
 stop-brightbot:  ## ④ Stop brightbot
 	@$(MAKE) -C "$(SIBLINGS_DIR)/brightbot" stop 2>/dev/null || true
 
-localstack: start-core start-brightbot start-webapp  ## ④ Start full local stack (core → brightbot → webapp)
-	@echo ""
-	@printf "  %-20s %s\n" "platform-core" "http://localhost:4040/graphql"
-	@printf "  %-20s %s\n" "brightbot"     "http://127.0.0.1:2024"
-	@printf "  %-20s %s\n" "webapp"        "http://localhost:7420"
-	@echo ""
-	@echo "  Stop all: make stopstack"
+start-slack-server:  ## ④ Start brightbot-slack-server on :3339 (background, local mode)
+	$(call _check_sibling,brightbot-slack-server)
+	@echo "  → starting slack-server (local mode)..."
+	@cd "$(SIBLINGS_DIR)/brightbot-slack-server" && \
+		unset SLACK_BOT_TOKEN SLACK_APP_TOKEN && \
+		nohup yarn dev > /tmp/bh-slack-server.log 2>&1 & echo $$! > /tmp/bh-slack-server.pid
+	@echo "  → slack-server http://localhost:3339  (logs: /tmp/bh-slack-server.log)"
 
-stopstack: stop-webapp stop-brightbot stop-core  ## ④ Stop all local services
+stop-slack-server:  ## ④ Stop slack-server
+	@if [ -f /tmp/bh-slack-server.pid ]; then \
+		kill $$(cat /tmp/bh-slack-server.pid) 2>/dev/null && echo "  ✓ slack-server stopped" || true; \
+		rm -f /tmp/bh-slack-server.pid; \
+	else \
+		lsof -ti tcp:3339 | xargs kill 2>/dev/null || true; \
+	fi
+
+# ── LocalStack (S3 + DynamoDB) ────────────────────────────────
+
+LOCALSTACK_CONTAINER := brighthive-localstack
+LOCALSTACK_PORT      := 4566
+LOCAL_S3_BUCKET      := brighthive-local
+LOCAL_NOTIF_TABLE    := brighthive-notifications-local
+LOCAL_SUBS_TABLE     := brighthive-notification-subscriptions-local
+
+start-localstack:  ## ④ Start LocalStack (S3 + DynamoDB) in Docker
+	@if docker ps --format '{{.Names}}' | grep -q "^$(LOCALSTACK_CONTAINER)$$"; then \
+		echo "  ✓ localstack already running"; \
+	else \
+		echo "  → starting localstack..."; \
+		docker run -d \
+			--name $(LOCALSTACK_CONTAINER) \
+			-p $(LOCALSTACK_PORT):4566 \
+			-e SERVICES=s3,dynamodb \
+			-e DEFAULT_REGION=us-east-1 \
+			-e AWS_DEFAULT_REGION=us-east-1 \
+			localstack/localstack:3 > /dev/null; \
+		echo "  → waiting for localstack to be ready..."; \
+		for i in $$(seq 1 15); do \
+			curl -sf http://localhost:$(LOCALSTACK_PORT)/_localstack/health >/dev/null 2>&1 && break; \
+			sleep 1; \
+		done; \
+		echo "  ✓ localstack ready"; \
+	fi
+
+stop-localstack:  ## ④ Stop and remove LocalStack container
+	@docker rm -f $(LOCALSTACK_CONTAINER) 2>/dev/null && echo "  ✓ localstack stopped" || true
+
+localstack-infra: start-localstack  ## ④ Create S3 bucket + DynamoDB tables in LocalStack
+	@echo "  → creating local infrastructure..."
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
+		aws --endpoint-url=http://localhost:$(LOCALSTACK_PORT) \
+		s3 mb s3://$(LOCAL_S3_BUCKET) --region us-east-1 2>/dev/null || echo "  ✓ s3://$(LOCAL_S3_BUCKET) already exists"
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
+		aws --endpoint-url=http://localhost:$(LOCALSTACK_PORT) \
+		dynamodb create-table \
+		--table-name $(LOCAL_NOTIF_TABLE) \
+		--attribute-definitions AttributeName=event_id,AttributeType=S \
+		--key-schema AttributeName=event_id,KeyType=HASH \
+		--billing-mode PAY_PER_REQUEST \
+		--region us-east-1 2>/dev/null | grep -q TableName && echo "  ✓ $(LOCAL_NOTIF_TABLE) created" || echo "  ✓ $(LOCAL_NOTIF_TABLE) already exists"
+	@AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test \
+		aws --endpoint-url=http://localhost:$(LOCALSTACK_PORT) \
+		dynamodb create-table \
+		--table-name $(LOCAL_SUBS_TABLE) \
+		--attribute-definitions AttributeName=PK,AttributeType=S AttributeName=SK,AttributeType=S \
+		--key-schema AttributeName=PK,KeyType=HASH AttributeName=SK,KeyType=RANGE \
+		--billing-mode PAY_PER_REQUEST \
+		--region us-east-1 2>/dev/null | grep -q TableName && echo "  ✓ $(LOCAL_SUBS_TABLE) created" || echo "  ✓ $(LOCAL_SUBS_TABLE) already exists"
+	@echo "  ✓ local infra ready"
+	@echo ""
+	@echo "    S3:      s3://$(LOCAL_S3_BUCKET)"
+	@echo "    DynamoDB: $(LOCAL_NOTIF_TABLE)"
+	@echo "    DynamoDB: $(LOCAL_SUBS_TABLE)"
+	@echo "    Console: http://localhost:$(LOCALSTACK_PORT)"
+
+localstack: localstack-infra start-brightbot start-slack-server  ## ④ Full local stack: LocalStack + brightbot + slack-server
+	@echo ""
+	@echo "  ┌──────────────────────────────────────────────────────────────┐"
+	@echo "  │  BrightHive Local Stack                                      │"
+	@echo "  ├──────────────────────────────────────────────────────────────┤"
+	@echo "  │  localstack     http://localhost:4566   S3 + DynamoDB        │"
+	@echo "  │  brightbot      http://localhost:2024   langgraph dev         │"
+	@echo "  │  slack-server   http://localhost:3339   Socket Mode           │"
+	@echo "  └──────────────────────────────────────────────────────────────┘"
+	@echo ""
+	@echo "  ngrok (OAuth):  make ngrok  →  separate terminal"
+	@echo "  Stop all:       make stopstack"
+	@echo "  Status:         make stackstatus"
+
+stopstack: stop-slack-server stop-brightbot stop-core stop-localstack stop-webapp  ## ④ Stop all local services
 
 stackstatus:  ## ④ Show running status of all local services
-	@printf "  %-20s " "platform-core"; lsof -ti tcp:4040 >/dev/null 2>&1 && echo "running :4040" || echo "down"
+	@printf "  %-20s " "localstack";    curl -sf http://localhost:4566/_localstack/health >/dev/null 2>&1 && echo "running :4566" || echo "down"
 	@printf "  %-20s " "brightbot";     lsof -ti tcp:2024 >/dev/null 2>&1 && echo "running :2024" || echo "down"
+	@printf "  %-20s " "slack-server";  lsof -ti tcp:3339 >/dev/null 2>&1 && echo "running :3339" || echo "down"
+	@printf "  %-20s " "platform-core"; lsof -ti tcp:4040 >/dev/null 2>&1 && echo "running :4040" || echo "down"
 	@printf "  %-20s " "webapp";        lsof -ti tcp:7420 >/dev/null 2>&1 && echo "running :7420" || echo "down"
 
 # ── Status ────────────────────────────────────────────────────
