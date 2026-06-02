@@ -55,7 +55,7 @@ sequenceDiagram
 
 ### 2.1 GraphQL surface (Platform Core)
 
-Seven new mutations, all workspace-scoped. Each takes `transformationServiceId` + `workspaceId` and resolves the right host + token internally.
+Seven new mutations, all workspace-scoped. Each takes `transformationServiceId` + `workspaceId` and resolves the right host + token internally. **Note**: every output uses a `success/error` envelope pattern — failures return `{success: false, error: "..."}` rather than throwing GraphQL errors. BH-561 adds structured `errorCode` + `httpStatus`.
 
 ```graphql
 type Mutation {
@@ -70,22 +70,31 @@ type Mutation {
 
 input CreateGitHubPRInput {
   transformationServiceId: ID!
-  workspaceId: ID!
-  repoId: ID                  # optional; defaults to the single ACTIVE repo
-  baseBranch: String!         # e.g. "main"
-  headBranch: String!         # e.g. "bh/stg/vendor_security_master"
+  workspaceId: ID!              # ⚠️ BH-559 will derive from context.token.sub instead
+  repoId: ID                    # optional; defaults to the single ACTIVE repo
   title: String!
-  body: String!
-  draft: Boolean = false
+  body: String                  # optional; BH-566 will enforce template compliance
+  headBranch: String!           # e.g. "bh/stg/vendor_security_master"
+  baseBranch: String!           # e.g. "main"
 }
 
 type CreateGitHubPROutput {
-  prNumber: Int!
-  prUrl: String!
+  success: Boolean!
+  prNumber: Int                 # populated on success
+  prUrl: String                 # populated on success
+  error: String                 # populated on failure; BH-561 adds errorCode + httpStatus
+}
+
+type ReadGitHubFileOutput {
+  success: Boolean!
+  content: String               # truncated at MAX_FILE_CONTENT_CHARS=20_000
+  sha: String
+  error: String
+  # BH-561 adds: truncated: Boolean!
 }
 ```
 
-The other six mutations follow the same pattern. Full schema in `brighthive-platform-core/src/graphql/schema/typedefs.ts` (134 lines added in BH-529).
+The other five mutations follow the same envelope pattern. Full schema in `brighthive-platform-core/src/graphql/schema/typedefs.ts` (134 lines added in BH-529).
 
 ### 2.2 BrightBot tool surface
 
