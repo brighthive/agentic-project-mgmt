@@ -1,6 +1,6 @@
 # Longaeva — Live Tracker
 
-_Last refreshed **2026-06-02 19:19 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-06-02 20:39 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: TBD with Grant · **Epic**: [BH-526](https://brighthiveio.atlassian.net/browse/BH-526)
 
@@ -137,18 +137,18 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 |---|---|---|---|---|
 | **Harbour Wang** | 3 | 4 | 12 | [BH-542](https://brighthiveio.atlassian.net/browse/BH-542) feat(core): seed 20+ QualityRuleTemplat… |
 | **Ahmed Elsherbiny** | 0 | 2 | 4 | — |
-| **Kuri Chinca** | 0 | 3 | 15 | — |
+| **Kuri Chinca** | 0 | 11 | 7 | — |
 | **Marwan Samih** | 0 | 6 | 2 | — |
 | **_unassigned_** | 0 | 0 | 2 | — |
 
 ## 📊 Summary
 
 - **3/53** tickets done · 7 in progress · 43 to do
-- PRs: 11 merged · 10 ready for review · 2 draft
+- PRs: 11 merged · 10 ready for review · 12 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (35)
+### 🟡 To Do (27)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -174,15 +174,7 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | [BH-552](https://brighthiveio.atlassian.net/browse/BH-552) | audit(webapp): confirm Snowflake dropdown + form fields render | Kuri Chinca | [🟢 Merged agentic-project-mgmt#19](https://github.com/brighthive/agentic-project-mgmt/pull/19) |
 | [BH-557](https://brighthiveio.atlassian.net/browse/BH-557) | feat(notifications): wire Quality Agent → BrightSignals end-to-end… | Harbour Wang | — |
 | [BH-558](https://brighthiveio.atlassian.net/browse/BH-558) | feat(webapp): wire side-menu push-notifications to live BrightSignals… | Harbour Wang | — |
-| [BH-559](https://brighthiveio.atlassian.net/browse/BH-559) | fix(platform-core): derive workspaceId from context.token in… | Kuri Chinca | — |
-| [BH-560](https://brighthiveio.atlassian.net/browse/BH-560) | fix(platform-core): disable redirect-following + scrub PAT from… | Kuri Chinca | — |
-| [BH-561](https://brighthiveio.atlassian.net/browse/BH-561) | feat(platform-core): truncated flag + structured errorCode/httpStatus… | Kuri Chinca | — |
-| [BH-562](https://brighthiveio.atlassian.net/browse/BH-562) | chore(brightbot): finish PyGithub removal — pyproject + 4 modules +… | Kuri Chinca | — |
-| [BH-563](https://brighthiveio.atlassian.net/browse/BH-563) | fix(brightbot): redact Authorization header + payload from… | Kuri Chinca | — |
-| [BH-564](https://brighthiveio.atlassian.net/browse/BH-564) | refactor(brightbot): Pydantic responses + DI for PlatformAPISession… | Kuri Chinca | — |
-| [BH-565](https://brighthiveio.atlassian.net/browse/BH-565) | docs(brightbot): author BRIGHTBOT-GITHUB-PROXY-GUIDE.md (currently… | Kuri Chinca | — |
 | [BH-566](https://brighthiveio.atlassian.net/browse/BH-566) | feat(brightbot): dbt-agent reads pull_request_template.md +… | Kuri Chinca | — |
-| [BH-567](https://brighthiveio.atlassian.net/browse/BH-567) | test(platform-core): property-based tests for parseGitHubRepoUrl +… | Kuri Chinca | — |
 | [BH-568](https://brighthiveio.atlassian.net/browse/BH-568) | chore(brightbot): migrate non-dbt agents off PyGithub (super_agent,… | Kuri Chinca | — |
 | [BH-569](https://brighthiveio.atlassian.net/browse/BH-569) | feat(github-proxy): GitHub App installation flow — replace PAT for… | Kuri Chinca | — |
 | [BH-570](https://brighthiveio.atlassian.net/browse/BH-570) | feat(platform-core): self-signed CA bundle support for GHE Server… | _unassigned_ | — |
@@ -197,7 +189,7 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | [BH-541](https://brighthiveio.atlassian.net/browse/BH-541) | feat(core): resolvers + service for quality rule CRUD, status… | Harbour Wang | — |
 | [BH-543](https://brighthiveio.atlassian.net/browse/BH-543) | feat(brightbot): add execute_library_quality_rules_tool with… | Marwan Samih | — |
 
-### 🔵 In Review (11)
+### 🔵 In Review (19)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -205,13 +197,21 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | [BH-526](https://brighthiveio.atlassian.net/browse/BH-526) | Longaeva Partners POC — 14-day pre-trial execution | Kuri Chinca | [🟢 Merged agentic-project-mgmt#17](https://github.com/brighthive/agentic-project-mgmt/pull/17)<br>[🔵 Review brighthive-platform-core#777](https://github.com/brighthive/brighthive-platform-core/pull/777) |
 | [BH-527](https://brighthiveio.atlassian.net/browse/BH-527) | Add SnowflakeConnection class to warehouse_connections.py and wire… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#22](https://github.com/brighthive/agentic-project-mgmt/pull/22)<br>[🟢 Merged agentic-project-mgmt#19](https://github.com/brighthive/agentic-project-mgmt/pull/19)<br>[🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
 | [BH-528](https://brighthiveio.atlassian.net/browse/BH-528) | Add Snowflake SQL dialect rules to agent prompts | Kuri Chinca | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
-| [BH-529](https://brighthiveio.atlassian.net/browse/BH-529) | feat(dbt-agent): proxy all GitHub ops through Platform Core with… | Marwan Samih | [🔵 Review brightbot#490](https://github.com/brighthive/brightbot/pull/490)<br>[🔵 Review brighthive-platform-core#778](https://github.com/brighthive/brighthive-platform-core/pull/778) |
+| [BH-529](https://brighthiveio.atlassian.net/browse/BH-529) | feat(dbt-agent): proxy all GitHub ops through Platform Core with… | Marwan Samih | [🟡 Draft brightbot#495](https://github.com/brighthive/brightbot/pull/495)<br>[🟡 Draft brightbot#493](https://github.com/brighthive/brightbot/pull/493)<br>[🔵 Review brightbot#490](https://github.com/brighthive/brightbot/pull/490) |
 | [BH-531](https://brighthiveio.atlassian.net/browse/BH-531) | Build Snowflake semantic view YAML scaffold tool | Marwan Samih | [🟢 Merged agentic-project-mgmt#22](https://github.com/brighthive/agentic-project-mgmt/pull/22)<br>[🟢 Merged agentic-project-mgmt#20](https://github.com/brighthive/agentic-project-mgmt/pull/20)<br>[🟡 Draft brightbot#489](https://github.com/brighthive/brightbot/pull/489) |
 | [BH-549](https://brighthiveio.atlassian.net/browse/BH-549) | feat(brightbot): warehouse_config-aware Snowflake branch in… | Marwan Samih | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
 | [BH-550](https://brighthiveio.atlassian.net/browse/BH-550) | test(brightbot): tests/unit/test_snowflake_warehouse.py mirror of… | Marwan Samih | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
 | [BH-551](https://brighthiveio.atlassian.net/browse/BH-551) | feat(platform-core): SnowflakeSourceConfig in OMD ingestion lambda | Ahmed Elsherbiny | [🟢 Merged agentic-project-mgmt#19](https://github.com/brighthive/agentic-project-mgmt/pull/19)<br>[🔵 Review brighthive-platform-core#777](https://github.com/brighthive/brighthive-platform-core/pull/777) |
 | [BH-553](https://brighthiveio.atlassian.net/browse/BH-553) | feat(brightbot): data_profiler Snowflake-specific branches (verify;… | Marwan Samih | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
 | [BH-554](https://brighthiveio.atlassian.net/browse/BH-554) | refactor(org-cdk): SnowflakeIngestionStack reads workspace_secret_sto… | Ahmed Elsherbiny | [🔵 Review brighthive-data-organization-cdk#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156) |
+| [BH-559](https://brighthiveio.atlassian.net/browse/BH-559) | fix(platform-core): derive workspaceId from context.token in… | Kuri Chinca | [🟡 Draft brighthive-platform-core#780](https://github.com/brighthive/brighthive-platform-core/pull/780) |
+| [BH-560](https://brighthiveio.atlassian.net/browse/BH-560) | fix(platform-core): disable redirect-following + scrub PAT from… | Kuri Chinca | [🟡 Draft brighthive-platform-core#781](https://github.com/brighthive/brighthive-platform-core/pull/781) |
+| [BH-561](https://brighthiveio.atlassian.net/browse/BH-561) | feat(platform-core): truncated flag + structured errorCode/httpStatus… | Kuri Chinca | [🟡 Draft brighthive-platform-core#782](https://github.com/brighthive/brighthive-platform-core/pull/782) |
+| [BH-562](https://brighthiveio.atlassian.net/browse/BH-562) | chore(brightbot): finish PyGithub removal — pyproject + 4 modules +… | Kuri Chinca | [🟡 Draft brightbot#495](https://github.com/brighthive/brightbot/pull/495) |
+| [BH-563](https://brighthiveio.atlassian.net/browse/BH-563) | fix(brightbot): redact Authorization header + payload from… | Kuri Chinca | [🟡 Draft brightbot#492](https://github.com/brighthive/brightbot/pull/492) |
+| [BH-564](https://brighthiveio.atlassian.net/browse/BH-564) | refactor(brightbot): Pydantic responses + DI for PlatformAPISession… | Kuri Chinca | [🟡 Draft brightbot#494](https://github.com/brighthive/brightbot/pull/494) |
+| [BH-565](https://brighthiveio.atlassian.net/browse/BH-565) | docs(brightbot): author BRIGHTBOT-GITHUB-PROXY-GUIDE.md (currently… | Kuri Chinca | [🟡 Draft brightbot#493](https://github.com/brighthive/brightbot/pull/493) |
+| [BH-567](https://brighthiveio.atlassian.net/browse/BH-567) | test(platform-core): property-based tests for parseGitHubRepoUrl +… | Kuri Chinca | [🟡 Draft brighthive-platform-core#783](https://github.com/brighthive/brighthive-platform-core/pull/783) |
 
 ### ✅ Done (3)
 
@@ -224,6 +224,11 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-06-02** · [BH-563](https://brighthiveio.atlassian.net/browse/BH-563) — Needs Refinement · Kuri Chinca
+- **2026-06-02** · [BH-562](https://brighthiveio.atlassian.net/browse/BH-562) — Needs Refinement · Kuri Chinca
+- **2026-06-02** · [BH-561](https://brighthiveio.atlassian.net/browse/BH-561) — Needs Refinement · Kuri Chinca
+- **2026-06-02** · [BH-560](https://brighthiveio.atlassian.net/browse/BH-560) — Needs Refinement · Kuri Chinca
+- **2026-06-02** · [BH-559](https://brighthiveio.atlassian.net/browse/BH-559) — Needs Refinement · Kuri Chinca
 - **2026-06-02** · [BH-571](https://brighthiveio.atlassian.net/browse/BH-571) — Needs Refinement · _unassigned_
 - **2026-06-02** · [BH-570](https://brighthiveio.atlassian.net/browse/BH-570) — Needs Refinement · _unassigned_
 - **2026-06-02** · [BH-569](https://brighthiveio.atlassian.net/browse/BH-569) — Needs Refinement · Kuri Chinca
@@ -232,11 +237,6 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 - **2026-06-02** · [BH-566](https://brighthiveio.atlassian.net/browse/BH-566) — Needs Refinement · Kuri Chinca
 - **2026-06-02** · [BH-565](https://brighthiveio.atlassian.net/browse/BH-565) — Needs Refinement · Kuri Chinca
 - **2026-06-02** · [BH-564](https://brighthiveio.atlassian.net/browse/BH-564) — Needs Refinement · Kuri Chinca
-- **2026-06-02** · [BH-563](https://brighthiveio.atlassian.net/browse/BH-563) — Needs Refinement · Kuri Chinca
-- **2026-06-02** · [BH-562](https://brighthiveio.atlassian.net/browse/BH-562) — Needs Refinement · Kuri Chinca
-- **2026-06-02** · [BH-561](https://brighthiveio.atlassian.net/browse/BH-561) — Needs Refinement · Kuri Chinca
-- **2026-06-02** · [BH-560](https://brighthiveio.atlassian.net/browse/BH-560) — Needs Refinement · Kuri Chinca
-- **2026-06-02** · [BH-559](https://brighthiveio.atlassian.net/browse/BH-559) — Needs Refinement · Kuri Chinca
 - **2026-06-02** · [BH-529](https://brighthiveio.atlassian.net/browse/BH-529) — Code Review · Marwan Samih
 - **2026-06-02** · [BH-528](https://brighthiveio.atlassian.net/browse/BH-528) — Code Review · Kuri Chinca
 - **2026-06-02** · [BH-527](https://brighthiveio.atlassian.net/browse/BH-527) — Code Review · Kuri Chinca
