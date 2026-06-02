@@ -85,8 +85,16 @@ phases:
         outcome: Webapp Snowflake form audit signed off
         linked: [BH-552]
       - day: Pre-trial
-        outcome: dbt agent GitHub Enterprise base_url config merged
-        linked: [BH-529]
+        outcome: BH-529 GitHub proxy + 7 P0 follow-ups merged (PyGithub fully removed, tenant isolation fixed, redirect-strip fixed)
+        linked: [BH-529, BH-559, BH-560, BH-561, BH-562, BH-563, BH-564, BH-565]
+      - day: Pre-trial
+        outcome: GHE smoke test — dbt agent opens a PR against a BrightHive-internal GHE sandbox before Longaeva access
+        linked: [BH-567]
+      - day: Pre-trial
+        outcome: Longaeva GHE PAT + host URL + TLS chain confirmed by Grant
+      - day: Pre-trial
+        outcome: PR template compliance — dbt agent reads .github/pull_request_template.md
+        linked: [BH-566]
       - day: Pre-trial
         outcome: "GX output: serialize as YAML to repo branch (not Markdown to S3)"
         linked: [BH-530]

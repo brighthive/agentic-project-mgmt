@@ -1,6 +1,6 @@
 # Longaeva — Live Tracker
 
-_Last refreshed **2026-06-02 15:51 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-06-02 16:54 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: TBD with Grant · **Epic**: [BH-526](https://brighthiveio.atlassian.net/browse/BH-526)
 
@@ -10,7 +10,15 @@ _Last refreshed **2026-06-02 15:51 UTC** by `make longaeva-tracker`. Auto sectio
 
 <!-- TRACKER:MANUAL:BEGIN blockers -->
 
-_No active blockers. Add lines in the form: `**🚨 BH-XXX** — short description (raised YYYY-MM-DD by @owner)`._
+**🚨 BH-529 chain — 7 P0 fixes must merge before trial** (raised 2026-06-02 by @kuri)
+- PR [#778](https://github.com/brighthive/brighthive-platform-core/pull/778) + [#490](https://github.com/brighthive/brightbot/pull/490) reviewed → CHANGES_REQUESTED
+- Multi-tenant data exfil bug (BH-559), PAT-leak-on-redirect (BH-560), security headline FALSE on PR #490 because PyGithub still in pyproject + 4 modules (BH-562), JWT leak in `bh_platform_api.py:130` (BH-563)
+- Full chain: BH-559, BH-560, BH-561, BH-562, BH-563, BH-564, BH-565
+- Spec: [github-enterprise-host-config.md §11](https://github.com/brighthive/agentic-project-mgmt/blob/master/docs/specs/github-enterprise-host-config.md#11-implementation-gaps-as-of-2026-06-02)
+- Smoke test plan: [`artifacts/ghe-smoke-test-plan.md`](./artifacts/ghe-smoke-test-plan.md)
+
+**⏳ Awaiting Grant** — GHE host URL, sandbox PAT, TLS chain confirmation (raised 2026-06-02 by @kuri)
+- Without these, smoke test Phase B cannot run → trial cannot start
 
 <!-- TRACKER:MANUAL:END blockers -->
 
@@ -29,10 +37,14 @@ _No active blockers. Add lines in the form: `**🚨 BH-XXX** — short descripti
 
 ### This week's commits
 
-- **Marwan**: ship Snowflake bundle (#488 → ready) and Atlas scaffold (#489 → ready); start BH-529 GHE config + BH-530 GX YAML output
-- **Ahmed**: ship #777 (OMD SnowflakeSourceConfig) and #156 (org-CDK migration); start BH-532 MCP client config
+- **Marwan**: address PR #490 review — finish PyGithub removal (BH-562), redact JWT logs (BH-563), Pydantic + DI (BH-564), author migration guide (BH-565); ship Snowflake bundle (#488 → ready); BH-530 GX YAML output
+- **Kuri**: address PR #778 review — workspaceId from JWT (BH-559), redirect-strip + token scrub (BH-560), truncated flag + structured errors (BH-561); push Grant for GHE PAT + TLS chain
+- **Ahmed**: ship #777 (OMD SnowflakeSourceConfig) and #156 (org-CDK migration); pick up BH-570 (CA bundle) when triggered; start BH-532 MCP client config
 - **Harbour**: BH-541 in progress; pull BH-557 + BH-558 next; pair with BrightSignals architecture doc
-- **Kuri**: trial date confirmation with Grant; BH-552 audit; mark Snowflake PRs Ready for review
+
+### Pre-trial GHE readiness gate
+
+Phase A1 (CI smoke) → A2 (manual sandbox) → B (Longaeva sandbox) → C (Day 3 prod). See [`artifacts/ghe-smoke-test-plan.md`](./artifacts/ghe-smoke-test-plan.md). Phase A blocked on BH-559..565 merge; Phase B blocked on Grant creds.
 
 <!-- TRACKER:MANUAL:END this-week -->
 
