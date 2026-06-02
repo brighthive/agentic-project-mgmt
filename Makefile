@@ -805,8 +805,6 @@ help:  ## Show this help
 
 .PHONY: longaeva-tracker longaeva-tracker-dry longaeva-tracker-no-slack longaeva-tracker-install-cron longaeva-tracker-uninstall-cron
 
-LONGAEVA_TRACKER_CRON := "0 10 * * * cd $(CURDIR) && make longaeva-tracker >> /tmp/longaeva-tracker.log 2>&1"
-
 longaeva-tracker:  ## ⑤ Refresh clients/trials/longaeva/TRACKER.md (Jira + GH PRs + Slack)
 	@python3 -m scripts.longaeva_tracker
 
@@ -820,8 +818,9 @@ longaeva-tracker-install-cron:  ## ⑤ Install nightly tracker refresh in cronta
 	@if crontab -l 2>/dev/null | grep -qF "longaeva-tracker"; then \
 		echo "[tracker] cron entry already installed"; \
 	else \
-		(crontab -l 2>/dev/null; echo $(LONGAEVA_TRACKER_CRON)) | crontab -; \
-		echo "[tracker] cron installed: $(LONGAEVA_TRACKER_CRON)"; \
+		entry='0 10 * * * cd $(CURDIR) && make longaeva-tracker >> /tmp/longaeva-tracker.log 2>&1'; \
+		(crontab -l 2>/dev/null; echo "$$entry") | crontab -; \
+		echo "[tracker] cron installed: $$entry"; \
 	fi
 
 longaeva-tracker-uninstall-cron:  ## ⑤ Remove the tracker cron entry
