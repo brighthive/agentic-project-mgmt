@@ -1,6 +1,6 @@
 # Longaeva — Live Tracker
 
-_Last refreshed **2026-06-02 15:18 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved across refreshes._
+_Last refreshed **2026-06-02 15:26 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved across refreshes._
 
 > **Phase**: Pre-trial · **Trial dates**: TBD with Grant · **Epic**: [BH-526](https://brighthiveio.atlassian.net/browse/BH-526)
 
@@ -37,6 +37,78 @@ _No active blockers. Add lines in the form: `**🚨 BH-XXX** — short descripti
 <!-- TRACKER:MANUAL:END this-week -->
 
 ---
+
+## 🗓️ Day-by-day — what to expect
+
+_Auto-fills as linked tickets close and PRs merge. Manual rows (no linked items) are flipped by hand once the outcome lands._
+
+### Pre-trial — Snowflake foundation must be merged (0/9)
+
+_All Phase 1 Snowflake integration PRs land before Day 1. Without these, brightbot can't query Snowflake and the trial can't run §1 ingestion or §2 semantic-view enrollment._
+
+| | Day | Outcome | Linked |
+|---|---|---|---|
+| 🔲 | Pre-trial | brightbot Layer 5 (SnowflakeConnection + dialect + tests) merged | [BH-527](https://brighthiveio.atlassian.net/browse/BH-527), [BH-528](https://brighthiveio.atlassian.net/browse/BH-528), [BH-549](https://brighthiveio.atlassian.net/browse/BH-549), [BH-550](https://brighthiveio.atlassian.net/browse/BH-550), [BH-553](https://brighthiveio.atlassian.net/browse/BH-553) |
+| 🔲 | Pre-trial | Atlas semantic-view YAML scaffold tool merged (BH-531) | [BH-531](https://brighthiveio.atlassian.net/browse/BH-531) |
+| 🔲 | Pre-trial | OMD ingestion lambda Layer 3 (SnowflakeSourceConfig) merged | [BH-551](https://brighthiveio.atlassian.net/browse/BH-551) |
+| 🔲 | Pre-trial | Org-CDK ingestion stack reads workspace_secret_store | [BH-554](https://brighthiveio.atlassian.net/browse/BH-554) |
+| 🔲 | Pre-trial | Webapp Snowflake form audit signed off | [BH-552](https://brighthiveio.atlassian.net/browse/BH-552) |
+| 🔲 | Pre-trial | dbt agent GitHub Enterprise base_url config merged | [BH-529](https://brighthiveio.atlassian.net/browse/BH-529) |
+| 🔲 | Pre-trial | GX output: serialize as YAML to repo branch (not Markdown to S3) | [BH-530](https://brighthiveio.atlassian.net/browse/BH-530) |
+| 🔲 | Pre-trial | Quality agent CRUD resolvers + service merged | [BH-541](https://brighthiveio.atlassian.net/browse/BH-541) |
+| 🔲 | Pre-trial | Quality → BrightSignals wiring + webapp side-menu live | [BH-557](https://brighthiveio.atlassian.net/browse/BH-557), [BH-558](https://brighthiveio.atlassian.net/browse/BH-558) |
+| ⬜ | Pre-trial | Trial start date confirmed with Grant | _manual_ |
+| ⬜ | Pre-trial | Trial-user list confirmed (1-2 DEs + 1-2 DSs) | _manual_ |
+
+### Days 1-5 — Provision + context layer (0/3)
+
+_Stack connectivity validated; reference schemas + Atlas YAML spec loaded into the workspace KG. Joint working session on Day 3._
+
+| | Day | Outcome | Linked |
+|---|---|---|---|
+| ⬜ | Day 1 | Use cases + success criteria confirmed (joint kickoff) | _manual_ |
+| ⬜ | Day 2 | Longaeva provisions stack access (Snowflake, S3, dbt, Dagster, GHE, MCP) | _manual_ |
+| 🔲 | Day 3 | Workspace provisioned + Snowflake connectivity validated | [BH-533](https://brighthiveio.atlassian.net/browse/BH-533) |
+| 🔲 | Day 3 | MCP client config to Longaeva's MCP server confirmed | [BH-532](https://brighthiveio.atlassian.net/browse/BH-532) |
+| 🔲 | Day 4 | Context layer built — reference schemas + Atlas YAML spec in KG | [BH-534](https://brighthiveio.atlassian.net/browse/BH-534) |
+| ⬜ | Day 5 | Environment mapping validated (joint review) | _manual_ |
+
+### Days 6-10 — Trial executions (0/6)
+
+_Run the three ingestion scenarios + semantic-view enrollment + MCP validation. This is where the platform shows up._
+
+| | Day | Outcome | Linked |
+|---|---|---|---|
+| 🔲 | Day 6-8 | Ingestion: S3 vendor bucket scenario merge-ready | [BH-535](https://brighthiveio.atlassian.net/browse/BH-535) |
+| 🔲 | Day 6-8 | Ingestion: REST API scenario merge-ready | [BH-535](https://brighthiveio.atlassian.net/browse/BH-535) |
+| 🔲 | Day 6-8 | Ingestion: Snowflake Data Share scenario merge-ready | [BH-535](https://brighthiveio.atlassian.net/browse/BH-535) |
+| 🔲 | Day 8-10 | Semantic view scaffolded for ≥1 Silver table (Atlas YAML) | [BH-536](https://brighthiveio.atlassian.net/browse/BH-536) |
+| 🔲 | Day 8-10 | Reference-data binding (LEI/FIGI / fiscal calendar / geo) auto-detected | [BH-536](https://brighthiveio.atlassian.net/browse/BH-536) |
+| 🔲 | Day 8-10 | MCP validation: enrolled view queryable through Longaeva's MCP | [BH-536](https://brighthiveio.atlassian.net/browse/BH-536) |
+
+### Days 11-14 — Maintenance demo + final evaluation (0/1)
+
+_Self-healing PRs, longitudinal anomaly signals, Slack triage. Then joint scorecard review and commercial next-steps discussion._
+
+| | Day | Outcome | Linked |
+|---|---|---|---|
+| ⬜ | Day 11-12 | Self-healing: schema drift → surgical fix PR demonstrated | _manual_ |
+| ⬜ | Day 11-12 | Self-healing: missing partition / broken stage / dbt contract fail | _manual_ |
+| ⬜ | Day 11-12 | Longitudinal anomaly: ≥1 of {row-count / cardinality / skew / nulls} | _manual_ |
+| 🔲 | Day 11-12 | Slack alerts: triage-ready (dataset + severity + PR/run link) | [BH-557](https://brighthiveio.atlassian.net/browse/BH-557) |
+| ⬜ | Day 11-12 | Slack bidirectional: @brightagent answers pipeline-state question | _manual_ |
+| ⬜ | Day 13 | Final scorecard filled (17 success criteria scored) | _manual_ |
+| ⬜ | Day 14 | Commercial next-steps discussion scheduled | _manual_ |
+
+### Post-trial — followups (0/0)
+
+_Things tracked but not gated by the 14-day window. Update as the decision lands._
+
+| | Day | Outcome | Linked |
+|---|---|---|---|
+| ⬜ | Post | Decision recorded (Won / Lost / Extended) with rationale | _manual_ |
+| ⬜ | Post | JWT/key-pair Snowflake auth (Phase 2) | _manual_ |
+
 
 ## 📊 Summary
 
