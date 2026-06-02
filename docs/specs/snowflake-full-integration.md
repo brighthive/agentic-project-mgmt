@@ -2,11 +2,12 @@
 title: "Snowflake — Full Platform Integration (extends warehouse-agnostic pattern)"
 epic: "BH-503-snowflake"
 author: "drchinca"
-status: "Ready"
+status: "Phase 1 Shipped — PRs in review"
 created: "2026-06-01"
 last_reviewed: "2026-06-01"
 amended:
   - "2026-06-01 — ingested Longaeva Atlas YAML examples; BH-531 contract now grounded in real client artifacts (atlas-semantic-view-spec.md)"
+  - "2026-06-01 EOD — all 8 Phase 1 tickets shipped across 4 PRs (brightbot#488, brightbot#489, platform-core#777, data-organization-cdk#156); 168 unit tests green; 4-agent compliance review caught + fixed CTE-bypass security gap"
 generates: "epic"
 tags: [warehouse, snowflake, byow, ingestion, destination, longaeva]
 related:

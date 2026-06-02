@@ -9,6 +9,8 @@ updated: "2026-06-01"
 
 14-day POC. Start date: **June 2026, exact TBD with Grant**. Days are relative to the agreed start. Updated daily once trial begins.
 
+> **EOD 2026-06-01**: Snowflake integration shipped end-to-end across 4 PRs (brightbot [#488](https://github.com/brighthive/brightbot/pull/488) + [#489](https://github.com/brighthive/brightbot/pull/489), platform-core [#777](https://github.com/brighthive/brighthive-platform-core/pull/777), data-organization-cdk [#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156)). 168 unit tests green. All 7 layers of the warehouse-agnostic pattern Snowflake-compliant. Trial unblocked for §1 ingestion + §2 semantic-view enrollment.
+
 ---
 
 ## Milestone Progress
