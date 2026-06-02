@@ -1,0 +1,293 @@
+[
+  {
+    "key": "BH-556",
+    "summary": "fix(webapp): repair stale routes on /home shortcuts and breadcrumb nav",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": "2026-06-01T13:16:23.228-0500",
+    "labels": [
+      "bug",
+      "routing",
+      "webapp"
+    ]
+  },
+  {
+    "key": "BH-548",
+    "summary": "fix(platform-core): extend agent CRUD permissions to collaborator role in BrightStudio",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Unassigned",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": null,
+    "labels": []
+  },
+  {
+    "key": "BH-530",
+    "summary": "Fix GX output: serialize expectation suite as YAML and commit to repo branch",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-526",
+    "resolved": null,
+    "labels": []
+  },
+  {
+    "key": "BH-523",
+    "summary": "Fix Auto-trigger data profiler on data ingestion",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": null,
+    "resolved": "2026-05-29T10:54:42.521-0500",
+    "labels": []
+  },
+  {
+    "key": "BH-522",
+    "summary": "Fix Run Profiler button on asset detail page",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": null,
+    "resolved": "2026-05-29T10:54:40.641-0500",
+    "labels": []
+  },
+  {
+    "key": "BH-520",
+    "summary": "Add profiler_task as a schedulable batch task",
+    "status": "Staging QC",
+    "statusCategory": "In Progress",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": null,
+    "resolved": null,
+    "labels": []
+  },
+  {
+    "key": "BH-517",
+    "summary": "fix(nav): preserve existing role-based section visibility in refactored nav",
+    "status": "Staging QC",
+    "statusCategory": "In Progress",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": null,
+    "labels": [
+      "bug",
+      "feature-flags",
+      "nav-refactor"
+    ]
+  },
+  {
+    "key": "BH-516",
+    "summary": "fix(nav): add end prop to NavLinks",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": "2026-05-27T14:35:08.347-0500",
+    "labels": [
+      "bug",
+      "nav-refactor",
+      "ui"
+    ]
+  },
+  {
+    "key": "BH-515",
+    "summary": "fix(governance): align GovernancePolicyDetail route and back-links to new /govern path",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": "2026-05-27T14:34:57.106-0500",
+    "labels": [
+      "bug",
+      "governance",
+      "nav-refactor"
+    ]
+  },
+  {
+    "key": "BH-514",
+    "summary": "fix(schemas): update all hardcoded /govern/schemas links to /catalog/schemas",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": "2026-05-27T13:21:35.948-0500",
+    "labels": [
+      "bug",
+      "nav-refactor",
+      "schemas"
+    ]
+  },
+  {
+    "key": "BH-513",
+    "summary": "fix(studio): restore canAccessFiles admin role guard for KB file query and form props",
+    "status": "Done",
+    "statusCategory": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "parent": "BH-173",
+    "resolved": "2026-05-29T16:10:09.568-0500",
+    "labels": [
+      "brightstudio",
+      "bug",
+      "nav-refactor",
+      "security"
+    ]
+  },
+  {
+    "key": "BH-502",
+    "summary": "test(profiler): end-to-end verification of data_profiler_agent across UI, manual route, and ingestion webhook | brightbot deployment of new agent ",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Story",
+    "parent": "BH-111",
+    "resolved": null,
+    "labels": [
+      "e2e",
+      "profiler",
+      "qa"
+    ]
+  },
+  {
+    "key": "BH-501",
+    "summary": "feat(platform-core): auto-trigger data_profiler_agent on ingestion in parallel with quality check",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Story",
+    "parent": "BH-111",
+    "resolved": null,
+    "labels": [
+      "ingestion",
+      "openmetadata-webhook",
+      "platform-core",
+      "profiler"
+    ]
+  },
+  {
+    "key": "BH-498",
+    "summary": "chore(brightbot): review + land PR #462 — data_profiler_agent + workspace-scoped runs",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Story",
+    "parent": "BH-111",
+    "resolved": null,
+    "labels": [
+      "agent",
+      "brightbot",
+      "langgraph",
+      "profiler"
+    ]
+  },
+  {
+    "key": "BH-497",
+    "summary": "[Webapp] BrightAgent \"Session Error\" masking Vite/MUI duplicate-React issue (useContext null in SvgIcon)",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Unassigned",
+    "points": null,
+    "type": "Bug",
+    "parent": "BH-173",
+    "resolved": null,
+    "labels": [
+      "error-boundary",
+      "mui",
+      "regression",
+      "vite",
+      "webapp"
+    ]
+  },
+  {
+    "key": "BH-495",
+    "summary": "[Webapp] Add \"Coming Soon\" preview states for pages that break or show fake data without APIs",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Unassigned",
+    "points": null,
+    "type": "Story",
+    "parent": "BH-114",
+    "resolved": null,
+    "labels": [
+      "coming-soon",
+      "polish",
+      "ux",
+      "webapp"
+    ]
+  },
+  {
+    "key": "BH-491",
+    "summary": "[Settings] Phase 1 — Critical bug fixes (uncontrolled TextField, hardcoded names, file cleanup)",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Unassigned",
+    "points": null,
+    "type": "Story",
+    "parent": "BH-114",
+    "resolved": null,
+    "labels": [
+      "bug-fix",
+      "settings",
+      "ship-stopper",
+      "webapp"
+    ]
+  },
+  {
+    "key": "BH-376",
+    "summary": "Custom Personas Builder — visual flow for persona assignment per user/project/agent",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Story",
+    "parent": "BH-172",
+    "resolved": null,
+    "labels": [
+      "brightstudio",
+      "personas",
+      "react-flow"
+    ]
+  },
+  {
+    "key": "BH-359",
+    "summary": "Platform Analytics, Monitoring & Reporting Dashboard",
+    "status": "Needs Refinement",
+    "statusCategory": "To Do",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "parent": null,
+    "resolved": null,
+    "labels": [
+      "analytics",
+      "enterprise",
+      "platform"
+    ]
+  }
+]

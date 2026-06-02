@@ -1,8 +1,22 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 10 (released May 15, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 11 (released June 2, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 11 🧪 — Profiler + Permissions Cut (May 15 – June 2, 2026)
+- **Duration**: 18 days (date-range cut, unofficial)
+- **Focus**: Data Profiler agent (port + auto-trigger + scheduler), nav + permissions hardening (BH-376 + 5 BH-51x fixes), BrightStudio collaborator unlock, quality → BrightSignals Slack signals, local-dev seeds
+- **Team**: Kuri, Marwan, Harbour, Ahmed
+- **Tickets**: 19 in scope · 7 Done · 2 Staging QC · 10 Needs Refinement (PRs merged, awaiting transition)
+- **PRs Merged**: 27 (23 feature/fix + 4 staging release carriers, 3 repos)
+- **Lines Changed**: 15,183 (excl. release-carrier PRs); 68,047 incl.
+- **Highlights**: Data Profiler agent fully production-ready (BH-498/501/520/522), enterprise nav restructure + 5 surgical role-guard fixes, BrightStudio collaborator agent CRUD unlocked (BH-548), quality run completion → Slack via BrightSignals (BH-530), local-dev seed data + workspace-aware BrightBot
+- **Sprint Health**: Strong delivery on Profiler + Permissions themes. 10 Needs-Refinement tickets are Done-by-PR but not transitioned — same linkage gap as Sprint 6, needs a 15-min sweep. 4 tickets unassigned heading into Sprint 12.
+- **Excluded**: Longaeva PoC work (epic BH-526 + Snowflake integration + poc_tracker scaffolding) — tracked separately under `clients/trials/longaeva/TRACKER.md`
+- [Details →](./11/)
 
 ---
 

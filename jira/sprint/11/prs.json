@@ -1,0 +1,431 @@
+[
+  {
+    "additions": 281,
+    "author": {
+      "id": "U_kgDOCwVHkQ",
+      "is_bot": false,
+      "login": "Marwan-Samih-Brighthive",
+      "name": ""
+    },
+    "deletions": 50,
+    "headRefName": "hotfix-prod-brightagent-s3-streaming-mem0",
+    "mergedAt": "2026-05-15T18:18:26Z",
+    "number": 483,
+    "title": "fix: Hotfix prod brightagent s3 streaming mem0",
+    "repo": "brightbot"
+  },
+  {
+    "additions": 1424,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & why\n\nThe data profiler agent existed only on the stale `drchinca/BH-00/profiler` branch (623 commits behind develop). Core PR #767 fires `data_profiler_agent` from the OMD webhook, but that agent was never on develop — so #767 had nothing to trigger. This lands the agent.\n\n## Why not a rebase\n\ndevelop already absorbed ~80% of the profiler work via #466/#478, but evolved `data_profiler.py` in a **divergent** direction and dropped `build_data_asset_profile_v2` (the entrypoint the agent depends on). A rebase would have dragged a 3-week-old `data_profiler.py` back over develop's newer one. So this is an **additive port** instead — develop's profiler is untouched.\n\n## Changes\n\n- **New** `brightbot/agents/governance_agent/sub_agents/data_profiler_agent.py` — the agent graph; registered in `langgraph.json` as `data_profiler_agent`\n- **New** `brightbot/models/data_profile_contracts.py` — `DatasetProfileV2` / `ColumnProfileV2` models\n- **Appended** the v2 builder block to develop's `data_profiler.py`: `build_data_asset_profile_v2` + 16 self-contained helpers. The 7 shared helpers already on develop (`_coerce_float`, `_severity_*`, `_quote_*`) are reused, not duplicated. develop's `compute_*` primitives are untouched.\n- **Fixed state-schema drift**: the agent reuses develop's `fetch_asset_details` / `analyze_dataset` nodes, which are now reducer-annotated. `DataProfilerState` was using plain fields and redefining the BBState-inherited `error` channel — caused `Channel 'error' already exists with a different type`. Aligned all shared channels to `last_value_reducer` and removed the `error` redefinition.\n\n## Verification\n\n- `data_profiler_agent_graph` compiles and registers\n- **35 tests pass** (`test_data_profiler.py` + `test_data_profiler_agent.py`), no regressions in develop's profiler util\n\n## Merge order\n\nThis must land **before** core PR #767 is functional — #767's webhook fires `data_profiler_agent`, which only exists after this merges.\n\n## Housekeeping\n\n- Deleted the dead `drchinca/BH-00/profiler_quality_agent` branch (0 unique commits)\n- The original `drchinca/BH-00/profiler` branch is left intact as historical reference\n\n## Related\n\n- core PR #767 (webhook auto-trigger) — depends on this\n- BH-501\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **New Features**\n  * Added a data profiler agent that analyzes datasets and generates comprehensive profiling insights.\n  * Profiling results can be saved to cloud storage or tracked inline with capability execution records.\n  * Dataset profiler now generates insights including identifier detection, format patterns, numeric/temporal ranges, and cardinality classification.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brightbot/pull/485?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 0,
+    "headRefName": "drchinca/BH-501/brightbot-profiler-agent",
+    "mergedAt": "2026-05-27T18:55:13Z",
+    "number": 485,
+    "title": "feat(profiler): port data_profiler_agent onto develop (BH-501)",
+    "repo": "brightbot"
+  },
+  {
+    "additions": 323,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & Why\n\n**What**: Adds a `publish_completion_notification` node to the quality check agent graph. After a quality check completes and results are recorded in OGM, it writes a `quality_checks` event to DynamoDB with `score`, `failing_checks`, and `result_url` so BrightSignals delivers the Markdown report as a Slack attachment.\n\n**Why**: Quality check reports were saved to S3 but never surfaced in Slack. The notification event was written only when the agent was triggered (empty metadata — no score, no URL) so BrightSignals skipped it. This closes the loop so clients see the actual report.\n\n## Changes\n\n- `quality_check_agent.py` — new `publish_completion_notification` node + wired into graph after `record_capability_execution`\n- `.env` — added `NOTIFICATIONS_TABLE_NAME` and `BACKEND_S3_BUCKET` for LangGraph Cloud staging\n\n## Flow after this change\n\n```\nquality check completes → save_to_s3 → record_capability_execution\n  → publish_completion_notification\n      puts DynamoDB item: { score, failing_checks, result_url: s3://brighthive-backups-stg/... }\n  → BrightSignals poller picks up → Slack alert + Markdown report attached\n```\n\n## Tests\n\n- [ ] Quality check cron runs end-to-end\n- [ ] DynamoDB `brighthive-notifications-stg` receives event with score + result_url\n- [ ] BrightSignals delivers Slack message with attachment\n\n🔗 Related: BH-530\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **New Features**\n  * Quality check completion notifications are now published with execution status and performance metrics when a notification service is configured.\n\n* **Chores**\n  * Improved local development tooling with in-memory schedule management and workspace selection capabilities.\n  * Enhanced error logging and status reporting in webhook completion workflows for better visibility.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brightbot/pull/486?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 68,
+    "headRefName": "drchinca/BH-530/quality-check-slack-notifications",
+    "mergedAt": "2026-05-29T18:34:46Z",
+    "number": 486,
+    "title": "feat(notifications): publish quality check completion to BrightSignals",
+    "repo": "brightbot"
+  },
+  {
+    "additions": 316,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n(BH-520), (BH-522), (BH-523)\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **New Features**\n  * Data profiling capability now available for scheduled profiling of multiple data assets.\n  * Profiler agent support with automatic cooldown verification and rate limiting.\n  * Asset result navigation links now dynamically adapt based on action context.\n  * S3 artifact uploads support configurable categorization.\n\n* **Chores**\n  * Updated LangGraph configuration for profiler task support.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brightbot/pull/487?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 27,
+    "headRefName": "harbour/BH-520/profiler-task",
+    "mergedAt": "2026-06-01T15:25:01Z",
+    "number": 487,
+    "title": "feat(profiler): fix profiler issues and made runnable on demand or as a scheduled task",
+    "repo": "brightbot"
+  },
+  {
+    "additions": 467,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & Why\n\n**What**: On every OpenMetadata `entityCreated` / `entityUpdated` webhook, fire `data_profiler_agent` alongside the existing `quality_check_agent`. Both LangGraph runs kick off in parallel via `ThreadPoolExecutor(max_workers=2)`. Failure isolation preserved — profiler failure does not affect quality stage status, and vice versa.\n\n**Why**: The webapp Profiler tab (live on develop + staging) currently shows an empty state on freshly ingested assets because nothing populates the `DatasetProfileV2` artifact. Auto-firing on ingestion makes the tab \"alive\" — first paint shows the freshly-computed profile instead of an empty state with a button.\n\nSequential firing would add ~5–10s per cold LangGraph run; parallel firing keeps wall-clock bounded by the slower of the two.\n\n## Changes\n\n- **Added**: `new_openmetadata_webhook_lambda/utils/data_profiler_trigger.py` (mirrors `quality_check_trigger.py` 1:1 — same payload contract, same shared `trigger_langgraph_agent` util, same env vars)\n- **Modified**: `new_openmetadata_webhook_lambda/main.py` — concurrent firing block at the post-sync hook site, plus startup config logging for symmetry\n- **Modified**: `new_openmetadata_webhook_lambda/utils/ingestion_status_event.py` — added `STAGE_DATA_PROFILING = \"data_profiling\"` to the stage enum\n\n## Tests\n\n- [ ] Unit tests for `trigger_data_profiler_agent` (new commit pending)\n- [ ] Unit test for concurrent invocation path + failure isolation (new commit pending)\n\n## Notes for reviewers\n\n**New metadata field** in the `quality_checks` EventBridge event payload: the failure branch may now include an optional `error` key (string from `str(exc)`). This was previously absent. JSON detail is freeform and downstream consumers should tolerate it, but flagging explicitly.\n\n**Defense-in-depth try/except**: `trigger_langgraph_agent` already swallows exceptions and returns `False`, so the outer `_safe_*` closures' `try/except Exception` is theoretically unreachable. Kept as belt-and-suspenders — happy to simplify to plain `bool` if preferred.\n\n**Lambda concurrency**: `ThreadPoolExecutor` is created and torn down per invocation (inside `with` block), so no thread leakage across warm-container reuse. `requests` is thread-safe per-call (no shared Session). Env vars are read-only after init.\n\n## Review Steps\n\n```bash\n# Diff the new util against its precedent\ndiff new_openmetadata_webhook_lambda/utils/quality_check_trigger.py \\\n     new_openmetadata_webhook_lambda/utils/data_profiler_trigger.py\n\n# Key call site\nsed -n '395,505p' new_openmetadata_webhook_lambda/main.py\n```\n\n## Dependencies\n\n- Blocks on brightbot PR #462 — `data_profiler_agent` must be deployed to LangGraph Cloud staging before this is useful end-to-end\n- LangGraph deploys on git push (per @drchinca confirmation)\n\n## Tickets\n\n- BH-501 (this PR)\n- BH-498 (brightbot PR #462 — blocking)\n- BH-502 (E2E smoke — follow-up)\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **New Features**\n  * Added data profiler support to automatically profile table columns during data synchronization operations.\n  * Improved system reliability by enabling concurrent execution of quality checks and profiling tasks with automatic sequential fallback.\n\n* **Tests**\n  * Added comprehensive test coverage for concurrent task execution and data profiler functionality.\n\n* **Chores**\n  * Updated CI workflow to run on additional pull request event types with enhanced analysis capabilities.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-platform-core/pull/767)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 35,
+    "headRefName": "drchinca/BH-501/profiler-webhook-auto-trigger",
+    "mergedAt": "2026-05-28T14:14:46Z",
+    "number": 767,
+    "title": "feat(webhook): auto-trigger data_profiler_agent concurrently with quality check (BH-501)",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 1960,
+    "author": {
+      "id": "U_kgDOCwVHkQ",
+      "is_bot": false,
+      "login": "Marwan-Samih-Brighthive",
+      "name": ""
+    },
+    "deletions": 50,
+    "headRefName": "feat/dbt-cloud-credentials-secrets-manager",
+    "mergedAt": "2026-05-15T18:13:35Z",
+    "number": 768,
+    "title": "Store dbt Cloud transformation credentials in Secrets Manager",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 229,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & Why\n\n**What**: New `getRuntimeFeatureFlags` query + `setRuntimeFeatureFlags` mutation for controlling webapp route visibility at runtime without redeploying.\n\n**Why**: Route visibility was previously baked into the webapp's Vite env var at build time. Now engineering can toggle routes via a CLI script that calls this mutation.\n\n## Changes\n- **Added**: `src/graphql/models/runtime-config.ts` — Neo4j CRUD for RuntimeConfig nodes (Cypher MERGE)\n- **Added**: `src/graphql/resolvers/runtime-config-resolver.ts` — resolver wiring\n- **Modified**: `src/graphql/schema/typedefs.ts` — new types, query, mutation\n- **Modified**: `src/graphql/resolvers/resolvers.ts` — registration\n\n## Schema\n\n```graphql\ntype RuntimeFeatureFlagConfig { disabledRoutes: [String!]!, enabledRoutes: [String!]! }\ntype RuntimeFeatureFlagsOutput { global: RuntimeFeatureFlagConfig, workspace: RuntimeFeatureFlagConfig, updatedAt: String }\ninput SetRuntimeFeatureFlagsInput { workspaceId: ID, disabledRoutes: [String!]!, enabledRoutes: [String!]! }\n\n# Query (any authenticated user)\ngetRuntimeFeatureFlags(workspaceId: ID): RuntimeFeatureFlagsOutput!\n\n# Mutation (system admin only)\nsetRuntimeFeatureFlags(input: SetRuntimeFeatureFlagsInput!): RuntimeFeatureFlagsOutput!\n```\n\n## Tests\n- [ ] Deploy to staging\n- [ ] GraphQL Playground: `getRuntimeFeatureFlags` returns empty (no flags set)\n- [ ] Set global flags: `setRuntimeFeatureFlags(input: { disabledRoutes: [\"Quality Rules\"] })` → verify response\n- [ ] Set workspace flags: include `workspaceId` → verify both global and workspace returned\n- [ ] Non-admin user calling mutation → 403 Forbidden\n\n## Related\n- Webapp PR: brighthive/brighthive-webapp#1114\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **New Features**\n  * Enabled runtime feature flag configuration, allowing administrators to dynamically control enabled and disabled routes.\n  * Introduced a comprehensive quality rules framework with template definitions, execution tracking, severity levels, status management, and rule categorization.\n  * Added database optimizations for enhanced query performance on quality rules and execution metrics.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-platform-core/pull/772?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 0,
+    "headRefName": "drchinca/BH-376/runtime-feature-flags",
+    "mergedAt": "2026-05-28T00:15:02Z",
+    "number": 772,
+    "title": "feat(flags): runtime feature flags query + mutation",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 244,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\n- feat(flags): runtime feature flags query + mutation (#772)\n- Merge PR #764: perms-fixes\n- chore(port): local dev server on :4040 (#760)\n\n## Deploy Order\nThis MUST deploy before brighthive-webapp staging (webapp queries getRuntimeFeatureFlags).",
+    "deletions": 66,
+    "headRefName": "develop",
+    "mergedAt": "2026-05-28T00:16:22Z",
+    "number": 773,
+    "title": "release(staging): runtime feature flags + perms fixes",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 609,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\n\n- Fix comprehensive Neo4j seed for both workspaces (Acme Foods + NorthStar Financial)\n- Add local dev mocks for AWS services unavailable locally (Glue Schema Registry, S3/DynamoDB data preview)\n- All node IDs are proper 36-char UUIDs (required by OGM validators)\n\n## Changes\n\n### Seed fixes\n- Correct invalid UUIDs in ws2 source nodes (hex chars beyond `f`)\n- Add required OGM fields to all source nodes (airbyteSourceId, type, owner, manager)\n- Add `status: \"ACTIVE\"` to GitHubRepoNode seeds\n- Restructure workflow pipeline with proper IDAG→Transform→FDPG→Dest connections\n- Replace all `local-*` IDs with deterministic UUID5 hashes\n- Add Airbyte connector icon URLs from public CDN\n- Add KB documents (PDFs, CSVs, DOCX) for both workspaces\n- Give FDPGs distinct names\n- Unlink IDAG→Schema to avoid Glue call locally\n\n### Local dev mocks\n- `processSchema`: falls back to Neo4j `jsonSchema` when Glue unavailable\n- `getDataAssetPreview`: returns mock sample rows when S3/DynamoDB unavailable\n- Add `jsonSchema` to workspace schemas selection set\n\n## Test plan\n- [ ] Run `bash setup/scripts/seed-neo4j-comprehensive.sh` — clean seed, no errors\n- [ ] Verify sources, schemas, workflow, resources load in webapp\n- [ ] Verify data preview tab returns mock rows locally\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **Documentation**\n  * Added comprehensive \"Full local stack\" setup guide with detailed seed data configuration and local GraphQL endpoint information\n\n* **New Features**\n  * Mock data preview functionality in local development mode when AWS credentials unavailable\n  * Updated demo datasets with realistic organizational scenarios (Acme Foods, NorthStar Financial)\n\n* **Improvements**\n  * Enhanced schema retrieval with fallback mechanism for local development environments\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-platform-core/pull/774?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 199,
+    "headRefName": "drchinca/local-dev-seeds",
+    "mergedAt": "2026-05-29T18:30:32Z",
+    "number": 774,
+    "title": "feat(local-dev): comprehensive seed data + local dev mocks",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 1,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **New Features**\n  * Added support for profiler task handling in the scheduled agent dispatcher system.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-platform-core/pull/775?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 0,
+    "headRefName": "harbour/BH-520/profiler-task",
+    "mergedAt": "2026-06-01T15:26:01Z",
+    "number": 775,
+    "title": "feat(scheduler): register profiler_task in dispatcher action registry (BH-520)",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 5,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "…htStudio\r\n\r\nCollaborators navigating to BrightStudio (permitted via BH-517) received a \"user not authorized\" toast after creating or deleting custom agents. The operations succeeded in BrightBot, but all five platform-core agent operations (getWorkspaceAgents, getAgent, createAgent, updateAgent, deleteAgent) were gated with @authorized(requires: WORKSPACE_ADMIN) — an exact-match check that excluded collaborators. Apollo's refetchQueries call after each mutation hit getWorkspaceAgents with FORBIDDEN, which the global error handler surfaced as a toast.\r\n\r\nSwitch from requires: WORKSPACE_ADMIN to\r\nprohibits: [WORKSPACE_VIEWER, WORKSPACE_CONTRIBUTOR, WORKSPACE_AGENT_GUEST] so both ADMIN and COLLABORATOR can manage agents.\r\n\r\nFixes BH-548. Related: BH-517.\r\n\r\n# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **Bug Fixes**\n  * Updated authorization restrictions for agent operations to refine access control across queries and mutations.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-platform-core/pull/776?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 5,
+    "headRefName": "harbour/BH-548/fix-collaborator-agent-permissions",
+    "mergedAt": "2026-06-01T15:18:12Z",
+    "number": 776,
+    "title": "fix(auth): extend agent CRUD permissions to collaborator role",
+    "repo": "brighthive-platform-core"
+  },
+  {
+    "additions": 4903,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\n\nRestructures the BrightHive webapp left navigation around an enterprise mental model (Hive → BrightAgent → Data Assets → Knowledge → Governance → Analytics → Inbox → Infrastructure), introduces a tabbed Documents page, restores the Personas drag-and-drop graph builder, and adds honest in-product labeling for pages that currently render sample data. Also fixes a Vite/MUI pre-bundle bug that was crashing the BrightAgent chat header.\n\n## What this PR delivers\n\n### Navigation\nThe left nav now follows this structure:\n\n| Section | Sub-items |\n|---|---|\n| **Hive** | Workspace landing (honeycomb dashboard) |\n| **BrightAgent** | Chat · Studio · Personas · Schedules |\n| **Projects** | Projects list · Sessions |\n| **Data Assets** | Catalog · Sources · Documents · Voice Connectors · Glossary · Schemas |\n| **Knowledge** | Workspace Context · Projects & Context · Research · Workflows · Enterprise Library |\n| **Governance** | Policies · Quality Rules · Access Control · Usage & Audit |\n| **Analytics** | Dashboards · Reports · Alerts · Notifications · Health Checks |\n| **Inbox** | Notifications inbox (top-level) |\n| **Infrastructure** | Warehouse · Ingestion · Transform |\n\n### Documents page\nA tabbed view that combines two surfaces:\n- **Files** — folder/resource browser (existing functionality)\n- **Knowledge Base** — indexed search across documents\n\nThe deep-link route \\`/catalog/knowledge-base\\` is preserved for direct linking.\n\n### Voice Connectors\nThe catalog item formerly labeled \"Transcribes\" is now **Voice Connectors** — accurate signal of intent (voice/audio data source connectors).\n\n### Personas drag-and-drop builder\nThe Personas page is an interactive canvas with 9 node types (Persona, User, Project, Role, DataAsset, InputGroup, Tool, Formula, UserGroup), a node toolkit, connection validation, and persistence via a Zustand graph store. Drag from toolkit → canvas, connect persona → role/asset/tool, refresh — graph state persists.\n\n### PreviewBanner on sample-data pages\nPages that render hardcoded sample data carry an inline \\`PreviewBanner\\` next to the title: ✨ *Preview — sample data shown. Live data coming soon.*\n\nApplied to: **Analytics** (Dashboard, Alerts, Reports, Notifications), **Knowledge** (Formulas, Project Context, Prompt Learnings), **Governance** (Quality Rules, Usage & Audit). The mock UX is preserved so reviewers and early users can see each page's intent; the banner is the honest signal that the data is not real.\n\nA separate \\`ComingSoonPreview\\` shell component is available for pages with no implementation at all (intended for SSO, audit logs, API keys, billing — tracked separately under BH-491..496).\n\n### Vite / MUI fix\n\\`vite.config.ts\\` deduplicates React, React-DOM, and emotion across the dep graph and pre-bundles them alongside \\`@mui/material\\` + \\`@mui/icons-material\\`. Without this, the icon stack inside MUI's pre-bundled chunk would resolve a different React instance than app code, causing \\`useContext\\` to return null inside \\`SvgIcon\\`. The crash surfaced as a misleading \"Session Error\" via \\`SessionErrorBoundary\\` whenever the BrightAgent header rendered \\`PostAddIcon\\`.\n\n### Route visibility\n\\`WHITELIST_ONLY_ROUTES\\` gates only \\`BrightAgentV1Switch\\`, \\`Roles\\`, \\`Permissions\\`. All other nav items are visible by default. Sample-data pages (Analytics, Quality Rules, Formulas, etc.) carry the \\`PreviewBanner\\` so users know they're looking at preview UI.\n\n### Local dev tooling\n\\`Makefile\\` provides \\`make local | stop | status\\` — boots the webapp on \\`:7420\\` with \\`VITE_LOCAL_DEV=true\\` from \\`.env.local\\`.\n\n## Key files\n\n- \\`src/routes/index.tsx\\` — nav definition\n- \\`src/Constants/routeConstants.ts\\` — route identifiers + visibility whitelist\n- \\`src/DataAssetCatalog/DocumentsPage/index.tsx\\` — tabbed Documents page\n- \\`src/CustomAgents/pages/PersonasBuilder/\\` — Personas graph builder\n- \\`src/components/PreviewBanner/index.tsx\\` — sample-data label component\n- \\`src/components/ComingSoonPreview/index.tsx\\` — reusable empty-page shell\n- \\`vite.config.ts\\` — React/MUI dedupe + pre-bundle\n- 9 mock-data pages under \\`src/Analytics/\\`, \\`src/Context/pages/\\`, \\`src/Governance/pages/\\`\n- \\`Makefile\\`\n\n## Verification\n\n\\`\\`\\`bash\nrm -rf node_modules/.vite        # required: pick up new Vite pre-bundle\nmake local                        # or: npm start\n\\`\\`\\`\n\n1. Left nav matches the table above; nothing 404s on click\n2. \\`Documents\\` opens with two tabs — Files and Knowledge Base — both rendering\n3. \\`Voice Connectors\\` appears in Data Assets\n4. \\`Personas\\` canvas: drag a node from the toolkit, connect to a persona, refresh — state survives\n5. Sample-data pages (e.g., Analytics → Reports) show the \\`PreviewBanner\\` inline next to the title\n6. BrightAgent chat header renders without \\\"Session Error\\\"\n7. Enterprise Library route reachable under Knowledge\n\n## Out of scope (called out for clarity)\n\n- Settings surfaces (\\`/my-profile\\`, \\`/my-organization\\`, \\`/workspace-settings\\`) — multi-agent review surfaced significant work needed there; tracked under BH-491..496, not in this PR\n- Real APIs for the sample-data pages — pages are labeled honestly until backing data lands\n- Legacy \\`src/common/WorkspaceSidenav\\` and \\`SideBarV2\\` still reference older paths; active nav uses \\`SideBarV3\\` and is unaffected — follow-up cleanup PR\n\n## Related Jira\n\n- **BH-376** — parent epic (UX nav restructure)\n- **BH-495** — Preview / Coming Soon shells for sample-data pages\n- **BH-497** — Vite/MUI useContext crash\n\n## Decision needed before merge\n\n\\`WHITELIST_ONLY_ROUTES\\` is intentionally trimmed in this PR so the new nav is visible to all workspaces by default. The \\`PreviewBanner\\` mitigates the \"fake data\" risk for sample-data pages. Reviewers — please confirm this rollout is acceptable, or request the sample-data pages be re-gated.\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **New Features**\n  * Enhanced Personas Builder with dynamic graph-backed personas, custom persona creation, and visual node relationships.\n  * New DocumentsPage tabbing Files and Knowledge Base resources.\n  * Preview banners replacing legacy beta indicators across pages.\n  * Reorganized Knowledge/Context navigation with workspace context, research, and workflows.\n  * Consolidated BrightAgent studio routes under unified path structure.\n\n* **Refactor**\n  * Restructured governance, schema, and navigation routing for improved organization.\n  * Removed Hive honeycomb dashboard; expanded persona data model with persistence.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-webapp/pull/1100?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 1999,
+    "headRefName": "drchinca/BH-376/nav-enterprise-dashboard",
+    "mergedAt": "2026-05-27T13:50:19Z",
+    "number": 1100,
+    "title": "feat(nav): enterprise dashboard restructure + Documents tabs + mock-data previews (BH-376)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 43,
+    "author": {
+      "id": "U_kgDOCwVHkQ",
+      "is_bot": false,
+      "login": "Marwan-Samih-Brighthive",
+      "name": ""
+    },
+    "deletions": 2,
+    "headRefName": "fix/brightagent-sidebar-ag-grid-aria-layout",
+    "mergedAt": "2026-05-15T18:13:46Z",
+    "number": 1103,
+    "title": "fix(BrightAgent): keep AG Grid aria description out of sidebar layout",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 508,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n",
+    "deletions": 307,
+    "headRefName": "harbour/BH-513/restore-canAccessFiles-role-guard",
+    "mergedAt": "2026-05-26T22:28:27Z",
+    "number": 1107,
+    "title": "fix(webapp): Fix role hidden routes and buttons (BH-513)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 40,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n",
+    "deletions": 8,
+    "headRefName": "harbour/BH-516/fix-nav-active-state",
+    "mergedAt": "2026-05-26T22:28:37Z",
+    "number": 1108,
+    "title": "fix(webapp): Fix nav prop states (BH-516)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 21,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n",
+    "deletions": 24,
+    "headRefName": "harbour/BH-514/fix-schemas-route",
+    "mergedAt": "2026-05-26T22:28:43Z",
+    "number": 1109,
+    "title": "fix(schemas): Fix schema routes and save load bugs (BH-514)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 13,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n",
+    "deletions": 8,
+    "headRefName": "harbour/BH-515/fix-governance-detail-route",
+    "mergedAt": "2026-05-26T22:28:53Z",
+    "number": 1110,
+    "title": "fix(govern): Fix govern routes and bugs (BH-515)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 227,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & Why\n- **What**: Cherry-picks commit #1096 (UI/permission bug fixes by Nano) from staging onto develop to bring branches in sync\n- **Why**: Two commits existed in staging that were never in develop, causing branch divergence. Per no-backward-merge rule, cherry-picking forward instead of merging staging→develop.\n\n## Changes\n- Fix contributor project list\n- Allow creation for collaborator\n- Fix perms visibility\n- Hide data asset for viewer\n- Add file guard for studio roles\n- Fix member view for non-admin\n- Resolved duplicate `canAccessFiles` declaration and `useGetUserRole` import (cherry-pick conflict with nav restructure)\n\n## Tests\n- [ ] TypeScript passes (`npx tsc --noEmit`)\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **New Features**\n  * Role-based access control now restricts data assets and project features based on workspace role\n  * Optimistic project creation displays new projects immediately\n\n* **Bug Fixes**\n  * Improved authorization loading state handling to prevent premature access decisions\n  * Fixed project overview navigation timing during loading/error states\n  * Enhanced date comparison accuracy\n\n* **Improvements**\n  * Real-time role management UI updates when workspace roles change\n  * Better visibility controls for member editing interface\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-webapp/pull/1111?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 61,
+    "headRefName": "chore/sync-staging-commits",
+    "mergedAt": "2026-05-27T17:59:52Z",
+    "number": 1111,
+    "title": "chore(sync): cherry-pick staging-only UI/permission fixes onto develop (#1096)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 14791,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\n- Complete navigation restructure — 8 clean sections (Hive, BrightAgent, Catalog, Agents, Govern, Analytics, Infrastructure) replacing old overlapping layout (BH-376)\n- Bright Signals unified activity drawer, enterprise dashboard, Documents tabs, mock-data PreviewBanner\n- UI/permission bug fixes: contributor project list, collaborator creation, perms visibility, file guard for studio roles, member view for non-admin\n- Health Checks page wired to real GraphQL data (BH-359)\n\n## Feature flags\nRoute visibility: `VITE_ROUTE_VISIBILITY_CONFIG` in Amplify env vars.\nStaging template (`agentic-project-mgmt/config/env-templates/webapp-staging.env.tmpl`) enables: `Ingestion`, `Files`, `Sessions`.\n\nSee `docs/FEATURE_FLAGS.md` for full reference.\n\n## Test plan\n- [ ] All 8 nav sections render correctly\n- [ ] Role-based: Infrastructure section visible to Admin only\n- [ ] Whitelist routes (`Files`, `Sessions`, `Ingestion`) show because staging enables them\n- [ ] Studio routing works post-nav-refactor\n- [ ] Personas drag-and-drop builder loads",
+    "deletions": 2347,
+    "headRefName": "release/staging-nav-bh376",
+    "mergedAt": "2026-05-27T18:05:08Z",
+    "number": 1113,
+    "title": "release(staging): nav restructure + UI/permission fixes (BH-376)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 502,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & Why\n\n**What does this do?**\n- Adds a `useRuntimeFeatureFlags` hook that fetches route visibility config from Platform Core at runtime (5min polling)\n- Replaces build-time-only `VITE_ROUTE_VISIBILITY_CONFIG` with a live system — no redeploy needed to toggle routes\n- Adds CLI script (`scripts/set-feature-flags.sh`) for engineering to set flags via GraphQL mutation\n- `VITE_FEATURE_FLAGS_LOCAL_ONLY=true` for local dev without Platform Core\n\n**Why was this needed?**\nRoute visibility changes currently require an Amplify redeploy (env var is baked at build time). Engineering needs on-demand control.\n\n## Changes\n- **Added**: `src/hooks/useRuntimeFeatureFlags.ts` — hook to fetch + merge remote config\n- **Added**: `src/graphql/queries/getRuntimeFeatureFlags.graphql`\n- **Added**: `src/graphql/mutations/setRuntimeFeatureFlags.graphql`\n- **Added**: `scripts/set-feature-flags.sh` — CLI for BH engineering\n- **Modified**: `src/hooks/useAssetRoutes.ts` — consumes runtime hook instead of static config\n- **Modified**: `.env.example`, `src/vite-env.d.ts` — new env var declaration\n\n## Depends On\nPlatform Core PR (adds `getRuntimeFeatureFlags` query + `setRuntimeFeatureFlags` mutation with Neo4j storage)\n\n## Tests\n- [ ] Local dev with `VITE_FEATURE_FLAGS_LOCAL_ONLY=true` — uses env var, no remote fetch\n- [ ] Staging with Platform Core deployed — fetches config, hides/shows routes dynamically\n- [ ] CLI: `./scripts/set-feature-flags.sh --env staging --show`\n- [ ] CLI: `./scripts/set-feature-flags.sh --env staging --disable \"Quality Rules\"`\n- [ ] Verify polling: change flags → wait 5min or reload → routes update",
+    "deletions": 24,
+    "headRefName": "drchinca/BH-376/runtime-feature-flags",
+    "mergedAt": "2026-05-28T00:15:17Z",
+    "number": 1114,
+    "title": "feat(flags): runtime feature flags via Platform Core GraphQL",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 15293,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\n- feat(flags): runtime feature flags via Platform Core GraphQL (#1114)\n- Merge conflict resolution from earlier develop sync\n\n## Key Changes\n- Webapp now fetches route visibility from Platform Core at runtime (5min polling)\n- Blocks rendering until flags resolve — restrictive on error (no beta page leaks)\n- CLI script for engineering: `scripts/set-feature-flags.sh`\n- `VITE_FEATURE_FLAGS_LOCAL_ONLY` for local dev\n\n## Depends On\n- Platform Core #772 (already merged to develop) — must be deployed to staging first\n\n## Test Plan\n- [ ] Verify Platform Core staging has the new `getRuntimeFeatureFlags` query\n- [ ] Load webapp staging — should render normally (no flags set = all defaults)\n- [ ] Set a flag: `./scripts/set-feature-flags.sh --env staging --token <jwt> --disable \"Quality Rules\"`\n- [ ] Reload webapp — Quality Rules page should be hidden\n- [ ] Kill Platform Core → webapp should show restrictive view (Home + BrightAgent only) or cached last-good",
+    "deletions": 2371,
+    "headRefName": "develop",
+    "mergedAt": "2026-05-28T00:16:02Z",
+    "number": 1115,
+    "title": "release(staging): runtime feature flags + merge fixes",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 45,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## What & Why\n\n**What**: The nav restructure changed URLs but the BrightAgent OmniPanel toggle and several nav links still referenced old paths, making the \"Ask BrightAgent\" side panel invisible on Schemas, Sources, and Govern pages.\n\n**Why**: `useBrightAgentRoutes.ts` checked for `/connect/data-sources` and `/govern/data-catalog` which no longer exist.\n\n## Changes\n- `src/hooks/useBrightAgentRoutes.ts` — updated route matchers to current paths\n- `src/BrightAgent/hooks/usePageBrightAgentConfig.ts` — updated page overrides + added catalog/assets\n- 12 files with stale `/connect/*`, `/govern/data-catalog`, `/configure/*` paths → updated to `/catalog/*`, `/govern/*`, `/settings/*`\n\n## Tests\n- [ ] Open /catalog/schemas → \"Ask BrightAgent\" button visible in top bar\n- [ ] Open /catalog/sources → \"Ask BrightAgent\" button visible with prompt suggestions\n- [ ] Open /govern/policies → \"Ask BrightAgent\" button visible\n- [ ] Click \"Ask BrightAgent\" → side panel opens with chat\n- [ ] Home page links navigate to correct pages\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **Refactor**\n  * Reorganized navigation routes: configuration settings for warehouse, transformation, and ingestion now use `/settings/` paths instead of `/configure/`.\n  * Updated data exploration routes to catalog-based paths (`/catalog/sources`, `/catalog/assets`) for clearer workflow organization.\n  * Refined home page shortcuts to point to updated catalog locations with enhanced upload capabilities.\n  * Improved AI assistant navigation and chat prompts for data discovery workflows.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-webapp/pull/1116?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 43,
+    "headRefName": "drchinca/BH-376/fix-brightagent-panel-routes",
+    "mergedAt": "2026-05-28T14:28:54Z",
+    "number": 1116,
+    "title": "fix(nav): restore BrightAgent panel + fix stale route paths (BH-376)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 15338,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\nFixes the \"Ask BrightAgent\" side panel not appearing on Schemas, Sources, and Govern pages after the nav restructure.\n\nAll stale route paths updated: `/connect/*` → `/catalog/*`, `/configure/*` → `/settings/*`.",
+    "deletions": 2414,
+    "headRefName": "develop",
+    "mergedAt": "2026-05-28T14:29:51Z",
+    "number": 1117,
+    "title": "release(staging): fix BrightAgent panel routes (BH-376)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 65,
+    "author": {
+      "id": "MDQ6VXNlcjEzMTc5NTAw",
+      "is_bot": false,
+      "login": "drchinca",
+      "name": "Adrián Kuri Bado Chinca"
+    },
+    "body": "## Summary\n\n- Send `X-Workspace-Id` header on all BrightBot API calls so local dev resolves the correct workspace per request\n- Skip thread workspace validation in local dev mode (the hardcoded `\"local-ws-dev\"` workspace ID never existed in Neo4j)\n\n## Changes\n\n- **`src/api/chatApi.ts`**: Extract workspace ID from URL path and send as `X-Workspace-Id` header\n- **`src/hooks/useThreadWorkspaceValidation.ts`**: Bypass validation entirely when `VITE_LOCAL_DEV=true`\n\n## Test plan\n- [ ] Switch between Acme and NorthStar workspaces — BrightAgent sessions filter correctly per workspace\n- [ ] Side panel agents (ingestion, schema) no longer break main agent session\n- [ ] Schedules page shows correct schedules per workspace",
+    "deletions": 19,
+    "headRefName": "drchinca/local-dev-fixes",
+    "mergedAt": "2026-05-29T18:30:54Z",
+    "number": 1119,
+    "title": "fix(local-dev): workspace-aware BrightBot requests + thread validation",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 2,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "Adds profiler_task as a selectable task in the schedule creation dialog and maps its label in the schedules table.\r\n\r\n# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n* **New Features**\n  * Added \"Data Profiler\" as a new task type option in schedules. The Data Profiler task requires data assets to be selected.\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-webapp/pull/1120?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 0,
+    "headRefName": "harbour/BH-520/profiler-task",
+    "mergedAt": "2026-06-01T15:21:59Z",
+    "number": 1120,
+    "title": "feat(scheduler): add Data Profiler task to scheduler UI (BH-520)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 105,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n<!-- review_stack_entry_start -->\n\n[![Review Change Stack](https://storage.googleapis.com/coderabbit_public_assets/review-stack-in-coderabbit-ui.svg)](https://app.coderabbit.ai/change-stack/brighthive/brighthive-webapp/pull/1121?utm_source=github_walkthrough&utm_medium=github&utm_campaign=change_stack)\n\n<!-- review_stack_entry_end -->\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 27,
+    "headRefName": "harbour/BH-517/fix-role-based-nav-visibility-clean",
+    "mergedAt": "2026-05-29T21:19:43Z",
+    "number": 1121,
+    "title": "fix(Perms): Fix Navigation permissions and implement sidebar guard (BH-517)",
+    "repo": "brighthive-webapp"
+  },
+  {
+    "additions": 53,
+    "author": {
+      "id": "MDQ6VXNlcjg2NzUwNzI4",
+      "is_bot": false,
+      "login": "Nano-233",
+      "name": "Nano"
+    },
+    "body": "# Description\r\n\r\n## JIRA ticket\r\n\r\n[HIVE-####] <- Replace the pound signs with your JIRA ticket number to have github create a link.\r\n\r\n## Summary\r\n\r\nA summary of the pull request (PR) and the issue it resolves. Please include the following:\r\n\r\n- A link to the relevant issue and/or ClubHouse card\r\n- A code \"walk-through\" in bullet points\r\n- A demo, e.g., screenshots, GIFs, code examples, etc. (OPTIONAL)\r\n\r\n# Checklists\r\n\r\n### Basic\r\n\r\n- [ ] Did you write tests for the code in this PR?\r\n- [ ] Did you document your changes in the README and/or in docstrings (as needed)?\r\n\r\n### Security\r\n\r\n- [ ] Authorization has been implemented across these changes\r\n- [ ] Injection has been prevented (parameterized queries, no eval or system calls)\r\n- [ ] Any web UI is escaping output (to prevent XSS)\r\n- [ ] Sensitive data has been identified and is being protected properly\r\n\r\n### Frontend\r\n\r\n- [ ] HTTP links should embed text that clearly explains what information your readers will find when they click on a hyperlink. [Read more about HTML accessibility](https://accessibility.umn.edu/core-skills/hyperlinks).\r\n\r\n# Notes for the Reviewer\r\n\r\nA precise explanation of what the PR reviewer needs to evaluate. This might be:\r\n\r\n- a low-level code review of certain functions\r\n- a high-level assessment of strategy or architecture\r\n- a confirmation that the code behaves as expected on another machine\r\n\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n## Release Notes\n\n* **Refactor**\n  * Simplified breadcrumb navigation logic for workspace sections\n  * Updated home page shortcut navigation to be client-side\n  * Enhanced home page shortcut visibility based on user role permissions\n  * Improved navigation permission handling for home shortcuts\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+    "deletions": 85,
+    "headRefName": "harbour/BH-556/fix-stale-routes-home-breadcrumbs",
+    "mergedAt": "2026-06-01T17:15:47Z",
+    "number": 1122,
+    "title": "fix(webapp): fix breadcrumbs and shortcuts routes (BH-556)",
+    "repo": "brighthive-webapp"
+  }
+]

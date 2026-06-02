@@ -1,0 +1,68 @@
+{
+  "sprint": 11,
+  "name": "Sprint 11 — Profiler + Permissions Cut",
+  "emoji": "🧪",
+  "official": false,
+  "note": "Unofficial sprint cut covering merges from May 15 → June 2, 2026. Sprint 7 was the last formal Jira sprint object; we've been running unofficial since then. Counted forward from Sprint 10 (May 5–15). Excludes Longaeva-related work — Snowflake integration PRs and BH-526 children are tracked separately under the PoC tracker.",
+  "dates": {
+    "start": "2026-05-15",
+    "end": "2026-06-02",
+    "duration_days": 18
+  },
+  "exclusions": {
+    "longaeva_epic": "BH-526",
+    "longaeva_tickets": [
+      "BH-527", "BH-528", "BH-531", "BH-549", "BH-550",
+      "BH-551", "BH-552", "BH-553", "BH-554"
+    ],
+    "longaeva_prs": [
+      "brighthive-platform-core#777",
+      "brightbot#488",
+      "brightbot#489",
+      "brighthive-data-organization-cdk#156"
+    ],
+    "tracker_prs": "agentic-project-mgmt#20-#28"
+  },
+  "tickets": {
+    "total": 19,
+    "completed": 7,
+    "staging_qc": 2,
+    "needs_refinement": 10
+  },
+  "completion": {
+    "tickets_pct": 36.8,
+    "tickets_done_or_qc_pct": 47.4
+  },
+  "prs": {
+    "total": 27,
+    "feature_and_fix": 23,
+    "release_pr_carriers": 4,
+    "lines_changed": 68047,
+    "lines_changed_excluding_release_carriers": 15183,
+    "repos_touched": [
+      "brighthive-platform-core",
+      "brighthive-webapp",
+      "brightbot"
+    ],
+    "by_repo": {
+      "brighthive-webapp": 16,
+      "brighthive-platform-core": 7,
+      "brightbot": 4
+    }
+  },
+  "team": [
+    {"name": "Harbour Wang", "tickets": 9, "done": 7, "in_qc": 2},
+    {"name": "Kuri Chinca", "tickets": 4, "done": 0, "in_pipeline": 4},
+    {"name": "Marwan Samih", "tickets": 1, "done": 0, "in_pipeline": 1},
+    {"name": "Ahmed Elsherbiny", "tickets": 1, "done": 0, "in_pipeline": 1},
+    {"name": "Unassigned", "tickets": 4}
+  ],
+  "themes": [
+    "Data Profiler agent — port, scheduler, webhook auto-trigger",
+    "Navigation + permissions hardening (BH-376 enterprise restructure + role guards)",
+    "BrightStudio collaborator role unlock (BH-548)",
+    "Quality check Slack notifications (BH-530 GX YAML output)",
+    "Local-dev seeds + workspace-aware BrightBot UX",
+    "Production hotfixes (S3 streaming mem0, AG Grid sidebar)"
+  ]
+}
