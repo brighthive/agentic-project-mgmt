@@ -805,14 +805,42 @@ help:  ## Show this help
 
 .PHONY: longaeva-tracker longaeva-tracker-dry longaeva-tracker-no-slack longaeva-tracker-install-cron longaeva-tracker-uninstall-cron
 
-longaeva-tracker:  ## ⑤ Refresh clients/trials/longaeva/TRACKER.md (Jira + GH PRs + Slack)
-	@python3 -m scripts.longaeva_tracker
+# Resolve a Python that has PyYAML — checks the common venvs in the repo,
+# falls back to system python3. Override with TRACKER_PYTHON=/path/to/python.
+TRACKER_PYTHON ?= $(shell \
+	for p in $(CURDIR)/aws-secrets-vault/.venv/bin/python \
+	         $(CURDIR)/dynamo-vault/.venv/bin/python \
+	         $(CURDIR)/.venv/bin/python; do \
+		[ -x $$p ] && $$p -c 'import yaml' >/dev/null 2>&1 && { echo $$p; exit 0; }; \
+	done; \
+	command -v python3 >/dev/null && python3 -c 'import yaml' >/dev/null 2>&1 && { command -v python3; exit 0; }; \
+	echo MISSING)
 
-longaeva-tracker-dry:  ## ⑤ Refresh tracker — dry run (no file write, no Slack)
-	@python3 -m scripts.longaeva_tracker --no-slack --dry-run
+poc-tracker-deps:  ## ⑤ Verify PyYAML is reachable; print install hint if not
+	@if [ "$(TRACKER_PYTHON)" = "MISSING" ]; then \
+		echo "[tracker] No Python with PyYAML found. Install via: aws-secrets-vault/.venv/bin/pip install pyyaml"; \
+		exit 3; \
+	fi
+	@echo "[tracker] using $(TRACKER_PYTHON)"
 
-longaeva-tracker-no-slack:  ## ⑤ Refresh tracker without posting to Slack
-	@python3 -m scripts.longaeva_tracker --no-slack
+poc-tracker: poc-tracker-deps  ## ⑤ Refresh tracker for any client; CLIENT=<slug> (default: longaeva)
+	@$(TRACKER_PYTHON) -m scripts.poc_tracker --client $(or $(CLIENT),longaeva)
+
+poc-tracker-dry: poc-tracker-deps  ## ⑤ PoC tracker — dry run (no file write, no Slack)
+	@$(TRACKER_PYTHON) -m scripts.poc_tracker --client $(or $(CLIENT),longaeva) --no-slack --dry-run
+
+poc-tracker-no-slack: poc-tracker-deps  ## ⑤ PoC tracker without Slack post
+	@$(TRACKER_PYTHON) -m scripts.poc_tracker --client $(or $(CLIENT),longaeva) --no-slack
+
+# Shorthand for the common case — Longaeva is what we're running today.
+longaeva-tracker: poc-tracker-deps  ## ⑤ Alias for `make poc-tracker CLIENT=longaeva`
+	@$(TRACKER_PYTHON) -m scripts.poc_tracker --client longaeva
+
+longaeva-tracker-dry: poc-tracker-deps  ## ⑤ Alias for `make poc-tracker-dry CLIENT=longaeva`
+	@$(TRACKER_PYTHON) -m scripts.poc_tracker --client longaeva --no-slack --dry-run
+
+longaeva-tracker-no-slack: poc-tracker-deps  ## ⑤ Alias for `make poc-tracker-no-slack CLIENT=longaeva`
+	@$(TRACKER_PYTHON) -m scripts.poc_tracker --client longaeva --no-slack
 
 longaeva-tracker-install-cron:  ## ⑤ Install nightly tracker refresh in crontab (06:00 ET / 10:00 UTC)
 	@if crontab -l 2>/dev/null | grep -qF "longaeva-tracker"; then \

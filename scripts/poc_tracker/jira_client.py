@@ -1,8 +1,4 @@
-"""Thin Jira REST client — read-only ticket fetch for the tracker.
-
-Uses stdlib urllib so this script has zero third-party dependencies and runs
-under any Python 3.11+ install (matters for the cron entry on a fresh box).
-"""
+"""Thin Jira REST client — read-only ticket fetch for the tracker."""
 
 from __future__ import annotations
 
@@ -16,51 +12,28 @@ from dataclasses import dataclass
 from typing import Any
 
 from ._ssl import build_ssl_context
-from .config import (
-    ADJACENT_EPICS,
-    JIRA_BROWSE_BASE,
-    LONGAEVA_EPIC,
-    LONGAEVA_KEYWORD_JQL,
-    SNOWFLAKE_TICKET_KEYS,
-    TrackerConfig,
-)
-
-# Validate ticket keys before they enter JQL — defends against injection via
-# config edits.
-_TICKET_KEY_RE = re.compile(r"^BH-\d+$")
-
-# Cap on tickets returned by a single search — guards against unbounded growth
-# of the keyword JQL clause.
-MAX_TICKETS = 500
+from .loader import PocConfig
 
 logger = logging.getLogger(__name__)
 
-# Default fields the tracker needs. Avoid `*all` to keep payloads tight.
 JIRA_FIELDS: tuple[str, ...] = (
-    "summary",
-    "status",
-    "assignee",
-    "priority",
-    "issuetype",
-    "labels",
-    "parent",
-    "customfield_10016",  # story points (BrightHive board uses this slot)
-    "updated",
-    "created",
+    "summary", "status", "assignee", "priority", "issuetype",
+    "labels", "parent", "customfield_10016", "updated", "created",
 )
-
 JIRA_SEARCH_PATH = "/rest/api/3/search/jql"
 JIRA_PAGE_SIZE = 100
+MAX_TICKETS = 500
+JIRA_BROWSE_BASE = "https://brighthiveio.atlassian.net/browse"
+
+_TICKET_KEY_RE = re.compile(r"^BH-\d+$")
 
 
 @dataclass(frozen=True)
 class JiraTicket:
-    """Flat shape — only fields the tracker renders."""
-
     key: str
     summary: str
     status: str
-    status_category: str  # "To Do" | "In Progress" | "Done"
+    status_category: str
     assignee_name: str | None
     assignee_email: str | None
     priority: str | None
@@ -80,31 +53,26 @@ class JiraTicket:
         return f"{JIRA_BROWSE_BASE}/{self.key}"
 
 
-def fetch_longaeva_tickets(*, config: TrackerConfig) -> list[JiraTicket]:
-    """Fetch all tickets in scope: BH-526 children + adjacent epics + keyword catch-all + explicit Snowflake keys."""
-    # Validate all ticket keys before interpolating into JQL — fail loud on
-    # malformed config rather than emit a 400 from Jira at 2am.
-    bad_keys = [k for k in (LONGAEVA_EPIC, *ADJACENT_EPICS, *SNOWFLAKE_TICKET_KEYS)
-                if not _TICKET_KEY_RE.fullmatch(k)]
-    if bad_keys:
-        raise ValueError(f"Malformed Jira ticket key(s) in config: {bad_keys}")
-
-    jql_parts = [
-        f"parent = {LONGAEVA_EPIC}",
-        *[f"parent = {epic}" for epic in ADJACENT_EPICS],
-        f"key in ({','.join(SNOWFLAKE_TICKET_KEYS)})",
-        LONGAEVA_KEYWORD_JQL,
+def fetch_tickets(*, config: PocConfig) -> list[JiraTicket]:
+    bad = [
+        k for k in (config.epic, *config.adjacent_epics, *config.ticket_keys)
+        if not _TICKET_KEY_RE.fullmatch(k)
     ]
-    # Combine with OR so we get the union; statusCategory != Done is already
-    # in the keyword JQL but we want done tickets too for the Done column —
-    # so wrap each part separately.
-    jql = " OR ".join(f"({p})" for p in jql_parts)
+    if bad:
+        raise ValueError(f"Malformed Jira ticket key(s) in poc.yaml: {bad}")
+
+    parts = [f"parent = {config.epic}"]
+    parts.extend(f"parent = {epic}" for epic in config.adjacent_epics)
+    if config.ticket_keys:
+        parts.append(f"key in ({','.join(config.ticket_keys)})")
+    if config.keyword_jql:
+        parts.append(config.keyword_jql)
+    jql = " OR ".join(f"({p})" for p in parts)
     logger.info("Tracker JQL: %s", jql)
     return _search_all(config=config, jql=jql)
 
 
-def _search_all(*, config: TrackerConfig, jql: str) -> list[JiraTicket]:
-    """Page through results until we drain the result set or hit MAX_TICKETS."""
+def _search_all(*, config: PocConfig, jql: str) -> list[JiraTicket]:
     tickets: list[JiraTicket] = []
     next_token: str | None = None
     auth_header = _basic_auth_header(config=config)
@@ -120,7 +88,7 @@ def _search_all(*, config: TrackerConfig, jql: str) -> list[JiraTicket]:
             body["nextPageToken"] = next_token
 
         req = urllib.request.Request(
-            url=f"{config.jira_base_url}{JIRA_SEARCH_PATH}",
+            url=f"{config.auth.jira_base_url}{JIRA_SEARCH_PATH}",
             method="POST",
             data=json.dumps(body).encode("utf-8"),
             headers={
@@ -142,8 +110,7 @@ def _search_all(*, config: TrackerConfig, jql: str) -> list[JiraTicket]:
 
         if len(tickets) >= MAX_TICKETS:
             logger.warning(
-                "Hit MAX_TICKETS=%d cap — truncating result set. "
-                "Tighten LONGAEVA_KEYWORD_JQL if this happens.",
+                "Hit MAX_TICKETS=%d cap — truncating. Tighten keyword_jql.",
                 MAX_TICKETS,
             )
             break
@@ -152,7 +119,6 @@ def _search_all(*, config: TrackerConfig, jql: str) -> list[JiraTicket]:
         if not next_token:
             break
 
-    # Dedupe — multiple JQL clauses may overlap.
     seen: set[str] = set()
     unique: list[JiraTicket] = []
     for ticket in tickets:
@@ -163,10 +129,9 @@ def _search_all(*, config: TrackerConfig, jql: str) -> list[JiraTicket]:
     return unique
 
 
-def _basic_auth_header(*, config: TrackerConfig) -> str:
-    creds = f"{config.jira_user_email}:{config.jira_api_token}"
-    encoded = base64.b64encode(creds.encode("utf-8")).decode("ascii")
-    return f"Basic {encoded}"
+def _basic_auth_header(*, config: PocConfig) -> str:
+    creds = f"{config.auth.jira_user_email}:{config.auth.jira_api_token}"
+    return "Basic " + base64.b64encode(creds.encode("utf-8")).decode("ascii")
 
 
 def _parse_issue(*, issue: dict[str, Any]) -> JiraTicket:
@@ -177,7 +142,6 @@ def _parse_issue(*, issue: dict[str, Any]) -> JiraTicket:
     parent = fields.get("parent") or {}
     priority = fields.get("priority") or {}
     issue_type = (fields.get("issuetype") or {}).get("name", "Task")
-
     return JiraTicket(
         key=issue["key"],
         summary=fields.get("summary", ""),

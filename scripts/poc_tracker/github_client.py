@@ -1,7 +1,7 @@
 """GitHub PR fetch via the `gh` CLI — avoids requests + token wrangling.
 
-Returns PRs across LONGAEVA_REPOS that mention any of the given Jira ticket keys
-in title or body. Indexed by ticket key for the renderer.
+Returns PRs across the configured repos that mention any of the given Jira
+ticket keys in title or body. Indexed by ticket key for the renderer.
 """
 
 from __future__ import annotations
@@ -12,8 +12,6 @@ import re
 import shlex
 import subprocess
 from dataclasses import dataclass
-
-from .config import LONGAEVA_REPOS
 
 logger = logging.getLogger(__name__)
 
@@ -45,14 +43,16 @@ class GitHubPR:
         return f"{prefix} {self.short_repo}#{self.number}"
 
 
-def fetch_prs_referencing_tickets(*, ticket_keys: set[str]) -> dict[str, list[GitHubPR]]:
-    """Across LONGAEVA_REPOS, find PRs whose title or body references a tracker ticket.
+def fetch_prs_referencing_tickets(
+    *, ticket_keys: set[str], repos: tuple[str, ...]
+) -> dict[str, list[GitHubPR]]:
+    """Across the configured repos, find PRs that reference a tracker ticket.
 
     Returns: {ticket_key: [GitHubPR, ...]} — multiple PRs per ticket allowed.
     """
     by_ticket: dict[str, list[GitHubPR]] = {key: [] for key in ticket_keys}
 
-    for repo in LONGAEVA_REPOS:
+    for repo in repos:
         try:
             prs = _list_recent_prs(repo=repo)
         except subprocess.CalledProcessError as exc:
