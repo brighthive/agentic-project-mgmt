@@ -16,6 +16,7 @@ tags: [financial-services, snowflake, dbt, dagster, github-enterprise, mcp]
 last_reviewed: "2026-06-01"
 amended:
   - "2026-06-01 — Atlas YAML contract received from client; §2 Semantic View Enrollment scope grounded in real artifacts"
+  - "2026-06-01 EOD — Snowflake integration shipped end-to-end across 4 PRs (brightbot#488 #489, platform-core#777, data-organization-cdk#156); 168 unit tests green; trial unblocked for §1 ingestion + §2 enrollment"
 ---
 
 # Longaeva Partners LP — Trial
@@ -68,27 +69,28 @@ Full honest capability map: `../../../../platform-saas-ai-context/clients/longae
 
 5 participants total (Grant + 1-2 data engineers + 1-2 data scientists).
 
-## The Gap to Resolve Before Day 1
+## The Gap to Resolve Before Day 1 (RESOLVED 2026-06-01)
 
-**Brightbot's SQL execution layer does not connect to Snowflake today.**
+> ✅ **Snowflake integration shipped end-to-end as of 2026-06-01 EOD.** All 7
+> layers of the warehouse-agnostic pattern are Snowflake-compliant. PRs in
+> review across 3 repos; trial runs on solid ground.
 
-The Snowflake connection params are already modelled (`SnowflakeConnectionParams`
-in `query_retrieval.py`) and env vars are read (`warehouse.py:337`). But the
-`WarehouseConnectionFactory` only has `"redshift"` and `"azure_synapse"` in
-`CONNECTION_CLASSES` — Snowflake is parsed but never executed. Any attempt to
-run SQL against Snowflake currently raises `ValueError`.
+| Layer | Status | PR |
+|---|---|---|
+| 1 — Destination Service | Already shipped | — |
+| 2 — OMD Webhook Adapter | Already shipped | — |
+| 3 — OMD Ingestion Source Config | ✅ Done | [platform-core#777](https://github.com/brighthive/brighthive-platform-core/pull/777) |
+| 4 — OMD Service Type Mapping | Already shipped | — |
+| 5 — Brightbot Connection + Dialect (`SnowflakeConnection`, dialect rules, warehouse_config, tests, security guard) | ✅ Done | [brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
+| 6 — Webapp Registry | Already shipped (verified) | — |
+| 7 — Org-CDK Ingestion Pipeline (`workspace_secret_store` migration) | ✅ Done | [data-organization-cdk#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156) |
+| **§2 Atlas semantic-view YAML scaffold tool (BH-531)** | ✅ Done | [brightbot#489](https://github.com/brighthive/brightbot/pull/489) |
 
-This is closer than a full sprint: the plumbing exists, the factory just needs a
-`SnowflakeConnection` class wired in. Realistic estimate: **1-2 weeks of
-engineering**, not 1-2 months. But it must happen before the trial — not during it.
+**Test coverage**: 168 unit tests across the 3 repos, all green. 4-agent compliance review caught + fixed a CTE-bypass security gap (`WITH ... DELETE` body-keyword guard) before merge.
 
-**Options before signing the trial SOW:**
+**Auth scope**: Phase 1 ships username/password auth. JWT/key-pair auth lands in Phase 2 placeholder TBC-B in the spec.
 
-| Option | What it means |
-|---|---|
-| **A — Pre-trial sprint** | Brighthive completes Snowflake connectivity layer (2-3 weeks) before trial starts. Trial runs on solid ground. Recommended. |
-| **B — Scoped trial** | Trial proceeds with Sections 3 and 4 (monitoring, Slack, KG) which are production-ready. Sections 1 and 2 are treated as a co-development engagement with working prototypes by Day 8. Honest with Grant about the difference. |
-| **C — Trial as-is** | Start Day 1 without Snowflake layer. Risk: Sections 1 and 2 fail or disappoint on Day 6-8 when dependencies surface. Not recommended. |
+**What remains for Day 1**: mark the 4 PRs Ready-for-review → squash-merge → drop a Snowflake secret into `workspace_secret_store/{longaeva-workspace-uuid}` with `type=SNOWFLAKE`. That's it.
 
 ## What Is Genuinely Production-Ready Today
 
@@ -108,9 +110,11 @@ These deliver real value with zero engineering pre-work:
 | Task | Effort | Blocks | Status |
 |---|---|---|---|
 | Snowflake sandbox account + medallion DDL + semantic view (target environment) | done 2026-05-29 | All trial workstreams | ✅ [PR #17](https://github.com/brighthive/agentic-project-mgmt/pull/17) — see [`sandbox/`](sandbox/) |
-| `SnowflakeConnection` in warehouse factory (plumbing exists, factory missing) | 1-2 days | Sections 1 + 2 | 🔲 — sandbox is the real target now |
-| Snowflake schema introspection via INFORMATION_SCHEMA | 2-3 days | 1.1, 1.3, 2.3 | 🔲 |
-| Snowflake semantic view YAML scaffolding tool | 1 sprint | Section 2 | 🔲 — golden reference at [`sandbox/semantic/sv_daily_portfolio_exposure.yaml`](sandbox/semantic/sv_daily_portfolio_exposure.yaml) |
+| `SnowflakeConnection` in warehouse factory + dialect rules + warehouse_config + tests (BH-527/528/549/550/553) | shipped 2026-06-01 | Sections 1 + 2 | ✅ [brightbot#488](https://github.com/brighthive/brightbot/pull/488) — 66 tests, security CTE-bypass guard |
+| Snowflake schema introspection via INFORMATION_SCHEMA | 2-3 days | 1.1, 1.3, 2.3 | 🔲 — wired through `SnowflakeConnection` once #488 merges |
+| Snowflake semantic view YAML scaffolding tool (BH-531) | shipped 2026-06-01 | Section 2 | ✅ [brightbot#489](https://github.com/brighthive/brightbot/pull/489) — 35 tests, golden ref at [`sandbox/semantic/sv_daily_portfolio_exposure.yaml`](sandbox/semantic/sv_daily_portfolio_exposure.yaml) |
+| OMD ingestion: `SnowflakeSourceConfig` (BH-551) | shipped 2026-06-01 | Section 3 | ✅ [platform-core#777](https://github.com/brighthive/brighthive-platform-core/pull/777) — 14 tests |
+| Org-CDK: `SnowflakeIngestionStack` reads `workspace_secret_store` (BH-554) | shipped 2026-06-01 | Sections 1 + 4 | ✅ [data-organization-cdk#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156) — 20 tests |
 | dbt sources.yml generation from scratch (not just update) | 3-4 days | 1.1, 1.3 | 🔲 |
 | GX output: write YAML to repo branch, not Markdown to S3 | 2-3 days | 1.3, 4.2 | 🔲 |
 | GitHub Enterprise `base_url` config (one param) | 1 day | All PR creation | 🔲 |
