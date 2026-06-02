@@ -790,6 +790,9 @@ help:  ## Show this help
 	@printf "\n  \033[1mLayer 3 — Stack orchestration\033[0m  (coming soon: staging stack)\n"
 	@grep -hE '^(localstack|stopstack|stackstatus):.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
+	@printf "\n  \033[1mLayer 5 — Longaeva trial tracker\033[0m  (refreshed manually + nightly cron)\n"
+	@grep -hE '^longaeva-tracker[a-zA-Z_-]*:.*## ' Makefile | \
+		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mLegacy — Slack integration\033[0m\n"
 	@grep -hE '^slack[a-zA-Z_-]*:.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -797,5 +800,32 @@ help:  ## Show this help
 	@grep -hE '^(status|help):.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  See ONBOARDING.md for the linear new-leader walkthrough.\n\n"
+
+# ── Longaeva trial tracker ───────────────────────────────────────────
+
+.PHONY: longaeva-tracker longaeva-tracker-dry longaeva-tracker-no-slack longaeva-tracker-install-cron longaeva-tracker-uninstall-cron
+
+LONGAEVA_TRACKER_CRON := "0 10 * * * cd $(CURDIR) && make longaeva-tracker >> /tmp/longaeva-tracker.log 2>&1"
+
+longaeva-tracker:  ## ⑤ Refresh clients/trials/longaeva/TRACKER.md (Jira + GH PRs + Slack)
+	@python3 -m scripts.longaeva_tracker
+
+longaeva-tracker-dry:  ## ⑤ Refresh tracker — dry run (no file write, no Slack)
+	@python3 -m scripts.longaeva_tracker --no-slack --dry-run
+
+longaeva-tracker-no-slack:  ## ⑤ Refresh tracker without posting to Slack
+	@python3 -m scripts.longaeva_tracker --no-slack
+
+longaeva-tracker-install-cron:  ## ⑤ Install nightly tracker refresh in crontab (06:00 ET / 10:00 UTC)
+	@if crontab -l 2>/dev/null | grep -qF "longaeva-tracker"; then \
+		echo "[tracker] cron entry already installed"; \
+	else \
+		(crontab -l 2>/dev/null; echo $(LONGAEVA_TRACKER_CRON)) | crontab -; \
+		echo "[tracker] cron installed: $(LONGAEVA_TRACKER_CRON)"; \
+	fi
+
+longaeva-tracker-uninstall-cron:  ## ⑤ Remove the tracker cron entry
+	@crontab -l 2>/dev/null | grep -vF "longaeva-tracker" | crontab - && \
+		echo "[tracker] cron entry removed"
 
 .DEFAULT_GOAL := help
