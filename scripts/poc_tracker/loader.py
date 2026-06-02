@@ -54,6 +54,7 @@ class Phase:
 class Owner:
     owner: str
     lane: str
+    slack_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -135,7 +136,11 @@ def load_config(*, slug: str, repo_root: Path) -> PocConfig:
         repos=tuple(raw.get("repos") or ()),
         slack_channel_id=(raw.get("slack") or {}).get("channel_id", ""),
         ownership=tuple(
-            Owner(owner=row["owner"], lane=row["lane"])
+            Owner(
+                owner=row["owner"],
+                lane=row["lane"],
+                slack_id=row.get("slack_id"),
+            )
             for row in (raw.get("ownership") or [])
         ),
         phases=tuple(_parse_phase(phase) for phase in (raw.get("phases") or [])),

@@ -51,12 +51,16 @@ slack:
 ownership:
   - owner: Marwan Samih
     lane: dbt + engineering agent + Snowflake / YAML executions
+    slack_id: U07RDS6P4DU
   - owner: Ahmed Elsherbiny
     lane: MCP + AWS DevOps + workspace provisioning
+    slack_id: U07S17DJNHF
   - owner: Harbour Wang
     lane: Quality agent — granular per-asset/group + configurable + notifications
+    slack_id: U0A959ZCWKZ
   - owner: Kuri Chinca
     lane: Trial driver + cross-cutting
+    slack_id: U09NA98TYEM
 
 phases:
   - title: Pre-trial — Snowflake foundation must be merged
