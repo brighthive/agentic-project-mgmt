@@ -186,6 +186,55 @@ class TestRendererBuckets:
         idx_done = out.find("✅ Done")
         assert idx_todo < idx_progress < idx_done
 
+    def test_day_by_day_section_renders_at_top(self):
+        out = render_tracker(tickets=[], pr_map={}, existing_text=None, now=_now())
+        # Day-by-day matrix should appear before the summary section.
+        idx_day = out.find("🗓️ Day-by-day")
+        idx_summary = out.find("📊 Summary")
+        assert idx_day != -1
+        assert idx_summary != -1
+        assert idx_day < idx_summary
+
+    def test_day_by_day_auto_checks_when_ticket_done(self):
+        # BH-552 is in the Pre-trial phase as a single-ticket expectation.
+        out = render_tracker(
+            tickets=[_t("BH-552", status="Done", category="Done")],
+            pr_map={},
+            existing_text=None,
+            now=_now(),
+        )
+        # Find the row for the audit outcome and assert ✅.
+        for line in out.split("\n"):
+            if "Webapp Snowflake form audit" in line:
+                assert "✅" in line, f"Expected ✅ in {line!r}"
+                break
+        else:
+            raise AssertionError("Pre-trial audit expectation row not found")
+
+    def test_day_by_day_open_when_ticket_not_done(self):
+        out = render_tracker(
+            tickets=[_t("BH-552", status="To Do", category="To Do")],
+            pr_map={},
+            existing_text=None,
+            now=_now(),
+        )
+        for line in out.split("\n"):
+            if "Webapp Snowflake form audit" in line:
+                assert "🔲" in line, f"Expected 🔲 in {line!r}"
+                break
+        else:
+            raise AssertionError("Pre-trial audit expectation row not found")
+
+    def test_manual_outcome_renders_as_open_box(self):
+        # "Trial start date confirmed" has no linked items — manual.
+        out = render_tracker(tickets=[], pr_map={}, existing_text=None, now=_now())
+        for line in out.split("\n"):
+            if "Trial start date confirmed" in line:
+                assert "⬜" in line, f"Expected ⬜ (manual) in {line!r}"
+                break
+        else:
+            raise AssertionError("Manual expectation row not found")
+
     def test_pts_column_dropped_when_no_estimates(self):
         ticket = JiraTicket(
             key="BH-1", summary="x", status="To Do", status_category="To Do",

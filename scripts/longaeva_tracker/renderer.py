@@ -20,6 +20,7 @@ from .config import (
     SNOWFLAKE_TICKET_KEYS,
     SUMMARY_CLIP_CHARS,
 )
+from .expectations import EXPECTATION_PLAN, Expectation, Phase
 from .github_client import GitHubPR
 from .jira_client import JiraTicket
 
@@ -148,6 +149,8 @@ def _render_auto_sections(
     now: datetime,
 ) -> str:
     chunks: list[str] = [
+        _render_day_by_day(tickets=tickets, pr_map=pr_map),
+        "",
         _render_summary(tickets=tickets, pr_map=pr_map),
         "",
         _render_status_grid(tickets=tickets, pr_map=pr_map),
@@ -287,6 +290,125 @@ def _render_recent_activity(*, tickets: list[JiraTicket], now: datetime) -> str:
 
 
 # ── Helpers ─────────────────────────────────────────────────────────
+
+
+# ── Day-by-day expectations matrix ────────────────────────────────
+
+
+def _render_day_by_day(
+    *, tickets: list[JiraTicket], pr_map: dict[str, list[GitHubPR]]
+) -> str:
+    """Render the day-by-day expectation matrix — auto-checked from Jira/PRs.
+
+    Goes from empty to green as tickets close and PRs merge. Manual
+    expectations (linked=()) render as `[ ]` until a teammate flips them to
+    `[x]` (preserved across refreshes — they live in the auto section but
+    once flipped are themselves a stable pattern).
+    """
+    ticket_statuses = {t.key: t.status_category for t in tickets}
+    merged_pr_keys = {
+        f"{pr.short_repo}#{pr.number}"
+        for prs in pr_map.values()
+        for pr in prs
+        if pr.state == "MERGED"
+    }
+
+    lines = [
+        "## 🗓️ Day-by-day — what to expect",
+        "",
+        "_Auto-fills as linked tickets close and PRs merge. Manual rows "
+        "(no linked items) are flipped by hand once the outcome lands._",
+        "",
+    ]
+    for phase in EXPECTATION_PLAN:
+        green, total = _phase_progress(
+            phase=phase,
+            ticket_statuses=ticket_statuses,
+            merged_pr_keys=merged_pr_keys,
+        )
+        lines.append(f"### {phase.title} ({green}/{total})")
+        lines.append("")
+        lines.append(f"_{phase.description}_")
+        lines.append("")
+        lines.append("| | Day | Outcome | Linked |")
+        lines.append("|---|---|---|---|")
+        for exp in phase.expectations:
+            checkbox = _expectation_checkbox(
+                expectation=exp,
+                ticket_statuses=ticket_statuses,
+                merged_pr_keys=merged_pr_keys,
+            )
+            linked = _format_linked(linked=exp.linked, pr_map=pr_map)
+            lines.append(f"| {checkbox} | {exp.day} | {exp.outcome} | {linked} |")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _expectation_checkbox(
+    *,
+    expectation: Expectation,
+    ticket_statuses: dict[str, str],
+    merged_pr_keys: set[str],
+) -> str:
+    """Auto-checked when all linked items resolve; `[ ]` otherwise."""
+    state = expectation.is_green(
+        ticket_statuses=ticket_statuses, merged_pr_keys=merged_pr_keys
+    )
+    if state is True:
+        return "✅"
+    if state is False:
+        return "🔲"
+    return "⬜"  # manual — visually distinct from auto-pending
+
+
+def _phase_progress(
+    *,
+    phase: Phase,
+    ticket_statuses: dict[str, str],
+    merged_pr_keys: set[str],
+) -> tuple[int, int]:
+    """Count green / total expectations in a phase, ignoring manual rows."""
+    auto_total = 0
+    auto_green = 0
+    for exp in phase.expectations:
+        result = exp.is_green(
+            ticket_statuses=ticket_statuses, merged_pr_keys=merged_pr_keys
+        )
+        if result is None:
+            continue
+        auto_total += 1
+        if result:
+            auto_green += 1
+    return auto_green, auto_total
+
+
+def _format_linked(
+    *,
+    linked: tuple[str, ...],
+    pr_map: dict[str, list[GitHubPR]],
+) -> str:
+    """Format linked items as Markdown links — Jira for tickets, PR URL for PRs."""
+    if not linked:
+        return "_manual_"
+    parts: list[str] = []
+    for item in linked:
+        if item.startswith("BH-"):
+            parts.append(f"[{item}](https://brighthiveio.atlassian.net/browse/{item})")
+            continue
+        # PR shorthand — find a matching PR in pr_map for the URL.
+        pr_url: str | None = None
+        for prs in pr_map.values():
+            for pr in prs:
+                if f"{pr.short_repo}#{pr.number}" == item:
+                    pr_url = pr.url
+                    break
+            if pr_url:
+                break
+        parts.append(f"[{item}]({pr_url})" if pr_url else item)
+    return ", ".join(parts)
+
+
+# ── Existing helpers ──────────────────────────────────────────────
 
 
 def _has_open_pr(*, pr_map: dict[str, list[GitHubPR]], key: str) -> bool:
