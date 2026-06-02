@@ -108,6 +108,23 @@ Use this repo to **coordinate** sibling repos via specs, tickets, and release no
 
 ---
 
+## PR Size Rules (every agent, every repo)
+
+**Read [`PR_RULES.md`](./PR_RULES.md) before opening any PR — in this repo or any sibling.** Hard limits:
+
+```
+< 500 lines     → ✅  proceed
+500–700 lines  → ⚠️  consider splitting
+700–900 lines  → 🛑  split now
+≥ 900 lines    → ❌  BLOCKED — reviewers will refuse
+```
+
+If you're approaching the limit mid-task, **stop and propose a split shape to the user before writing more code**. Refactor + feature in one PR is forbidden, even if the user asked for both.
+
+The same rules apply to Claude Code, Cursor, Gemini, Copilot, and humans. PR_RULES.md is the canonical copy; the user's global rule lives at `~/.claude/rules/pr-templates.md`.
+
+---
+
 ## Safety Rules
 
 - Never commit credentials, vault dumps, local exports, or secrets
