@@ -101,3 +101,7 @@ sprint/archive/**/*.csv
 # - README.md
 # - CLAUDE.md
 # - snapshots/*.md
+
+
+# Longaeva tracker per-machine snapshot (used for diff vs Slack)
+clients/trials/longaeva/.tracker-snapshot.json
