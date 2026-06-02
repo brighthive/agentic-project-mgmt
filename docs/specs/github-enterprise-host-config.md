@@ -3,7 +3,7 @@ title: "GitHub Enterprise via Platform Core proxy (PyGithub removed from BrightB
 epic: "BH-526"
 ticket: "BH-529"
 author: "drchinca"
-status: "Implemented — pending review"
+status: "Implementation in progress — REQUEST CHANGES on both PRs"
 created: "2026-06-02"
 last_reviewed: "2026-06-02"
 generates: "feature-doc"
@@ -18,7 +18,7 @@ related:
 
 # GitHub Enterprise via Platform Core proxy
 
-> **Note**: This spec documents the architecture as **shipped on PRs [brighthive-platform-core#778](https://github.com/brighthive/brighthive-platform-core/pull/778) + [brightbot#490](https://github.com/brighthive/brightbot/pull/490)** under [BH-529](https://brighthiveio.atlassian.net/browse/BH-529). An earlier draft of this spec proposed adding a `GitHubHostConfig` dataclass inside BrightBot. That approach was superseded by BH-529's better design: BrightBot stops talking to GitHub directly. Platform Core owns every GitHub API call.
+> **Note**: This spec describes the **target architecture** for [BH-529](https://brighthiveio.atlassian.net/browse/BH-529). Two PRs are open implementing it: [brighthive-platform-core#778](https://github.com/brighthive/brighthive-platform-core/pull/778) and [brightbot#490](https://github.com/brighthive/brightbot/pull/490). **Both PRs were senior-reviewed on 2026-06-02 and BLOCK merge** for security and completeness gaps — see §11 Implementation Gaps. The spec is the contract we ship against; the PRs need iteration before they meet it.
 
 ## 1. Context
 
@@ -330,3 +330,48 @@ Metrics:
 | Provision GHE PAT scoped to dbt repo | Longaeva (Grant) |
 | Confirm GHE host + dbt repo URL | Longaeva (Grant) |
 | Confirm TLS chain (public vs internal CA) | Longaeva (Grant) |
+
+## 11. Implementation Gaps (as of 2026-06-02)
+
+Senior review of both open PRs found these blockers. Both must close before merge.
+
+### Platform Core PR #778 — `BLOCK MERGE`
+
+| # | File:line | Severity | Gap |
+|---|---|---|---|
+| 1 | `github-proxy.ts:77-84`, all 7 resolvers in `transformation-service.ts:932-1033` | **P0 security** | `workspaceId` is taken from `args.input.workspaceId` (client-supplied) and the tenant check compares it to the service's `workspace.id` — both sides are client-controlled. Any caller with a valid JWT for workspace A can pass `workspaceId: B` and access B's PAT-mediated GitHub. **Fix**: derive `workspaceId` from `context.token.sub` like `createTransformationService` does (`transformation-service.ts:170`). |
+| 2 | `github-proxy.ts:201` | **P0 security** | Native `fetch` follows redirects by default; Node 20 `undici` re-sends `Authorization` cross-origin. CNAME-fronted GHE → PAT leaks to redirected host. **Fix**: pass `redirect: 'manual'` and surface 30x as `GitHubHostMisconfigured`. |
+| 3 | `github-proxy.ts:264-271` | **High** | `MAX_FILE_CONTENT_CHARS` slices content but never sets `truncated: true`. Dbt agent commits truncated models silently. **Fix**: add `truncated` bool to response. |
+| 4 | All catch blocks | High | `err.message` from GHE forwarded raw; HTTP status dropped. dbt agent can't distinguish 401/403/404/422 → can't retry vs repair. **Fix**: structured `errorCode` + `httpStatus` + token-scrub on `err.message` before throw. |
+| 5 | (entire branch) | High | Zero tests. No coverage of `parseRepoInfo`, `resolveServiceContext`, tenant check, error paths. |
+| 6 | (Octokit absence) | Medium | Spec says Octokit; impl uses raw `fetch`. Either adopt Octokit (gets retry/throttle/pagination plugins for free) or document custom-fetch parity intentionally. |
+| 7 | TLS / self-signed CA | Medium | No `dispatcher`/`Agent` with custom CA, no `NODE_EXTRA_CA_CERTS` doc. Failure surfaces as cryptic `UNABLE_TO_VERIFY_LEAF_SIGNATURE` to the dbt agent. **Fix**: doc env var + Lambda layer for GHE Server installs. |
+| 8 | (no rate limiting) | Medium | No 403/`X-RateLimit-Remaining` handling. GHE Server admins commonly cap PATs at 60/hr → cascade-fail mid-PR (5+ calls per `commitGitHubFiles`). |
+
+### BrightBot PR #490 — `BLOCK MERGE` (security headline is currently FALSE)
+
+The spec's invariant 1 ("PAT never enters BrightBot state, logs, or Lambda memory") is **not satisfied on this branch**. Multiple legacy paths still import PyGithub and read `state["github_pat"]`.
+
+| # | File:line | Severity | Gap |
+|---|---|---|---|
+| 1 | `pyproject.toml` | **P0** | `pygithub>=2.3.0` still pinned. Future re-introduction risk + import still works. |
+| 2 | `super_agent/nodes/agents/dbt.py:8,159,177,327,385,639,657,667,753,1125` | **P0** | Parallel super_agent graph still uses `from github import Github` and reads/writes `state["github_pat"]`. Includes a Secrets Manager fetch poking the PAT into state at line 667. |
+| 3 | `dbt_agent/utils.py:19,46,76,110,137,235,413,422,437` | **P0** | `_parse_github_url(url, github_pat)`, `Authorization: Bearer {github_pat}` headers, `get_models_list(dbt_folder_link, github_pat)` still PAT-shaped. Called by `simple_messaging_agent.py:430`. |
+| 4 | `tools/github_file_commiter.py:4,36`, `tools/github_operations.py:3,42` | **P0** | Both still `from github import Github`. |
+| 5 | `tests/unit/agents/test_dbt_react_tools.py:75,99,224,235,244,255,850,869` | High | Tests still pass `github_pat` and `from github import GithubException`. Pass against the deprecated path while new path is untested. |
+| 6 | `bh_platform_api.py:130-135` | **P0 security** | Logs the full `requests.Session` (with `Authorization: Bearer {JWT}` header) and full payload at INFO. Same security boundary; JWT leak to CloudWatch. |
+| 7 | (file does not exist) | Medium | `docs/BRIGHTBOT-GITHUB-PROXY-GUIDE.md` referenced in PR description but absent on the branch. |
+| 8 | `platform_queries.py:738-922` | Medium | 7 mutation responses are `tuple[str, dict]` — no Pydantic models, violates `python-environment.md` strong-typing rule. |
+| 9 | `github_tools.py:88,122,156,198,245,295` | Medium | `PlatformAPISession` instantiated inline in every tool. Not injectable → testing requires `patch()` → violates `testable-code.md`. |
+| 10 | (no test) | Medium | No regression test asserting `import github` raises `ModuleNotFoundError` from inside BrightBot. Will fail today (PyGithub still a dep) — that's the point. |
+| 11 | `workflows/states.py:254-260` | Medium | `github_pat` removed without checkpoint migration plan. In-flight LangGraph checkpoints from prod will deserialize against new schema. **Fix**: tolerant reader for one release, or document checkpoint flush. |
+
+### Must-fix-before-Longaeva-trial summary
+
+1. Tenant isolation derived from `context.token` (PR #778)
+2. Disable redirects + token-scrub error messages (PR #778)
+3. `truncated=true` + structured error codes to BrightBot (PR #778)
+4. Finish PAT removal: drop `pygithub` from pyproject; migrate or delete `super_agent/dbt.py`, `dbt_agent/utils.py`, `tools/github_file_commiter.py`, `tools/github_operations.py`; update tests; add `import github` regression test (PR #490)
+5. Stop logging session/Authorization at INFO in `bh_platform_api.py` (PR #490)
+6. Type the 7 mutation responses with Pydantic + inject the GraphQL client (PR #490)
+7. Author the actual migration guide `docs/BRIGHTBOT-GITHUB-PROXY-GUIDE.md` (PR #490)
