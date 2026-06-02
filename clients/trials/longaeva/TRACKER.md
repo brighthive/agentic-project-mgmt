@@ -1,8 +1,8 @@
 # Longaeva — Live Tracker
 
-_Last refreshed **2026-06-02 15:26 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved across refreshes._
+_Last refreshed **2026-06-02 15:51 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
-> **Phase**: Pre-trial · **Trial dates**: TBD with Grant · **Epic**: [BH-526](https://brighthiveio.atlassian.net/browse/BH-526)
+> **Trial dates**: TBD with Grant · **Epic**: [BH-526](https://brighthiveio.atlassian.net/browse/BH-526)
 
 ---
 
@@ -110,6 +110,21 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | ⬜ | Post | JWT/key-pair Snowflake auth (Phase 2) | _manual_ |
 
 
+## 🏁 Who's done what
+
+**Lanes**
+- **Marwan Samih** — dbt + engineering agent + Snowflake / YAML executions
+- **Ahmed Elsherbiny** — MCP + AWS DevOps + workspace provisioning
+- **Harbour Wang** — Quality agent — granular per-asset/group + configurable + notifications
+- **Kuri Chinca** — Trial driver + cross-cutting
+
+| Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
+|---|---|---|---|---|
+| **Harbour Wang** | 3 | 4 | 12 | [BH-542](https://brighthiveio.atlassian.net/browse/BH-542) feat(core): seed 20+ QualityRuleTemplat… |
+| **Ahmed Elsherbiny** | 0 | 2 | 4 | — |
+| **Kuri Chinca** | 0 | 1 | 4 | — |
+| **Marwan Samih** | 0 | 7 | 3 | — |
+
 ## 📊 Summary
 
 - **3/40** tickets done · 6 in progress · 31 to do
@@ -177,20 +192,6 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | [BH-540](https://brighthiveio.atlassian.net/browse/BH-540) | feat(core): add scope/context model to OGM, expose QualityRule… | Harbour Wang | — |
 | [BH-542](https://brighthiveio.atlassian.net/browse/BH-542) | feat(core): seed 20+ QualityRuleTemplateNode starters with scope… | Harbour Wang | — |
 
-
-## ❄️ Snowflake integration (0/9)
-
-| Key | Summary | Status | PR |
-|---|---|---|---|
-| [BH-527](https://brighthiveio.atlassian.net/browse/BH-527) | Add SnowflakeConnection class to warehouse_connections.py and wire… | Code Review | [🟢 Merged agentic-project-mgmt#22](https://github.com/brighthive/agentic-project-mgmt/pull/22)<br>[🟢 Merged agentic-project-mgmt#19](https://github.com/brighthive/agentic-project-mgmt/pull/19)<br>[🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
-| [BH-528](https://brighthiveio.atlassian.net/browse/BH-528) | Add Snowflake SQL dialect rules to agent prompts | Code Review | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
-| [BH-531](https://brighthiveio.atlassian.net/browse/BH-531) | Build Snowflake semantic view YAML scaffold tool | Needs Refinement | [🟢 Merged agentic-project-mgmt#22](https://github.com/brighthive/agentic-project-mgmt/pull/22)<br>[🟢 Merged agentic-project-mgmt#20](https://github.com/brighthive/agentic-project-mgmt/pull/20)<br>[🟡 Draft brightbot#489](https://github.com/brighthive/brightbot/pull/489) |
-| [BH-549](https://brighthiveio.atlassian.net/browse/BH-549) | feat(brightbot): warehouse_config-aware Snowflake branch in… | Needs Refinement | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
-| [BH-550](https://brighthiveio.atlassian.net/browse/BH-550) | test(brightbot): tests/unit/test_snowflake_warehouse.py mirror of… | Needs Refinement | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
-| [BH-551](https://brighthiveio.atlassian.net/browse/BH-551) | feat(platform-core): SnowflakeSourceConfig in OMD ingestion lambda | Needs Refinement | [🟢 Merged agentic-project-mgmt#19](https://github.com/brighthive/agentic-project-mgmt/pull/19)<br>[🔵 Review brighthive-platform-core#777](https://github.com/brighthive/brighthive-platform-core/pull/777) |
-| [BH-552](https://brighthiveio.atlassian.net/browse/BH-552) | audit(webapp): confirm Snowflake dropdown + form fields render | Needs Refinement | [🟢 Merged agentic-project-mgmt#19](https://github.com/brighthive/agentic-project-mgmt/pull/19) |
-| [BH-553](https://brighthiveio.atlassian.net/browse/BH-553) | feat(brightbot): data_profiler Snowflake-specific branches (verify;… | Needs Refinement | [🔵 Review brightbot#488](https://github.com/brighthive/brightbot/pull/488) |
-| [BH-554](https://brighthiveio.atlassian.net/browse/BH-554) | refactor(org-cdk): SnowflakeIngestionStack reads workspace_secret_sto… | Needs Refinement | [🔵 Review brighthive-data-organization-cdk#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156) |
 
 ## 🕒 Recent activity (14 days)
 

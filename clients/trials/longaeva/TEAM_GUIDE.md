@@ -115,7 +115,7 @@ One-time Jira:
    export JIRA_USER="you@brighthive.io"
    export JIRA_TOKEN="paste-token-here"
    ```
-3. Verify: `make longaeva-tracker-dry`  (≡ `python3 -m scripts.longaeva_tracker --dry-run`)
+3. Verify: `make longaeva-tracker-dry`  (≡ `python3 -m scripts.poc_tracker --client longaeva --dry-run`)
    - `--dry-run` already implies no Slack post; `--no-slack` is the explicit flag.
 
 GitHub: re-uses your existing `gh` CLI auth (`gh auth status`). The tracker
@@ -149,7 +149,7 @@ The tracker logs to `/tmp/longaeva-tracker.log`; tail it after the first run.
 
 - Tracker fails with `Missing required env vars` → see Auth above.
 - Tracker shows tickets you didn't expect → check the JQL line in the log;
-  adjust `LONGAEVA_KEYWORD_JQL` in `scripts/longaeva_tracker/config.py`.
+  adjust `scope.keyword_jql` in `clients/trials/longaeva/poc.yaml`.
 - PR not linking → confirm `BH-XXX` is in title / body / branch; rerun.
 - Slack post not appearing → `gh auth status` for tokens; bot must be in
   #engineering (already added).

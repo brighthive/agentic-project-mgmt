@@ -1,11 +1,8 @@
-"""CLI entry: `python -m scripts.longaeva_tracker [--no-slack]`.
+"""CLI entry: `python -m scripts.poc_tracker --client <slug> [--no-slack]`.
 
-Pipeline:
-  1. Load env config.
-  2. Fetch tickets from Jira and PRs from `gh`.
-  3. Render TRACKER.md (preserving manual sections).
-  4. Compute diff vs prior snapshot, post to Slack if non-empty.
-  5. Persist new snapshot.
+Reads `clients/trials/<slug>/poc.yaml` and writes
+`clients/trials/<slug>/TRACKER.md`. Posts a state + diff message to the
+configured Slack channel unless `--no-slack` is set.
 """
 
 from __future__ import annotations
@@ -17,17 +14,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .config import (
-    LONGAEVA_REPOS,
-    SNAPSHOT_RELATIVE_PATH,
-    TRACKER_GITHUB_URL,
-    TRACKER_RELATIVE_PATH,
-    load_from_env,
-)
 from .github_client import fetch_prs_referencing_tickets
-from .jira_client import fetch_longaeva_tickets
-from .renderer import render_tracker
-from .slack_notify import post_to_slack_if_changed
+from .jira_client import fetch_tickets
+from .loader import load_config
+from .renderer import compute_phase_progress, render_tracker
+from .slack_notify import post_to_slack
 from .snapshot import build_snapshot, diff_snapshots, load_snapshot, save_snapshot
 
 logging.basicConfig(level=logging.INFO, format="[tracker] %(levelname)s %(message)s")
@@ -37,16 +28,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _check_preconditions() -> int:
-    """Verify `gh` is on PATH and authenticated. Return non-zero if anything's off."""
     if not shutil.which("gh"):
-        logger.error(
-            "`gh` CLI not found on PATH. Install with `brew install gh` and run "
-            "`gh auth login` to authenticate."
-        )
+        logger.error("`gh` CLI not found on PATH. Run `gh auth login` first.")
         return 127
-    # Strip token env so `gh` falls back to the keyring auth — same as the PR
-    # fetcher does. Local shells often have a fine-grained PAT that doesn't
-    # cover all 4 repos.
     import os
     env = {**os.environ}
     env.pop("GITHUB_TOKEN", None)
@@ -54,31 +38,26 @@ def _check_preconditions() -> int:
     try:
         subprocess.run(
             ["gh", "auth", "status"],
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=10,
-            env=env,
+            check=True, capture_output=True, text=True, timeout=10, env=env,
         )
     except subprocess.CalledProcessError as exc:
-        logger.error(
-            "`gh` is installed but not authenticated. Run `gh auth login`. "
-            "(stderr: %s)",
-            exc.stderr.strip(),
-        )
+        logger.error("`gh` not authenticated. Run `gh auth login`. (%s)", exc.stderr.strip())
         return 126
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        prog="longaeva-tracker",
-        description="Refresh clients/trials/longaeva/TRACKER.md.",
+        prog="poc-tracker",
+        description="Refresh clients/trials/<slug>/TRACKER.md from Jira + GitHub PRs.",
+    )
+    parser.add_argument(
+        "--client", "-c", default="longaeva",
+        help="Client slug — must match a directory under clients/trials/",
     )
     parser.add_argument("--no-slack", action="store_true", help="Skip Slack post.")
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
+        "--dry-run", action="store_true",
         help="Print what would change without writing files.",
     )
     args = parser.parse_args(argv)
@@ -88,26 +67,29 @@ def main(argv: list[str] | None = None) -> int:
         return precond
 
     try:
-        config = load_from_env()
-    except ValueError as exc:
+        config = load_config(slug=args.client, repo_root=REPO_ROOT)
+    except (FileNotFoundError, ValueError) as exc:
         logger.error("%s", exc)
         return 2
 
+    logger.info("Client: %s · Epic: %s · Repos: %d", config.slug, config.epic, len(config.repos))
+
     logger.info("Fetching Jira tickets…")
-    tickets = fetch_longaeva_tickets(config=config)
+    tickets = fetch_tickets(config=config)
     logger.info("Got %d tickets in scope.", len(tickets))
 
     ticket_keys = {t.key for t in tickets}
     logger.info("Fetching PRs referencing %d ticket keys…", len(ticket_keys))
-    pr_map = fetch_prs_referencing_tickets(ticket_keys=ticket_keys)
+    pr_map = fetch_prs_referencing_tickets(ticket_keys=ticket_keys, repos=config.repos)
     pr_count = sum(len(prs) for prs in pr_map.values())
-    logger.info("Linked %d PR references across %d repos.", pr_count, len(LONGAEVA_REPOS))
+    logger.info("Linked %d PR references across %d repos.", pr_count, len(config.repos))
 
-    tracker_path = REPO_ROOT / TRACKER_RELATIVE_PATH
-    snapshot_path = REPO_ROOT / SNAPSHOT_RELATIVE_PATH
-
+    tracker_path = REPO_ROOT / config.tracker_path
+    snapshot_path = REPO_ROOT / config.snapshot_path
     existing_text = tracker_path.read_text() if tracker_path.exists() else None
+
     new_content = render_tracker(
+        config=config,
         tickets=tickets,
         pr_map=pr_map,
         existing_text=existing_text,
@@ -127,17 +109,19 @@ def main(argv: list[str] | None = None) -> int:
     save_snapshot(snapshot=current, path=snapshot_path)
     logger.info(
         "Diff: %d new ticket(s), %d status change(s), %d new PR(s), %d merged PR(s).",
-        len(diff.new_tickets),
-        len(diff.status_changes),
-        len(diff.new_prs),
-        len(diff.merged_prs),
+        len(diff.new_tickets), len(diff.status_changes),
+        len(diff.new_prs), len(diff.merged_prs),
     )
 
     if not args.no_slack:
-        posted = post_to_slack_if_changed(
-            diff=diff, config=config, tracker_url=TRACKER_GITHUB_URL
+        phase_progress = compute_phase_progress(
+            config=config, tickets=tickets, pr_map=pr_map
         )
-        logger.info("Slack: %s", "posted" if posted else "skipped (empty diff or no token)")
+        posted = post_to_slack(
+            config=config, diff=diff, tickets=tickets,
+            pr_map=pr_map, phase_progress=phase_progress,
+        )
+        logger.info("Slack: %s", "posted" if posted else "skipped")
 
     return 0
 

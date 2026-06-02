@@ -1,0 +1,174 @@
+# Longaeva PoC tracker config — single source of truth.
+#
+# Edit this file to tune scope, ownership, and trial-day expectations.
+# `make longaeva-tracker` reads it and renders TRACKER.md.
+#
+# Schema (also see scripts/poc_tracker/loader.py):
+#   slug:            short identifier — must match the directory name
+#   trial_dates:     human-readable for the tracker header
+#   epic:            primary Jira epic (BH-XXX); its children land in scope
+#   adjacent_epics:  other epics whose children should appear in the tracker
+#   ticket_keys:     explicit BH-XXX list to include even if not under an epic
+#   keyword_jql:     catch-all clause (statusCategory != Done AND ...)
+#   repos:           GitHub repos crossed by the trial (PR linkage scan)
+#   slack:
+#     channel_id:    target channel for the diff post
+#   ownership:       lane definitions per assignee
+#   phases:          day-by-day expectation matrix
+
+slug: longaeva
+trial_dates: "TBD with Grant"
+
+scope:
+  epic: BH-526
+  adjacent_epics:
+    - BH-503
+  ticket_keys:
+    - BH-527
+    - BH-528
+    - BH-549
+    - BH-550
+    - BH-551
+    - BH-552
+    - BH-553
+    - BH-554
+    - BH-531
+  keyword_jql: |
+    project = BH AND statusCategory != Done AND (
+      summary ~ "Longaeva" OR description ~ "Longaeva"
+      OR summary ~ "POC" OR summary ~ "Snowflake POC"
+    )
+
+repos:
+  - brighthive/brightbot
+  - brighthive/brighthive-platform-core
+  - brighthive/brighthive-data-organization-cdk
+  - brighthive/agentic-project-mgmt
+
+slack:
+  channel_id: C0782EYPC2K  # #engineering
+
+ownership:
+  - owner: Marwan Samih
+    lane: dbt + engineering agent + Snowflake / YAML executions
+  - owner: Ahmed Elsherbiny
+    lane: MCP + AWS DevOps + workspace provisioning
+  - owner: Harbour Wang
+    lane: Quality agent — granular per-asset/group + configurable + notifications
+  - owner: Kuri Chinca
+    lane: Trial driver + cross-cutting
+
+phases:
+  - title: Pre-trial — Snowflake foundation must be merged
+    description: >
+      All Phase 1 Snowflake integration PRs land before Day 1. Without these,
+      brightbot can't query Snowflake and the trial can't run §1 ingestion or
+      §2 semantic-view enrollment.
+    expectations:
+      - day: Pre-trial
+        outcome: brightbot Layer 5 (SnowflakeConnection + dialect + tests) merged
+        linked: [BH-527, BH-528, BH-549, BH-550, BH-553]
+      - day: Pre-trial
+        outcome: Atlas semantic-view YAML scaffold tool merged (BH-531)
+        linked: [BH-531]
+      - day: Pre-trial
+        outcome: OMD ingestion lambda Layer 3 (SnowflakeSourceConfig) merged
+        linked: [BH-551]
+      - day: Pre-trial
+        outcome: Org-CDK ingestion stack reads workspace_secret_store
+        linked: [BH-554]
+      - day: Pre-trial
+        outcome: Webapp Snowflake form audit signed off
+        linked: [BH-552]
+      - day: Pre-trial
+        outcome: dbt agent GitHub Enterprise base_url config merged
+        linked: [BH-529]
+      - day: Pre-trial
+        outcome: "GX output: serialize as YAML to repo branch (not Markdown to S3)"
+        linked: [BH-530]
+      - day: Pre-trial
+        outcome: Quality agent CRUD resolvers + service merged
+        linked: [BH-541]
+      - day: Pre-trial
+        outcome: Quality → BrightSignals wiring + webapp side-menu live
+        linked: [BH-557, BH-558]
+      - day: Pre-trial
+        outcome: Trial start date confirmed with Grant
+      - day: Pre-trial
+        outcome: Trial-user list confirmed (1-2 DEs + 1-2 DSs)
+
+  - title: Days 1-5 — Provision + context layer
+    description: >
+      Stack connectivity validated; reference schemas + Atlas YAML spec loaded
+      into the workspace KG. Joint working session on Day 3.
+    expectations:
+      - day: Day 1
+        outcome: Use cases + success criteria confirmed (joint kickoff)
+      - day: Day 2
+        outcome: "Longaeva provisions stack access (Snowflake, S3, dbt, Dagster, GHE, MCP)"
+      - day: Day 3
+        outcome: Workspace provisioned + Snowflake connectivity validated
+        linked: [BH-533]
+      - day: Day 3
+        outcome: MCP client config to Longaeva's MCP server confirmed
+        linked: [BH-532]
+      - day: Day 4
+        outcome: Context layer built — reference schemas + Atlas YAML spec in KG
+        linked: [BH-534]
+      - day: Day 5
+        outcome: Environment mapping validated (joint review)
+
+  - title: Days 6-10 — Trial executions
+    description: >
+      Run the three ingestion scenarios + semantic-view enrollment + MCP
+      validation. This is where the platform shows up.
+    expectations:
+      - day: Day 6-8
+        outcome: "Ingestion: S3 vendor bucket scenario merge-ready"
+        linked: [BH-535]
+      - day: Day 6-8
+        outcome: "Ingestion: REST API scenario merge-ready"
+        linked: [BH-535]
+      - day: Day 6-8
+        outcome: "Ingestion: Snowflake Data Share scenario merge-ready"
+        linked: [BH-535]
+      - day: Day 8-10
+        outcome: Semantic view scaffolded for ≥1 Silver table (Atlas YAML)
+        linked: [BH-536]
+      - day: Day 8-10
+        outcome: Reference-data binding (LEI/FIGI / fiscal calendar / geo) auto-detected
+        linked: [BH-536]
+      - day: Day 8-10
+        outcome: "MCP validation: enrolled view queryable through Longaeva's MCP"
+        linked: [BH-536]
+
+  - title: Days 11-14 — Maintenance demo + final evaluation
+    description: >
+      Self-healing PRs, longitudinal anomaly signals, Slack triage. Then joint
+      scorecard review and commercial next-steps discussion.
+    expectations:
+      - day: Day 11-12
+        outcome: "Self-healing: schema drift → surgical fix PR demonstrated"
+      - day: Day 11-12
+        outcome: "Self-healing: missing partition / broken stage / dbt contract fail"
+      - day: Day 11-12
+        outcome: "Longitudinal anomaly: ≥1 of {row-count / cardinality / skew / nulls}"
+      - day: Day 11-12
+        outcome: "Slack alerts: triage-ready (dataset + severity + PR/run link)"
+        linked: [BH-557]
+      - day: Day 11-12
+        outcome: "Slack bidirectional: @brightagent answers pipeline-state question"
+      - day: Day 13
+        outcome: Final scorecard filled (17 success criteria scored)
+      - day: Day 14
+        outcome: Commercial next-steps discussion scheduled
+
+  - title: Post-trial — followups
+    description: >
+      Things tracked but not gated by the 14-day window. Update as the
+      decision lands.
+    expectations:
+      - day: Post
+        outcome: Decision recorded (Won / Lost / Extended) with rationale
+      - day: Post
+        outcome: JWT/key-pair Snowflake auth (Phase 2)
