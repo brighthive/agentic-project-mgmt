@@ -4,9 +4,10 @@ client: longaeva
 jira_epic: BH-526
 trial_start: "2026-06-15"
 author: kuri
-last_reviewed: "2026-06-01"
+last_reviewed: "2026-06-03"
 amended:
   - "2026-06-01 — GAP-3 (semantic view scaffolder) blocker resolved: Atlas YAML examples received from client; spec distilled at artifacts/atlas-semantic-view-spec.md"
+  - "2026-06-03 — Self-hosting deployment simplified: Matt → Grant/Sumukh email confirms Terraform module as primary path (CDK becomes alternative). Trial-guide artifact extended with Path A (Terraform) + uv-based local install. New tickets BH-572 (TF module), BH-573 (setup doc), BH-574 (CLI/uv), BH-575 (MCP auth decision) queued in TRACKER.md."
 status: pre-trial
 ---
 

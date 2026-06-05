@@ -102,8 +102,16 @@ phases:
         outcome: Quality agent CRUD resolvers + service merged
         linked: [BH-541]
       - day: Pre-trial
-        outcome: Quality → BrightSignals wiring + webapp side-menu live
-        linked: [BH-557, BH-558]
+        outcome: "Slack: quality/anomaly alerts wired through BrightSignals → channel (triage-ready: dataset + severity + PR/run link)"
+        linked: [BH-557]
+      - day: Pre-trial
+        outcome: "Slack: webapp side-menu push-notifications live (BrightSignals feed)"
+        linked: [BH-558]
+      - day: Pre-trial
+        outcome: "Slack: bidirectional @brightagent — pipeline-state Q&A + re-run/scaffold trigger"
+        linked: [BH-587]
+      - day: Pre-trial
+        outcome: "Slack: @brightagent bot installed in Longaeva workspace + channel created"
       - day: Pre-trial
         outcome: Trial start date confirmed with Grant
       - day: Pre-trial
@@ -169,7 +177,8 @@ phases:
         outcome: "Slack alerts: triage-ready (dataset + severity + PR/run link)"
         linked: [BH-557]
       - day: Day 11-12
-        outcome: "Slack bidirectional: @brightagent answers pipeline-state question"
+        outcome: "Slack bidirectional: @brightagent answers pipeline-state question + triggers re-run"
+        linked: [BH-587]
       - day: Day 13
         outcome: Final scorecard filled (17 success criteria scored)
       - day: Day 14
