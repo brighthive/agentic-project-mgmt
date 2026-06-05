@@ -7,12 +7,14 @@ last_reviewed: "2026-06-05"
 
 # Longaeva integration — source of truth
 
-> **Status — re-verified 2026-06-05.** PR states below were re-scanned today and
-> are **unchanged** since 2026-06-04: still **1 of 21 merged** (bb#497). bb#488
-> remains DIRTY (conflict); pc#778 + bb#490 remain CHANGES_REQUESTED. No niche
-> 1–4 work has reached `develop` yet. The integration test cannot start until at
-> least Gate A (Snowflake) and Gate B (GHE proxy foundation) land on staging —
-> see the [runbook](00-STAGING-INTEGRATION-RUNBOOK.md).
+> **Status — re-verified 2026-06-05 (afternoon scan).** Still **1 of 21 merged**
+> (bb#497). bb#488 remains DIRTY (conflict); pc#778 + bb#490 remain
+> CHANGES_REQUESTED. **Drift since last scan:** the niche-5 platform-core stack
+> (pc#784, #788, #789, #790) and bb#501 have been marked **Ready-for-review** —
+> they are no longer drafts. Table below updated. No niche 1–4 work has reached
+> `develop` yet. The integration test cannot start until at least Gate A
+> (Snowflake) and Gate B (GHE proxy foundation) land on staging — see the
+> [runbook](00-STAGING-INTEGRATION-RUNBOOK.md).
 
 > **Read this first.** The trial needs five workstreams ("niches") landed on
 > `develop` and deployed to **staging** before integration testing. This folder
@@ -66,12 +68,12 @@ State as of **2026-06-04**. `bb` = brightbot, `pc` = brighthive-platform-core, `
 | 13 | bb | [#496](https://github.com/brighthive/brightbot/pull/496) | 3 dbt migration | OPEN · draft | — | `BH-529-…` (#490) |
 | 14 | bb | [#495](https://github.com/brighthive/brightbot/pull/495) | 4 dead code | OPEN · draft | — | `BH-529-…` (#490) |
 | 15 | bb | [#497](https://github.com/brighthive/brightbot/pull/497) | 5 MCP/Okta | **MERGED** ✅ | — | `develop` |
-| 16 | pc | [#784](https://github.com/brighthive/brighthive-platform-core/pull/784) | 5 MCP/Okta | OPEN · draft | REVIEW_REQUIRED | `develop` |
-| 17 | pc | [#788](https://github.com/brighthive/brighthive-platform-core/pull/788) | 5 MCP/Okta | OPEN · draft | — | `…/BH-573` (#784) |
-| 18 | pc | [#789](https://github.com/brighthive/brighthive-platform-core/pull/789) | 5 MCP/Okta | OPEN · draft | — | `…/BH-573` (#784) |
-| 19 | pc | [#790](https://github.com/brighthive/brighthive-platform-core/pull/790) | 5 MCP/Okta | OPEN · draft | — | `…/BH-573` (#784) |
-| 20 | wa | [#1132](https://github.com/brighthive/brighthive-webapp/pull/1132) | 5 MCP/Okta | OPEN · draft | REVIEW_REQUIRED | `develop` |
-| 21 | bb | [#501](https://github.com/brighthive/brightbot/pull/501) | 5 MCP/Okta | OPEN · draft | — | `develop` |
+| 16 | pc | [#784](https://github.com/brighthive/brighthive-platform-core/pull/784) | 5 MCP/Okta | OPEN | REVIEW_REQUIRED | `develop` |
+| 17 | pc | [#788](https://github.com/brighthive/brighthive-platform-core/pull/788) | 5 MCP/Okta | OPEN | — | `…/BH-573` (#784) |
+| 18 | pc | [#789](https://github.com/brighthive/brighthive-platform-core/pull/789) | 5 MCP/Okta | OPEN | — | `…/BH-573` (#784) |
+| 19 | pc | [#790](https://github.com/brighthive/brighthive-platform-core/pull/790) | 5 MCP/Okta | OPEN | — | `…/BH-573` (#784) |
+| 20 | wa | [#1132](https://github.com/brighthive/brighthive-webapp/pull/1132) | 5 MCP/Okta | OPEN | REVIEW_REQUIRED | `develop` |
+| 21 | bb | [#501](https://github.com/brighthive/brightbot/pull/501) | 5 MCP/Okta | OPEN | REVIEW_REQUIRED | `develop` |
 
 > **Honesty note.** Of 21 PRs, **1 is merged** (bb#497). The rest are open;
 > most are draft and stacked on a parent branch, not on `develop` directly. Two
