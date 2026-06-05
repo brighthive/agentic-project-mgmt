@@ -179,9 +179,9 @@ class TestRenderer:
             config=config, tickets=tickets, pr_map={}, existing_text=None, now=_now(),
         )
         assert "Acme — Live Tracker" in out
-        assert "Phase 1 (1/1)" in out  # 1 auto green / 1 auto total (manual ignored)
-        assert "✅" in out  # auto-checked row
-        assert "⬜" in out  # manual row
+        assert "Phase 1 (1/1 🟢)" in out  # 1 auto green / 1 auto total (manual ignored)
+        assert "🟢" in out  # auto-checked (done) row
+        assert "🔲" in out  # manual row (no linked item)
         # Scoreboard
         assert "Alice" in out
         assert "🏁 Who's done what" in out
@@ -190,4 +190,15 @@ class TestRenderer:
         config = _config(tmp_path=tmp_path)
         tickets = [_ticket("BH-101", status="To Do", category="To Do")]
         progress = compute_phase_progress(config=config, tickets=tickets, pr_map={})
-        assert progress == [("Phase 1", 0, 1)]
+        assert progress == [("Phase 1", 0, 0, 1)]  # (title, green, wip, total)
+
+    def test_in_review_ticket_renders_wip(self, tmp_path):
+        config = _config(tmp_path=tmp_path)
+        tickets = [_ticket("BH-101", status="Code Review", category="In Review")]
+        out = render_tracker(
+            config=config, tickets=tickets, pr_map={}, existing_text=None, now=_now(),
+        )
+        assert "🟡" in out  # in-review ticket shows in-progress, not blank
+        assert "Phase 1 (0/1 🟢, 1 🟡)" in out
+        progress = compute_phase_progress(config=config, tickets=tickets, pr_map={})
+        assert progress == [("Phase 1", 0, 1, 1)]

@@ -42,6 +42,29 @@ class Expectation:
                     return False
         return True
 
+    def is_wip(
+        self,
+        *,
+        ticket_statuses: dict[str, str],
+        merged_pr_keys: set[str],
+        open_pr_ticket_keys: set[str],
+    ) -> bool:
+        """True when work is actively moving but not yet done — ticket In Progress/Review, or a linked PR is open."""
+        if not self.linked or self.is_green(
+            ticket_statuses=ticket_statuses, merged_pr_keys=merged_pr_keys
+        ):
+            return False
+        wip_statuses = {"in progress", "in review", "code review"}
+        for item in self.linked:
+            if item.startswith("BH-"):
+                if ticket_statuses.get(item, "").lower() in wip_statuses:
+                    return True
+                if item in open_pr_ticket_keys:
+                    return True
+            elif item not in merged_pr_keys:
+                return True
+        return False
+
 
 @dataclass(frozen=True)
 class Phase:
