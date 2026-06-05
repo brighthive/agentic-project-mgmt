@@ -2,7 +2,7 @@
 title: "Longaeva — staging integration runbook"
 audience: "Marwan, Ahmed, Harbour, Kuri"
 purpose: "The auditable merge + deploy + verify order for all 21 PRs onto staging"
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Longaeva — staging integration runbook

@@ -2,7 +2,7 @@
 title: "Niche 1 — Snowflake connector / BYOW"
 epic: "BH-526"
 prs: ["brightbot#488", "brightbot#489", "brighthive-platform-core#777"]
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Niche 1 — Snowflake connector / Bring-Your-Own-Warehouse

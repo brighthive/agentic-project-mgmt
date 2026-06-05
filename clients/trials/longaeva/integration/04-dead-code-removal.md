@@ -2,7 +2,7 @@
 title: "Niche 4 — Dead PyGithub code removal"
 epic: "BH-529 (child BH-562 PR2/2)"
 prs: ["brightbot#495"]
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Niche 4 — Dead PyGithub code removal

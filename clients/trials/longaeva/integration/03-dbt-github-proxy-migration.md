@@ -2,7 +2,7 @@
 title: "Niche 3 — DBT GitHub proxy migration (PAT off the agent boundary)"
 epic: "BH-529 (children BH-560..567, BH-568)"
 prs: ["brighthive-platform-core#781", "brighthive-platform-core#782", "brighthive-platform-core#783", "brightbot#493", "brightbot#494", "brightbot#496"]
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Niche 3 — DBT GitHub proxy migration

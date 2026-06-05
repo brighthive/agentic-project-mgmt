@@ -2,10 +2,17 @@
 title: "Longaeva integration — source of truth"
 audience: "Marwan, Ahmed, Harbour, Kuri"
 purpose: "One auditable map of the 21 PRs we must merge + deploy to staging for the Longaeva trial"
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Longaeva integration — source of truth
+
+> **Status — re-verified 2026-06-05.** PR states below were re-scanned today and
+> are **unchanged** since 2026-06-04: still **1 of 21 merged** (bb#497). bb#488
+> remains DIRTY (conflict); pc#778 + bb#490 remain CHANGES_REQUESTED. No niche
+> 1–4 work has reached `develop` yet. The integration test cannot start until at
+> least Gate A (Snowflake) and Gate B (GHE proxy foundation) land on staging —
+> see the [runbook](00-STAGING-INTEGRATION-RUNBOOK.md).
 
 > **Read this first.** The trial needs five workstreams ("niches") landed on
 > `develop` and deployed to **staging** before integration testing. This folder

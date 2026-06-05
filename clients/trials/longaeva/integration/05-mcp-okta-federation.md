@@ -2,7 +2,7 @@
 title: "Niche 5 — MCP server + Okta identity federation"
 epic: "BH-115 (children BH-572/573/574/575/588/589)"
 prs: ["brightbot#497", "brighthive-platform-core#784", "brighthive-platform-core#788", "brighthive-platform-core#789", "brighthive-platform-core#790", "brighthive-webapp#1132", "brightbot#501"]
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Niche 5 — MCP server + Okta identity federation

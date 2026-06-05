@@ -2,7 +2,7 @@
 title: "Niche 2 — GitHub Enterprise proxy foundation"
 epic: "BH-529"
 prs: ["brighthive-platform-core#778", "brighthive-platform-core#780", "brightbot#490", "brightbot#492"]
-last_reviewed: "2026-06-04"
+last_reviewed: "2026-06-05"
 ---
 
 # Niche 2 — GitHub Enterprise proxy foundation
