@@ -1,0 +1,236 @@
+---
+title: "Longaeva — staging integration runbook"
+audience: "Marwan, Ahmed, Harbour, Kuri"
+purpose: "The auditable merge + deploy + verify order for all 21 PRs onto staging"
+last_reviewed: "2026-06-05"
+---
+
+# Longaeva — staging integration runbook
+
+> **What this is.** The ordered, gated sequence to get the five niches onto
+> `develop`, promoted to `staging`, deployed, and verified. Each gate is
+> independently checkable — work top to bottom, don't skip a gate's
+> verification. If a gate fails, stop and fix before the next.
+>
+> **What this is NOT.** Not a deploy automation. Not a substitute for code
+> review. The CHANGES_REQUESTED PRs (pc#778, bb#490) still need their reviews
+> resolved by a human before merge — this runbook tells you the *order*, not
+> permission to bypass review.
+
+## Read before you start
+
+- The full PR map + niche docs are in [`README.md`](README.md).
+- **Current reality (2026-06-04):** 1 of 21 PRs merged (bb#497). Nothing in
+  niches 1–4 is on `develop`. Two foundation PRs are CHANGES_REQUESTED; bb#488
+  has a merge conflict. So this runbook is a *plan to execute*, not a record of
+  what happened.
+- **Outstanding external blockers** (from [`../TRACKER.md`](../TRACKER.md)) that
+  gate full verification — surface these in standup:
+  - **GHE host URL + sandbox PAT + TLS chain** from Grant → Gate B step 3 can't
+    run without them.
+  - **MCP auth-workflow decision** (joint with Grant/Sumukh) → affects Gate D.
+
+## How staging deploy works (so the gates make sense)
+
+| Repo | Promote by | Deploy target | Trigger |
+|---|---|---|---|
+| brighthive-platform-core | merge `develop` → `staging` | Lambda / API Gateway, STAGE acct `873769991712` | **auto** on `staging` push |
+| brightbot | merge `develop` → `staging` | LangGraph Cloud | **auto** on `staging` push |
+| brighthive-webapp | merge `develop` → `staging` | Amplify (`d1dk6ngojdo9gg`, MAIN acct) | webhook (manual trigger) |
+| platform-core **CDK** (Cognito #784, DNS #790) | n/a — CDK | `cdk deploy` per env | **manual**, per AWS account |
+
+> Two of the niche-5 PRs (#784 Cognito, #790 DNS) are **CDK**, not Lambda code.
+> Merging to `staging` does **not** deploy them — someone runs `cdk deploy` with
+> the right profile. Build that into Gate D.
+
+## Branch / merge discipline (per team rules)
+
+- Stacked PRs collapse onto their parent's branch, then the parent merges to
+  `develop` via **squash**. Never merge the stacked children directly to
+  `develop`.
+- One-directional flow only: `feature → develop → staging`. **Never** merge
+  `staging` back into `develop` (see memory `feedback_no_backward_merge`).
+- Order of operations per niche is in each gate below.
+
+---
+
+## Gate A — Snowflake / BYOW
+
+**Niche doc:** [`01-snowflake-byow.md`](01-snowflake-byow.md) · **PRs:** pc#777, bb#488, (bb#489 optional)
+
+**Independent of every other gate.** Can run in parallel with B/C/D.
+
+### Merge order
+1. **Clear bb#488's conflict** — rebase onto current `develop`, resolve
+   (`uv.lock` + `warehouse.py`), get review, squash-merge to `develop`.
+2. Squash-merge **pc#777** to `develop` (independent; needs review).
+3. (Optional for trial) Squash-merge **bb#489** (Atlas scaffold) — additive, not
+   on the critical path; the tool isn't wired into routing yet.
+4. Promote both repos `develop` → `staging`.
+
+### Verify on staging (OneTen workspace first)
+- [ ] Configure a staging workspace with the synthetic Snowflake secret:
+      `username`, `password`, `account`, `warehouse` (console
+      https://app.snowflake.com/bfddsko/dua97555/).
+- [ ] BrightBot connects — **no** `ValueError: Unknown warehouse type: snowflake`.
+- [ ] OMD ingestion lambda pulls the Snowflake catalog → tables appear in the
+      workspace.
+- [ ] BrightBot generates a Snowflake-dialect SELECT (uses `LIMIT`, ANSI
+      double-quotes — not `TOP`/brackets).
+- [ ] A write statement (`DELETE`/`UPDATE`/`INSERT`/`DROP`) is **rejected** by
+      `assert_read_only_sql`.
+- [ ] (if #489) Atlas scaffold YAML validates against the Atlas SDK for one
+      Silver table.
+
+---
+
+## Gate B — GitHub Enterprise proxy (foundation)
+
+**Niche doc:** [`02-github-enterprise-proxy.md`](02-github-enterprise-proxy.md) · **PRs:** pc#778 (+#780), then bb#490 (+#492)
+
+**This gate has the one hard cross-repo ordering rule in the whole bundle:
+platform-core must deploy to staging _before_ brightbot can be tested.**
+
+### Merge order — platform-core first
+1. Resolve pc#778's **CHANGES_REQUESTED** review.
+2. Merge the P0 fix **pc#780** (tenant gate) into #778's branch.
+   *(Niche-3 hardening pc#781/#782/#783 collapse here too — see Gate C; you can
+   bundle them into the same #778 merge if all reviews are clear.)*
+3. Squash-merge **pc#778** (now carrying #780) to `develop`.
+4. Promote platform-core `develop` → `staging`; confirm auto-deploy succeeded.
+
+### Then — brightbot
+5. Resolve bb#490's **CHANGES_REQUESTED** review.
+6. Merge P0 **bb#492** (log redaction) into #490's branch.
+   *(Niche-3 bb#493/#494/#496 and Niche-4 bb#495 also collapse onto #490's
+   branch — see Gates C/E.)*
+7. Squash-merge **bb#490** to `develop`; promote `develop` → `staging`
+   (LangGraph Cloud auto-deploy).
+
+### Verify on staging
+- [ ] All 7 proxy mutations resolve against github.com.
+- [ ] **Tenant isolation (P0):** workspace-A JWT calling `readGitHubFile` with
+      `workspaceId=B` → `ForbiddenError`; with `workspaceId=A` → success.
+- [ ] **GHE routing:** `base_url` env var routes a call to the self-hosted
+      instance. ⛔ **Blocked on Grant's GHE host URL + PAT + TLS chain.**
+- [ ] **PAT containment:** a full dbt run (explore→commit→PR) through the proxy
+      shows **no `github_pat`** in agent state or LangSmith traces.
+- [ ] **Log redaction (P0):** grep staging CloudWatch for `Bearer `, `ghp_`,
+      `github_pat_` on Platform Core calls → none.
+
+---
+
+## Gate C — dbt proxy hardening + correctness
+
+**Niche doc:** [`03-dbt-github-proxy-migration.md`](03-dbt-github-proxy-migration.md) · **PRs:** pc#781/#782/#783, bb#493/#494/#496
+
+These collapse onto the **same two branches** as Gate B. Sequence within:
+
+### platform-core (onto #778's branch, before the #778 squash in Gate B step 3)
+- pc#781 (redirect strip, P0), pc#782 (errorCode/truncated), pc#783 (URL tests +
+  trailing-slash bug). Mutually independent — any order.
+
+### brightbot (onto #490's branch, before the #490 squash in Gate B step 7)
+- bb#494 **first** (Pydantic models + injectable client), **then** bb#496
+  (super_agent proxy path — imports #494's modules). bb#493 (docs) anytime.
+
+### Verify on staging
+- [ ] `mapErrorCode` returns the right code for 401 / 403 / 404 / 422 (force a
+      call against a missing repo and a bad branch).
+- [ ] `truncated: true` returned when a file exceeds the char cap (commit a
+      >20k-char file, read it back via the proxy).
+- [ ] super_agent dbt run **with** `transformation_service_id` set → PR created
+      via the proxy; grep state + traces for `ghp_`/`github_pat` → none.
+- [ ] super_agent run **without** `transformation_service_id` → still works via
+      the legacy path (backwards-compat until BH-568).
+
+---
+
+## Gate E — dead code removal (verify-only)
+
+**Niche doc:** [`04-dead-code-removal.md`](04-dead-code-removal.md) · **PR:** bb#495
+
+Collapses onto #490's branch (Gate B). It's a pure deletion of unreferenced
+code — no behavior change expected.
+
+### Verify
+- [ ] After the bb#490 squash to `develop`, the dbt agent and super_agent both
+      start and run (imports resolve) on staging.
+- [ ] `tests/unit/tools/test_no_dead_pygithub_modules.py` green in CI.
+- [ ] **Do not** claim "PyGithub removed from BrightBot" — it's still imported by
+      super_agent's legacy path (BH-568). Only the 4 dead modules are gone.
+
+> Gate ordered after C because both ride #490's branch; verify together.
+
+---
+
+## Gate D — MCP + Okta federation
+
+**Niche doc:** [`05-mcp-okta-federation.md`](05-mcp-okta-federation.md) · **PRs:** bb#497 (merged), pc#784 (+#788/#789/#790), wa#1132, bb#501
+
+**Mostly independent of A/B/C.** bb#497 is already merged but non-functional
+until Layer 1 deploys.
+
+### Merge order — platform-core
+1. Resolve pc#784 review; squash-merge **pc#784** (Cognito clients + Okta hook)
+   to `develop`.
+2. Merge stacked **pc#788** (Okta runbook, docs), **pc#789** (DCR spec, docs)
+   — these are docs/specs, low risk.
+3. Squash-merge **pc#790** (DNS CDK) — must land for the custom domain to attach.
+4. Promote platform-core `develop` → `staging`.
+
+### Deploy the CDK (manual — not covered by the staging auto-deploy)
+5. `cdk deploy` the **DnsStack** (pc#790) for staging → grab the
+   `AuthZoneNameservers` / `McpZoneNameservers` outputs.
+6. **Cloudflare:** add the NS delegation records for `auth.staging.brighthive.io`
+   + `mcp.staging.brighthive.io` (one-time, per the
+   `MCP_DNS_DEPLOYMENT_RUNBOOK.md`). Wait for ACM validation.
+7. `cdk deploy` the **UserPoolStack** (pc#784) with the cert/zone/fqdn wired →
+   Cognito custom domain attaches.
+
+### Docs / specs (merge anytime, not gating)
+8. **bb#501** (cross-link MCP docs) → `develop`.
+9. **wa#1132** (webapp MCP UI **spec**) → `develop`. *Spec only — the UI
+   implementation is a future PR, NOT part of this integration test.*
+
+### Verify on staging
+- [ ] Cognito resource server + 4 scopes + 2 app clients exist.
+- [ ] pre-token-gen Lambda maps a federated Okta `org` claim →
+      `custom:workspace_id` in an issued staging token.
+- [ ] `auth.staging.brighthive.io` + `mcp.staging.brighthive.io` resolve; ACM
+      cert valid; Cognito custom domain attached.
+- [ ] `GET mcp.staging.brighthive.io/.well-known/oauth-protected-resource` → 200.
+- [ ] Unauthenticated `tools/list` → 401 with `WWW-Authenticate` pointing at the
+      real `auth.staging…` issuer.
+- [ ] Authenticated `ping` returns the principal's `workspace_id`.
+- [ ] Two-tenant: same tool, two workspace JWTs → workspace-scoped results
+      differ.
+
+---
+
+## Final integration-test checklist (the few-hours session)
+
+Run after all gates pass. This is the "is the trial ready" readout.
+
+| # | Check | Niche | Owner |
+|---|---|---|---|
+| 1 | Snowflake workspace connects + read-only enforced | A | |
+| 2 | OMD ingests Snowflake catalog | A | |
+| 3 | Proxy tenant isolation rejects cross-workspace | B | |
+| 4 | GHE `base_url` routing works (needs Grant's creds) | B | |
+| 5 | dbt run leaves no PAT in state/traces | B+C | |
+| 6 | super_agent PR via proxy (with TSID) | C | |
+| 7 | No-regression after dead-code deletion | E | |
+| 8 | MCP endpoint live + authenticated + tenant-scoped | D | |
+| 9 | Okta federation maps to workspace_id | D | |
+
+> **Honesty gate for the readout:** mark a row green only when verified on
+> staging. "PR merged" ≠ "deployed" ≠ "verified". Per
+> `feedback_pr_state_honesty`, don't report intended behavior as shipped.
+
+## Sign-off
+
+- [ ] All gates verified on **OneTen** (dev sandbox) first.
+- [ ] Promote to **DemoEnv** only after OneTen is clean (per
+      `project_staging_environments`).
+- [ ] TRACKER blockers resolved or explicitly accepted.
