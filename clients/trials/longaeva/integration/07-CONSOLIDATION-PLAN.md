@@ -3,7 +3,7 @@ title: "Longaeva — 23→4 PR consolidation plan"
 audience: "Kuri, Marwan, Ahmed, Harbour"
 purpose: "Collapse the ~23 stacked trial PRs into 4 reviewable integration PRs, in dependency order, without burying review feedback"
 last_reviewed: "2026-06-06"
-status: "IN PROGRESS — PR-1 executed (bb#503). PR-2 gated on review. PR-3/4 pending."
+status: "IN PROGRESS — PR-1 (bb#503) + PR-3 (pc#791) executed; PR-4 capabilities shipped (#504-507). PR-2 gated on CHANGES_REQUESTED review."
 ---
 
 > **Execution log**
@@ -21,8 +21,16 @@ status: "IN PROGRESS — PR-1 executed (bb#503). PR-2 gated on review. PR-3/4 pe
 >   - **#507 BH-594** — infer dbt schema.yml tests from an introspected table (§4)
 >   Stack: #503 → #504 → #505 → #506 → #507. Each: unit-tested + (where live)
 >   validated against LONGAEVA_POC; all draft, reviewers assigned.
-> - PR-2 (GHE proxy) still gated on pc#778/bb#490 CHANGES_REQUESTED. PR-3 (MCP/Okta)
->   not yet consolidated.
+> - **2026-06-06 — PR-3 (MCP/Okta) DONE.** platform-core `integration/mcp-okta`
+>   → **pc#791** (draft). Folds pc#784 + pc#788 + pc#789 + pc#790. Clean merge
+>   (zero conflicts; 788/789 fast-forward). **18/18 cognito lambda tests green.**
+>   pc#784/788/789/790 closed as superseded (commits verified contained).
+>   ⚠️ pc#790 DNS + pc#784 Cognito custom domain are CDK — manual `cdk deploy`
+>   per env (runbook Gate D), not triggered by merge. Companion docs PRs
+>   wa#1132 + bb#501 remain separate.
+> - PR-2 (GHE proxy) still gated on pc#778/bb#490 CHANGES_REQUESTED — the only
+>   remaining blocked bucket. PR-4 (Layer-B) capabilities shipped via the
+>   dbt-agent stack (#504-507) above.
 
 # Longaeva — 23→4 PR consolidation plan
 
