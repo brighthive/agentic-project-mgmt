@@ -10,7 +10,19 @@ status: "IN PROGRESS — PR-1 executed (bb#503). PR-2 gated on review. PR-3/4 pe
 > - **2026-06-06 — PR-1 DONE.** `integration/snowflake-byow` → **bb#503** (draft).
 >   Folds bb#488 + bb#489 + bb#502. Clean merge (disjoint files; only uv.lock
 >   regen). **114 unit tests green** on the consolidated branch. bb#488/489/502
->   commented as superseded, left open. PR-2/3/4 unchanged below.
+>   closed as superseded (commits verified contained in #503).
+> - **2026-06-06 — dbt-agent Snowflake/Longaeva capability stack DONE** (stacked
+>   on #503). All built **warehouse-agnostic** (Snowflake/Redshift/Synapse/Postgres):
+>   - **#504 BH-591** — wire Atlas semantic-view scaffold into the agent (§2)
+>   - **#505 BH-590** — warehouse-agnostic introspection (list_tables/stages/
+>     semantic_views); Snowflake uses SHOW PRIMARY KEYS, others share an ANSI
+>     KEY_COLUMN_USAGE path. Live-verified vs LONGAEVA_POC.
+>   - **#506 BH-592b** — generate dbt source + staging from an introspected table (§1)
+>   - **#507 BH-594** — infer dbt schema.yml tests from an introspected table (§4)
+>   Stack: #503 → #504 → #505 → #506 → #507. Each: unit-tested + (where live)
+>   validated against LONGAEVA_POC; all draft, reviewers assigned.
+> - PR-2 (GHE proxy) still gated on pc#778/bb#490 CHANGES_REQUESTED. PR-3 (MCP/Okta)
+>   not yet consolidated.
 
 # Longaeva — 23→4 PR consolidation plan
 
