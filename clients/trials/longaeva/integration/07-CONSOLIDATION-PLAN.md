@@ -3,8 +3,14 @@ title: "Longaeva — 23→4 PR consolidation plan"
 audience: "Kuri, Marwan, Ahmed, Harbour"
 purpose: "Collapse the ~23 stacked trial PRs into 4 reviewable integration PRs, in dependency order, without burying review feedback"
 last_reviewed: "2026-06-06"
-status: "PLAN — no branch surgery executed yet. Awaiting go per consolidation gate."
+status: "IN PROGRESS — PR-1 executed (bb#503). PR-2 gated on review. PR-3/4 pending."
 ---
+
+> **Execution log**
+> - **2026-06-06 — PR-1 DONE.** `integration/snowflake-byow` → **bb#503** (draft).
+>   Folds bb#488 + bb#489 + bb#502. Clean merge (disjoint files; only uv.lock
+>   regen). **114 unit tests green** on the consolidated branch. bb#488/489/502
+>   commented as superseded, left open. PR-2/3/4 unchanged below.
 
 # Longaeva — 23→4 PR consolidation plan
 
