@@ -142,13 +142,30 @@ is:
    `verified_query` per major use-case implied by the user's description.
    SQL must use Snowflake's native `SEMANTIC_VIEW(...)` syntax with three
    sections: `DIMENSIONS <table>.<dim>, ...`, `FACTS <table>.<fact>, ...`,
-   and optional `METRICS`. Every column reference is **table-qualified**
-   (`UNIFIED_SPEND.PERIOD_START_DATE`) — this works for both single- and
-   multi-table views.
+   and optional `METRICS`.
 
-6. **Validate the verified_query.** Once the validation harness lands
-   (BH-596), call it; until then, hand the YAML to the user with a "verify
-   in Snowflake before commit" flag.
+   **Qualify every column by the table that OWNS it — not just any table in
+   the view.** This is the #1 cause of `invalid identifier` errors and is only
+   caught by running the query. A column that comes from a joined/related table
+   must be qualified with that table's name, NOT the base table:
+   - ✅ `EXPOSURE.asset_class_code` — column is on the EXPOSURE base table.
+   - ❌ `EXPOSURE.region` — `region` lives on the joined `rel_geo` table;
+     this raises `invalid identifier 'EXPOSURE.REGION'`. Use the owning table.
+   (Verified live against `LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE`,
+   2026-06-05.) When you introspected the schema (step 1), you know which table
+   each column came from — use that to qualify correctly.
+
+   **`name == expr` for time_dimensions** (and any dimension whose `expr` is a
+   plain column). The SDK uses `expr`, not `name`, as the identifier in the
+   generated query; mismatched name/expr deploys the view under one name but
+   queries the other → `invalid identifier` at enrollment.
+
+6. **Validate the verified_query — it WILL be machine-checked.** The Atlas
+   enrollment harness compiles and runs every `verified_query` against
+   Snowflake (client-confirmed 2026-06-05); a query that doesn't round-trip
+   blocks enrollment. Once BrightHive's own validation harness lands (BH-596),
+   call it pre-commit; until then, hand the YAML to the user with a "verify in
+   Snowflake before commit" flag. Treat a verified_query as a gate, not garnish.
 
 7. **Commit + PR.** Write the YAML to `models/semantic/<svw_name>.yml` (or
    wherever the project's semantic views live — confirm via
@@ -167,6 +184,17 @@ correct action is to **bind the field WITHOUT an atlas.target** (let the
 deterministic tool's default handle it) rather than invent a target. Hallucinated
 targets fail the grounding validator (BH-596) and break the Atlas SDK.
 
+**`metric_type` and `growth_type` are CLOSED enums** (client-confirmed
+2026-06-05, fully specified as Pydantic models in their codebase):
+- `metric_type` ∈ `{Feature, Estimate, Actual}`
+- `growth_type` ∈ `{Level, PoP, YoY}` (upstream set)
+
+The deterministic scaffold tool already rejects out-of-set values at scaffold
+time (`scaffold_atlas_semantic_view` raises `ValueError`), so you cannot smuggle
+an invalid value through. If a use-case seems to need a value outside these
+sets, that's a downstream-derivative concept — surface it to the user, don't
+invent an enum value.
+
 ### What you must NOT do
 
 - **Never emit `CREATE SEMANTIC VIEW` DDL.** The Atlas SDK strips `atlas.*`
@@ -176,6 +204,9 @@ targets fail the grounding validator (BH-596) and break the Atlas SDK.
   the field empty and flag for human review.
 - **Never invent column names** in `expr:` fields. They must reference real
   introspected columns.
+- **Never use a `metric_type`/`growth_type` outside the closed enums above.**
+- **Never qualify a column with a table that doesn't own it** — qualify by the
+  owning (base or related) table, or the `SEMANTIC_VIEW()` query fails to compile.
 ```
 
 ## Diff 4 — tests

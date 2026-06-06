@@ -1,9 +1,10 @@
 ---
 title: "Atlas Semantic View YAML Contract — extracted from Longaeva's sanitized examples"
 source: "clients/trials/longaeva/artifacts/atlas-semantic-view-examples.yaml"
-source_provided: "2026-06-01 by client"
-status: "authoritative — derived directly from client's POC enablement file"
+source_provided: "2026-06-01 by client; enums + 5 open-Qs answered by client 2026-06-05; SEMANTIC_VIEW rules live-verified vs LONGAEVA_POC 2026-06-05"
+status: "authoritative — derived from client's POC enablement file + client confirmations + live Snowflake validation"
 extends: "Snowflake Semantic View YAML spec (https://docs.snowflake.com/en/user-guide/views-semantic/semantic-view-yaml-spec)"
+last_reviewed: "2026-06-05"
 ---
 
 # Atlas Semantic View YAML Contract
@@ -160,12 +161,17 @@ verified_queries:
       ORDER BY ...
 ```
 
-Two semantic notes about the SQL:
+Semantic notes about the SQL (the first two are live-verified against
+`LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE`, 2026-06-05):
 
 1. They use Snowflake's native `SEMANTIC_VIEW(…)` table-function syntax — three sections: `DIMENSIONS`, `FACTS`, optional `METRICS`.
-2. Every column reference is **table-qualified** (`UNIFIED_SPEND.PERIOD_START_DATE`) so multi-table views work consistently.
+2. **Every column reference must be qualified by its OWNING table — not just any table.** This is the failure mode that only a live run catches: in `SV_DAILY_PORTFOLIO_EXPOSURE`, `region` lives on the joined `rel_geo` table, so `EXPOSURE.region` raises `invalid identifier 'EXPOSURE.REGION'`. A base-table column like `EXPOSURE.asset_class_code` works. The scaffold/agent must bind each dimension/fact to the table that actually owns it, then qualify with that table's alias.
+   - ✅ proven: `SELECT * FROM SEMANTIC_VIEW(LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE DIMENSIONS EXPOSURE.asset_class_code, EXPOSURE.as_of_date METRICS EXPOSURE.total_exposure_usd)` → returns rows.
+   - ❌ fails: same query with `EXPOSURE.region` (region is on `rel_geo`, not `EXPOSURE`).
+3. **`name == expr` for time_dimensions** (and any dimension whose `expr` is a plain column). The SDK uses `expr` — not `name` — as the identifier in the generated `SEMANTIC_VIEW()` query; if they differ, the deployed view exposes one name but the query references the other → `invalid identifier`. (From the SDK skill doc.)
+4. **`verified_queries` are machine-validated** at enrollment time — the harness compiles and runs them against Snowflake (client-confirmed 2026-06-05). A query that doesn't round-trip blocks enrollment. So the scaffold's verified_query is not decoration; it's a gate.
 
-The scaffolding tool should generate at least one `verified_query` per major use-case implied by `custom_instructions`. These are gold for both agent context and human enrollment confidence.
+The scaffolding tool should generate at least one `verified_query` per major use-case implied by `custom_instructions`. These are gold for both agent context and human enrollment confidence — and they must actually compile.
 
 ---
 
@@ -180,12 +186,24 @@ atlas:
   entities:
     primary: <atlas_target_key>             # which dimension's atlas.target is the primary entity
   defaults:
-    metric_type:  Feature                   # observed values: Feature
-    growth_type:  Level                     # observed values: Level
-    period_type:  Month | Week              # default time grain
+    metric_type:  Feature | Estimate | Actual   # BOUNDED — client-confirmed 2026-06-05
+    growth_type:  Level | PoP | YoY             # BOUNDED (upstream set) — client-confirmed 2026-06-05
+    period_type:  Month | Week                  # default time grain
   dagster_dep: ["dbt", "<dbt_model_name>"]  # orchestration dependency — couples to Dagster
   warehouse_size: S | M | L | XL            # optional — Example 2 sets L
 ```
+
+**Enum vocabulary (client-confirmed 2026-06-05, fully specified as Pydantic models in their codebase):**
+
+| Field | Allowed values (upstream semantic views) | Notes |
+|---|---|---|
+| `metric_type` | `Feature`, `Estimate`, `Actual` | Closed set. |
+| `growth_type` | `Level`, `PoP`, `YoY` | Upstream-only set. The downstream-derivative set is broader, but values *expected in upstream semantic views* are limited to these three. |
+
+The enrollment harness rejects out-of-set values at load time, so BrightHive's scaffold
+**validates at scaffold time** (`scaffold_atlas_semantic_view` raises `ValueError`) rather
+than emitting YAML the harness will bounce. Encoded as `Literal` types + `VALID_*` sets in
+`brightbot/agents/dbt_agent/tools/atlas_semantic_view/constants.py` (bb#489).
 
 `dagster_dep` is a tuple `[orchestrator, dep_name]`. In all examples the orchestrator is `"dbt"` and the dep is the upstream dbt model. **Confirms Dagster is in scope** for the trial — BrightHive's lineage agent needs to understand the dbt→Dagster→semantic-view chain.
 
@@ -229,8 +247,10 @@ The brightbot scaffolding tool for Snowflake semantic views MUST:
    - `sample_values` populated by `SELECT DISTINCT col LIMIT 10` on the Silver table (or a configurable cap)
    - `atlas.target` inferred from the column name via a known-mapping table (LEI/FIGI → `lngv_issuer_id`, bloomberg → `bloomberg_ticker`, geography columns → `metric_attributes.geography.*`)
    - `atlas.metric.aggregations` defaulted from fact name (counts → sum, prices → avg, percentages → null)
+   - `atlas.dataset_key` with the **first component = source domain** (reusable across sibling datasets from the same source), not a per-dataset slug
+   - `atlas.defaults.metric_type` / `growth_type` **validated against the bounded enums** ({Feature, Estimate, Actual} / {Level, PoP, YoY}) — reject out-of-set at scaffold time
    - `custom_instructions` — first pass scaffolded from the description; flagged for human review
-   - At least one `verified_query` — generated from the plain-language description
+   - At least one `verified_query` — generated from the plain-language description, **table-qualified by each column's owning table**, and ideally round-tripped against Snowflake before enrollment (the harness will do this anyway)
 
 3. **Output**: a YAML string PLUS a structured "scaffold report" listing every field the LLM had to guess vs every field grounded in catalog data (so a human can review the inferred bits).
 
@@ -250,10 +270,14 @@ So the "reference-data join detection" requirement is actually: **detect when an
 
 ---
 
-## 7. Open questions to confirm with Grant
+## 7. Open questions — RESOLVED (client, 2026-06-05)
 
-1. Is the **stripping rule** for `atlas.*` keys done by the Atlas SDK before Snowflake DDL generation, or do we strip in our scaffolding tool? (We should not emit Snowflake DDL ourselves; we emit the YAML and Atlas handles DDL.)
-2. Are `metric_type` / `growth_type` enumerations bounded? Only `Feature` and `Level` appear in the examples — confirm full vocabulary.
-3. Is the `dataset_key` namespace structure flat (`<namespace>.<slug>`) or hierarchical (>2 dots)? All 3 examples use 2 levels.
-4. Are `verified_queries` machine-validated (compiled against Snowflake) at enrollment time, or human-curated only?
-5. What's the canonical name for the entity-type prefix in `owners`? Only `team:*` appears in examples.
+1. **Stripping rule** — ✅ **The Atlas SDK strips `atlas.*` keys and generates the Snowflake DDL.** BrightHive emits YAML only; we never emit `CREATE SEMANTIC VIEW` DDL ourselves. (Confirmed: "The atlas key stripping and DDL generation will be done by our SDK.")
+2. **`metric_type` / `growth_type` bounded?** — ✅ **Yes, both finite enums, fully specified as Pydantic models in their codebase.** `metric_type ∈ {Feature, Estimate, Actual}`; `growth_type ∈ {Level, PoP, YoY}` for upstream views (downstream-derivative growth set is broader but does not apply to authored upstream views). See §4.
+3. **`dataset_key` structure** — ✅ **Period-delimited string; the first component is the DOMAIN, which can be shared across datasets from the same source system.** So it's hierarchical-by-convention: `<domain>.<dataset>[.…]`, and the domain prefix is intentionally reusable across sibling datasets from one source. Scaffold should set the first component from the source/domain, not a per-dataset slug.
+4. **`verified_queries` machine-validated?** — ✅ **Yes — machine-validated as part of the enrollment harness** (compiled + run against Snowflake). Not human-curated only. See §3 note 4.
+5. **`owners` prefix** — ✅ **Dagster-specific syntax. An asset owner is either an individual (`username`) or a team (`team:*`).** Both forms valid; don't enforce `team:` only.
+
+### Remaining genuinely-open item (not about the YAML format)
+
+- **MCP auth-workflow** for connecting to Longaeva's internal MCP server — still a joint decision with Grant + Sumukh (gates POC §3). Tracked in the integration runbook Gate D, not here.
