@@ -4,9 +4,11 @@ client: longaeva
 jira_epic: BH-526
 trial_start: "2026-06-15"
 author: kuri
-last_reviewed: "2026-06-01"
+last_reviewed: "2026-06-03"
 amended:
   - "2026-06-01 — GAP-3 (semantic view scaffolder) blocker resolved: Atlas YAML examples received from client; spec distilled at artifacts/atlas-semantic-view-spec.md"
+  - "2026-06-03 — Self-hosting deployment simplified: Matt → Grant/Sumukh email confirms Terraform module as primary path (CDK becomes alternative). Trial-guide artifact extended with Path A (Terraform) + uv-based local install. New tickets BH-572 (TF module), BH-573 (setup doc), BH-574 (CLI/uv), BH-575 (MCP auth decision) queued in TRACKER.md."
+  - "2026-06-05 — HONESTY AMENDMENT (multi-agent trial review). The original 'Confidence to win: HIGH' read was written before the Layer-A/B/C decomposition surfaced that the dbt engineering agent's authoring capability (POC §1+§2 headline) has ZERO PRs today, only 5 freshly-created tickets (BH-590..BH-594) plus 3 more identified by review (BH-595..BH-597). Honest confidence is MEDIUM, win-conditional on: (a) Grant call this week to reframe semantic-view as co-build Day 6-8, (b) BH-590/591/592 landing to demo-quality by Day 3, (c) GHE creds + MCP auth decision unblocked, (d) E2E eval harness (BH-597) catching hallucinations before Day 6. See artifacts/email-2026-06-05-grant-trial-reframe-DRAFT.md for the proposed Grant reframe."
 status: pre-trial
 ---
 
@@ -28,9 +30,14 @@ sandbox proves are valid.
   full ELT stack live (Snowflake + dbt + **Dagster orchestration**), ~95% fidelity
 - **BrightHive readiness**: 🔲 9 product gaps (GAP-1…9 below), of which **1 is the
   critical path** (Snowflake connectivity) and the rest are scoped wiring.
-- **Confidence to win**: HIGH *if* the critical path + 3 P1 items land before
-  June 15. The sandbox de-risks everything downstream because we can now
-  develop the agents against a known-good environment instead of guessing.
+- **Confidence to win**: **MEDIUM, win-conditional** (amended 2026-06-05 after
+  multi-agent trial review surfaced 8 tickets, not 4, with ZERO PRs covering
+  POC §1+§2 authoring). Was previously stated as HIGH; that read was written
+  before the Layer-A/B/C decomposition exposed the missing dbt-agent
+  authoring layer. Sandbox de-risks the *target* (the artifacts BrightHive
+  must emit are real and reachable); it does NOT de-risk the *agent's ability
+  to emit them under LLM non-determinism*. See "Honest probability per POC
+  section" below.
 
 ## How to read this
 
@@ -185,24 +192,53 @@ Sequenced by dependency. Critical path first.
 
 **Minimum viable for Day-1 success** (Sections 1 + 2 demoable): tickets **1, 2, 3, 4, 5**. Tickets 6–9 enrich Sections 3 + 4 and can land during the trial as co-development if needed.
 
-## Confidence statement
+## Confidence statement (amended 2026-06-05)
 
-We can state with high confidence that **the PoC is winnable with excellence**,
+> Previously read "HIGH". Amended after the multi-agent trial review surfaced
+> the dbt-agent authoring layer (POC §1+§2 headline) as zero-PR, eight-ticket
+> work with non-deterministic LLM steps. See `amended:` log at top.
+
+We state with **MEDIUM, win-conditional** confidence that the PoC is winnable,
 because:
 
-1. **The environment is no longer a question mark** — we have a live Snowflake
-   account with the exact medallion + semantic-view + share + RBAC shape
-   Longaeva described, and every use case resolves against it (`validate_poc.sh`
-   10/10).
-2. **Each BrightHive gap has a golden reference to build against** — the agent
-   work is no longer "figure out what correct looks like", it's "make the agent
-   emit what the sandbox already proved is valid". That collapses the risk.
-3. **The critical path is bounded and small** — GAP-1 is 1–2 days of wiring on
-   plumbing that already exists, not a from-scratch build.
+1. **The environment is no longer a question mark** — live Snowflake parity
+   account, every use case resolves against `validate_poc.sh` (10/10). The
+   *target* is de-risked.
+2. **Each BrightHive gap has a golden reference** — agent work is "emit what
+   the sandbox proved valid", not "figure out what valid looks like."
+3. **Layer A (Snowflake plumbing) is bounded and mechanical** — BH-527 is
+   1–2d wiring on existing plumbing. This piece is honestly LOW-risk.
 
-The two genuine external dependencies — Longaeva's **actual YAML spec** (GAP-3)
-and **MCP access** (GAP-6) — are owned by Grant and due before/at Day 1; both
-have sandbox stand-ins so BrightHive development is unblocked until they arrive.
+We caveat with **THREE risk factors not in the original read**:
+
+1. **Layer B (dbt-agent authoring) is 8 tickets, 0 PRs, ~25 engineering-days
+   of work** before the trial. BH-590..597 cover POC §1.1, §1.3, §2, §4.2 —
+   but §1.2 (REST API) is at risk and POC §3 (MCP feedback loop) is gated on
+   Grant's auth decision.
+2. **LLM non-determinism is uncovered.** Hallucination risk is concentrated
+   in `verified_queries[].sql`, `atlas.target` bindings, and `sample_values`.
+   BH-596 (grounding validator + compile harness) + BH-597 (E2E eval harness)
+   are the quality gates that turn "21 PRs merged, gates green" into "demo
+   works the first time, every time" — they MUST land before Day 6.
+3. **The "co-build" framing is now the proposed plan, not the original
+   black-box demo.** See `artifacts/email-2026-06-05-grant-trial-reframe-DRAFT.md`
+   — Day 6–8 reframed from "agent autonomously enrolls" to "joint workshop
+   with Longaeva data scientist." Win-condition (a): Grant agrees.
+
+**Honest probability per POC section (multi-agent review, 2026-06-05):**
+
+| Section | Realistic prob. E2E on real data |
+|---|---|
+| §1 Ingestion (S3 / REST / Data Share) | 20% |
+| §2 Semantic view (headline) | 15% |
+| §3 MCP feedback loop | 30% |
+| §4 Maintenance | 25% |
+| **All four on real data** | ~5% |
+| **≥2 of 4 demoed convincingly** | ~45% |
+
+**External dependencies still owned by Grant** — GHE host URL + sandbox PAT +
+TLS chain (gates BH-593 verify), MCP auth-workflow decision (gates Gate D).
+The Grant call this week (see Grant email draft) exists to unblock both.
 
 ## Reproduce
 

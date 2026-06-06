@@ -20,13 +20,20 @@ last_reviewed: "2026-06-05"
 ## Read before you start
 
 - The full PR map + niche docs are in [`README.md`](README.md).
-- **Current reality (2026-06-04):** 1 of 21 PRs merged (bb#497). Nothing in
+- **Current reality (2026-06-05):** 1 of 21 PRs merged (bb#497). Nothing in
   niches 1–4 is on `develop`. Two foundation PRs are CHANGES_REQUESTED; bb#488
   has a merge conflict. So this runbook is a *plan to execute*, not a record of
   what happened.
+- **The 21-PR bundle is NOT the full trial scope.** It covers Layer A
+  (Snowflake plumbing — 3 PRs), Layer C (GHE proxy delivery — 10 PRs), and
+  Layer D (MCP/Okta — 7 PRs). **Layer B — the dbt engineering agent's actual
+  authoring capability — is mostly NOT in this bundle.** See the new
+  [**Gate A.5 — dbt agent authoring capability**](#gate-a5--dbt-agent-authoring-capability-layer-b)
+  below; it tracks 5 tickets (BH-590…BH-594) that gate Sections 1, 2, and 4 of
+  the POC scope and have ZERO PRs today.
 - **Outstanding external blockers** (from [`../TRACKER.md`](../TRACKER.md)) that
   gate full verification — surface these in standup:
-  - **GHE host URL + sandbox PAT + TLS chain** from Grant → Gate B step 3 can't
+  - **GHE host URL + sandbox PAT + TLS chain** from Grant → Gate B step 3 + BH-593 can't
     run without them.
   - **MCP auth-workflow decision** (joint with Grant/Sumukh) → affects Gate D.
 
@@ -56,17 +63,28 @@ last_reviewed: "2026-06-05"
 
 ## Gate A — Snowflake / BYOW
 
-**Niche doc:** [`01-snowflake-byow.md`](01-snowflake-byow.md) · **PRs:** pc#777, bb#488, (bb#489 optional)
+**Niche doc:** [`01-snowflake-byow.md`](01-snowflake-byow.md) · **PRs:** `bb#488`, `pc#777`, `data-organization-cdk#156`, `bb#489`
 
 **Independent of every other gate.** Can run in parallel with B/C/D.
+
+> **Reality (2026-06-05):** all 4 PRs **built and tested**, 168 unit tests
+> green. Gating action is review approve → squash merge → deploy → drop a
+> Snowflake secret into `workspace_secret_store/{longaeva-workspace-uuid}`
+> with `type=SNOWFLAKE`. See `01-snowflake-byow.md` "What is truly built
+> today" for the layer breakdown.
 
 ### Merge order
 1. **Clear bb#488's conflict** — rebase onto current `develop`, resolve
    (`uv.lock` + `warehouse.py`), get review, squash-merge to `develop`.
-2. Squash-merge **pc#777** to `develop` (independent; needs review).
-3. (Optional for trial) Squash-merge **bb#489** (Atlas scaffold) — additive, not
-   on the critical path; the tool isn't wired into routing yet.
-4. Promote both repos `develop` → `staging`.
+2. Squash-merge **pc#777** (Layer 3 OMD ingestion source config) to `develop`.
+3. Squash-merge **data-organization-cdk#156** (Layer 7 org-CDK
+   `workspace_secret_store` migration) to `develop`.
+4. Squash-merge **bb#489** (Atlas YAML scaffold tool, BH-531). Note: tool
+   exists but is **orphaned** until BH-591 wires it into the dbt_agent
+   registry — see Gate A.5.
+5. Promote all 3 repos `develop` → `staging`.
+6. Drop the Snowflake secret into `workspace_secret_store/{workspace-uuid}`
+   with `type=SNOWFLAKE`.
 
 ### Verify on staging (OneTen workspace first)
 - [ ] Configure a staging workspace with the synthetic Snowflake secret:
@@ -81,6 +99,66 @@ last_reviewed: "2026-06-05"
       `assert_read_only_sql`.
 - [ ] (if #489) Atlas scaffold YAML validates against the Atlas SDK for one
       Silver table.
+
+---
+
+## Gate A.5 — dbt agent authoring capability (Layer B)
+
+**Not in the 21-PR bundle. Five tickets, zero open PRs today. This gate exists
+because Gate A only gives BrightHive *connectivity* to Snowflake — it does NOT
+give the dbt engineering agent the ability to author the artifacts the trial
+demands.**
+
+**Tickets:** BH-590 (GAP-2), BH-591 (GAP-3b), BH-592 (GAP-4), BH-594 (GAP-9).
+BH-593 (GAP-5, GHE base_url) overlaps with Gate B but is independent of the
+proxy PRs.
+
+**Why this gate is separate from A and B:**
+
+| Layer | What it gives the trial | In the 21-PR bundle? |
+|---|---|---|
+| A — Snowflake plumbing | BrightBot can connect, SELECT, introspect | Yes (bb#488, pc#777, bb#489) |
+| **A.5 — dbt agent authoring** | **Agent can author dbt sources, staging models, schema.yml tests, Atlas YAML — the actual POC §1 + §2 capabilities** | **No (5 tickets, 0 PRs)** |
+| B/C — GHE proxy + dbt PR delivery | Agent's output reaches Longaeva's GHE repo without PAT leak | Partial (10 PRs, 0 merged) |
+
+### Critical dependencies (block POC §1 + §2 demos)
+
+| # | Ticket | What it unblocks | Depends on |
+|---|---|---|---|
+| 1 | **BH-590** (GAP-2) Snowflake `INFORMATION_SCHEMA` introspection → BH metadata model | Every Layer-B capability — agent needs to *see* Snowflake tables before it can author against them | bb#488 (Layer A) on develop |
+| 2 | **BH-591** (GAP-3b) Wire `scaffold_atlas_semantic_view_tool` into dbt_agent registry + LLM enrichment prompt | POC §2 (Snowflake semantic view enrollment — the headline trial capability) | bb#489 (BH-531) lands; BH-590 lands |
+| 3 | **BH-592** (GAP-4) Generate dbt `sources.yml` + staging model from introspected Silver table | POC §1.1 (S3 vendor) + §1.3 (Snowflake Data Share) — 2 of 3 ingestion source types | BH-590 |
+| 4 | **BH-594** (GAP-9) Infer dbt `schema.yml` tests (`not_null`/`unique`/`accepted_values`) from introspected schema | POC §4.2 (rapid DQ test construction) | BH-590, BH-592 |
+
+**BH-593** (GAP-5, GHE `base_url`) sits *between* this gate and Gate B — it's a
+1-day config thread-through that gates every PR creation regardless of whether
+the proxy work has landed. Land it on the same branch as the proxy code, but
+don't let the proxy review timeline block it.
+
+### Verify on staging (per ticket)
+
+- [ ] **BH-590**: introspect `LONGAEVA_POC.*`; agent's metadata view shows the
+      16 sandbox tables, 2 stages, 1 semantic view.
+- [ ] **BH-591**: user says "scaffold a semantic view for
+      `LONGAEVA_POC.SILVER.int_enriched_holdings`" → agent calls the tool, LLM
+      enriches `custom_instructions` + `verified_queries`, at least one
+      `verified_query` round-trips through `SEMANTIC_VIEW(...)` against
+      Snowflake.
+- [ ] **BH-592**: agent generates `sources.yml` + `stg_<table>.sql` for a
+      Snowflake Data Share table; `dbt parse` succeeds; output structurally
+      equivalent to `sandbox/dbt/models/staging/stg_vendor_security_master.sql`.
+- [ ] **BH-594**: generated `schema.yml` tests pass against live data; scaffold
+      report flags inferred-vs-grounded.
+- [ ] **BH-593**: workspace with `ghe_base_url` set routes PR creation to GHE,
+      not github.com.
+
+### Honesty note
+
+This gate has **no merge order** because nothing exists to merge. It's a
+sequencing gate for *future PR work* that must land before the trial's
+headline use cases (POC §1, §2, §4) can be demoed. If the trial starts before
+these land, those sections are not demoable end-to-end — only sandbox stand-ins
+work.
 
 ---
 
@@ -212,17 +290,21 @@ until Layer 1 deploys.
 
 Run after all gates pass. This is the "is the trial ready" readout.
 
-| # | Check | Niche | Owner |
+| # | Check | Gate | Owner |
 |---|---|---|---|
 | 1 | Snowflake workspace connects + read-only enforced | A | |
 | 2 | OMD ingests Snowflake catalog | A | |
-| 3 | Proxy tenant isolation rejects cross-workspace | B | |
-| 4 | GHE `base_url` routing works (needs Grant's creds) | B | |
-| 5 | dbt run leaves no PAT in state/traces | B+C | |
-| 6 | super_agent PR via proxy (with TSID) | C | |
-| 7 | No-regression after dead-code deletion | E | |
-| 8 | MCP endpoint live + authenticated + tenant-scoped | D | |
-| 9 | Okta federation maps to workspace_id | D | |
+| 3 | **Agent introspects Snowflake → BH metadata model populated (BH-590)** | **A.5** | |
+| 4 | **Atlas YAML scaffold tool invoked via agent + LLM enrichment + verified_query round-trips (BH-591)** | **A.5** | |
+| 5 | **Agent generates `sources.yml` + staging model from Silver table; `dbt parse` passes (BH-592)** | **A.5** | |
+| 6 | **Generated `schema.yml` tests pass against live data (BH-594)** | **A.5** | |
+| 7 | Proxy tenant isolation rejects cross-workspace | B | |
+| 8 | GHE `base_url` routing works (needs Grant's creds; BH-593) | B / A.5 | |
+| 9 | dbt run leaves no PAT in state/traces | B+C | |
+| 10 | super_agent PR via proxy (with TSID) | C | |
+| 11 | No-regression after dead-code deletion | E | |
+| 12 | MCP endpoint live + authenticated + tenant-scoped | D | |
+| 13 | Okta federation maps to workspace_id | D | |
 
 > **Honesty gate for the readout:** mark a row green only when verified on
 > staging. "PR merged" ≠ "deployed" ≠ "verified". Per

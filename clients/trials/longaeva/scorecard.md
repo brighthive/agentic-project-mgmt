@@ -2,7 +2,7 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "pre-trial"
-updated: "2026-06-01"
+updated: "2026-06-03"
 ---
 
 # Longaeva — Trial Scorecard
@@ -10,6 +10,10 @@ updated: "2026-06-01"
 14-day POC. Start date: **June 2026, exact TBD with Grant**. Days are relative to the agreed start. Updated daily once trial begins.
 
 > **EOD 2026-06-01**: Snowflake integration shipped end-to-end across 4 PRs (brightbot [#488](https://github.com/brighthive/brightbot/pull/488) + [#489](https://github.com/brighthive/brightbot/pull/489), platform-core [#777](https://github.com/brighthive/brighthive-platform-core/pull/777), data-organization-cdk [#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156)). 168 unit tests green. All 7 layers of the warehouse-agnostic pattern Snowflake-compliant. Trial unblocked for §1 ingestion + §2 semantic-view enrollment.
+>
+> **EOD 2026-06-03**: Self-hosting deployment simplified. Per Matt's 11:29 ET email to Grant/Sumukh, BrightHive committed to ship a **Terraform module as the primary deployment path** for Longaeva (CDK remains as alternative). Trial-guide artifact extended with Path A (Terraform, recommended) + Path B (CDK), plus a uv-based local install section (`uv tool install brighthive` recommended; pip fallback documented). Simplified setup doc + Terraform module due to Longaeva by EOW 2026-06-05. New tickets **BH-584** (TF module — Ahmed), **BH-585** (setup doc — Kuri), **BH-586** (CLI/uv publish — Marwan) created under BH-526. MCP auth-workflow conversation to be held with Grant + Sumukh before Grant's vacation.
+>
+> **Honest engineering reality (2026-06-03)**: the FS-critical foundation is **open PRs in review, NOT merged** — Snowflake (`brightbot#488`), GHE proxy (`platform-core#778` + `brightbot#490`), P0 security chain (BH-559→565, drafts), Atlas scaffolder (`brightbot#489`, draft). Merged to `develop` so far: MCP server *scaffold* (`brightbot#497` — `invoke_analyst` still a stub), data profiler (`#485/#487`), BrightSignals notif (`#486`). Nothing is deployed to staging/prod. The PoC sandbox (11/11 use cases vs live Snowflake) de-risks the design; it is not the product running.
 
 ---
 
