@@ -27,12 +27,12 @@ def post_to_slack(
     diff: TrackerDiff,
     tickets: list[JiraTicket],
     pr_map: dict[str, list[GitHubPR]],
-    phase_progress: list[tuple[str, int, int]],
+    phase_progress: list[tuple[str, int, int, int]],
 ) -> bool:
     """Post the full state + diff. Returns True on success.
 
     Caller passes pre-computed `phase_progress` so we don't duplicate the
-    expectations logic. Each tuple is (phase_title, green_count, total_count).
+    expectations logic. Each tuple is (phase_title, green, wip, total).
     """
     if not config.auth.slack_bot_token:
         logger.info("SLACK_BOT_TOKEN not set — skipping Slack post.")
@@ -80,7 +80,7 @@ def _render_message(
     diff: TrackerDiff,
     tickets: list[JiraTicket],
     pr_map: dict[str, list[GitHubPR]],
-    phase_progress: list[tuple[str, int, int]],
+    phase_progress: list[tuple[str, int, int, int]],
 ) -> tuple[str, list[dict]]:
     """Compose a Slack post with phase progress + scoreboard + diff highlights."""
     total = len(tickets)
@@ -91,8 +91,8 @@ def _render_message(
     )
 
     phase_lines = "\n".join(
-        f"• *{title}* — {green}/{total_p}"
-        for title, green, total_p in phase_progress
+        f"• *{title}* — {green}/{total_p} 🟢" + (f" · {wip} 🟡" if wip else "")
+        for title, green, wip, total_p in phase_progress
     )
     scoreboard_lines = _format_scoreboard(tickets=tickets, pr_map=pr_map)
 

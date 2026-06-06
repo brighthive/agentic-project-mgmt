@@ -72,18 +72,20 @@ def compute_phase_progress(
     config: PocConfig,
     tickets: list[JiraTicket],
     pr_map: dict[str, list[GitHubPR]],
-) -> list[tuple[str, int, int]]:
+) -> list[tuple[str, int, int, int]]:
     """Used by the Slack post to show per-phase progress without re-rendering."""
     ticket_statuses = {t.key: t.status_category for t in tickets}
     merged_pr_keys = _merged_pr_keys(pr_map=pr_map)
+    open_pr_ticket_keys = _open_pr_ticket_keys(pr_map=pr_map)
     out = []
     for phase in config.phases:
-        green, total = _phase_progress(
+        green, wip, total = _phase_progress(
             phase=phase,
             ticket_statuses=ticket_statuses,
             merged_pr_keys=merged_pr_keys,
+            open_pr_ticket_keys=open_pr_ticket_keys,
         )
-        out.append((phase.title, green, total))
+        out.append((phase.title, green, wip, total))
     return out
 
 
@@ -195,19 +197,25 @@ def _render_day_by_day(
 ) -> str:
     ticket_statuses = {t.key: t.status_category for t in tickets}
     merged_pr_keys = _merged_pr_keys(pr_map=pr_map)
+    open_pr_ticket_keys = _open_pr_ticket_keys(pr_map=pr_map)
 
     lines = [
-        "## 🗓️ Day-by-day — what to expect",
+        "## 🗓️ Day-by-day — task / day / progress",
         "",
-        "_Auto-fills as linked tickets close and PRs merge. Manual rows "
-        "(no linked items) are flipped by hand once the outcome lands._",
+        "_Legend: 🟢 done (ticket closed / PR merged) · 🟡 in progress (PR open or "
+        "ticket in review) · ⬜ not started · 🔲 awaiting external/manual. "
+        "Auto-fills as tickets move and PRs merge._",
         "",
     ]
     for phase in config.phases:
-        green, total = _phase_progress(
-            phase=phase, ticket_statuses=ticket_statuses, merged_pr_keys=merged_pr_keys,
+        green, wip, total = _phase_progress(
+            phase=phase,
+            ticket_statuses=ticket_statuses,
+            merged_pr_keys=merged_pr_keys,
+            open_pr_ticket_keys=open_pr_ticket_keys,
         )
-        lines.append(f"### {phase.title} ({green}/{total})")
+        wip_note = f", {wip} 🟡" if wip else ""
+        lines.append(f"### {phase.title} ({green}/{total} 🟢{wip_note})")
         lines.append("")
         if phase.description:
             lines.append(f"_{phase.description}_")
@@ -219,6 +227,7 @@ def _render_day_by_day(
                 expectation=exp,
                 ticket_statuses=ticket_statuses,
                 merged_pr_keys=merged_pr_keys,
+                open_pr_ticket_keys=open_pr_ticket_keys,
             )
             linked = _format_linked(linked=exp.linked, pr_map=pr_map)
             lines.append(f"| {checkbox} | {exp.day} | {exp.outcome} | {linked} |")
@@ -362,15 +371,22 @@ def _expectation_checkbox(
     expectation: Expectation,
     ticket_statuses: dict[str, str],
     merged_pr_keys: set[str],
+    open_pr_ticket_keys: set[str],
 ) -> str:
     state = expectation.is_green(
         ticket_statuses=ticket_statuses, merged_pr_keys=merged_pr_keys
     )
+    if state is None:
+        return "🔲"  # manual / awaiting external (no linked item)
     if state is True:
-        return "✅"
-    if state is False:
-        return "🔲"
-    return "⬜"
+        return "🟢"  # done — ticket closed / PR merged
+    if expectation.is_wip(
+        ticket_statuses=ticket_statuses,
+        merged_pr_keys=merged_pr_keys,
+        open_pr_ticket_keys=open_pr_ticket_keys,
+    ):
+        return "🟡"  # in progress — PR open or ticket in review
+    return "⬜"  # linked but not started
 
 
 def _phase_progress(
@@ -378,9 +394,11 @@ def _phase_progress(
     phase: Phase,
     ticket_statuses: dict[str, str],
     merged_pr_keys: set[str],
-) -> tuple[int, int]:
+    open_pr_ticket_keys: set[str],
+) -> tuple[int, int, int]:
     auto_total = 0
     auto_green = 0
+    auto_wip = 0
     for exp in phase.expectations:
         result = exp.is_green(
             ticket_statuses=ticket_statuses, merged_pr_keys=merged_pr_keys
@@ -390,7 +408,21 @@ def _phase_progress(
         auto_total += 1
         if result:
             auto_green += 1
-    return auto_green, auto_total
+        elif exp.is_wip(
+            ticket_statuses=ticket_statuses,
+            merged_pr_keys=merged_pr_keys,
+            open_pr_ticket_keys=open_pr_ticket_keys,
+        ):
+            auto_wip += 1
+    return auto_green, auto_wip, auto_total
+
+
+def _open_pr_ticket_keys(*, pr_map: dict[str, list[GitHubPR]]) -> set[str]:
+    return {
+        key
+        for key, prs in pr_map.items()
+        if any(pr.state == "OPEN" for pr in prs)
+    }
 
 
 def _merged_pr_keys(*, pr_map: dict[str, list[GitHubPR]]) -> set[str]:
