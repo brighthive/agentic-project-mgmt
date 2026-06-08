@@ -2,12 +2,14 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "pre-trial"
-updated: "2026-06-03"
+updated: "2026-06-08"
 ---
 
 # Longaeva — Trial Scorecard
 
-14-day POC. Start date: **June 2026, exact TBD with Grant**. Days are relative to the agreed start. Updated daily once trial begins.
+14-day POC. Start date: **2026-06-15** (Trial Day 1). Days are relative to the agreed start. Updated daily once trial begins.
+
+> **EOD 2026-06-08 — Pre-trial code locked in develop**. 24 PRs squash-merged across brightbot / pc / webapp / cdk over the weekend (bb#510, 511, 512, 513, 514, 515, 516, 517, 518, 491, 484, 501, 498; pc#793, 794, 795, 796, 779, 769, 785; wa#1132, 1133, 1102, 1123, 1124; cdk#156). 6 specs signed off in develop (SPEC-GOLDEN-CASES, SPEC-SNOWFLAKE-E2E, SPEC-GENERATE-MART-MODEL, SPEC-BB-OKTA-FEDERATED, SPEC-GHE-MIGRATION-FINAL, SPEC-MCP-DCR-RFC7591) — every code PR has a contract pointer; §10 questions resolved on all 4 spec docs that had them. Live verdict on develop HEAD: GC harness 5 passed / 8 skipped / 2 strict-xfailed in 21s; L3 full-graph e2e 1 passed in 59s; semantic-view query alive ($174B exposure across 196 issuers via `SEMANTIC_VIEW(... METRICS exposure.total_exposure_usd DIMENSIONS exposure.asset_class_code)`); 14 distinct live-Snowflake function-tier verifications green. Composite ≥10-of-14 GCs demoed convincingly: **40% → ~70%**. **Outstanding for Day 1**: staging deploy (auto-flips GC-10 S6/S7), BH-533 connectivity validation, demo storyboard scope decision with Grant (single-table vs schema-wide GC-6 framing). Full handoff: [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md).
 
 > **EOD 2026-06-01**: Snowflake integration shipped end-to-end across 4 PRs (brightbot [#488](https://github.com/brighthive/brightbot/pull/488) + [#489](https://github.com/brighthive/brightbot/pull/489), platform-core [#777](https://github.com/brighthive/brighthive-platform-core/pull/777), data-organization-cdk [#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156)). 168 unit tests green. All 7 layers of the warehouse-agnostic pattern Snowflake-compliant. Trial unblocked for §1 ingestion + §2 semantic-view enrollment.
 >

@@ -311,6 +311,17 @@ _(+48 older updates not shown.)_
 
 _Filled during the trial — one entry per trial day. Use `### Day N — YYYY-MM-DD` headings._
 
+### Day -7 — 2026-06-08 (pre-trial weekend merge train)
+
+**Code-locked in develop across all 4 repos.** 24 PRs squash-merged. 6 specs signed off. Live verified against `LONGAEVA_POC` Snowflake.
+
+- **GC harness on develop HEAD**: 5 passed / 8 skipped / 2 strict-xfailed in 21s
+- **L3 full-graph e2e**: 1 passed in 59s ($174B exposure / 196 issuers via `SEMANTIC_VIEW(...)`)
+- **Composite ≥10-of-14 demoed convincingly**: ~70% (was 40%)
+- **Demo bar holds** for "single Silver table → enrolled → PR-raised"; **NOT defensible** for "auto-infer schema-wide ≥90%" without bb#489
+
+Full state + outstanding follow-ups + risks in [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md). **Read that doc first when resuming.**
+
 <!-- TRACKER:MANUAL:END daily-notes -->
 
 ## ❓ Open Questions

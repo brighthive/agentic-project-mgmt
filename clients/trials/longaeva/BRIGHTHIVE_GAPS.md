@@ -4,12 +4,13 @@ client: longaeva
 jira_epic: BH-526
 trial_start: "2026-06-15"
 author: kuri
-last_reviewed: "2026-06-03"
+last_reviewed: "2026-06-08"
 amended:
   - "2026-06-01 — GAP-3 (semantic view scaffolder) blocker resolved: Atlas YAML examples received from client; spec distilled at artifacts/atlas-semantic-view-spec.md"
   - "2026-06-03 — Self-hosting deployment simplified: Matt → Grant/Sumukh email confirms Terraform module as primary path (CDK becomes alternative). Trial-guide artifact extended with Path A (Terraform) + uv-based local install. New tickets BH-572 (TF module), BH-573 (setup doc), BH-574 (CLI/uv), BH-575 (MCP auth decision) queued in TRACKER.md."
   - "2026-06-05 — HONESTY AMENDMENT (multi-agent trial review). The original 'Confidence to win: HIGH' read was written before the Layer-A/B/C decomposition surfaced that the dbt engineering agent's authoring capability (POC §1+§2 headline) has ZERO PRs today, only 5 freshly-created tickets (BH-590..BH-594) plus 3 more identified by review (BH-595..BH-597). Honest confidence is MEDIUM, win-conditional on: (a) Grant call this week to reframe semantic-view as co-build Day 6-8, (b) BH-590/591/592 landing to demo-quality by Day 3, (c) GHE creds + MCP auth decision unblocked, (d) E2E eval harness (BH-597) catching hallucinations before Day 6. See artifacts/email-2026-06-05-grant-trial-reframe-DRAFT.md for the proposed Grant reframe."
-status: pre-trial
+  - "2026-06-08 — MERGE TRAIN LANDED (24 PRs across 4 repos squash-merged to develop). Tickets closed via merge: BH-527, BH-528, BH-529, BH-530, BH-549, BH-550, BH-551, BH-553, BH-554, BH-559, BH-560, BH-561, BH-562, BH-563, BH-564, BH-565, BH-567, BH-573, BH-574, BH-592, BH-594, BH-597. Specs signed off on develop: SPEC-GOLDEN-CASES, SPEC-SNOWFLAKE-E2E, SPEC-GENERATE-MART-MODEL, SPEC-BB-OKTA-FEDERATED, SPEC-GHE-MIGRATION-FINAL, SPEC-MCP-DCR-RFC7591. Live verdict on develop HEAD: GC harness 5 passed / 8 skipped / 2 strict-xfailed, L3 e2e 1 passed, semantic-view query alive ($174B exposure across 196 issuers). Composite ≥10-of-14 GCs demoed convincingly: 40% → ~70%. **Outstanding for Day 1**: staging deploy (auto-flips GC-10 S6/S7 + unblocks GC-9), BH-533 connectivity validation, demo-storyboard scope decision with Grant. **Audit-debt (not trial-blocking)**: SPEC-GHE-MIGRATION-FINAL impl (closes routes/dbt_routes.py + github_tools.py read-path PyGithub leaks), generate_mart_model impl (bb#513 spec only), bb#489 multi-table semantic view (orphaned draft). Full handoff: SESSION-HANDOFF-2026-06-08.md."
+status: pre-trial-locked
 ---
 
 # Longaeva PoC — What's missing on the BrightHive side
