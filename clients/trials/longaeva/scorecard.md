@@ -2,12 +2,14 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "pre-trial"
-updated: "2026-06-08-eod-cycle-7"
+updated: "2026-06-09-eod-cycle-17"
 ---
 
 # Longaeva — Trial Scorecard
 
-14-day POC. Start date: **2026-06-15** (Trial Day 1). Days are relative to the agreed start. Updated daily once trial begins.
+14-day POC. Start date: **2026-06-15** (Trial Day 1, 6 days out). Days are relative to the agreed start. Updated daily once trial begins.
+
+> **EOD 2026-06-09 cycle-17 — final tally, 20 PRs across 4 repos**. Cycles 8-17 added a CI workflow gating 70 unit tests (`pc#805`), a `make verify-pristine` one-command pre-flight (`pc#804`), folder + scripts READMEs and CONTRIBUTING guides, a Unit-Tests CI badge, and an expanded runbook glossary keying every `errorCode` to a recovery path. **Net change since cycle-7**: GC-6 platform layer was already end-to-end then; cycles 8-17 made it discoverable, gated, and testable cold by anyone with a laptop. Cycles 13-17 were explicitly marked **FILLER** in PR descriptions per user election. Eng channel updated 2026-06-09 (`#engineering` ts `1781011761.012769`). Final PR list captured under `BRIGHTHIVE_GAPS.md` `amended[]`.
 
 > **EOD 2026-06-08 cycle-7 — GC-6 demo loop fulfills its purpose end-to-end**. After the merge train captured below, an autonomous loop shipped 8 more PRs across 4 repos closing the platform-side of GC-6 from "specced" to "live PR opens against `github.com/brighthive/longaeva-semantic-views` in 30 seconds." Composite ≥10-of-14 GCs demoed convincingly: ~70% (held — no GC moved, but GC-6 went from `[~] needs work` to `✅ end-to-end on local`). Detail:
 >
