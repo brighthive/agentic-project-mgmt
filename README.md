@@ -65,12 +65,25 @@ agentic-project-mgmt/
 ├── dynamo-vault/                 # CLI: DynamoDB workspace config scanner
 ├── lastpass-vault/               # CLI: LastPass credential vault
 ├── notion/                       # Notion workspace page map
+├── clients/                      # Per-client trial + active-customer artifacts
+│   └── trials/
+│       └── longaeva/             # 14-day POC starting 2026-06-15 — see README.md
 └── archive/                      # Historical sprints + old specs (read-only)
 ```
 
 ---
 
 Run `make help` to see all available targets.
+
+---
+
+## Active trials
+
+| Client | Stage | Day 1 | Index |
+|---|---|---|---|
+| Longaeva Partners LP | pre-trial-locked | 2026-06-15 | [`clients/trials/longaeva/README.md`](clients/trials/longaeva/README.md) |
+
+Each trial folder follows the same convention: `README.md` is the entry point, with pointers to overview / scorecard / runbook / handoff docs and a cross-repo artifact table.
 
 ---
 
