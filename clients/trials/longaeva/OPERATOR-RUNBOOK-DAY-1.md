@@ -353,8 +353,49 @@ The customer is watching. These are the things to actually say:
 
 ## Glossary
 
+### Demo concepts
+
 - **GC-6** — Golden Case 6 from BH-601: "Semantic view ≥90% coverage." This runbook covers the single-table demo path. Multi-table is GC-6 ⭐ and depends on bb#489 (orphaned, see session-handoff #6).
-- **PAT** — GitHub personal access token. For the trial, a fine-scoped PAT minted via `gh auth token` and stored in `workspace_secret_store/{ws}/services/github/proxy_pat`.
-- **Binding** — `WorkspaceGitHubBindingNode` in Neo4j — routing metadata pointing the workspace at a specific GitHub repo. One per workspace.
-- **Orchestrator** — `commitSemanticViewToGitHub` mutation. The 9-step pipeline that takes the saved YAML and turns it into a real GitHub PR.
-- **Property 1** — "PAT never leaves Secrets Manager." Test-locked at `tests/unit/scrub-bearer.test.ts` and `tests/unit/semantic-view/commit-orchestrator.test.ts`.
+- **GC-10** — Golden Case 10: "End-to-end Silver→PR." S6 + S7 stages auto-flip green when pc#793 staging deploys; until then they're strict-xfailed.
+- **Single-table demo path** — what we're actually selling on Day 1: one DataAsset, one YAML, one Snowflake validation, one PR. Defensible without bb#489.
+- **Schema-wide** — multi-table semantic view that auto-infers joins/entities across an entire SILVER schema. **Not** what we're demoing on Day 1; framing this as schema-wide to the customer is a credibility risk.
+
+### Platform pieces
+
+- **PAT** — GitHub personal access token. For the trial, a fine-scoped PAT minted via `gh auth token` and stored in `workspace_secret_store/{ws}/services/github/proxy_pat`. The PAT never leaves Secrets Manager via API or logs (see Property 1).
+- **Binding** — `WorkspaceGitHubBindingNode` in Neo4j — routing metadata (host, ownerSlug, repoSlug, defaultBranch, yamlRootPath, prTitleTemplate) pointing the workspace at a specific GitHub repo. One per workspace. Created via `setWorkspaceGitHubBinding` (BH-613).
+- **Orchestrator** — `commitSemanticViewToGitHub` mutation (BH-614). The 9-step pipeline that takes the saved YAML and turns it into a real GitHub PR: binding lookup → asset YAML read → branch/path slugify → PAT read → base ref SHA → branch create → file commit → PR open → optional auto-merge.
+- **Idempotent retry** — when `createGitHubBranch` returns 422 ("Reference already exists"), the orchestrator retries once with a `-retry` suffix on the branch name. Spec invariant I-6.
+- **LocalStack** — AWS service emulator we run in `docker-compose.local.yml`. Covers Secrets Manager, S3, SSM, STS on community tier. Cognito-IDP is Pro-tier only and stays mocked-out.
+- **`workspace_secret_store/{workspace_uuid}`** — Secrets Manager prefix; pc writes (binding PAT + warehouse creds), cdk reads (during ingestion stack runs), brightbot reads (during dbt-agent runs).
+- **`LONGAEVA_POC`** — the live Snowflake account/database the trial runs against. `bfddsko-dua97555 / KURICHINCA / LONGAEVA_POC_ROLE / POC_WH / LONGAEVA_POC`.
+- **`LONGAEVA_AGENT_ROLE`** — the read-only Snowflake role agents should use during the trial (vs. KURICHINCA admin). Per GC-14 sandbox parity. Currently a Day-1 outstanding (humans-only).
+
+### errorCode taxonomy
+
+Every step the orchestrator runs returns a typed `errorCode` on failure. The runbook §"If something breaks" is keyed on these:
+
+- **`BINDING_NOT_CONFIGURED`** — workspace has no `WorkspaceGitHubBindingNode`. Fix: run `provision_semantic_views_repo.sh`.
+- **`ASSET_NOT_FOUND`** — DataAsset UUID doesn't resolve in the workspace. Fix: re-confirm the asset ID.
+- **`YAML_EMPTY`** — DataAsset has no `semanticViewYaml`. Fix: call `upsertSemanticView` first.
+- **`PAT_NOT_FOUND`** (httpStatus 401) — binding exists but no PAT in Secrets Manager. Fix: re-run provisioning with `ROTATE_PAT=1`.
+- **`BAD_BRANCH_NAME` / `BAD_FILE_PATH`** — input failed validation regex. Fix: use a clean branch name or trust the default.
+- **`BASE_REF_NOT_FOUND`** — `defaultBranch` on the binding doesn't exist on the remote repo. Fix: update binding with the correct branch.
+- **`BRANCH_CREATE_FAILED`** (httpStatus 422 means already exists; auto-retry kicks in. Other statuses surface here untouched.)
+- **`COMMIT_FAILED`** — typically 422 if the file path is invalid for some reason; check `httpStatus`.
+- **`PR_CREATE_FAILED`** (httpStatus 403 typically means PAT lacks `pull_requests:write` scope — re-mint).
+- **`mergeBlocked: true`** — PR opened successfully but auto-merge couldn't proceed (required reviews / branch protection). Surface this to the demo audience as a feature, not a bug.
+
+### Spec properties
+
+- **Property 1** — "PAT never leaves Secrets Manager." Test-locked at `tests/unit/scrub-bearer.test.ts` (20 tests) + `tests/unit/semantic-view/commit-orchestrator.test.ts` (PAT-redaction subset).
+- **Property 2** — "yamlHash continuity from upsert→commit." `committedYamlHash == DataAsset.semanticViewYamlHash`. Test-locked in the orchestrator suite. The dry-run script also asserts this inline.
+- **Property 4** — "Failure surface is observable." Every step returns verbatim `errorCode` + `httpStatus` with a step-name prefix in `error`. Locked by 8 tests in the orchestrator suite.
+
+### Tooling
+
+- **`make verify`** — assumes stack + server running. Generates JWT, ensures binding registered, runs `trial_day_1_dry_run.sh` with cleanup. ~30s.
+- **`make verify-pristine`** — cold start. `stack-up` → `seed-localstack` → `seed-neo4j` → `local` → `verify`. Use this on a fresh laptop.
+- **`trial_day_1_dry_run.sh`** — the script `make verify` calls. Lives in sibling `brighthive-scripts/scripts/`. Standalone, env-driven, reusable against any environment.
+- **`provision_semantic_views_repo.sh`** — one-command per-customer onboarding. Creates the GitHub repo, mints the PAT, registers the binding via `setWorkspaceGitHubBinding`. Idempotent.
+- **`SKIP_DEV_SERVER_CHECK=1`** — env var that lets `tests/setup.ts` skip the dev-server gate for pure unit tests. Used by the CI workflow and by humans running unit tests locally without spinning up platform-core.
