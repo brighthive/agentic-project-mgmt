@@ -2,14 +2,36 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "pre-trial"
-updated: "2026-06-08"
+updated: "2026-06-08-eod-cycle-7"
 ---
 
 # Longaeva — Trial Scorecard
 
 14-day POC. Start date: **2026-06-15** (Trial Day 1). Days are relative to the agreed start. Updated daily once trial begins.
 
-> **EOD 2026-06-08 — Pre-trial code locked in develop**. 24 PRs squash-merged across brightbot / pc / webapp / cdk over the weekend (bb#510, 511, 512, 513, 514, 515, 516, 517, 518, 491, 484, 501, 498; pc#793, 794, 795, 796, 779, 769, 785; wa#1132, 1133, 1102, 1123, 1124; cdk#156). 6 specs signed off in develop (SPEC-GOLDEN-CASES, SPEC-SNOWFLAKE-E2E, SPEC-GENERATE-MART-MODEL, SPEC-BB-OKTA-FEDERATED, SPEC-GHE-MIGRATION-FINAL, SPEC-MCP-DCR-RFC7591) — every code PR has a contract pointer; §10 questions resolved on all 4 spec docs that had them. Live verdict on develop HEAD: GC harness 5 passed / 8 skipped / 2 strict-xfailed in 21s; L3 full-graph e2e 1 passed in 59s; semantic-view query alive ($174B exposure across 196 issuers via `SEMANTIC_VIEW(... METRICS exposure.total_exposure_usd DIMENSIONS exposure.asset_class_code)`); 14 distinct live-Snowflake function-tier verifications green. Composite ≥10-of-14 GCs demoed convincingly: **40% → ~70%**. **Outstanding for Day 1**: staging deploy (auto-flips GC-10 S6/S7), BH-533 connectivity validation, demo storyboard scope decision with Grant (single-table vs schema-wide GC-6 framing). Full handoff: [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md).
+> **EOD 2026-06-08 cycle-7 — GC-6 demo loop fulfills its purpose end-to-end**. After the merge train captured below, an autonomous loop shipped 8 more PRs across 4 repos closing the platform-side of GC-6 from "specced" to "live PR opens against `github.com/brighthive/longaeva-semantic-views` in 30 seconds." Composite ≥10-of-14 GCs demoed convincingly: ~70% (held — no GC moved, but GC-6 went from `[~] needs work` to `✅ end-to-end on local`). Detail:
+>
+> - **pc#797** — auth role hierarchy (BH-612), full OGM seed (7 unseeded types, 42 nodes), 109-mutation inventory, 14-of-23 Longaeva delta verified live
+> - **pc#798** — SPEC-SEMANTIC-VIEW-AUTHORING-E2E (open, draft) — 10 invariants + 11 Gherkin scenarios + 4 properties; defines the trial-uses-our-GitHub-not-customer-GHE model
+> - **pc#799** — `WorkspaceGitHubBindingNode` + `setWorkspaceGitHubBinding` + `getWorkspaceGitHubBinding` (BH-613). PAT in Secrets Manager only, never echoed
+> - **pc#800** — `commitSemanticViewToGitHub` orchestrator (BH-614). 9-step pipeline, idempotent retry, every step surfaces verbatim `errorCode` + `httpStatus`. Verified against real `github.com/brighthive/longaeva-semantic-views`
+> - **pc#801** — 20 deterministic eval tests for the orchestrator (BH-618) — Properties 1–4 + 5 eval rows
+> - **pc#802** — LocalStack in `docker-compose.local.yml` + endpoint-aware AWS clients (BH-611). Local stack now round-trips Secrets Manager calls without LocalStack-Pro / SSO
+> - **pc#803** — token-redaction regex extension (audit-debt #11). `ghu_*`, `ghr_*`, `?access_token=`, `&pat=` — closed leak surfaces on X-1 invariant. 20 regression tests
+> - **bb#520** — GHE proxy selection-set drift (audit-debt #10). All 7 mutations now select `errorCode` + `httpStatus`; revives the dormant BRANCH_EXISTS retry path. 7 regression tests
+> - **brighthive-scripts#3** — `provision_semantic_views_repo.sh` (BH-617) — one-command per-customer onboarding
+> - **brighthive-scripts#4** — `trial_day_1_dry_run.sh` — re-runnable 5-step demo smoke against any environment + JWT, with cleanup. Verified happy + auto-merge + bad-JWT paths
+> - **agentic-project-mgmt#30** — [`OPERATOR-RUNBOOK-DAY-1.md`](./OPERATOR-RUNBOOK-DAY-1.md) — pre-flight checklist + 4-mutation live demo script + 7 named recovery paths keyed on errorCode values
+>
+> **Trial-Day-1 platform readiness**: ✅ green. Anyone with `PC_GRAPHQL_URL` + admin JWT + workspace/asset UUIDs can run `scripts/trial_day_1_dry_run.sh` and a real GitHub PR opens. Property 1 (PAT redaction) and Property 2 (yamlHash continuity) hold under test.
+>
+> **Outstanding for Day 1 (humans only, not session-reachable)**: staging deploy of pc#797–803 + bb#520 (auto-flips GC-10 S6/S7 + the GC-6 demo path); BH-533 connectivity validation post-deploy; demo storyboard scope decision with Grant; LONGAEVA_AGENT_ROLE runtime in CDK.
+>
+> **Sprint-sized deferrals** (untouched this cycle, intentionally): #6 bb#489 multi-table semantic view, #7 generate_mart_model (GC-5), #8 Snowflake auto-trigger (~50 lines pc + SSM), BH-615 + BH-616 (webapp UI — paused per "no UI mess" instruction).
+>
+> Full pre-cron handoff: [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md).
+
+> **EOD 2026-06-08 — Pre-trial code locked in develop** (pre-cron baseline). 24 PRs squash-merged across brightbot / pc / webapp / cdk over the weekend (bb#510, 511, 512, 513, 514, 515, 516, 517, 518, 491, 484, 501, 498; pc#793, 794, 795, 796, 779, 769, 785; wa#1132, 1133, 1102, 1123, 1124; cdk#156). 6 specs signed off in develop (SPEC-GOLDEN-CASES, SPEC-SNOWFLAKE-E2E, SPEC-GENERATE-MART-MODEL, SPEC-BB-OKTA-FEDERATED, SPEC-GHE-MIGRATION-FINAL, SPEC-MCP-DCR-RFC7591) — every code PR has a contract pointer; §10 questions resolved on all 4 spec docs that had them. Live verdict on develop HEAD: GC harness 5 passed / 8 skipped / 2 strict-xfailed in 21s; L3 full-graph e2e 1 passed in 59s; semantic-view query alive ($174B exposure across 196 issuers via `SEMANTIC_VIEW(... METRICS exposure.total_exposure_usd DIMENSIONS exposure.asset_class_code)`); 14 distinct live-Snowflake function-tier verifications green. Composite ≥10-of-14 GCs demoed convincingly: **40% → ~70%**. **Outstanding for Day 1**: staging deploy (auto-flips GC-10 S6/S7), BH-533 connectivity validation, demo storyboard scope decision with Grant (single-table vs schema-wide GC-6 framing). Full handoff: [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md).
 
 > **EOD 2026-06-01**: Snowflake integration shipped end-to-end across 4 PRs (brightbot [#488](https://github.com/brighthive/brightbot/pull/488) + [#489](https://github.com/brighthive/brightbot/pull/489), platform-core [#777](https://github.com/brighthive/brighthive-platform-core/pull/777), data-organization-cdk [#156](https://github.com/brighthive/brighthive-data-organization-cdk/pull/156)). 168 unit tests green. All 7 layers of the warehouse-agnostic pattern Snowflake-compliant. Trial unblocked for §1 ingestion + §2 semantic-view enrollment.
 >
