@@ -2,12 +2,29 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "pre-trial"
-updated: "2026-06-09-eod-cycle-17"
+updated: "2026-06-11-cycle-18"
 ---
 
 # Longaeva — Trial Scorecard
 
 14-day POC. Start date: **2026-06-15** (Trial Day 1, 6 days out). Days are relative to the agreed start. Updated daily once trial begins.
+
+> **2026-06-11 cycle-18 — SV lifecycle + QC live on staging; MCP reaches the agent, not yet Snowflake.** Shipped the semantic-view *lifecycle* (lineage, ship-to-PR, QC) to staging and stood up a live MCP integration harness. Honest headline: **MCP → BrightAgent is live and verified; BrightAgent → Snowflake *via MCP* is NOT yet working** — a `deep_agent` routing gap, handed to Marwan. No green-washing; the harness proves it by failing on it.
+>
+> **Shipped to staging (all 4 repos at develop=staging parity):**
+> - **BH-619** SV lineage — `base_tables` + join graph on `list_semantic_views` ([bb#532](https://github.com/brighthive/brightbot/pull/532)→[#533](https://github.com/brighthive/brightbot/pull/533)). Live-verified: 4 base tables + 3 joins.
+> - **BH-620** ship SV YAML as a governed PR — scaffold→upsert→`commitSemanticViewToGitHub` ([bb#536](https://github.com/brighthive/brightbot/pull/536)→[#537](https://github.com/brighthive/brightbot/pull/537)). 11 contract tests, write-safety reviewed (idempotent branch, partial-write honesty).
+> - **BH-622** SV QC — read-only upstream-vs-product (row counts, null rates, freshness, flags) ([bb#538](https://github.com/brighthive/brightbot/pull/538)→[#539](https://github.com/brighthive/brightbot/pull/539)). Live vs `LONGAEVA_POC`: 174,384-row mart vs 3 REF upstreams; surfaced a real `IDENTIFIER_MAP.EFFECTIVE_TO` 100%-null flag.
+> - **BH-601** live MCP-driven Golden Cases + Longaeva PoC E2E harness ([bb#540](https://github.com/brighthive/brightbot/pull/540)→[#541](https://github.com/brighthive/brightbot/pull/541)) — the repeatable acceptance gate.
+>
+> **MCP end-to-end — proven vs blocked:**
+> - ✅ MCP server live (`mcp.staging.brighthive.net/mcp`); OAuth gate fixed (`BH_MCP_*` env → staging Cognito issuer); auth→agent→Bedrock inference verified live.
+> - ✅ OneTen staging workspace now → Snowflake `LONGAEVA_POC` (replaced its Synapse+2×Redshift; backup retained).
+> - 🔴 `deep_agent` answers warehouse questions from `search_memory_tool`/`read_file` instead of delegating to the dbt subagent's `introspect_warehouse_schema`/`qc_semantic_view_pipeline`; when forced, errors `Missing user_id or token in session_info` (MCP→subagent handoff drops session_info). **Handed to Marwan.** Harness Q1/Q2/Q4 correctly FAIL on this by design.
+>
+> **6 analyst questions:** Q1 SV-list, Q2 lineage, Q3 ship-PR, Q4 QC — **all built**, *gated on the deep_agent routing fix for MCP reachability*. Q5 alerting ❌ not built. Q6 RBAC ⚠️ read-half only.
+>
+> **Jira:** BH-619/620/622 → Staging QC. **Notion** "2 · Current Status" + **TRACKER.md** synced. **#engineering:** Matt (Claude connect-guide) + Marwan (routing finding) posted 2026-06-10.
 
 > **EOD 2026-06-09 cycle-17 — final tally, 20 PRs across 4 repos**. Cycles 8-17 added a CI workflow gating 70 unit tests (`pc#805`), a `make verify-pristine` one-command pre-flight (`pc#804`), folder + scripts READMEs and CONTRIBUTING guides, a Unit-Tests CI badge, and an expanded runbook glossary keying every `errorCode` to a recovery path. **Net change since cycle-7**: GC-6 platform layer was already end-to-end then; cycles 8-17 made it discoverable, gated, and testable cold by anyone with a laptop. Cycles 13-17 were explicitly marked **FILLER** in PR descriptions per user election. Eng channel updated 2026-06-09 (`#engineering` ts `1781011761.012769`). Final PR list captured under `BRIGHTHIVE_GAPS.md` `amended[]`.
 
