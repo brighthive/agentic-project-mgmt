@@ -9,6 +9,8 @@ updated: "2026-06-11-cycle-18"
 
 14-day POC. Start date: **2026-06-15** (Trial Day 1, 6 days out). Days are relative to the agreed start. Updated daily once trial begins.
 
+> **EOD 2026-06-12 (T-3 to Day 1) — status broadcast pushed.** Tracker auto-refresh: **20/83 tickets done · 19 in flight · 44 merged PRs across 4 repos**. No new red lights since cycle-18: `deep_agent` routing is still the gating bug (Marwan), Sat 2026-06-13 staging deploy of pc#797..806 + bb#520 still the path, customer-side prep (Grant: GHE creds + MCP creds + Okta tenant) still the unknown. **Day-1 readiness: code/platform ~85%, customer-side ~0% visibility.** Status posted to `#engineering` + commented on BH-526. Notion update pending OAuth.
+
 > **2026-06-11 cycle-18 — SV lifecycle + QC live on staging; MCP reaches the agent, not yet Snowflake.** Shipped the semantic-view *lifecycle* (lineage, ship-to-PR, QC) to staging and stood up a live MCP integration harness. Honest headline: **MCP → BrightAgent is live and verified; BrightAgent → Snowflake *via MCP* is NOT yet working** — a `deep_agent` routing gap, handed to Marwan. No green-washing; the harness proves it by failing on it.
 >
 > **Shipped to staging (all 4 repos at develop=staging parity):**
