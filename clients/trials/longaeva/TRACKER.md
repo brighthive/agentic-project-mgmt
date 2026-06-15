@@ -1,6 +1,6 @@
 # Longaeva — Live Tracker
 
-_Last refreshed **2026-06-11 14:15 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-06-15 13:58 UTC** by `make longaeva-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: TBD with Grant · **Epic**: [BH-526](https://brighthiveio.atlassian.net/browse/BH-526)
 
@@ -189,19 +189,19 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
 | **Harbour Wang** | 17 | 0 | 4 | [BH-545](https://brighthiveio.atlassian.net/browse/BH-545) feat(webapp): replace MOCK_RULES with… |
-| **Kuri Chinca** | 3 | 10 | 31 | [BH-565](https://brighthiveio.atlassian.net/browse/BH-565) docs(brightbot): author BRIGHTBOT-GITHU… |
+| **Kuri Chinca** | 3 | 13 | 28 | [BH-565](https://brighthiveio.atlassian.net/browse/BH-565) docs(brightbot): author BRIGHTBOT-GITHU… |
 | **Ahmed Elsherbiny** | 0 | 2 | 6 | — |
 | **Marwan Samih** | 0 | 4 | 4 | — |
 | **_unassigned_** | 0 | 0 | 2 | — |
 
 ## 📊 Summary
 
-- **20/83** tickets done · 16 in progress · 47 to do
+- **20/83** tickets done · 19 in progress · 44 to do
 - PRs: 44 merged · 0 ready for review · 26 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (47)
+### 🟡 To Do (44)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -248,12 +248,9 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | [BH-616](https://brighthiveio.atlassian.net/browse/BH-616) | [BH-NEW-4] webapp SemanticViewYamlEditor "Save & Open PR" + binding… | Kuri Chinca | — |
 | [BH-617](https://brighthiveio.atlassian.net/browse/BH-617) | [BH-NEW-5] Per-customer semantic-views repo provisioning script | Kuri Chinca | — |
 | [BH-618](https://brighthiveio.atlassian.net/browse/BH-618) | [BH-NEW-6] Eval harness for SPEC-SEMANTIC-VIEW-AUTHORING §7… | Kuri Chinca | [🟢 Merged brighthive-platform-core#801](https://github.com/brighthive/brighthive-platform-core/pull/801) |
-| [BH-619](https://brighthiveio.atlassian.net/browse/BH-619) | SV lineage: expose base_tables + join graph on list_semantic_views | Kuri Chinca | [🟢 Merged brightbot#538](https://github.com/brighthive/brightbot/pull/538)<br>[🟢 Merged brightbot#535](https://github.com/brighthive/brightbot/pull/535)<br>[🟢 Merged brightbot#534](https://github.com/brighthive/brightbot/pull/534) |
-| [BH-620](https://brighthiveio.atlassian.net/browse/BH-620) | SV edits land as governed PRs — CI compile-check on PR, apply-on-merge | Kuri Chinca | [🟢 Merged brightbot#537](https://github.com/brighthive/brightbot/pull/537)<br>[🟢 Merged brightbot#536](https://github.com/brighthive/brightbot/pull/536) |
 | [BH-621](https://brighthiveio.atlassian.net/browse/BH-621) | Project-scoped dbt MCP: bind project_id → dbt-mcp config so BA MCP… | Kuri Chinca | — |
-| [BH-622](https://brighthiveio.atlassian.net/browse/BH-622) | SV QC: compare upstream base tables vs data product (row counts,… | Kuri Chinca | [🟢 Merged brightbot#539](https://github.com/brighthive/brightbot/pull/539)<br>[🟢 Merged brightbot#538](https://github.com/brighthive/brightbot/pull/538) |
 
-### 🟢 In Progress (16)
+### 🟢 In Progress (19)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -273,6 +270,9 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 | [BH-592](https://brighthiveio.atlassian.net/browse/BH-592) | feat(dbt-agent): generate dbt sources.yml + staging model from… | Kuri Chinca | [🟢 Merged brightbot#510](https://github.com/brighthive/brightbot/pull/510)<br>[🟡 Draft brightbot#503](https://github.com/brighthive/brightbot/pull/503)<br>[🟡 Draft brightbot#502](https://github.com/brighthive/brightbot/pull/502) |
 | [BH-594](https://brighthiveio.atlassian.net/browse/BH-594) | feat(dbt-agent): infer dbt schema.yml tests (not_null/unique/accepted… | Kuri Chinca | [🟡 Draft brightbot#507](https://github.com/brighthive/brightbot/pull/507) |
 | [BH-597](https://brighthiveio.atlassian.net/browse/BH-597) | feat(eval): end-to-end agent eval harness for the 6-step Longaeva… | Kuri Chinca | [🟢 Merged brightbot#512](https://github.com/brighthive/brightbot/pull/512) |
+| [BH-619](https://brighthiveio.atlassian.net/browse/BH-619) | SV lineage: expose base_tables + join graph on list_semantic_views | Kuri Chinca | [🟢 Merged brightbot#538](https://github.com/brighthive/brightbot/pull/538)<br>[🟢 Merged brightbot#535](https://github.com/brighthive/brightbot/pull/535)<br>[🟢 Merged brightbot#534](https://github.com/brighthive/brightbot/pull/534) |
+| [BH-620](https://brighthiveio.atlassian.net/browse/BH-620) | SV edits land as governed PRs — CI compile-check on PR, apply-on-merge | Kuri Chinca | [🟢 Merged brightbot#537](https://github.com/brighthive/brightbot/pull/537)<br>[🟢 Merged brightbot#536](https://github.com/brighthive/brightbot/pull/536) |
+| [BH-622](https://brighthiveio.atlassian.net/browse/BH-622) | SV QC: compare upstream base tables vs data product (row counts,… | Kuri Chinca | [🟢 Merged brightbot#539](https://github.com/brighthive/brightbot/pull/539)<br>[🟢 Merged brightbot#538](https://github.com/brighthive/brightbot/pull/538) |
 
 ### ✅ Done (20)
 
@@ -302,9 +302,10 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 
 ## 🕒 Recent activity (14 days)
 
-- **2026-06-10** · [BH-622](https://brighthiveio.atlassian.net/browse/BH-622) — Needs Refinement · Kuri Chinca
-- **2026-06-10** · [BH-620](https://brighthiveio.atlassian.net/browse/BH-620) — Needs Refinement · Kuri Chinca
-- **2026-06-10** · [BH-619](https://brighthiveio.atlassian.net/browse/BH-619) — Needs Refinement · Kuri Chinca
+- **2026-06-12** · [BH-526](https://brighthiveio.atlassian.net/browse/BH-526) — Needs Refinement · Kuri Chinca
+- **2026-06-11** · [BH-622](https://brighthiveio.atlassian.net/browse/BH-622) — Staging QC · Kuri Chinca
+- **2026-06-11** · [BH-620](https://brighthiveio.atlassian.net/browse/BH-620) — Staging QC · Kuri Chinca
+- **2026-06-11** · [BH-619](https://brighthiveio.atlassian.net/browse/BH-619) — Staging QC · Kuri Chinca
 - **2026-06-09** · [BH-621](https://brighthiveio.atlassian.net/browse/BH-621) — Needs Refinement · Kuri Chinca
 - **2026-06-09** · [BH-557](https://brighthiveio.atlassian.net/browse/BH-557) — Needs Refinement · Harbour Wang
 - **2026-06-09** · [BH-545](https://brighthiveio.atlassian.net/browse/BH-545) — Done · Harbour Wang
@@ -321,9 +322,8 @@ _Things tracked but not gated by the 14-day window. Update as the decision lands
 - **2026-06-08** · [BH-612](https://brighthiveio.atlassian.net/browse/BH-612) — Needs Refinement · Kuri Chinca
 - **2026-06-08** · [BH-611](https://brighthiveio.atlassian.net/browse/BH-611) — Needs Refinement · Kuri Chinca
 - **2026-06-08** · [BH-610](https://brighthiveio.atlassian.net/browse/BH-610) — Needs Refinement · Kuri Chinca
-- **2026-06-08** · [BH-601](https://brighthiveio.atlassian.net/browse/BH-601) — Needs Refinement · Kuri Chinca
 
-_(+61 older updates not shown.)_
+_(+59 older updates not shown.)_
 
 ## 📝 Daily Notes
 
@@ -341,6 +341,24 @@ _Filled during the trial — one entry per trial day. Use `### Day N — YYYY-MM
 - **Demo bar holds** for "single Silver table → enrolled → PR-raised"; **NOT defensible** for "auto-infer schema-wide ≥90%" without bb#489
 
 Full state + outstanding follow-ups + risks in [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md). **Read that doc first when resuming.**
+
+### Day 0 — 2026-06-15 (Snowflake catalog → embeddings unblocked)
+
+**Root cause of OneTen's empty Snowflake catalog found and fixed.** The shared OM ingestion lambda bundles `openmetadata-ingestion==0.12.2` (2022 SDK), which **cannot talk to the live OM 1.8.9 server** — its `/api/v1/version` probe 500s, so every Snowflake scan failed silently. That's why OneTen showed **0 catalog assets** despite Snowflake being connected and live-queryable.
+
+**Shipped to `develop` (platform-core):**
+- **#819** — NEW isolated `snowflake_ingestion_lambda`: Docker-image lambda, py3.11, `openmetadata-ingestion[snowflake]==1.8.9` (~358 MB, over the Zip limit → image). Snowflake-only; existing Zip lambda left **frozen** for Redshift/Synapse/Glue. Routing is caller-side by `source_type`. (#823/#825: keyring/`jaraco.*` pins + don't-fail-scan-on-partial-errors.)
+- **#816** — webhook migrated to OM 1.8.9 `/v1/events/subscriptions`.
+- **#837** — webhook now triggers description+embedding generation for **warehouse-scanned** tables (was BrightHive-authored only).
+- **#839** — webhook writes the DynamoDB mapping so description-gen can run.
+
+**Net:** the ingestion → catalog → `embedded_text`/`embedding` → semantic-search chain is now wired end-to-end for Snowflake. Before this, OneTen's 23 scanned Snowflake DataAssetNodes had `embedding=None` (present in graph, invisible to semantic search); the fix closes that on the next scan.
+
+**Still open / not yet proven:**
+- **platform-core #841** (OM 1.8 single-event payload parsing + py3.9 import fix) — verified mergeable on current develop, **17 webhook tests pass**; review-gated.
+- **Staging-first acceptance gate NOT yet met**: OneTen catalog populating end-to-end via the new lambda after a real `PUT /snowflake/service` → `POST /snowflake/workflow` scan. Next thing to prove before prod promotion.
+
+Architecture documented in `platform-saas-ai-context/docs/architecture/SNOWFLAKE_OMD_INGESTION.md`.
 
 <!-- TRACKER:MANUAL:END daily-notes -->
 
