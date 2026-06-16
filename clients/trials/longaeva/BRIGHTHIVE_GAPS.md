@@ -150,6 +150,7 @@ the golden reference / test target for that piece of agent work.
 | **Sandbox proves** | `sandbox/monitoring/` persists per-snapshot metrics + detects all 4 anomaly families (row-count drift, cardinality breakdown, distributional skew, null spike) vs trailing window. 4/4 fire in simulation. |
 | **BrightHive gap** | Quality agent is stateless per run; no trailing-window persistence. This maps to the `QualityRuleExecutionNode` already specced in the BH-503 quality-rules epic. |
 | **Work** | Persist per-run metrics; trend computation vs window. The sandbox's `metric_history` + `anomaly_events` tables are a ready schema to mirror. |
+| **Approach spec** | ✅ `docs/specs/longitudinal-monitoring.md` — full plan (3 Gherkin scenarios, 6 tickets): metric history → trailing-window detection → nightshift scheduler → BrightSignals → analyst read path. Flips GC-12 skip→live. |
 | **Effort** | ~1 sprint (BH-503 overlap — sequence after it) |
 | **Owner** | Marwan |
 
