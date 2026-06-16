@@ -136,8 +136,9 @@ Feature: BYOW end-to-end on OM 1.8.9 native ingestion
 | Snowflake e2e proof (LONGAEVA_POC, BH-526 acceptance) | B | " | full Gherkin |
 | Synapse e2e proof | B | " | full Gherkin |
 | Glue native-1.8.9 decision + cutover-or-document | C | platform-core/org-cdk | per finding |
-| Migrate `/openmetadata/team` PUT+DELETE off the old lambda → SDK-free REST handler or admin mutation; repoint `redshift_openmetadata_lambda` + admin teardown | D | platform-core + workspace-cdk + admin | unit + integ + staging UAT on provision **and** teardown |
-| Retire `openmetadata_ingestion_lambda` + `/openmetadata/*` routes | D | platform-core | post-soak, after `/team` callers migrated |
+| ✅ Build SDK-free `/team` CRUD module (`openmetadata_ingestion_lambda/team_rest.py`) | D | platform-core | DONE (#863) — requests-only, 17 contract tests, parity-verified vs live OM; inert (no caller yet) |
+| Wire `team_rest.py` into a `/team` handler + repoint `redshift_openmetadata_lambda` (PUT) and admin teardown (DELETE) off the SDK path | D | platform-core + workspace-cdk + admin | unit + integ + staging UAT on provision **and** teardown |
+| Retire `openmetadata_ingestion_lambda` + `/openmetadata/*` routes + drop the 358 MB scanner SDK | D | platform-core | post-soak, after `/team` callers migrated |
 | ~~Retire `snowflake_ingestion_lambda` + routes~~ | D | platform-core | ✅ DONE (#858) |
 | Future-warehouse (BigQuery) via checklist only — prove zero routing change | E | all | checklist + e2e |
 
