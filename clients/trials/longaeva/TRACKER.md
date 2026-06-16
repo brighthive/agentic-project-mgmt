@@ -361,6 +361,22 @@ Full state + outstanding follow-ups + risks in [`SESSION-HANDOFF-2026-06-08.md`]
 
 Architecture: `platform-saas-ai-context/docs/architecture/SNOWFLAKE_OMD_INGESTION.md` (corrected).
 
+### Day 1 — 2026-06-15 (UPDATE: OMD/BYOW fixed + deployed + verified)
+
+Supersedes the "root cause found, NOT yet fixed" note above — it's now **fixed, merged, and deployed to staging**. The live path is OM 1.8.9 **native AutoPilot** ingestion (no external scanner): `v2.ts` registers the DatabaseService under a canonical `<workspaceId>_<provider>_ingestion` name + triggers AutoPilot → table-sync webhook → workspace-resolver routes by uuid prefix → enrichment (description + 1536-dim embedding in Redis) → retrieval/analysis.
+
+**Merged + deployed to staging (platform-core):**
+- #842 — deprecate the 2 dead OMD scanners (banners + DEPRECATED.md)
+- #843 — AutoPilot trigger interpolation + full Snowflake connection forwarding (v2.9.0.17; AutoPilot contract verified live, HTTP 200)
+- #847 — webhook workspace routing via service-name uuid prefix, not the static header (v2.9.0.19; **UAT-verified live** — wrong-header event re-routed to correct workspace)
+- #849 — canonical service naming so ALL warehouses auto-route, idempotent rename no duplicates (v2.9.0.20)
+- #818 — superadmin cascade-delete (`deleteTransformationServiceAsAdmin` + `deleteDataAssetAsAdmin`) for **warehouse switching** (Snowflake↔Redshift teardown) (v2.9.0.21)
+- #841 — OM 1.8 single-event payload parse + py3.9 fix (table-sync webhook) — merged, promote pending
+
+**Verified live on staging:** OM 1.8.9 = 171 catalogued tables; Redis = 333 asset embeddings; Snowflake auto-route+embed proven end-to-end (webhook replay). The dev.test+system.admin.1 user IS_A SuperAdmin/SystemAdmin (drives the cascade-delete mutations without workspace membership).
+
+**Still open:** Redshift full live UAT (code-complete + deployed; needs a real Redshift warehouse-add to exercise end-to-end). Embeddings store = Redis/RediSearch, not Neo4j (`graphrag_retrieval` queries Redis).
+
 <!-- TRACKER:MANUAL:END daily-notes -->
 
 ## ❓ Open Questions
