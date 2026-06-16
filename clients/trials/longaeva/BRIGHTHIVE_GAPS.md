@@ -139,6 +139,7 @@ the golden reference / test target for that piece of agent work.
 | **Sandbox proves** | `sandbox/self_healing/failure_modes.py` encodes the 4 failure modes Grant named, each with a detection query + the exact surgical fix. 4/4 detect→fix loops verified. `sandbox/orchestration/` (Dagster) provides the **run-log + asset-lineage surface** the agent reads to diagnose — the same shape as Longaeva's Dagster + OpenLineage stack. |
 | **BrightHive gap** | Observability agent alerts today; the **detect→diagnose→surgical-PR** loop is not auto-triggered. Schema-drift detection specifically has zero code refs. |
 | **Work** | Wire the loop: on detected failure, Engineering agent reads Dagster run logs / asset lineage / schema, generates a scoped PR with plain-language diagnosis. The sandbox's `fix_summary` fields are the spec for "surgical, not rewrite"; the Dagster asset graph is the lineage to traverse. |
+| **Approach spec** | ✅ `docs/specs/self-healing-pipelines.md` — detect→diagnose→surgical-PR loop for all 4 modes (6 tickets); flips GC-11 skip→live. |
 | **Effort** | ~1 sprint (drift detection can ride on GAP-2 schema-version comparison) |
 | **Owner** | Marwan + AI/ML |
 | **Test target** | Run each `failure_modes.py` mode; the agent must produce the same surgical fix the fixture encodes. |
