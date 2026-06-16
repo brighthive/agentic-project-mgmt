@@ -1,13 +1,33 @@
 ---
 name: "Longaeva Partners LP"
 slug: "longaeva"
-stage: "pre-trial"
-updated: "2026-06-11-cycle-18"
+stage: "trial"
+updated: "2026-06-16-cycle-19"
 ---
 
 # Longaeva — Trial Scorecard
 
-14-day POC. Start date: **2026-06-15** (Trial Day 1, 6 days out). Days are relative to the agreed start. Updated daily once trial begins.
+14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
+
+> **2026-06-16 cycle-19 — Golden-case completeness audit + remaining-gap map.** Infra foundation is solid (OM-native AutoPilot ingestion clean to 2 keepers, Demo Redshift 196 + OneTen Snowflake 57 embeddings, dbt agent verified live e2e vs LONGAEVA_POC, MCP handshake healthy). **But against the 13 golden cases the PoC is NOT done:**
+>
+> | Bucket | GCs | Count |
+> |---|---|---|
+> | ✅ Live | GC-3 (Snowflake DQ), GC-4 (Silver time-series) | 2 |
+> | 🟡 Partial | GC-6 (semantic view — built, gated on `deep_agent` MCP routing), GC-8 (validation compile), GC-10 (E2E silver→PR) | 3 |
+> | 🔴 Skip / no code | GC-1, GC-2 (ingestion connectors), GC-5 (gold marts — spec only), GC-7 (reference-join), GC-9 (MCP downstream), GC-11 (self-healing GAP-7), GC-12 (longitudinal anomaly GAP-8), GC-13 (Slack-native) | 8 |
+>
+> **PoC completeness for a 100%-success run: ~27%** (weighted live=1.0/partial=0.5/skip=0; strict fully-live = 15%). Honest, not green-washed — the harness `skip`s exactly the unbuilt cases.
+>
+> **The 4 gaps flagged + their approach .MDs:**
+> - **Quality rules** → `docs/specs/quality-rules-configurable.md` (BH-503, status **Ready**) — workspace rule library + `QualityRuleExecutionNode` + history. Specced, not built.
+> - **Longitudinal monitoring** (GC-12 / **GAP-8**, the headline gap) → `BRIGHTHIVE_GAPS.md` §GAP-8 + proven sandbox `sandbox/monitoring/` (`monitor.py` + `00_monitoring_ddl.sql`; 4/4 anomaly families fire in sim: row-count drift, cardinality, distributional skew, null spike). Approach: persist per-run metrics → trend vs trailing window; mirror sandbox `metric_history` + `anomaly_events` tables. Sequence after BH-503. ~1 sprint, Marwan.
+> - **Notifications** (BrightSignals) → scaffold shipped (bb#486); GC-12/Q5 alerting **not wired** — needs GAP-8 as the source to push from.
+> - **Nightshift** (scheduled nightly monitoring) → **no dedicated .MD yet** — the cron/scheduled-run wrapper around GAP-8 + BH-503. Needs a spec.
+>
+> **Self-healing** (GC-11 / **GAP-7**) → `BRIGHTHIVE_GAPS.md` §GAP-7 + sandbox `self_healing/failure_modes.py` (4/4 detect→fix verified). ~1 sprint.
+>
+> Full gap inventory + effort/owner table: `BRIGHTHIVE_GAPS.md`. BYOW ingestion plan: `../../../docs/specs/byow-end-to-end-omd-native.md`. Posted to `#engineering` (ts `1781588321`).
 
 > **EOD 2026-06-12 (T-3 to Day 1) — status broadcast pushed.** Tracker auto-refresh: **20/83 tickets done · 19 in flight · 44 merged PRs across 4 repos**. No new red lights since cycle-18: `deep_agent` routing is still the gating bug (Marwan), Sat 2026-06-13 staging deploy of pc#797..806 + bb#520 still the path, customer-side prep (Grant: GHE creds + MCP creds + Okta tenant) still the unknown. **Day-1 readiness: code/platform ~85%, customer-side ~0% visibility.** Status posted to `#engineering` + commented on BH-526. Notion update pending OAuth.
 
