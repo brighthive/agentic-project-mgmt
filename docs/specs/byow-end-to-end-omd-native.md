@@ -70,7 +70,14 @@ L1 destination handler, L2 webhook adapter registry, L4 `OMD_SERVICE_TYPE` map, 
 - **Phase A — Fix the shared control plane** (PR #843): AutoPilot trigger interpolation + verbatim connection forwarding (`OmdConnectionConfig`). Verify the OM 1.8.9 AutoPilot payload (staging curl / Ahmed) before un-draft.
 - **Phase B — Per-warehouse e2e proof on staging** (one ticket each): Redshift → Snowflake (LONGAEVA_POC, BH-526 acceptance) → Synapse. For each: connect → AutoPilot run created → tables in OM → DataAssetNode → description+embedding+schema → semantic retrieval returns it → analyst agent answers an NL question grounded in it. "Nothing dirty" = no orphan services, no half-synced nodes, embeddings non-null.
 - **Phase C — Glue decision**: confirm native 1.8.9 Glue ingestion; cut over or document Glue-stays-on-old-lambda exception.
-- **Phase D — Retire dead scanners**: once all live callers are on the native path + soaked, delete `openmetadata_ingestion_lambda` + `snowflake_ingestion_lambda` + their routes (banners/DEPRECATED.md already merged).
+- **Phase D — Retire dead scanners**:
+  - ✅ `snowflake_ingestion_lambda` + its `/snowflake/*` routes **DELETED (#858, on staging v2.9.0.25)** — was never wired to a live caller.
+  - 🔲 `openmetadata_ingestion_lambda` — **CANNOT delete yet.** Verified caller graph (2026-06-16): its `/openmetadata/workflow` *scan* route is dead (AutoPilot replaced it), but `/openmetadata/team` is **LIVE** — pure OM REST team+`DatabaseService` CRUD (no scanner SDK), with two live callers:
+    - `brighthive-data-workspace-cdk/redshift_openmetadata_lambda` → `PUT /team` (deployed by `redshift_workgroup.py:139`, invoked from `redshift_schemas_lambda` during workspace provisioning) — registers the workspace's Redshift `DatabaseService` + owner team.
+    - `brighthive-admin/.../delete_openmetadata_resources_lambda` → `DELETE /team` (account/workspace teardown Step Function).
+    - (`brighthive-data-organization-cdk/openmetadata_connector` POST is already commented out — `app.py:376-377`.)
+  - **Migration (own ticket — multi-repo, touches teardown + provisioning):** the `/team` handler needs NO 358 MB SDK — it's `GET/DELETE /v1/teams/{name|id}` + `GET/DELETE /v1/services/databaseServices/{name|id}?recursive=true`. Move it to (a) a small SDK-free `requests` handler, or (b) platform-core admin mutations (`deleteWarehouseServiceAsAdmin` already exists; add a team-CRUD sibling). Repoint both callers, soak, then delete the dir + `/openmetadata/*` routes.
+  - **Open question for the migration:** does `v2.ts upsertDatabaseService` (warehouse-connect-time registration) already make the CDK provisioning-time `PUT /team` registration redundant? If yes, the PUT caller can be deleted outright (only DELETE teardown needs a home). Confirm before building.
 - **Phase E — Future warehouse (BigQuery/Databricks)**: prove the "zero routing change" claim by adding one via the checklist only.
 
 ## Areas Involved
@@ -84,7 +91,8 @@ L1 destination handler, L2 webhook adapter registry, L4 `OMD_SERVICE_TYPE` map, 
 | Retrieval | brightbot `tools/graphrag_retrieval.py` | semantic search over embeddings |
 | Analysis | brightbot `tools/warehouse_connections.py` (`CONNECTION_CLASSES`) + dialect prompts | warehouse-agnostic query |
 | OMD stack | brighthive-openmetadata-stack | native Airflow ingestion 1.8.9 |
-| Deprecated scanners | platform-core `openmetadata_ingestion_lambda/`, `snowflake_ingestion_lambda/` | DELETE in Phase D |
+| Deprecated scanners | platform-core `openmetadata_ingestion_lambda/` (scan DEAD / `/team` LIVE), ~~`snowflake_ingestion_lambda/`~~ (DELETED #858) | old lambda blocked on `/team` caller migration |
+| `/team` callers (block old-lambda deletion) | workspace-cdk `redshift_openmetadata_lambda` (PUT), admin `delete_openmetadata_resources_lambda` (DELETE) | repoint to SDK-free REST / admin mutation in Phase D |
 
 ## Acceptance Criteria (per warehouse, all on staging)
 
@@ -113,9 +121,10 @@ Feature: BYOW end-to-end on OM 1.8.9 native ingestion
 
 ## Dependencies
 
-- **Staging AWS access** (`aws sso login --profile brighthive-staging`) + OM reachability (VPC-internal) — currently BLOCKING all of Phase B/C and un-draft of #843.
-- **OM 1.8.9 AutoPilot trigger contract** — staging curl or Ahmed (draft Qs: `clients/trials/longaeva/artifacts/ahmed-omd-autopilot-questions.md`).
-- Merged foundation: core #842 (deprecation), saas #12 (inventory). In flight: core #843 (v2.ts fix).
+- ✅ **Staging AWS access** + OM reachability — restored; Phase A/B verified live.
+- ✅ **OM 1.8.9 AutoPilot trigger contract** — confirmed live (`POST /apps/trigger/AutoPilotApplication` + `{entityLink}` → 200).
+- ✅ Merged foundation: core #842 (deprecation), #843 (v2.ts AutoPilot+connection fix), #854 (no destructive rename), #858 (`snowflake_ingestion_lambda` removed); saas #12/#13/#14/#15 (inventory + accuracy).
+- **Remaining blocker for Phase D**: the `/openmetadata/team` caller migration (above) — needs its own multi-repo ticket; touches workspace provisioning + account teardown.
 
 ## Ticket Breakdown
 
@@ -127,8 +136,9 @@ Feature: BYOW end-to-end on OM 1.8.9 native ingestion
 | Snowflake e2e proof (LONGAEVA_POC, BH-526 acceptance) | B | " | full Gherkin |
 | Synapse e2e proof | B | " | full Gherkin |
 | Glue native-1.8.9 decision + cutover-or-document | C | platform-core/org-cdk | per finding |
-| Retire `openmetadata_ingestion_lambda` + routes | D | platform-core | post-soak, all callers migrated |
-| Retire `snowflake_ingestion_lambda` + routes | D | platform-core | post-soak |
+| Migrate `/openmetadata/team` PUT+DELETE off the old lambda → SDK-free REST handler or admin mutation; repoint `redshift_openmetadata_lambda` + admin teardown | D | platform-core + workspace-cdk + admin | unit + integ + staging UAT on provision **and** teardown |
+| Retire `openmetadata_ingestion_lambda` + `/openmetadata/*` routes | D | platform-core | post-soak, after `/team` callers migrated |
+| ~~Retire `snowflake_ingestion_lambda` + routes~~ | D | platform-core | ✅ DONE (#858) |
 | Future-warehouse (BigQuery) via checklist only — prove zero routing change | E | all | checklist + e2e |
 
 ## Related
