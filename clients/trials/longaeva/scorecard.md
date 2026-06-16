@@ -25,9 +25,11 @@ updated: "2026-06-16-cycle-19"
 > - **Notifications** (BrightSignals) → scaffold shipped (bb#486); GC-12/Q5 alerting **not wired** — needs GAP-8 as the source to push from.
 > - **Nightshift** (scheduled nightly monitoring) → **now covered in `docs/specs/longitudinal-monitoring.md`** (the EventBridge → monitor scheduler section) — the cron/scheduled-run wrapper around GAP-8 + BH-503.
 >
-> **Self-healing** (GC-11 / **GAP-7**) → `BRIGHTHIVE_GAPS.md` §GAP-7 + sandbox `self_healing/failure_modes.py` (4/4 detect→fix verified). ~1 sprint.
+> **Self-healing** (GC-11 / **GAP-7**) → **approach spec now written: `docs/specs/self-healing-pipelines.md`** (detect→diagnose→surgical-PR loop, 4 modes, 6 tickets) + sandbox `self_healing/failure_modes.py` (4/4 detect→fix verified). ~1 sprint.
 >
-> Full gap inventory + effort/owner table: `BRIGHTHIVE_GAPS.md`. BYOW ingestion plan: `../../../docs/specs/byow-end-to-end-omd-native.md`. Posted to `#engineering` (ts `1781588321`).
+> **MILESTONE (2026-06-16): every PoC gap now has a documented approach spec** — the "full plan" is 100% written down (execution is what remains, not scoping). GC-5 → SPEC-GENERATE-MART-MODEL (bb#513); GC-7/9 → byow + MCP-routing fix; GC-11 → `self-healing-pipelines.md`; GC-12 → `longitudinal-monitoring.md`; quality rules → `quality-rules-configurable.md`; notifications → BrightSignals (bb#486).
+>
+> Full gap inventory + effort/owner table: `BRIGHTHIVE_GAPS.md`. BYOW ingestion plan: `../../../docs/specs/byow-end-to-end-omd-native.md`. Posted to `#engineering` (ts `1781588321`, `1781589288`).
 
 > **EOD 2026-06-12 (T-3 to Day 1) — status broadcast pushed.** Tracker auto-refresh: **20/83 tickets done · 19 in flight · 44 merged PRs across 4 repos**. No new red lights since cycle-18: `deep_agent` routing is still the gating bug (Marwan), Sat 2026-06-13 staging deploy of pc#797..806 + bb#520 still the path, customer-side prep (Grant: GHE creds + MCP creds + Okta tenant) still the unknown. **Day-1 readiness: code/platform ~85%, customer-side ~0% visibility.** Status posted to `#engineering` + commented on BH-526. Notion update pending OAuth.
 
