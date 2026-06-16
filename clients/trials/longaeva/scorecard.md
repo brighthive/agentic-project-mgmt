@@ -21,9 +21,9 @@ updated: "2026-06-16-cycle-19"
 >
 > **The 4 gaps flagged + their approach .MDs:**
 > - **Quality rules** → `docs/specs/quality-rules-configurable.md` (BH-503, status **Ready**) — workspace rule library + `QualityRuleExecutionNode` + history. Specced, not built.
-> - **Longitudinal monitoring** (GC-12 / **GAP-8**, the headline gap) → `BRIGHTHIVE_GAPS.md` §GAP-8 + proven sandbox `sandbox/monitoring/` (`monitor.py` + `00_monitoring_ddl.sql`; 4/4 anomaly families fire in sim: row-count drift, cardinality, distributional skew, null spike). Approach: persist per-run metrics → trend vs trailing window; mirror sandbox `metric_history` + `anomaly_events` tables. Sequence after BH-503. ~1 sprint, Marwan.
+> - **Longitudinal monitoring** (GC-12 / **GAP-8**, the headline gap) → **approach spec now written: `docs/specs/longitudinal-monitoring.md`** (3 Gherkin scenarios, 6 tickets) + `BRIGHTHIVE_GAPS.md` §GAP-8 + proven sandbox `sandbox/monitoring/` (`monitor.py` + `00_monitoring_ddl.sql`; 4/4 anomaly families fire in sim: row-count drift, cardinality, distributional skew, null spike). Approach: persist per-run metrics → trend vs trailing window; mirror sandbox `metric_history` + `anomaly_events`. Sequence after BH-503. ~1 sprint, Marwan.
 > - **Notifications** (BrightSignals) → scaffold shipped (bb#486); GC-12/Q5 alerting **not wired** — needs GAP-8 as the source to push from.
-> - **Nightshift** (scheduled nightly monitoring) → **no dedicated .MD yet** — the cron/scheduled-run wrapper around GAP-8 + BH-503. Needs a spec.
+> - **Nightshift** (scheduled nightly monitoring) → **now covered in `docs/specs/longitudinal-monitoring.md`** (the EventBridge → monitor scheduler section) — the cron/scheduled-run wrapper around GAP-8 + BH-503.
 >
 > **Self-healing** (GC-11 / **GAP-7**) → `BRIGHTHIVE_GAPS.md` §GAP-7 + sandbox `self_healing/failure_modes.py` (4/4 detect→fix verified). ~1 sprint.
 >
