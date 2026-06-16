@@ -342,23 +342,24 @@ _Filled during the trial — one entry per trial day. Use `### Day N — YYYY-MM
 
 Full state + outstanding follow-ups + risks in [`SESSION-HANDOFF-2026-06-08.md`](./SESSION-HANDOFF-2026-06-08.md). **Read that doc first when resuming.**
 
-### Day 0 — 2026-06-15 (Snowflake catalog → embeddings unblocked)
+### Day 1 — 2026-06-15 (Snowflake/OMD ingestion — root cause found, NOT yet fixed)
 
-**Root cause of OneTen's empty Snowflake catalog found and fixed.** The shared OM ingestion lambda bundles `openmetadata-ingestion==0.12.2` (2022 SDK), which **cannot talk to the live OM 1.8.9 server** — its `/api/v1/version` probe 500s, so every Snowflake scan failed silently. That's why OneTen showed **0 catalog assets** despite Snowflake being connected and live-queryable.
+> Corrects an earlier draft of this entry that overstated status as "found + fixed / wired end-to-end" and mislabeled the day. Accurate status below.
 
-**Shipped to `develop` (platform-core):**
-- **#819** — NEW isolated `snowflake_ingestion_lambda`: Docker-image lambda, py3.11, `openmetadata-ingestion[snowflake]==1.8.9` (~358 MB, over the Zip limit → image). Snowflake-only; existing Zip lambda left **frozen** for Redshift/Synapse/Glue. Routing is caller-side by `source_type`. (#823/#825: keyring/`jaraco.*` pins + don't-fail-scan-on-partial-errors.)
-- **#816** — webhook migrated to OM 1.8.9 `/v1/events/subscriptions`.
-- **#837** — webhook now triggers description+embedding generation for **warehouse-scanned** tables (was BrightHive-authored only).
-- **#839** — webhook writes the DynamoDB mapping so description-gen can run.
+**Root cause of OneTen's empty Snowflake catalog FOUND; fix NOT yet wired in.** The old shared scan lambda (`openmetadata_ingestion_lambda`, SDK `openmetadata-ingestion==0.12.2`, 2022) **cannot talk to the live OM 1.8.9 server** — its version probe 500s, so catalog scans fail for **every** warehouse type (Redshift/Glue callers hit the same 500; nobody noticed because no fresh scan ran). OneTen's Snowflake catalog is still **0 assets**.
 
-**Net:** the ingestion → catalog → `embedded_text`/`embedding` → semantic-search chain is now wired end-to-end for Snowflake. Before this, OneTen's 23 scanned Snowflake DataAssetNodes had `embedding=None` (present in graph, invisible to semantic search); the fix closes that on the next scan.
+**Built + deployed (dev/staging only), but NOT routed:**
+- **#819** — new `snowflake_ingestion_lambda` (Docker, py3.11, SDK 1.8.9) exists but is Snowflake-hardcoded and only deployed in non-prod; **no live caller points at it yet**. Every live scan caller still POSTs the dead old lambda.
+- **#816** — enhanced webhook migrated to OM 1.8.9 `/v1/events/subscriptions` (warehouse-agnostic, working).
+- **#837/#839** — enhanced webhook triggers description+embedding for scanned tables + DynamoDB mapping (working, downstream of the scan).
 
-**Still open / not yet proven:**
-- **platform-core #841** (OM 1.8 single-event payload parsing + py3.9 import fix) — verified mergeable on current develop, **17 webhook tests pass**; review-gated.
-- **Staging-first acceptance gate NOT yet met**: OneTen catalog populating end-to-end via the new lambda after a real `PUT /snowflake/service` → `POST /snowflake/workflow` scan. Next thing to prove before prod promotion.
+**ARCHITECTURE FORK (2026-06-15, per Ahmed):** the team has shifted to **OM 1.8.9 native ingestion (Airflow pipeline service) + enhanced webhook lambda + MCP** — the external warehouse-specific scan lambda is the *old* pattern. OM 1.8.9 ships a live `openmetadata/ingestion:1.8.9` Airflow container (`PIPELINE_SERVICE_CLIENT_ENABLED=true`), i.e. OM scans natively; the enhanced webhook (`new_openmetadata_webhook_lambda`, deployed as `EnhancedOmWebhookLambda`) is warehouse-agnostic by design. **The lambda-generalization plan is shelved pending confirmation with Ahmed.** Real fix likely = configure OM's native per-warehouse ingestion pipeline, an OMD/infra-owned concern.
 
-Architecture documented in `platform-saas-ai-context/docs/architecture/SNOWFLAKE_OMD_INGESTION.md`.
+**Still open:**
+- Confirm with Ahmed (infra/OMD owner): does OM native Airflow do the per-warehouse scan now? Is the container lambda dead? What is meant to populate OneTen's catalog?
+- platform-core #841 (OM 1.8 webhook payload parsing) — independent, verified mergeable, review-gated.
+
+Architecture: `platform-saas-ai-context/docs/architecture/SNOWFLAKE_OMD_INGESTION.md` (corrected).
 
 <!-- TRACKER:MANUAL:END daily-notes -->
 
