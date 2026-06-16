@@ -2,13 +2,21 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "trial"
-updated: "2026-06-16-cycle-21"
+updated: "2026-06-16-cycle-22"
 ---
 
 # Longaeva — Trial Scorecard
 
 14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
 
+> **2026-06-16 cycle-22 — ingestion chain 100% live-verified end-to-end; the cycle-21 ⏳ items are now ✅.** Re-audited the full produce-the-vectors path against staging this cycle, fresh (not cited):
+> - **OMD → Neo4j catalog (OneTen):** 17 DataAssetNodes · 17 OM-backed · **14 descriptions** · 0 dups · 0 foreign-FQN · 0 phantom. BH-651 flips **⏳ → ✅** (descriptions are live at 14; the v2.9.0.33 backfill landed).
+> - **Vector embeddings (Redis, live-counted):** DBSIZE 385; **28/28 OneTen `asset:` docs (RedisJSON) each carry a 1536-dim `embedding` array**; `vector_indexed:{OneTen-ws}` index flag present. The metadata→embedding→retrieval half is real, not assumed.
+> - **DBT engineering agent via MCP (re-verified):** `dbt_test` → `introspect_warehouse_schema` → all 7 real LONGAEVA GOLD/SILVER tables (2 MART_, 5 STG_), 37.8s, **no 504**. Raw JSON-RPC as a real external client (staging-admin in OneTen).
+> - **Open PRs (4 repos):** core/brightbot/cdk clear; webapp has 3 (#1164 auth toasts, #1155 setup-button, #1104 Studio MVP) — all frontend, **outside the ingestion/DBT/agent scope**, none merge-eligible (#1104 is 5,482 lines / 6× the 900-line cap; #1155 `claude-review: FAILURE`; #1164 Amplify preview pending). Not merged.
+> - **Note:** `matt@brighthive.io` MCP password now rejects (rotated) — he should set his own; verification ran as `dev.test+staging-admin` (same OneTen workspace, equivalent proof).
+> - **Unchanged:** BH-648 (heavy multi-step sync runs 504 — deployment fix), BH-503 (gates GC-12 persistence + quality-rule notifications), PoC golden-case completeness headline ~27%.
+>
 > **2026-06-16 cycle-21 — DBT-agent-via-MCP now WORKS (the cycle-18/19 gating bug is closed) + RBAC/ingestion hardening.** The headline from cycle-18/19 — *"BrightAgent → Snowflake via MCP is NOT working (deep_agent routing gap)"* — is **resolved and disproved live this cycle.** Root cause was not routing: it was a Bedrock Converse schema-validation crash. Verified live as the acceptance tester (matt@brighthive.io, admin in OneTen+Demo): `dbt_test` → `introspect_warehouse_schema` → real LONGAEVA GOLD/SILVER tables; schema/metadata agents clean. Focused queries 7–18s.
 >
 > **Shipped this cycle (all merged; ✅ = live-verified, ⏳ = deployed-pending-UAT):**
