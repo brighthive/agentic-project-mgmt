@@ -2,12 +2,29 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "trial"
-updated: "2026-06-16-cycle-19"
+updated: "2026-06-16-cycle-20"
 ---
 
 # Longaeva — Trial Scorecard
 
 14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
+
+> **2026-06-16 cycle-20 — Atlas semantic-view READ path closed (BH-624 epic shipped to staging).** The trigger: a real user question on staging — *"what are the semantic ymls of those tables?"* — hit a dead end because BrightAgent had only WRITE support (scaffold + commit, BH-619/620/622) and no read tool. Today closed the loop end-to-end across 4 PRs in ~3 hours with 3 rounds of multi-agent review.
+>
+> **What landed (brightbot PR #552 → develop → staging via #553; PR #554/#555 docs):**
+> - **BH-625** `SnowflakeConnection.get_semantic_view_ddl()` — `GET_DDL` helper with whitespace-strip + permission-error logging
+> - **BH-626** `get_semantic_view` @tool — Snowflake DDL by table name (live applied state). Live-verified vs `LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE` (1764-char DDL)
+> - **BH-633** `get_semantic_view_yaml` @tool — byte-identical Atlas YAML from Platform Core's `DataAsset.semanticViewYaml` (preserves `atlas:*`, `owners`, `dataset_key`, `verified_queries`). BH-640 (GitHub fetch) merged into BH-633 after analysis showed they converged on the same field
+> - **BH-628** wired into retrieval_agent + dbt_agent + metadata_agent
+> - **BH-629** deep_agent prompt updated with full lifecycle routing (DDL vs YAML decision rule)
+> - **BH-641** Stage 4 (deploy) — closed as done-by-existing-tools (`ship_semantic_view_to_github(auto_merge=True)` triggers Atlas SDK on Longaeva's side per spec; BrightHive emits YAML only, never DDL). Documented in `docs/SEMANTIC_VIEW_LIFECYCLE.md`.
+> - **dbt agent docs + system prompt** updated to document the new capabilities (PR #554)
+>
+> **Quality bar held:** 117 unit tests + 5 live LONGAEVA_POC integration tests + 2 staging integration tests, all green. Three review rounds caught a merge-blocker (`get_data_assets_by_workspace_id` was missing the new fields → silent 'no YAML' regression), promoted `__platform_client__` magic string to a `Final` constant, hardened error-envelope handling (data:null / GraphQL errors[] / data:list / workspace:list all distinct messages), removed PII from chat (asset names → logger only).
+>
+> **Honest deferred:** **BH-645** filed for code-level HITL gate on `auto_merge=True` (today the safety is prompt-only; that's a real gap for a destructive op).
+>
+> **Cross-repo docs:** `platform-saas-ai-context` capability-map.md updated (PR #18, merged) — flipped the SV compilation/validation row from Sprint→Shipped, added 3 new rows for the read tools + deploy, bumped `audited` to 2026-06-16.
 
 > **2026-06-16 cycle-19 — Golden-case completeness audit + remaining-gap map.** Infra foundation is solid (OM-native AutoPilot ingestion clean to 2 keepers, Demo Redshift 196 + OneTen Snowflake **73** embeddings [enrichment actively growing], dbt agent verified live e2e vs LONGAEVA_POC, MCP handshake healthy). Approach specs now exist for every flagged gap (longitudinal/nightshift → `docs/specs/longitudinal-monitoring.md`; quality rules → `quality-rules-configurable.md`; self-healing → `BRIGHTHIVE_GAPS.md §GAP-7`). **But against the 13 golden cases the PoC is NOT done:**
 >
