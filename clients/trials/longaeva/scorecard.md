@@ -9,7 +9,7 @@ updated: "2026-06-16-cycle-19"
 
 14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
 
-> **2026-06-16 cycle-19 — Golden-case completeness audit + remaining-gap map.** Infra foundation is solid (OM-native AutoPilot ingestion clean to 2 keepers, Demo Redshift 196 + OneTen Snowflake 57 embeddings, dbt agent verified live e2e vs LONGAEVA_POC, MCP handshake healthy). **But against the 13 golden cases the PoC is NOT done:**
+> **2026-06-16 cycle-19 — Golden-case completeness audit + remaining-gap map.** Infra foundation is solid (OM-native AutoPilot ingestion clean to 2 keepers, Demo Redshift 196 + OneTen Snowflake **73** embeddings [enrichment actively growing], dbt agent verified live e2e vs LONGAEVA_POC, MCP handshake healthy). Approach specs now exist for every flagged gap (longitudinal/nightshift → `docs/specs/longitudinal-monitoring.md`; quality rules → `quality-rules-configurable.md`; self-healing → `BRIGHTHIVE_GAPS.md §GAP-7`). **But against the 13 golden cases the PoC is NOT done:**
 >
 > | Bucket | GCs | Count |
 > |---|---|---|
