@@ -2,12 +2,33 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "trial"
-updated: "2026-06-16-cycle-20"
+updated: "2026-06-16-cycle-21"
 ---
 
 # Longaeva — Trial Scorecard
 
 14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
+
+> **2026-06-16 cycle-21 — DBT-agent-via-MCP now WORKS (the cycle-18/19 gating bug is closed) + RBAC/ingestion hardening.** The headline from cycle-18/19 — *"BrightAgent → Snowflake via MCP is NOT working (deep_agent routing gap)"* — is **resolved and disproved live this cycle.** Root cause was not routing: it was a Bedrock Converse schema-validation crash. Verified live as the acceptance tester (matt@brighthive.io, admin in OneTen+Demo): `dbt_test` → `introspect_warehouse_schema` → real LONGAEVA GOLD/SILVER tables; schema/metadata agents clean. Focused queries 7–18s.
+>
+> **Shipped this cycle (all merged; ✅ = live-verified, ⏳ = deployed-pending-UAT):**
+> - **BH-647** ✅ Bedrock schema sanitizer — stripped `example`/`examples` (Pydantic `json_schema_extra`) that crashed `schema_agent`/`dbt_test` on Converse. `SanitizingBedrockConverse` wraps all governance+shared model factories. The actual unblocker for "DBT agent via MCP". (brightbot #556/#558 → staging)
+> - **BH-646** ✅ tenant isolation — `getAllDataAssets` was returning ALL tenants' tables (unfiltered `syncDataAssets` leaked 141 Demo tables into OneTen); now scoped to the workspace's own services, fail-closed. (#881 → staging)
+> - **BH-650** ✅ RBAC fail-closed — `authorize_access` no longer honours a client workspace_id when the token has zero memberships (m2m/service-token pivot bypass). 7/7 unit. (#561 → staging)
+> - **BH-651** ⏳ OM→Neo4j description backfill — OM had 14 table descriptions, Neo4j had 0 (`getAllDataAssets` dropped the field + sync never backfilled, incl. the already-linked branch). Fixed #883+#885 → **v2.9.0.33 deployed**; UAT (descs 0→14) pending an SSO refresh.
+> - **BH-642/643/644** ✅ AutoPilot schema-filter (pipeline layer, not connection — the proven layer), legacy name-only node matching, dbt-sandbox phantom exclusion. OneTen catalog clean to the 17 real medallion tables.
+> - **GC-12 longitudinal** — two real slices landed: detection core (#557, all-4-families) + warehouse-agnostic metric-snapshot SQL (#563). 50/50 unit. Remaining: persistence (rides BH-503), nightshift scheduler, BrightSignals surface.
+> - **DBT lifecycle MCP harness** (brightbot #560, CI-green, in review) — programmatic full cycle: multi-cmd dbt run → SV change → open PR → merge → re-sync → verify new tables/SV, on the async-run path (dodges the BH-648 gateway 504).
+>
+> **RBAC/governance code audit (cycle-21):** all 15 langgraph graphs resolve workspace from session_info; `authorize_access` is the centralized membership gate on every run/thread, now fail-closed (BH-650). Live cross-tenant *denial* test still needs a 3rd staging workspace (staging has only Demo+OneTen, Matt in both) — verified by code path.
+>
+> **MCP capability surface:** 22 tools = 15 graphs + 7 `brightagent_studio` assistants. `Sleep doctor` + `The Nile Oracle` are demo agents leaking into the customer-facing MCP — candidates to remove.
+>
+> **PoC completeness vs 13 golden cases: ~27%** (unchanged headline — GC-12 has 2 of ~5 slices built but not flipped to live; the cycle-19 table still holds). The cycle-18/19 *"MCP doesn't reach Snowflake"* caveat is now lifted, which de-risks GC-9/GC-10 materially even though they're not formally flipped.
+>
+> **Open blockers (none in single-PR reach):** (1) **BH-648** — LangGraph staging deployment loses run-state across replicas → heavy multi-step agent runs 504/404 (needs shared Postgres checkpointer / single-replica / sticky sessions — control-plane owner). (2) **BH-503** — gates GC-12 persistence + configurable quality rules (notifications). (3) GC-11 self-healing (GAP-7). (4) staging SSO expired mid-cycle → the BH-651 UAT + OneTen re-audit are queued, not done.
+>
+> **Approach .MDs (all gaps have a written plan):** `docs/specs/longitudinal-monitoring.md` (GC-12 + nightshift) · `docs/specs/self-healing-pipelines.md` (GC-11) · `docs/specs/quality-rules-configurable.md` (BH-503/notifications). Engineering channel updated (`#engineering` ts 1781645546.079159).
 
 > **2026-06-16 cycle-20 — Atlas semantic-view READ path closed (BH-624 epic shipped to staging).** The trigger: a real user question on staging — *"what are the semantic ymls of those tables?"* — hit a dead end because BrightAgent had only WRITE support (scaffold + commit, BH-619/620/622) and no read tool. Today closed the loop end-to-end across 4 PRs in ~3 hours with 3 rounds of multi-agent review.
 >
