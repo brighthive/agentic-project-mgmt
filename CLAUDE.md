@@ -79,6 +79,9 @@ make status                 → confirm all sentinels green
 | **Longaeva POC overview** | `clients/trials/longaeva/overview.md` |
 | **Longaeva milestone scorecard** | `clients/trials/longaeva/scorecard.md` |
 | **Longaeva full POC response doc** | `clients/trials/longaeva/artifacts/poc-response-plan.md` |
+| **Longaeva UAT success guide** (whole-company testing) | `clients/trials/longaeva/UAT_GUIDE.md` |
+| **Longaeva — Sarah's Monday morning** (non-tech sales demo) | `clients/trials/longaeva/SARAH_DEMO.md` |
+| **Longaeva Snowflake standards** | `clients/trials/longaeva/SNOWFLAKE_STANDARDS.md` |
 | **Trial template** | `clients/_templates/TRIAL.md` |
 | **Client architecture profiles** | `../platform-saas-ai-context/clients/` |
 | **Longaeva stack + capability map** | `../platform-saas-ai-context/clients/longaeva/` |

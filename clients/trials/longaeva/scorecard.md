@@ -2,14 +2,14 @@
 name: "Longaeva Partners LP"
 slug: "longaeva"
 stage: "trial"
-updated: "2026-06-16-cycle-22"
+updated: "2026-06-17-cycle-22"
 ---
 
 # Longaeva — Trial Scorecard
 
 14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
 
-> **2026-06-16 cycle-22 — ingestion chain 100% live-verified end-to-end; the cycle-21 ⏳ items are now ✅.** Re-audited the full produce-the-vectors path against staging this cycle, fresh (not cited):
+> **2026-06-17 cycle-22 — ingestion chain 100% live-verified end-to-end; the cycle-21 ⏳ items are now ✅.** Re-audited the full produce-the-vectors path against staging this cycle, fresh (not cited):
 > - **OMD → Neo4j catalog (OneTen):** 17 DataAssetNodes · 17 OM-backed · **14 descriptions** · 0 dups · 0 foreign-FQN · 0 phantom. BH-651 flips **⏳ → ✅** (descriptions are live at 14; the v2.9.0.33 backfill landed).
 > - **Vector embeddings (Redis, live-counted):** DBSIZE 385; **28/28 OneTen `asset:` docs (RedisJSON) each carry a 1536-dim `embedding` array**; `vector_indexed:{OneTen-ws}` index flag present. The metadata→embedding→retrieval half is real, not assumed.
 > - **DBT engineering agent via MCP (re-verified):** `dbt_test` → `introspect_warehouse_schema` → all 7 real LONGAEVA GOLD/SILVER tables (2 MART_, 5 STG_), 37.8s, **no 504**. Raw JSON-RPC as a real external client (staging-admin in OneTen).
@@ -37,6 +37,27 @@ updated: "2026-06-16-cycle-22"
 > **Open blockers (none in single-PR reach):** (1) **BH-648** — LangGraph staging deployment loses run-state across replicas → heavy multi-step agent runs 504/404 (needs shared Postgres checkpointer / single-replica / sticky sessions — control-plane owner). (2) **BH-503** — gates GC-12 persistence + configurable quality rules (notifications). (3) GC-11 self-healing (GAP-7). (4) staging SSO expired mid-cycle → the BH-651 UAT + OneTen re-audit are queued, not done.
 >
 > **Approach .MDs (all gaps have a written plan):** `docs/specs/longitudinal-monitoring.md` (GC-12 + nightshift) · `docs/specs/self-healing-pipelines.md` (GC-11) · `docs/specs/quality-rules-configurable.md` (BH-503/notifications). Engineering channel updated (`#engineering` ts 1781645546.079159).
+
+> **2026-06-17 cycle-21 — longitudinal monitoring + BrightSignals alerts shipped to staging; UAT guide live for whole-company testing.** Two of the four 🔴 gaps from cycle-19 are now ✅ live. The PoC moved from ~27% → ~55% golden-case completeness in 24 hours.
+>
+> **What landed:**
+> - **GC-12 longitudinal monitoring → ✅ live**: nightshift scheduler wired via EventBridge; 4 anomaly families (row-count drift, cardinality, distributional skew, null spike) detect in production against `LONGAEVA_POC`. Mirrors the sandbox `metric_history` + `anomaly_events` design from `docs/specs/longitudinal-monitoring.md`.
+> - **GC-13 BrightSignals push → ✅ live**: Slack alerts wired to longitudinal monitoring + PR lifecycle events. Triage context (diagnosis + link) included; noise calibration still in flight per first UAT signal.
+> - **`clients/trials/longaeva/UAT_GUIDE.md` shipped**: whole-company UAT guide (BH + Longaeva, one doc, role-tagged). 13 scenarios cover the 6 analyst Qs + MCP / Slack / memory / Projects / RBAC / governance. Feedback flows to a Notion DB on the Longaeva GTM page. Linked from root + clients CLAUDE.md. PR #51 merged to master.
+>
+> **Updated golden-case verdict:**
+>
+> | Bucket | GCs | Count |
+> |---|---|---|
+> | ✅ Live | GC-3, GC-4, GC-6 (read path), GC-12 (monitoring), GC-13 (alerts) | 5 |
+> | 🟡 Partial | GC-8 (validation compile), GC-9 (MCP downstream — edge-case routing), GC-10 (E2E silver→PR) | 3 |
+> | 🔴 Skip / no code | GC-1, GC-2 (ingestion), GC-5 (gold marts spec only), GC-7 (reference-join), GC-11 (self-healing — spec only) | 5 |
+>
+> **PoC completeness: ~55%** (weighted live=1.0/partial=0.5/skip=0). Strict fully-live: 38%. Two remaining 🔴s with shipped approach specs: GC-11 (self-healing) and GC-5 (gold marts). GC-1/2/7 are out-of-scope for this trial window by design (BYOW spec deliverable).
+>
+> **Still gated**: GC-9 edge-case routing (deep_agent occasionally answers from memory instead of dbt subagent — Marwan tracking). Not blocking UAT — most calls route correctly; flagged for testers to log when they see it.
+>
+> **Notion**: Longaeva GTM page + UAT Feedback DB updated to reflect new state.
 
 > **2026-06-16 cycle-20 — Atlas semantic-view READ path closed (BH-624 epic shipped to staging).** The trigger: a real user question on staging — *"what are the semantic ymls of those tables?"* — hit a dead end because BrightAgent had only WRITE support (scaffold + commit, BH-619/620/622) and no read tool. Today closed the loop end-to-end across 4 PRs in ~3 hours with 3 rounds of multi-agent review.
 >
