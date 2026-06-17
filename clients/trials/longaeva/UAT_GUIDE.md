@@ -23,7 +23,7 @@ notion_page: "TBD — mirror this file under the Longaeva GTM page"
 | **How long per session** | 20–30 minutes per scenario. Pick one; you don't have to do all. |
 | **Where you test** | Slack (BrightAgent) + the BrightHive webapp (staging). Both pre-configured against the `LONGAEVA_POC` Snowflake. |
 | **Where feedback goes** | The **UAT Feedback** Notion database on the Longaeva GTM page. One row per scenario per tester. |
-| **Honest state** | ~27% of golden cases are fully live, ~21% partial, ~50% intentionally out-of-scope for this trial window. We tell you which is which up front — no green-washing. |
+| **Honest state (cycle-21)** | ~55% of golden cases are fully live (up from 27% as of cycle-19), ~25% partial, ~20% intentionally out-of-scope for this trial window. Longitudinal monitoring + BrightSignals push went live since the last audit. We tell you which is which up front — no green-washing. |
 
 ---
 
@@ -47,7 +47,7 @@ notion_page: "TBD — mirror this file under the Longaeva GTM page"
 
 ---
 
-## 2. The seven UAT scenarios
+## 2. The thirteen UAT scenarios
 
 Each scenario maps to a **golden case** in the PoC scorecard. Run any scenario in any order. **You do not have to be technical** — if your role lines up with the persona, just follow the prompt.
 
@@ -98,13 +98,15 @@ Legend: ✅ live · 🟡 partially live · 🔴 not in this window (we tell you 
 - **Expected**: dbt agent introspects schema, generates a staging model, opens a PR against the longaeva-dbt repo. Live verified end-to-end against `LONGAEVA_POC`.
 - **Caveat**: Sometimes the `deep_agent` routes the question to memory instead of dbt — if your answer feels like a summary instead of a PR link, **that's the bug Marwan is fixing**. Log it. We need the data points.
 
-### Scenario 6 — "Tell me when something breaks" 🔴
+### Scenario 6 — "Tell me when something breaks" 🟡
 
 - **Persona**: ops lead, ML platform engineer
-- **Maps to**: GC-12 (longitudinal monitoring) + GC-11 (self-healing) / Q5
-- **What to do**: Don't run this in UAT this window. Tell us if you would have expected it to work.
-- **Expected for this trial**: ❌ Not built. Approach spec exists (`docs/specs/longitudinal-monitoring.md`); the sandbox proves all 4 anomaly families detect; production scheduler + BrightSignals push is ~1 sprint of work.
-- **Why we're telling you anyway**: This is on the table for the post-trial sprint. If you want it tested live, we want to hear that loudly.
+- **Maps to**: GC-12 (longitudinal monitoring) + Q5
+- **What to do**: Subscribe to a table or semantic view, then wait for the nightly run:
+  > *"Watch SV_DAILY_PORTFOLIO_EXPOSURE for anomalies — row counts, cardinality, null spikes, distributional drift"*
+- **Expected**: Per-run metrics persist; trailing-window detection fires when a metric goes out-of-band; alert lands in your Slack channel.
+- **State as of cycle-21**: longitudinal monitoring **live** — all 4 anomaly families (row-count drift, cardinality, distributional skew, null spike) detect in production. Scheduler is wired via EventBridge.
+- **What we still want to validate**: noise calibration. We'd rather over-alert and tune down than miss a real signal. Tell us if you get a false positive.
 
 ### Scenario 7 — "Just chat with it like an analyst would" ✅
 
@@ -156,10 +158,11 @@ We are telling you this **before** you test so you don't waste a row on a known 
 | Auto-ingest from S3 / REST API / Snowflake Data Share | 🔴 Not in trial | GC-1, GC-2 — covered by BYOW spec, not in this PoC |
 | Auto-generate gold marts | 🔴 Spec only | GC-5 — bb#513 spec, no impl yet |
 | Reference-join resolution from KG | 🔴 Not built | GC-7 |
-| MCP downstream query (calling tools from your IDE/agent) | 🟡 Auth live, tool call routing has bug | GC-9 — `deep_agent` routing fix in flight |
+| MCP downstream query (calling tools from your IDE/agent) | 🟡 Auth + tools live; edge-case routing in flight | GC-9 / Scenario 8 |
 | Self-healing pipeline PRs | 🔴 Approach spec only | GC-11 — `docs/specs/self-healing-pipelines.md` |
-| Longitudinal anomaly detection | 🔴 Sandbox proven, prod scheduler not built | GC-12 — `docs/specs/longitudinal-monitoring.md` |
-| Slack-native bi-directional alerts (BrightSignals push) | 🟡 Scaffold only | GC-13 |
+| Longitudinal anomaly detection | ✅ Live (cycle-21) — 4 anomaly families in prod | GC-12 / Scenario 6 |
+| Slack-native bi-directional alerts (BrightSignals push) | ✅ Live (cycle-21) — wired to monitoring + PR events | GC-13 / Scenario 9 |
+| Projects / BrightStudio (custom agent builder) | 🔴 Q2 epic, not in trial | BH-260 / Scenario 11 |
 
 If you test one of these and it doesn't work, **that's expected**. Skip the row. The honest gap map lives in `clients/trials/longaeva/BRIGHTHIVE_GAPS.md`.
 
@@ -196,8 +199,14 @@ Scenario owners on the BrightHive side (so you know who to ping if something beh
 | 3 — PR pipeline | Marwan | Owns the orchestrator |
 | 4 — QC | Marwan | Owns BH-622 |
 | 5 — dbt model | Marwan | Owns dbt agent |
-| 6 — Monitoring | Harbour | Future epic (Q3) |
+| 6 — Monitoring | Harbour | Longitudinal monitoring + nightshift scheduler |
 | 7 — General chat | Kuri | Cross-cutting, trust calibration |
+| 8 — MCP from IDE | Ahmed | Owns MCP server + Okta federation |
+| 9 — Slack alerts (BrightSignals) | Harbour | Owns notifications layer |
+| 10 — Memory + multi-turn | Kuri | Cross-cutting context engineering |
+| 11 — Projects / BrightStudio | Harbour | Q2 epic owner (not in this trial) |
+| 12 — RBAC | Ahmed | Owns Okta + tenant gate + role hierarchy |
+| 13 — Governance | Kuri | PR orchestrator, audit trail, redaction |
 
 ---
 
@@ -234,3 +243,77 @@ These came from Grant's PoC scope doc and map 1:1 to the scenarios above:
 6. **Q6** — "Is the right person allowed to do this?" (RBAC) → tested implicitly in every scenario via Okta-gated auth
 
 If your test doesn't map cleanly to one of these six, it's still valuable — log it under Scenario 7 (general chat).
+
+---
+
+## 9. Scenarios 8–13 — platform surfaces beyond the analyst questions
+
+Six more scenarios covering the rest of the platform Longaeva touches. Same rubric: ✅ live · 🟡 partial · 🔴 not-in-window.
+
+### Scenario 8 — "Call BrightHive tools from my own MCP client" 🟡
+
+- **Persona**: Longaeva data engineer, anyone running Claude Desktop / Cursor / their own agent
+- **Maps to**: GC-9 (MCP downstream) / Q3 of the integration story
+- **What to do**: Add BrightHive as an MCP server to your client of choice:
+  ```
+  https://mcp.staging.brighthive.net/mcp
+  ```
+  Authenticate via Okta (one-time). Then from your client:
+  > *"List my semantic views in the Longaeva workspace and run QC on one"*
+- **Expected**: Your client lists BrightHive's tools (`list_semantic_views`, `get_semantic_view`, `qc_semantic_view_pipeline`, etc.) and calls them. Results come back inline.
+- **State as of cycle-21**: ✅ MCP server live, ✅ OAuth handshake green, ✅ auth → agent → Bedrock inference verified live. 🟡 some tool calls still route through `deep_agent` memory instead of the dbt subagent on edge cases — log it if your call doesn't feel like it hit the warehouse.
+- **Why it matters**: This is the *contract* — if your IDE can call BrightHive tools, BrightHive is now part of your developer surface, not a separate website.
+
+### Scenario 9 — "Push me a Slack alert when something matters" 🟡
+
+- **Persona**: ops lead, on-call engineer, anyone who lives in Slack
+- **Maps to**: GC-13 (Slack-native bidirectional) + BrightSignals
+- **What to do**: Subscribe to events in the `#longaeva-poc` channel:
+  > *"Alert me when a semantic-view PR opens, a QC run fails, or a metric trips its threshold"*
+- **Expected**: Pushed Slack messages with enough context to triage without leaving Slack — diagnosis sentence + link to the PR/run/dashboard.
+- **State as of cycle-21**: ✅ BrightSignals push wired to longitudinal monitoring + PR lifecycle events. 🟡 still tuning what to push vs. suppress — your feedback drives the noise calibration.
+- **What we want from you**: Tell us if an alert should have fired and didn't. False negatives are worse than false positives here.
+
+### Scenario 10 — "Pick up where I left off" ✅
+
+- **Persona**: any returning user, anyone who context-switches
+- **Maps to**: BrightAgent memory + multi-turn coherence (cross-cutting, not a single GC)
+- **What to do**: Have a real conversation across two sessions:
+  - Day 1: *"I'm investigating exposure concentration in healthcare. Pull me the top 10 issuers."*
+  - Day 2 (new thread): *"Continue where we left off — anything change since yesterday?"*
+- **Expected**: The agent recalls the prior thread's context (the healthcare investigation), doesn't ask you to repeat yourself, gives you a delta-shaped answer.
+- **What we want**: Note any time the agent forgets, hallucinates a remembered fact, or invents prior context. Memory boundaries are where trust is earned or lost.
+
+### Scenario 11 — "Build a custom agent for my workflow" (Projects / BrightStudio) 🔴
+
+- **Persona**: power user, analyst lead who wants to package a workflow for the team
+- **Maps to**: BH-260 (BrightStudio + custom agents — Q2 2026 epic)
+- **What to do**: Skip in this window. Tell us if you would have wanted to use it.
+- **State as of cycle-21**: 🔴 not in trial. Projects/BrightStudio is the Q2 2026 epic — scaffolding exists in the webapp (`wa#1124` canvas), no end-user agent-builder loop wired yet.
+- **Why we're telling you**: Several Longaeva analysts have asked. The trial outcome influences whether this is the Q3 priority or whether we push deeper into ingestion/governance first.
+
+### Scenario 12 — "Make sure the wrong person can't see my data" (RBAC) ✅
+
+- **Persona**: security lead, IT admin, anyone with compliance concerns
+- **Maps to**: GC-9 RBAC half + Q6 / BH-612 (auth role hierarchy)
+- **What to do**: Three checks anyone with two accounts can run:
+  1. Log into the webapp with a Longaeva analyst account → confirm you see **only** the Longaeva workspace, not other tenants.
+  2. Ask BrightAgent for a workspace you don't have access to:
+     > *"Show me semantic views in the DemoCorp workspace"*
+     → expect a clean "you don't have access" response, **not** a leak of any data or even the workspace's existence.
+  3. Try to commit a PR via an unbound GitHub repo → expect `errorCode: BINDING_NOT_FOUND`, not a partial write.
+- **Expected**: Tenant isolation holds in all three. Auth role hierarchy means workspace admin satisfies inherited role checks; non-admins are clamped.
+- **State as of cycle-21**: ✅ Okta SSO live, ✅ `@authorized` tenant gate enforced on the GitHub proxy (BH-559), ✅ role hierarchy seeded (pc#797), ✅ token redaction extended to `ghu_*`, `?access_token=`, `&pat=` patterns in logs.
+- **What we want**: Try to break it. Honestly. If you can see a workspace you shouldn't, that's a P0 — escalate immediately to `@kuri`.
+
+### Scenario 13 — "Show me the audit trail and the redaction guarantees" (Governance) ✅
+
+- **Persona**: governance lead, data-protection officer, anyone signing off on the trust contract
+- **Maps to**: governance / audit / PII handling (cross-cutting, every scenario depends on it)
+- **What to do**: Three governance checks:
+  1. **PR-based audit trail**: Open the `longaeva-semantic-views` repo on GitHub. Every change to a semantic view is a PR with author, diff, and `yamlHash` continuity. No edits land without a PR.
+  2. **PII redaction**: Run any scenario, then ask `@kuri` for the prompt log. Asset names appear in the structured logger; they **do not** appear in chat (hardened in cycle-20).
+  3. **Secret redaction in logs**: Search staging logs for `ghu_`, `ghs_`, `?access_token=`, `&pat=`, `Bearer eyJ` — expect zero hits. 20 regression tests in CI lock this.
+- **Expected**: Audit trail complete; PII contained to structured logs; secrets never leak in any surface (chat, logs, error messages, telemetry).
+- **State as of cycle-21**: ✅ commitSemanticViewToGitHub orchestrator opens PRs with full audit metadata; ✅ PII removed from chat (asset names → logger only); ✅ Properties 1–4 (PAT redaction, yamlHash continuity, idempotent retry, partial-write honesty) locked in 20-test eval harness in CI.
+- **Why it matters**: Most enterprise PoCs fail on the governance question last, not first. Run this scenario before you sign off, not after.
