@@ -17,6 +17,8 @@
 | Longaeva POC overview | `trials/longaeva/overview.md` |
 | Longaeva milestone scorecard | `trials/longaeva/scorecard.md` |
 | Longaeva UAT success guide (whole-company testing) | `trials/longaeva/UAT_GUIDE.md` |
+| Longaeva — Sarah's Monday morning (non-tech sales demo) | `trials/longaeva/SARAH_DEMO.md` |
+| Longaeva Snowflake standards | `trials/longaeva/SNOWFLAKE_STANDARDS.md` |
 | Longaeva full POC response plan | `trials/longaeva/artifacts/poc-response-plan.md` |
 | Longaeva client POC scope (verbatim) | `trials/longaeva/artifacts/poc-scope-from-client.md` |
 | Longaeva Atlas semantic-view YAML examples (client-provided) | `trials/longaeva/artifacts/atlas-semantic-view-examples.yaml` |

@@ -1,0 +1,184 @@
+# Atlas-shaped semantic view — week-over-week exposure delta.
+#
+# Built on GOLD.MART_WEEKLY_EXPOSURE_DELTA (clients/trials/longaeva/sandbox/snowflake/90_weekly_delta.sql).
+# Powers Q3 of the Sarah's-Monday-morning demo: "what changed in the last week?"
+#
+# Structure mirrors sv_daily_portfolio_exposure.yaml — spec section compiles
+# to CREATE SEMANTIC VIEW DDL; sdk_extensions below the strip boundary drive
+# MCP routing, agent context, and verified queries.
+
+# =============================================================================
+# spec — Snowflake-native (compiles to DDL)
+# =============================================================================
+spec:
+  name: sv_weekly_exposure_delta
+  schema: LONGAEVA_POC.SEMANTIC
+  description: >-
+    Week-over-week exposure delta per (portfolio × issuer). Today's exposure
+    minus same exposure 7 calendar days prior, with absolute and percent change
+    and a categorical change_type. Built on GOLD.mart_weekly_exposure_delta.
+
+  base_table: LONGAEVA_POC.GOLD.mart_weekly_exposure_delta
+
+  relationships:
+    - name: rel_issuer
+      type: many_to_one
+      join:
+        base: internal_issuer_id
+        target: LONGAEVA_POC.REF.identifier_map.internal_issuer_id
+
+    - name: rel_geo
+      type: many_to_one
+      join:
+        base: country_code
+        target: LONGAEVA_POC.REF.geo_codes.country_code
+
+    - name: rel_watchlist
+      type: many_to_one
+      join:
+        base: internal_issuer_id
+        target: LONGAEVA_POC.REF.watchlist.internal_issuer_id
+
+  dimensions:
+    - {name: portfolio_id,       expr: portfolio_id,                description: Internal portfolio identifier}
+    - {name: internal_issuer_id, expr: internal_issuer_id,          description: Longaeva internal issuer ID}
+    - {name: issuer_name,        expr: issuer_name,                 description: Issuer legal name (from REF.identifier_map)}
+    - {name: sector_code,        expr: sector_code,                 description: Issuer sector}
+    - {name: country_code,       expr: country_code,                description: ISO-3166 alpha-3 country code}
+    - {name: country_name,       expr: country_name,                description: Issuer primary country}
+    - {name: region,             expr: rel_geo.region,              description: AMERICAS / EMEA / APAC}
+    - {name: change_type,        expr: change_type,                 description: One of increased / decreased / new_position / closed_position / unchanged}
+    - {name: watchlist_severity, expr: rel_watchlist.severity,      description: monitor / elevated / critical — NULL if not on watchlist}
+    - {name: watchlist_reason,   expr: rel_watchlist.watchlist_reason, description: One-line reason for watchlist entry}
+
+  time_dimensions:
+    - {name: as_of_date, expr: as_of_date, grain: day, description: Calendar as-of date (today snapshot)}
+
+  facts:
+    - {name: exposure_today_usd,  expr: exposure_today_usd,  data_type: NUMBER(20,6)}
+    - {name: exposure_7d_ago_usd, expr: exposure_7d_ago_usd, data_type: NUMBER(20,6)}
+    - {name: delta_usd,           expr: delta_usd,           data_type: NUMBER(20,6)}
+    - {name: delta_pct,           expr: delta_pct,           data_type: NUMBER(10,4)}
+
+  metrics:
+    - name: total_delta_usd
+      expr: SUM(delta_usd)
+      description: Net change in USD exposure across positions over the trailing week
+    - name: gross_delta_usd
+      expr: SUM(ABS(delta_usd))
+      description: Gross movement (absolute) over the trailing week — turnover proxy
+    - name: total_exposure_today_usd
+      expr: SUM(exposure_today_usd)
+      description: Latest USD exposure summed over scope
+    - name: position_count
+      expr: COUNT(DISTINCT internal_issuer_id)
+      description: Distinct issuers in scope
+
+# =============================================================================
+# STRIP BOUNDARY  (everything below is removed before CREATE SEMANTIC VIEW)
+# =============================================================================
+
+sdk_extensions:
+
+  # ---- Metric store wiring ----------------------------------------------------
+  metric_store:
+    namespace: longaeva.exposure_delta
+    register:
+      - total_delta_usd
+      - gross_delta_usd
+      - total_exposure_today_usd
+    reuse_from: []
+
+  # ---- Named filter presets (surfaced through MCP) ----------------------------
+  filter_presets:
+    - name: increased_only
+      description: Positions where exposure grew week over week
+      expr: change_type = 'increased'
+    - name: decreased_only
+      description: Positions where exposure shrunk week over week
+      expr: change_type = 'decreased'
+    - name: new_or_closed
+      description: New positions opened or closed in the last 7 days
+      expr: change_type IN ('new_position', 'closed_position')
+    - name: on_watchlist
+      description: Issuers currently flagged on the analyst watchlist
+      expr: rel_watchlist.severity IS NOT NULL
+    - name: top_movers
+      description: Top 10 movers by absolute dollar change, per portfolio
+      expr: |-
+        internal_issuer_id IN (
+          SELECT internal_issuer_id
+          FROM LONGAEVA_POC.GOLD.mart_weekly_exposure_delta
+          QUALIFY ROW_NUMBER() OVER (
+            PARTITION BY portfolio_id
+            ORDER BY ABS(delta_usd) DESC
+          ) <= 10
+        )
+
+  # ---- Plain-language guidance for downstream agents --------------------------
+  agent_instructions: |-
+    This semantic view answers "what changed?" questions over the trailing
+    seven calendar days at the (portfolio, issuer) grain.
+
+    When the user asks about "movers" or "changes" without specifying scope,
+    default to ABS(delta_usd) descending — the biggest dollar moves are usually
+    what an analyst wants to see first.
+
+    When the user asks "did anything cross a watchlist", surface only rows
+    where watchlist_severity IS NOT NULL and include watchlist_reason in the
+    one-line summary. Never invent a watchlist reason — if watchlist_reason
+    is NULL, the issuer is NOT on the list.
+
+    delta_pct can be NULL for new positions (no prior exposure). Treat NULL
+    as "new position" in user-facing language; do not say "infinite" or "N/A".
+
+    For non-technical users, format dollar amounts as "$1.2M" / "$680K"
+    rather than scientific notation, and round to the nearest $1K.
+
+  # ---- Hand-verified queries (LLM grounding) ----------------------------------
+  verified_query_examples:
+    - title: Top 5 movers in a portfolio
+      nl_question: What changed in P-000 in the last week — biggest moves?
+      sql: |
+        SELECT issuer_name, sector_code, country_name, delta_usd, delta_pct, change_type
+        FROM SEMANTIC_VIEW(
+          sv_weekly_exposure_delta
+          DIMENSIONS issuer_name, sector_code, country_name, change_type
+          METRICS delta_usd, delta_pct
+          WHERE portfolio_id = 'P-000'
+        )
+        ORDER BY ABS(delta_usd) DESC
+        LIMIT 5
+
+    - title: New and closed positions this week
+      nl_question: Did we open or close any positions this week in P-001?
+      sql: |
+        SELECT issuer_name, change_type, delta_usd
+        FROM SEMANTIC_VIEW(
+          sv_weekly_exposure_delta
+          DIMENSIONS issuer_name, change_type
+          METRICS delta_usd
+          WHERE portfolio_id = 'P-001'
+            AND change_type IN ('new_position', 'closed_position')
+        )
+        ORDER BY ABS(delta_usd) DESC
+
+    - title: Movers that are also on the watchlist
+      nl_question: Any of last week's biggest moves on a watchlist?
+      sql: |
+        SELECT issuer_name, change_type, delta_usd, watchlist_severity, watchlist_reason
+        FROM SEMANTIC_VIEW(
+          sv_weekly_exposure_delta
+          DIMENSIONS issuer_name, change_type, watchlist_severity, watchlist_reason
+          METRICS delta_usd
+          WHERE portfolio_id = 'P-000'
+            AND watchlist_severity IS NOT NULL
+        )
+        ORDER BY ABS(delta_usd) DESC
+
+  # ---- Owners (Atlas SDK semantics) -------------------------------------------
+  owners:
+    - team:brighthive-pipeline
+    - team:longaeva-data
+
+  dataset_key: longaeva.weekly_exposure_delta
