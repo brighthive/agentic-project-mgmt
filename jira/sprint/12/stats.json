@@ -1,0 +1,101 @@
+{
+  "sprint": 12,
+  "name": "Sprint 12 \u2014 Longaeva Pre-Trial Platform Build",
+  "emoji": "\ud83d\udee0\ufe0f",
+  "official": false,
+  "note": "Unofficial sprint cut covering merges from June 3 \u2192 June 16, 2026. Continues from Sprint 11 (May 15 \u2192 June 2). Sprint 7 was the last formal Jira sprint object. Dominated by the Longaeva pre-trial build (epics BH-526 / BH-601 / BH-624) \u2014 but the work shipped as reusable platform capability (MCP, OMD-native ingestion, dbt-agent + semantic views, quality-rule library, Slack/notifications, Okta federation, longitudinal monitoring), so it is counted here as the platform sprint. PoC-completeness/scorecard narrative is tracked separately in clients/trials/longaeva/TRACKER.md.",
+  "dates": {
+    "start": "2026-06-03",
+    "end": "2026-06-16",
+    "duration_days": 14
+  },
+  "epics_in_play": {
+    "BH-526": "Longaeva Partners POC \u2014 14-day pre-trial execution",
+    "BH-601": "Longaeva PoC \u2014 14 Golden Success Paths (GC-1..14)",
+    "BH-624": "Semantic View Lifecycle: Read/Sync/Mirror/Write",
+    "BH-503": "Configurable Quality Rules",
+    "BH-409": "BrightSignals notifications",
+    "BH-115": "MCP server / Okta federation",
+    "BH-172": "Platform Features",
+    "BH-173": "Bugs & Fixes",
+    "BH-170": "SDLC & Code Quality"
+  },
+  "tickets": {
+    "total_updated_in_window": 100,
+    "done": 18,
+    "code_review": 3,
+    "staging_qc": 24,
+    "in_progress": 1,
+    "needs_refinement": 54,
+    "note": "54 Needs-Refinement are mostly freshly-filed BH-601 golden-case + BH-624 lifecycle backlog (specced, not built). Active work = Done+CodeReview+StagingQC+InProgress = 46."
+  },
+  "completion": {
+    "done_pct": 18.0,
+    "done_or_in_pipeline_pct": 46.0,
+    "note": "Denominator inflated by backlog grooming; 46 tickets actively worked, 28 sitting in review/QC pipeline ready to land."
+  },
+  "prs": {
+    "total_merged": 268,
+    "feature_and_fix": 235,
+    "release_carriers": 33,
+    "lines_changed": 604988,
+    "lines_changed_excl_carriers": 485074,
+    "by_repo": {
+      "brighthive-data-workspace-cdk": 2,
+      "brightbot": 51,
+      "brightbot-slack-server": 54,
+      "brighthive-webapp": 44,
+      "brighthive-platform-core": 82,
+      "brighthive-data-organization-cdk": 2
+    },
+    "by_author": {
+      "drchinca": 170,
+      "sherbiny-bh": 2,
+      "Marwan-Samih-Brighthive": 50,
+      "Nano-233": 13
+    },
+    "repos_touched": [
+      "brightbot",
+      "brightbot-slack-server",
+      "brighthive-data-organization-cdk",
+      "brighthive-data-workspace-cdk",
+      "brighthive-platform-core",
+      "brighthive-webapp"
+    ]
+  },
+  "themes": {
+    "MCP": 22,
+    "dbt-agent / semantic views": 25,
+    "Slack / notifications / HITL": 37,
+    "Auth / Okta / Cognito": 7,
+    "OMD / ingestion": 35,
+    "Longitudinal / quality": 8,
+    "Tests / CI": 7
+  },
+  "team": [
+    {
+      "name": "Kuri Chinca",
+      "github": "drchinca",
+      "prs": 170,
+      "focus": "MCP, OMD ingestion, dbt-agent/semantic views, Okta federation, security P0s, longitudinal core"
+    },
+    {
+      "name": "Marwan Samih",
+      "github": "Marwan-Samih-Brighthive",
+      "prs": 50,
+      "focus": "Slack-server notifications, HITL, dbt tool surfacing, OAuth invariants"
+    },
+    {
+      "name": "Harbour Wang",
+      "github": "Nano-233",
+      "prs": 13,
+      "focus": "Quality-rule library (BH-503) FE+BE, profiler, studio guardrails"
+    },
+    {
+      "name": "Ahmed Elsherbiny",
+      "github": "sherbiny-bh",
+      "prs": 2,
+      "focus": "CDK \u2014 Snowflake ingestion stack, workspace secret store"
+    }
+  ]
+}

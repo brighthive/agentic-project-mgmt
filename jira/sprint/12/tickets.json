@@ -1,0 +1,324 @@
+[
+  {
+    "key": "BH-641",
+    "summary": "Write/overwrite semantic view back to Snowflake from BrightBot",
+    "status": "Done",
+    "assignee": "Kuri",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-545",
+    "summary": "webapp: replace MOCK_RULES with live qualityRules query",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-547",
+    "summary": "webapp: activate/deactivate toggle + execution history + pass-rate sparkline",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-541",
+    "summary": "core: resolvers + service for quality rule CRUD + scope-aware query",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-505",
+    "summary": "brightbot: QualityRuleNode + QualityRuleExecutionNode in Neo4j OGM",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-583",
+    "summary": "brightbot: quality check graph cleanup \u2014 SQL datasource, dedup GX",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-565",
+    "summary": "brightbot: author BRIGHTBOT-GITHUB-PROXY-GUIDE.md",
+    "status": "Done",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-564",
+    "summary": "brightbot: Pydantic responses + DI for PlatformAPISession",
+    "status": "Done",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-562",
+    "summary": "brightbot: finish PyGithub removal (P0)",
+    "status": "Done",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-537",
+    "summary": "core: expose QualityRule types in public GraphQL schema + codegen",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-546",
+    "summary": "webapp: create/edit drawer with scope selector + asset picker",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-511",
+    "summary": "brightbot: seed library of 20+ quality rule templates",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-508",
+    "summary": "brightbot: per-rule execution fanout + pass rate aggregation",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-507",
+    "summary": "brightbot: quality agent reads rules from library, not LLM regen",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-506",
+    "summary": "brightbot: REST CRUD endpoints for quality rules",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-517",
+    "summary": "nav: preserve role-based section visibility in refactored nav",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-518",
+    "summary": "studio: critical frontend guardrails",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-520",
+    "summary": "add profiler_task as a schedulable batch task",
+    "status": "Done",
+    "assignee": "Harbour",
+    "epic": null
+  },
+  {
+    "key": "BH-650",
+    "summary": "RBAC: authorize_access honours client workspace_id on zero memberships",
+    "status": "Code Review",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-647",
+    "summary": "MCP: Bedrock Converse tool-schema 'example' rejected \u2014 sanitizer",
+    "status": "Code Review",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-646",
+    "summary": "TENANT ISOLATION: getAllDataAssets cross-attach fix",
+    "status": "Code Review",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-651",
+    "summary": "OM table descriptions reach DataAssetNode (backfill)",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-644",
+    "summary": "AutoPilot schemaFilterPattern on ingestion pipeline sourceConfig",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-643",
+    "summary": "OM\u2192Neo4j sync: match legacy name-only DataAssetNodes",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-642",
+    "summary": "Scope AutoPilot scan to prod schemas \u2014 exclude dbt dev sandboxes",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-622",
+    "summary": "SV QC: upstream base tables vs data product drift",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-620",
+    "summary": "SV edits land as governed PRs \u2014 CI compile-check",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-619",
+    "summary": "SV lineage: base_tables + join graph on list_semantic_views",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-597",
+    "summary": "eval: end-to-end agent eval harness for 6-step Longaeva DAG",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-554",
+    "summary": "org-cdk: SnowflakeIngestionStack reads workspace_secret_store",
+    "status": "Staging QC",
+    "assignee": "Ahmed",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-551",
+    "summary": "core: SnowflakeSourceConfig in OMD ingestion lambda",
+    "status": "Staging QC",
+    "assignee": "Ahmed",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-574",
+    "summary": "ops: Route53 + ACM for mcp/auth.brighthive.io",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-573",
+    "summary": "core: Cognito + Okta federation for MCP server",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-567",
+    "summary": "core: property/integration tests for github-proxy",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-561",
+    "summary": "core: truncated flag + structured errorCode/httpStatus on github-proxy",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-560",
+    "summary": "core: disable redirect-follow + scrub PAT (P0 leak)",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-559",
+    "summary": "core: derive workspaceId from token in github-proxy (P0 multi-tenant)",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-594",
+    "summary": "dbt-agent: infer dbt schema.yml tests from introspection",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-592",
+    "summary": "dbt-agent: generate sources.yml + staging model from Silver table",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-549",
+    "summary": "brightbot: warehouse_config-aware Snowflake branch",
+    "status": "Staging QC",
+    "assignee": "Marwan",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-563",
+    "summary": "brightbot: redact Authorization header from logs (P0 JWT leak)",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-530",
+    "summary": "fix GX output: serialize expectation suite as YAML + commit",
+    "status": "Staging QC",
+    "assignee": "Marwan",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-529",
+    "summary": "dbt-agent: proxy GitHub ops through Platform Core + GHE \u2014 remove PyGithub",
+    "status": "Staging QC",
+    "assignee": "Marwan",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-528",
+    "summary": "add Snowflake SQL dialect rules to agent prompts",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-527",
+    "summary": "add SnowflakeConnection class + wire into factory",
+    "status": "Staging QC",
+    "assignee": "Kuri",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-600",
+    "summary": "quality-agent: longitudinal anomaly monitoring (GC-12 / GAP-8)",
+    "status": "In Progress",
+    "assignee": "Kuri",
+    "epic": "BH-601"
+  }
+]

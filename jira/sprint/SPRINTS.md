@@ -1,8 +1,22 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 11 (released June 2, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 12 (released June 16, unofficial) | **Longaeva pre-trial build (BH-526/601/624)** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 12 🛠️ — Longaeva Pre-Trial Platform Build (June 3 – June 16, 2026)
+- **Duration**: 14 days (date-range cut, unofficial)
+- **Focus**: MCP integration (dbt-via-MCP working), OMD-native BYOW ingestion (Snowflake/Redshift AutoPilot), dbt-agent + semantic-view lifecycle, configurable quality-rule library (BH-503 shipped), Slack/notifications/HITL, Okta federation for MCP, longitudinal monitoring core, security P0 chain
+- **Team**: Kuri, Marwan, Harbour, Ahmed
+- **Tickets**: 100 touched · 18 Done · 3 Code Review · 24 Staging QC · 1 In Progress · 54 Needs Refinement (fresh backlog) — 46 actively worked
+- **PRs Merged**: 268 (235 feature/fix + 33 release carriers, 6 repos)
+- **Lines Changed**: 485,074 (excl. release-carrier PRs); 604,988 incl.
+- **Highlights**: dbt-via-MCP works end-to-end (BH-647 Bedrock sanitizer), quality-rule library shipped (11 tickets), OMD-native AutoPilot ingestion verified on staging (171 tables / 333 embeddings), semantic-view write-back to Snowflake (BH-641), Cognito+Okta MCP federation (BH-573/574), P0 security chain (multi-tenant exfil, PAT-leak, JWT scrub, tenant isolation)
+- **Sprint Health**: Heavy build sprint — large 28-ticket code-review/staging-QC pipeline queued for the pre-trial deploy; 54 follow-up tickets groomed into backlog
+- **Scope note**: Longaeva-driven but counted here as platform capability (Sprint 11 narrow-exclusion precedent); PoC-completeness/scorecard narrative in `clients/trials/longaeva/TRACKER.md`
+- [Details →](./12/)
 
 ---
 
