@@ -33,19 +33,22 @@ A workspace's warehouse is scanned on a schedule (nightshift). Each run snapshot
   - `00_monitoring_ddl.sql` — `MONITORING.metric_history` (PK `snapshot_ts, dataset, metric_name`) + `MONITORING.anomaly_events`.
   - `monitor.py` — `compute_metrics()` snapshots row_count / cardinality / null_rate / mean+stddev; `detect()` compares latest vs a `TRAILING_WINDOW = 7` window with per-metric fractional tolerances; writes `anomaly_events`.
   - Four families: `row_count_drift`, `cardinality_breakdown`, `distributional_skew`, `null_spike`.
-- **In the product**: none of this exists. The quality agent (`brightbot/agents/governance_agent/tools/quality_tools.py`) is stateless; there is no metric-history persistence, no scheduler, no anomaly surface.
+- **In the product (updated 2026-06-17 after code audit)**: two slices are **shipped as pure functions, called only in tests** — not yet wired into any production path:
+  - `brightbot/brightbot/agents/governance_agent/tools/longitudinal_detect.py` (#557) — `detect_anomalies(current, history, specs)` ports the sandbox `detect()`; all 4 families covered by unit tests. The module owns *only* the statistical decision; the caller wires source + sink.
+  - `brightbot/brightbot/agents/governance_agent/tools/metric_snapshot_sql.py` (#563) — `build_snapshot_sql(...)` returns dialect-templated metric SQL (Snowflake/Redshift/Postgres/Synapse). Returns a string; does not execute.
+  - The quality agent (`quality_tools.py`) remains stateless. **Still ABSENT**: metric-history persistence, the caller that computes+stores snapshots, the scheduler, the anomaly surface, the analyst read path. `brightbot/tests/integration/golden_cases/test_gc_12_longitudinal_live.py` records GC-12 as `live_partial` for exactly this reason.
 
 ### Hard limitations / gaps
 - **No state**: per-run metrics are not persisted, so no trend is computable.
 - **No scheduler ("nightshift")**: nothing runs the monitor unattended on a cadence.
 - **No anomaly surface**: BrightSignals notification scaffold (bb#486) exists but has no anomaly source to push from; the analyst agent has no `anomaly_events` to read.
-- **Mapping**: GAP-8 (`clients/trials/longaeva/BRIGHTHIVE_GAPS.md §GAP-8`) says this maps to the `QualityRuleExecutionNode` specced in BH-503 — sequence *after* BH-503 lands so history shares one persistence layer.
+- **Mapping (corrected 2026-06-17)**: GAP-8 originally said metric history maps to BH-503's `QualityRuleExecutionNode`. **Code audit refutes this**: that node (live in platform-core `quality-rule.ts`) stores per-rule *pass/fail* results (`evaluatedCount`, `successCount`, `passed`), not raw *metric values* (`row_count`, `cardinality`, `mean/stddev`). GC-12 needs its **own** `MetricSnapshotNode` keyed by `(snapshot_ts, dataset, metric_name)`. BH-503 is a sequencing dependency only for the **rule-library config surface** (which datasets/metrics a workspace opts into), not for the metric store itself.
 
 ## Proposals / Solutions
 
 **Persist metrics where BH-503 persists rule results; detect with the sandbox's trailing-window algorithm; schedule with a nightshift cron.** Single warehouse-agnostic path (metric SQL is dialect-templated, same as the dbt agent's dialect map).
 
-- **Persistence**: `MetricSnapshotNode` (or a `metric_history` table in the workspace warehouse, mirroring the sandbox DDL) keyed by `(snapshot_ts, dataset, metric_name)`. Reuse BH-503's execution-history store rather than a parallel one.
+- **Persistence**: a dedicated `MetricSnapshotNode` (or a `metric_history` table in the workspace warehouse, mirroring `sandbox/monitoring/00_monitoring_ddl.sql`) keyed by `(snapshot_ts, dataset, metric_name)`. This is a **new store** — *not* BH-503's `QualityRuleExecutionNode`, which holds per-rule pass/fail rather than raw metric values. Attach `MetricSnapshotNode` to the same `DataAsset` relationship BH-503's `QualityRule.assets` uses, so a workspace marks "monitor this asset" through one surface.
 - **Metrics**: per dataset per run — `row_count`, `cardinality:<dim>`, `null_rate:<col>`, `mean/stddev:<numeric>`. Configurable per workspace (rides BH-503's rule library).
 - **Detection**: latest snapshot vs trailing window (default 7), per-metric fractional tolerance; emit `AnomalyEventNode` with family + observed/expected + severity.
 - **Nightshift scheduler**: a scheduled trigger (EventBridge → the monitor) per workspace; cadence configurable. This is the missing "nightshift" .md — defined here, not yet built.
@@ -97,14 +100,17 @@ Feature: Longitudinal anomaly monitoring (GC-12 / GAP-8)
 
 ## Ticket Breakdown
 
-| Ticket | Repo | Gate |
-|---|---|---|
-| Metric-history persistence (mirror sandbox DDL / `MetricSnapshotNode`) | platform-core | unit + schema |
-| Port `monitor.py` compute_metrics + detect into governance agent (dialect-templated) | brightbot | unit (4 families) + integ vs live LONGAEVA_POC |
-| Nightshift scheduler (EventBridge → monitor per workspace) | data-workspace-cdk / platform-core | CDK synth + integ |
-| Wire anomaly → BrightSignals notification | brightbot | behavior |
-| Analyst read path for AnomalyEventNode | brightbot | behavior |
-| Flip GC-12 skip → live (≥1 anomaly from 4 families on staging) | brightbot | full Gherkin / UAT |
+> **Status (2026-06-17 audit).** The algorithm is done; what remains is **wiring**, not statistics. Detection core (#557) and metric SQL builder (#563) are shipped as pure functions — the tickets below consume them.
+
+| # | Ticket | Repo | Status | Gate |
+|---|---|---|---|---|
+| 1 | **Metric-history persistence** — dedicated `MetricSnapshotNode` (own store, mirror sandbox DDL; attach to `DataAsset`). **No longer rides BH-503's execution store.** | platform-core | ABSENT | unit + schema |
+| 2 | Snapshot caller — run `build_snapshot_sql` (#563) per dataset, parse rows, persist via #1 | brightbot | ABSENT | unit + integ vs live LONGAEVA_POC |
+| 3 | Detection wiring — call `detect_anomalies` (#557, already shipped) against persisted history; write `AnomalyEventNode` | brightbot | core shipped, wiring ABSENT | unit (4 families) + integ |
+| 4 | Nightshift scheduler (EventBridge → snapshot+detect per workspace; reads BH-503 `applyOnSchedule`) | data-workspace-cdk / platform-core | ABSENT | CDK synth + integ |
+| 5 | Wire anomaly → BrightSignals notification (anomaly source for the existing sink) | brightbot | ABSENT | behavior |
+| 6 | Analyst read path for `AnomalyEventNode` | brightbot | ABSENT | behavior |
+| 7 | Flip GC-12 `live_partial` → live (≥1 anomaly from 4 families, surfaced E2E on staging) | brightbot | blocked on 1–6 | full Gherkin / UAT |
 
 ## Related
 
