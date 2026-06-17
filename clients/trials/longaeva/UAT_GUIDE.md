@@ -47,7 +47,9 @@ notion_page: "TBD — mirror this file under the Longaeva GTM page"
 
 ---
 
-## 2. The thirteen UAT scenarios
+## 2. The fourteen UAT scenarios
+
+> Scenarios 1–13 are engineering acceptance. **Scenario 14 ("Sarah's Monday morning") is the one a non-engineer can run cold** — sales, exec, GTM, prospect. See `SARAH_DEMO.md` for the full script with real numbers.
 
 Each scenario maps to a **golden case** in the PoC scorecard. Run any scenario in any order. **You do not have to be technical** — if your role lines up with the persona, just follow the prompt.
 
@@ -207,6 +209,7 @@ Scenario owners on the BrightHive side (so you know who to ping if something beh
 | 11 — Projects / BrightStudio | Harbour | Q2 epic owner (not in this trial) |
 | 12 — RBAC | Ahmed | Owns Okta + tenant gate + role hierarchy |
 | 13 — Governance | Kuri | PR orchestrator, audit trail, redaction |
+| 14 — Sarah's Monday (non-tech) | Kuri | End-to-end product story for GTM / non-engineers |
 
 ---
 
@@ -228,6 +231,48 @@ Scenario owners on the BrightHive side (so you know who to ping if something beh
 | **Linked from**: `clients/trials/longaeva/scorecard.md`, `TEAM_GUIDE.md`, the Notion GTM page | One click from anywhere a tester might land |
 
 **Updating**: edit this file in the repo, commit, then mirror to Notion. Do not edit the Notion copy and let the repo drift — repo is canonical.
+
+---
+
+## 10. Scenario 14 — Sarah's Monday morning (non-tech / GTM UAT) ✅
+
+**Persona**: portfolio analyst. Bloomberg + Excel + Slack. No SQL, no platform terminology. Runs the demo in 15 minutes before the IC call.
+
+**Maps to**: end-to-end product value (positions + concentration + change + watchlist). Pulls from `SV_DAILY_PORTFOLIO_EXPOSURE` + `SV_WEEKLY_EXPOSURE_DELTA` + `REF.WATCHLIST`.
+
+**Why this scenario exists**: scenarios 1–13 read like engineering acceptance tests. They are. Scenario 14 is the one a non-engineer (sales, exec, prospect) can run cold — and walk away saying *"that's what my Monday morning looks like."*
+
+**Full demo script with real numbers**: [`SARAH_DEMO.md`](./SARAH_DEMO.md).
+
+### The five steps
+
+For each step, tester says the prompt verbatim to `@BrightBot` and verifies the bar.
+
+| # | Prompt | Pass bar | Fail signal |
+|---|---|---|---|
+| 1 | *"What are my top 10 positions today, ranked by dollar exposure?"* | Names + dollars + % match the SARAH_DEMO table within $1K | Bot says "semantic view" / "Snowflake" / "mart" |
+| 2 | *"Break those down by sector and by country — where is the concentration?"* | Two compact tables; percentages sum to 100% (±0.1%); callout matches table | Sums off; callout contradicts the table |
+| 3 | *"What changed in the last week? Anything I should look at first?"* | Top-5 movers by absolute $ change; honest narrative sentence | "I don't have that data" (delta mart not wired); random-looking picks |
+| 4 | *"Any of these names on a watchlist I should know about?"* | Every flagged issuer in `REF.WATCHLIST`; every unflagged NOT in it; reasons match the table | Bot invents reasons; misses flagged names |
+| 5 | *"Send this to my PM as a summary."* | ≤ 200 words; Slack-formatted; copy-paste-ready; no engineer language | Walls of text; jargon leaks; >200 words |
+
+### The hard prompt rule
+
+In any of these five steps, if the bot uses *any* of these words in a user-facing reply, the demo fails immediately:
+
+`semantic view` · `Snowflake` · `gold mart` · `mart` · `silver` · `bronze` · `MCP` · `deep_agent` · `subagent` · `database` · `query` · `SQL` · `Atlas` · `YAML` · `embedding` · `vector` · `Bedrock` · `LangGraph` · `agent loop`
+
+The one allowed platform sentence — *only if asked* — is in `SARAH_DEMO.md` under "Where the numbers come from".
+
+### Tester verdict
+
+Log to the **UAT Feedback** Notion DB (same as scenarios 1–13). Use scenario name `14 — Sarah Monday`. Verdict rubric is identical (✅ Met / 🟡 Partial / 🔴 Missed / ⏸ Blocked).
+
+**One extra column** for this scenario: `Jargon leaked?` (Y/N). Any Y is a P0 — file in `#engineering`, do not continue the demo.
+
+### Sales reuse
+
+The same five steps ship as a sales asset — see `SARAH_DEMO.md` §"Reusing this beyond Longaeva". One persona, four questions, swap the warehouse and the watchlist per prospect. Matt or Kuri can run the dry-run cold.
 
 ---
 
