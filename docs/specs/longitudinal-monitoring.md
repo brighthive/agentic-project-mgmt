@@ -100,17 +100,19 @@ Feature: Longitudinal anomaly monitoring (GC-12 / GAP-8)
 
 ## Ticket Breakdown
 
-> **Status (2026-06-17 audit).** The algorithm is done; what remains is **wiring**, not statistics. Detection core (#557) and metric SQL builder (#563) are shipped as pure functions — the tickets below consume them.
+> **Status (2026-06-17, build landed).** The algorithm was already done (#557/#563 pure functions); the build wired it in as an **agentic capability** — monitoring is something the quality agent *does*, reachable through the platform's existing `run_context` surfaces (ingestion/scheduled/on-demand), NOT parallel infra. See `longitudinal-monitoring-capability.md` for the interface contract. Tickets roll up to BH-600 / GC-12 under epic BH-601.
 
-| # | Ticket | Repo | Status | Gate |
+| Ticket | What | Repo | PR | Status |
 |---|---|---|---|---|
-| 1 | **Metric-history persistence** — dedicated `MetricSnapshotNode` (own store, mirror sandbox DDL; attach to `DataAsset`). **No longer rides BH-503's execution store.** | platform-core | ABSENT | unit + schema |
-| 2 | Snapshot caller — run `build_snapshot_sql` (#563) per dataset, parse rows, persist via #1 | brightbot | ABSENT | unit + integ vs live LONGAEVA_POC |
-| 3 | Detection wiring — call `detect_anomalies` (#557, already shipped) against persisted history; write `AnomalyEventNode` | brightbot | core shipped, wiring ABSENT | unit (4 families) + integ |
-| 4 | Nightshift scheduler (EventBridge → snapshot+detect per workspace; reads BH-503 `applyOnSchedule`) | data-workspace-cdk / platform-core | ABSENT | CDK synth + integ |
-| 5 | Wire anomaly → BrightSignals notification (anomaly source for the existing sink) | brightbot | ABSENT | behavior |
-| 6 | Analyst read path for `AnomalyEventNode` | brightbot | ABSENT | behavior |
-| 7 | Flip GC-12 `live_partial` → live (≥1 anomaly from 4 families, surfaced E2E on staging) | brightbot | blocked on 1–6 | full Gherkin / UAT |
+| BH-668 | `MetricSnapshotNode` + `AnomalyEventNode` persistence (own store — NOT BH-503's execution store, which holds pass/fail not raw metrics). Workspace-scoped reads. | platform-core | #891 | PR open |
+| BH-669 | Longitudinal monitoring as a **capability node** in `quality_check_agent` (best-effort; INV-1 snapshot-every-run, INV-2 detect iff `run_context != INGESTION` + history). Consumes #557/#563. | brightbot | #575 | PR open |
+| BH-670 | Runs on the **existing** scheduled dispatcher + `run_context` (reframed: no new EventBridge — the dispatcher already exists). Honors BH-503 `applyOnSchedule`. | platform-core | — | reframed, small |
+| BH-671 | Analyst read path — `get_anomalies` MCP tool (grounded in `AnomalyEventNode`, workspace-scoped from principal). | brightbot | #575 | PR open |
+| BH-672 | `longitudinal_anomaly` QualityRule type — validation (closed family set) + webapp "Data Drift Monitor" editor (mobile-first). The per-asset config surface. | platform-core + webapp | #891, #1178 | PR open |
+| BH-673 | Anomaly → dbt-agent self-healing bridge — **DEFERRED** until GC-12 is live. | brightbot | — | deferred |
+| — | Flip GC-12 `live_partial` → live (≥1 anomaly from 4 families, surfaced E2E on staging). | brightbot | — | blocked on merges + live E2E |
+
+> GC-12 stays `live_partial` until the PRs merge AND a live-warehouse/OGM E2E proves the full loop on staging — the unit/integration suite uses DI stubs (honest, no overclaim).
 
 ## Related
 
