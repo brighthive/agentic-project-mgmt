@@ -112,7 +112,7 @@ Feature: Longitudinal anomaly monitoring (GC-12 / GAP-8)
 | BH-673 | Anomaly → dbt-agent self-healing bridge — **DEFERRED**. | brightbot | — | deferred |
 | — | Flip GC-12 → live (≥1 anomaly from 4 families, surfaced E2E on staging). | brightbot | — | ✅ **done — staging E2E pass 2026-06-18** |
 
-> GC-12 is **live on staging** behind feature-flag kill-switches (brightbot `LONGITUDINAL_MONITORING_ENABLED`, webapp runtime flag). Verified by live E2E, not stubs. Remaining edges (BH-670 scheduled cadence, BrightSignals anomaly sink) are enhancements, not blockers.
+> GC-12 is **live on staging** — and for the Longaeva PoC staging *is* the live environment, so this is live on the same footing as the other shipped golden cases. Verified by live E2E (real OGM + OneTen workspace), not stubs. Feature flags (`LONGITUDINAL_MONITORING_ENABLED`, webapp runtime flag) are operational toggles, not a "not-really-live" caveat. Remaining edges (BH-670 scheduled cadence, BrightSignals anomaly sink) are enhancements.
 
 ## Related
 
