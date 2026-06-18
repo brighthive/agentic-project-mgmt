@@ -9,6 +9,15 @@ updated: "2026-06-17-cycle-22"
 
 14-day POC. Start date: **2026-06-15** (Trial Day 2). Days are relative to the agreed start. Updated daily once trial begins.
 
+> **2026-06-17 cycle-22b — GC-12 reclassified `live` → `live_partial` after a product-repo code audit. The cycle-21 "GC-12 ✅ live / ~55%" claim was an overclaim — corrected below.** Read the source files directly across all four product repos (not cited from prior notes):
+> - **SHIPPED, but pure functions called only in tests** (never in a production path): detection core `brightbot/brightbot/agents/governance_agent/tools/longitudinal_detect.py` (#557, 4 families) + warehouse-agnostic SQL builder `metric_snapshot_sql.py` (#563). `grep detect_anomalies` / `build_snapshot_sql` → only unit + golden-case tests call them. Neither is wired to a scheduler, a store, or a sink.
+> - **brightbot's own golden-case test agrees**: `tests/integration/golden_cases/test_gc_12_longitudinal_live.py` records state `live_partial` with the note "persistence + nightshift + BrightSignals surface not yet built — GC-12 not fully live."
+> - **ABSENT** (no code, verified by grep): metric-history persistence (`MetricSnapshotNode` / `metric_history`) in platform-core; nightshift EventBridge scheduler in data-workspace-cdk (only Redshift-refresh rules exist; the `applyOnSchedule` flag is in the GraphQL schema but nothing reads it); BrightSignals **anomaly** wiring (BrightSignals exists for quality-check completion, not for `AnomalyEvent`); analyst read path for anomalies.
+> - **GC-13 BrightSignals** correspondingly downgraded: the "wired to longitudinal monitoring" clause is unsupported — there is no anomaly source to push from. PR-lifecycle alerts may be real; the monitoring→alert path is not.
+> - **SHIPPED & correct** (not part of the overclaim): BH-503 quality-rules foundation — platform-core `src/graphql/service/neo4j/quality-rule.ts:114-252` (full CRUD) + webapp `src/Governance/pages/QualityRulesPage.tsx:567-580` (live GraphQL, no PreviewBanner). This is the existing per-asset marking surface (`QualityRule.assets`, `scope`, `applyOnSchedule`, `applyOnIngestion`) the monitor should ride.
+> - **Spec bug found & fixed** in `docs/specs/longitudinal-monitoring.md`: it assumed metric snapshots "ride BH-503's execution-history store" — but that store holds rule pass/fail results, not raw metric values. GC-12 needs its **own** `MetricSnapshotNode`. Corrected this cycle.
+> - **Honest completeness**: the cycle-21 "~55%" jump was driven by counting GC-12 + GC-13 as ✅ live. With GC-12 → 🟡 partial and GC-13's monitoring clause removed, the weighted figure returns toward the **cycle-19/22 ~27–35% band** (method: live=1.0 / partial=0.5 / skip=0 over 13 GCs). See the corrected rollup on the cycle-21 table below.
+>
 > **2026-06-17 cycle-22 — ingestion chain 100% live-verified end-to-end; the cycle-21 ⏳ items are now ✅.** Re-audited the full produce-the-vectors path against staging this cycle, fresh (not cited):
 > - **OMD → Neo4j catalog (OneTen):** 17 DataAssetNodes · 17 OM-backed · **14 descriptions** · 0 dups · 0 foreign-FQN · 0 phantom. BH-651 flips **⏳ → ✅** (descriptions are live at 14; the v2.9.0.33 backfill landed).
 > - **Vector embeddings (Redis, live-counted):** DBSIZE 385; **28/28 OneTen `asset:` docs (RedisJSON) each carry a 1536-dim `embedding` array**; `vector_indexed:{OneTen-ws}` index flag present. The metadata→embedding→retrieval half is real, not assumed.
@@ -45,7 +54,7 @@ updated: "2026-06-17-cycle-22"
 > - **GC-13 BrightSignals push → ✅ live**: Slack alerts wired to longitudinal monitoring + PR lifecycle events. Triage context (diagnosis + link) included; noise calibration still in flight per first UAT signal.
 > - **`clients/trials/longaeva/UAT_GUIDE.md` shipped**: whole-company UAT guide (BH + Longaeva, one doc, role-tagged). 13 scenarios cover the 6 analyst Qs + MCP / Slack / memory / Projects / RBAC / governance. Feedback flows to a Notion DB on the Longaeva GTM page. Linked from root + clients CLAUDE.md. PR #51 merged to master.
 >
-> **Updated golden-case verdict:**
+> **Updated golden-case verdict:** ⚠️ **SUPERSEDED by cycle-22b (top of doc) — GC-12 is `live_partial`, not live; the ~55% below is an overclaim. Corrected table follows.**
 >
 > | Bucket | GCs | Count |
 > |---|---|---|
@@ -54,6 +63,16 @@ updated: "2026-06-17-cycle-22"
 > | 🔴 Skip / no code | GC-1, GC-2 (ingestion), GC-5 (gold marts spec only), GC-7 (reference-join), GC-11 (self-healing — spec only) | 5 |
 >
 > **PoC completeness: ~55%** (weighted live=1.0/partial=0.5/skip=0). Strict fully-live: 38%. Two remaining 🔴s with shipped approach specs: GC-11 (self-healing) and GC-5 (gold marts). GC-1/2/7 are out-of-scope for this trial window by design (BYOW spec deliverable).
+>
+> **✅ Corrected verdict (cycle-22b, code-audited):**
+>
+> | Bucket | GCs | Count |
+> |---|---|---|
+> | ✅ Live | GC-3, GC-4, GC-6 (read path) | 3 |
+> | 🟡 Partial | GC-8 (validation compile), GC-9 (MCP downstream), GC-10 (E2E silver→PR), **GC-12 (detection core only — #557/#563 as pure fns)**, **GC-13 (PR-lifecycle alerts only; no monitoring→alert path)** | 5 |
+> | 🔴 Skip / no code | GC-1, GC-2 (ingestion), GC-5 (gold marts spec only), GC-7 (reference-join), GC-11 (self-healing — spec only) | 5 |
+>
+> **Corrected completeness: ~42%** weighted (live=1.0 × 3 + partial=0.5 × 5 = 5.5 / 13 = 42%); **strict fully-live: 23%** (3/13). The cycle-21 ~55% counted GC-12/13 as fully live; the code audit does not support that. GC-12 needs 4 wiring slices (persistence, scheduler, BrightSignals anomaly source, analyst read) before it flips to ✅.
 >
 > **Still gated**: GC-9 edge-case routing (deep_agent occasionally answers from memory instead of dbt subagent — Marwan tracking). Not blocking UAT — most calls route correctly; flagged for testers to log when they see it.
 >
