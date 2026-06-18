@@ -30,6 +30,115 @@ stateDiagram-v2
     SkipDetect --> [*]
 ```
 
+## 1a. Architecture (what it does, how it works)
+
+### Big picture — three trigger surfaces, one capability, two surfaces back
+
+The same capability runs no matter *how* it is triggered; `run_context` decides whether it just snapshots or also detects. Configuration and results both ride per–data-asset nodes.
+
+```mermaid
+flowchart TB
+    subgraph triggers["① Triggers (already exist — run_context dispatch)"]
+        ING["OpenMetadata webhook<br/>run_context = INGESTION"]
+        SCH["Scheduled dispatcher (EventBridge)<br/>run_context = SCHEDULED"]
+        OND["On-demand: /manage/agents/run<br/>or MCP run_longitudinal_analysis<br/>run_context = ON_DEMAND"]
+    end
+
+    subgraph agent["② Quality agent (brightbot) — quality_check_agent pipeline"]
+        QC["existing quality nodes<br/>(rules → analyze → validate → record)"]
+        CAP["run_longitudinal_monitoring (NEW)<br/>best-effort capability node"]
+        QC --> CAP
+    end
+
+    subgraph reuse["shipped pure functions (reused, not rebuilt)"]
+        SQL["build_snapshot_sql (#563)<br/>warehouse-agnostic metric SQL"]
+        DET["detect_anomalies (#557)<br/>trailing-window statistics"]
+    end
+
+    subgraph store["③ Persistence (platform-core OGM, per DataAsset)"]
+        MS[("MetricSnapshotNode<br/>raw per-run metrics")]
+        AE[("AnomalyEventNode<br/>surfaced anomalies")]
+    end
+
+    subgraph config["Config (BH-503 QualityRule, per asset)"]
+        RULE["longitudinal_anomaly rule<br/>metric_specs + trailing_window"]
+    end
+
+    subgraph surfaces["④ Surfaces back to the user"]
+        BS["BrightSignals → Slack alert"]
+        MCP["MCP get_anomalies<br/>(grounded analyst answer)"]
+        UI["webapp Quality Rules<br/>Data Drift Monitor editor"]
+    end
+
+    WH[("workspace warehouse<br/>Snowflake / Redshift / …")]
+
+    ING & SCH & OND --> QC
+    RULE -. "specs" .-> CAP
+    UI -. "author rule" .-> RULE
+    CAP --> SQL --> WH
+    WH -- "metrics" --> CAP
+    CAP --> DET
+    CAP -- "write snapshot (every run)" --> MS
+    CAP -- "write anomalies (when detected)" --> AE
+    MS -- "trailing window" --> CAP
+    AE --> BS
+    AE --> MCP
+```
+
+### Repo seams — who owns what, what crosses the boundary
+
+```mermaid
+flowchart LR
+    subgraph wa["webapp (PR #1178)"]
+        ED["Data Drift Monitor editor<br/>longitudinalContract.ts"]
+    end
+    subgraph pc["platform-core (PR #891)"]
+        VAL["validateLongitudinalParams<br/>(closed family set, full shape)"]
+        OGM["OGM: MetricSnapshotNode<br/>AnomalyEventNode + indexes"]
+    end
+    subgraph bb["brightbot (PR #575)"]
+        NODE["capability node +<br/>MetricHistoryStore + MCP tools"]
+    end
+
+    ED -- "expectationParams JSON<br/>(GraphQL mutation)" --> VAL
+    VAL --> OGM
+    NODE -- "GraphQL: create/query<br/>MetricSnapshot/AnomalyEvent" --> OGM
+    NODE -. "reads longitudinal_anomaly<br/>rule config" .-> OGM
+
+    classDef contract fill:#fff3cd,stroke:#d39e00;
+    class ED,VAL,NODE contract;
+```
+
+> **Contract seams (yellow)**: the family vocabulary (`row_count_drift · cardinality_breakdown · distributional_skew · null_spike`) and the `expectationParams` shape are hardcoded in all three boxes and pinned by a test in each repo — drift fails CI. Tolerance is a **fraction** end-to-end. Source of truth: §2.2.
+
+### One scheduled run — sequence
+
+```mermaid
+sequenceDiagram
+    participant Sch as Scheduled dispatcher
+    participant QA as Quality agent (brightbot)
+    participant Cfg as QualityRule (platform-core)
+    participant WH as Warehouse
+    participant St as MetricHistoryStore (OGM)
+    participant Sig as BrightSignals
+
+    Sch->>QA: run quality_check_agent (run_context=SCHEDULED)
+    QA->>Cfg: load longitudinal_anomaly rule for asset
+    Cfg-->>QA: metric_specs + trailing_window (or DEFAULT)
+    QA->>WH: build_snapshot_sql → execute
+    WH-->>QA: current metric values
+    QA->>St: write_snapshot (INV-1: always)
+    QA->>St: trailing_window(dataset, N)
+    St-->>QA: prior values (workspace-scoped)
+    QA->>QA: detect_anomalies(current, history, specs)
+    alt metric breaches tolerance
+        QA->>St: write_anomalies (AnomalyEventNode)
+        QA->>Sig: notify (dataset, family, severity)
+    else within tolerance
+        QA-->>QA: clean — nothing surfaced
+    end
+```
+
 ## 2. Interface Contract (MDE)
 
 ### 2.1 Persistence — platform-core OGM (mirrors existing idiom in `ogm/typedefs.ts`)
