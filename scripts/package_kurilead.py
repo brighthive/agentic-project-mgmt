@@ -63,7 +63,9 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
 
-# Files to include in / verify from any *lead/ directory (relative to the lead dir)
+# Files to include in / verify from any *lead/ directory (relative to the lead dir).
+# Each entry is either a literal relative path or a directory — directories are walked
+# recursively and every contained file is bundled.
 PACKAGE_PATTERNS = [
     "secrets-manager/main_secrets.json",
     "secrets-manager/stage_secrets.json",
@@ -73,6 +75,12 @@ PACKAGE_PATTERNS = [
     "dynamo-vault/main_workspace_configs.json",
     "dynamo-vault/stage_workspace_configs.json",
     "dynamo-vault/prod_workspace_configs.json",
+]
+
+# Directories whose contents are bundled wholesale. Used for vaults with a
+# variable number of files (e.g. LangSmith — one JSON per deployment).
+PACKAGE_DIRS = [
+    "langsmith-vault",
 ]
 
 PBKDF2_ITERATIONS = 260_000
@@ -158,6 +166,19 @@ def cmd_package(args: argparse.Namespace) -> int:
             files.append((pattern, p))
         else:
             missing.append(pattern)
+
+    for dir_pattern in PACKAGE_DIRS:
+        dir_path = src_dir / dir_pattern
+        if not dir_path.is_dir():
+            missing.append(f"{dir_pattern}/")
+            continue
+        found_any = False
+        for fp in sorted(dir_path.rglob("*")):
+            if fp.is_file() and fp.name != ".gitkeep":
+                files.append((str(fp.relative_to(src_dir)), fp))
+                found_any = True
+        if not found_any:
+            missing.append(f"{dir_pattern}/ (empty)")
 
     if missing:
         print(f"[WARN] {len(missing)} expected files not found in kurilead/:", file=sys.stderr)
@@ -253,6 +274,14 @@ def cmd_verify(args: argparse.Namespace) -> int:
             print(f"  [OK] {pattern}")
         else:
             print(f"  [MISSING] {pattern}", file=sys.stderr)
+            ok = False
+    for dir_pattern in PACKAGE_DIRS:
+        dir_path = src_dir / dir_pattern
+        count = sum(1 for fp in dir_path.rglob("*") if fp.is_file() and fp.name != ".gitkeep") if dir_path.is_dir() else 0
+        if count > 0:
+            print(f"  [OK] {dir_pattern}/ ({count} files)")
+        else:
+            print(f"  [MISSING] {dir_pattern}/", file=sys.stderr)
             ok = False
     if ok:
         print(f"\n[OK] All expected files present in {src_dir.name}/.")

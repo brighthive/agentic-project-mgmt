@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""LangSmith deployment snapshot CLI.
+
+Pulls the SHAPE (secret names, env var names, revisions) of LangSmith / LangGraph
+Cloud deployments and writes per-env snapshot files. Values are never written.
+
+Usage:
+    LANGCHAIN_API_KEY=... ./cli/snapshot pull --all
+    LANGCHAIN_API_KEY=... ./cli/snapshot pull --name brightagent-staging
+    ./cli/snapshot diff --name brightagent-staging
+    ./cli/snapshot index
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+LANGSMITH_HOST = os.environ.get("LANGSMITH_HOST", "https://api.host.langchain.com")
+VAULT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = VAULT_ROOT / "data"
+
+ENV_PATTERN = re.compile(r"-(dev|develop|staging|stage|prod|production|main)$", re.IGNORECASE)
+ENV_NORMALIZE = {"develop": "dev", "stage": "staging", "production": "prod"}
+
+
+def api_key() -> str:
+    key = os.environ.get("LANGCHAIN_API_KEY") or os.environ.get("LANGSMITH_API_KEY")
+    if not key:
+        sys.exit("ERROR: LANGCHAIN_API_KEY (or LANGSMITH_API_KEY) not set")
+    return key
+
+
+def http_get(path: str) -> dict:
+    """GET via curl — shells out so we inherit macOS Keychain certs reliably."""
+    url = f"{LANGSMITH_HOST}{path}"
+    result = subprocess.run(
+        [
+            "curl", "-sS", "--fail-with-body", "--max-time", "30",
+            "-H", f"X-API-Key: {api_key()}",
+            "-H", "Accept: application/json",
+            url,
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        sys.exit(f"ERROR: curl failed for {url}\n{result.stdout}\n{result.stderr}")
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        sys.exit(f"ERROR: non-JSON response from {url}\n{result.stdout[:500]}\n{exc}")
+
+
+def classify_env(deployment_name: str) -> str:
+    match = ENV_PATTERN.search(deployment_name)
+    if not match:
+        return "main"
+    raw = match.group(1).lower()
+    return ENV_NORMALIZE.get(raw, raw)
+
+
+def list_deployments() -> list[dict]:
+    return http_get("/v2/deployments").get("resources", [])
+
+
+def get_deployment(deployment_id: str) -> dict:
+    return http_get(f"/v2/deployments/{deployment_id}")
+
+
+def snapshot_one(deployment: dict) -> Path:
+    full = get_deployment(deployment["id"])
+    env = classify_env(full["name"])
+    secrets = full.get("secrets") or []
+    env_vars = full.get("env_vars") or full.get("environment_variables") or []
+
+    snapshot = {
+        "deployment_id": full["id"],
+        "name": full["name"],
+        "env": env,
+        "snapshot_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "secret_count": len(secrets),
+        "secret_names": sorted(s.get("name") for s in secrets if s.get("name")),
+        "env_var_count": len(env_vars),
+        "env_var_names": sorted(v.get("name") for v in env_vars if v.get("name")),
+        "latest_revision_id": full.get("latest_revision_id"),
+        "graph_aliases": full.get("graph_aliases") or full.get("graphs") or {},
+        "host": LANGSMITH_HOST,
+    }
+
+    out = DATA_DIR / env / f"{full['name']}.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(snapshot, indent=2, sort_keys=True) + "\n")
+    return out
+
+
+def cmd_pull(args: argparse.Namespace) -> None:
+    deployments = list_deployments()
+    if args.name:
+        deployments = [d for d in deployments if d.get("name") == args.name]
+        if not deployments:
+            sys.exit(f"ERROR: no deployment named {args.name!r}")
+    for dep in deployments:
+        path = snapshot_one(dep)
+        print(f"snapshot: {path.relative_to(VAULT_ROOT)} ({dep['name']})")
+    write_index()
+
+
+def cmd_diff(args: argparse.Namespace) -> None:
+    target = next(
+        (p for p in DATA_DIR.rglob(f"{args.name}.json")),
+        None,
+    )
+    if target is None:
+        sys.exit(f"ERROR: no committed snapshot for {args.name!r}")
+    committed = json.loads(target.read_text())
+    deployments = list_deployments()
+    live_dep = next((d for d in deployments if d["name"] == args.name), None)
+    if live_dep is None:
+        sys.exit(f"ERROR: deployment {args.name!r} not found in live LangSmith")
+    live_full = get_deployment(live_dep["id"])
+    live_secrets = sorted(s["name"] for s in (live_full.get("secrets") or []) if s.get("name"))
+    removed = sorted(set(committed["secret_names"]) - set(live_secrets))
+    added = sorted(set(live_secrets) - set(committed["secret_names"]))
+    print(f"deployment: {args.name}")
+    print(f"  committed count: {committed['secret_count']}")
+    print(f"  live      count: {len(live_secrets)}")
+    if removed:
+        print(f"  REMOVED ({len(removed)}): {removed}")
+    if added:
+        print(f"  ADDED   ({len(added)}): {added}")
+    if not removed and not added:
+        print("  no drift")
+
+
+def write_index() -> Path:
+    rows = []
+    for snap_path in sorted(DATA_DIR.rglob("*.json")):
+        if snap_path.name == "index.json":
+            continue
+        snap = json.loads(snap_path.read_text())
+        rows.append(snap)
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    lines = [
+        "# LangSmith Deployment Snapshot Index",
+        "",
+        f"_Generated: {generated_at}_",
+        "",
+        "| Env | Deployment | Secrets | Env Vars | Snapshot At | Latest Revision |",
+        "|-----|------------|---------|----------|-------------|-----------------|",
+    ]
+    for r in rows:
+        lines.append(
+            f"| {r['env']} | `{r['name']}` | {r['secret_count']} | {r.get('env_var_count', 0)} "
+            f"| {r['snapshot_at']} | `{(r.get('latest_revision_id') or '')[:12]}` |"
+        )
+    md_out = DATA_DIR / "index.md"
+    md_out.write_text("\n".join(lines) + "\n")
+    json_out = DATA_DIR / "index.json"
+    json_out.write_text(
+        json.dumps(
+            {"generated_at": generated_at, "deployments": rows},
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    return md_out
+
+
+def cmd_index(_: argparse.Namespace) -> None:
+    out = write_index()
+    print(f"wrote {out.relative_to(VAULT_ROOT)}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_pull = sub.add_parser("pull", help="Snapshot live deployments")
+    g = p_pull.add_mutually_exclusive_group(required=True)
+    g.add_argument("--all", action="store_true", help="snapshot every deployment")
+    g.add_argument("--name", help="snapshot a single deployment by name")
+    p_pull.set_defaults(func=cmd_pull)
+
+    p_diff = sub.add_parser("diff", help="Diff committed snapshot vs live")
+    p_diff.add_argument("--name", required=True)
+    p_diff.set_defaults(func=cmd_diff)
+
+    p_idx = sub.add_parser("index", help="Regenerate data/index.md")
+    p_idx.set_defaults(func=cmd_index)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

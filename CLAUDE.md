@@ -73,6 +73,10 @@ make status                 → confirm all sentinels green
 | **AWS accounts & infrastructure** | `dynamo-vault/INFRASTRUCTURE.md` |
 | **DynamoDB workspace configs** | `dynamo-vault/cli/secrets` |
 | **AWS Secrets Manager inventory** | `aws-secrets-vault/cli/secrets` |
+| **LangSmith deployment snapshots** | `langsmith-vault/` (shape only — no values) |
+| **LangSmith mutation protocol** | `docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md` |
+| **Refresh ALL vaults (lastpass + AWS + dynamo + langsmith)** | `NAME=kuri make sync-vaults` |
+| **Refresh LangSmith only** | `LANGCHAIN_API_KEY=... make sync-langsmith` |
 | **Notion workspace page map** | `notion/pages.md` |
 | **All leads, trials, active clients** | `clients/README.md` |
 | **Active trials & scorecards** | `clients/trials/` |
@@ -191,6 +195,10 @@ Hard rules (also in the template):
 2. `dynamo-vault/cli/secrets list --account PROD` — query DynamoDB
 3. `aws-secrets-vault/cli/secrets classify` — Secrets Manager inventory
 4. `../platform-saas-ai-context/docs/infrastructure/AWS_ACCOUNTS.md` — architectural reference
+
+### LangSmith / LangGraph Cloud Deployments — HARD RULE
+
+**Never modify a LangSmith deployment's `secrets`, `env_vars`, or revision config** without (1) a fresh pre-change snapshot committed to `langsmith-vault/data/{env}/`, (2) explicit per-edit approval from Kuri or Sherbiny, (3) a read-modify-write PATCH preserving the full array, and (4) a post-change snapshot committed in the same PR. Full protocol: `docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md`. The 2026-06-18 incident (74 secrets → 1 secret on `brightagent-staging`) is why.
 
 ### Understanding the System
 1. `../platform-saas-ai-context/docs/architecture/ARCHITECTURE.md`
