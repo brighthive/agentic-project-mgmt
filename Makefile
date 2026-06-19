@@ -545,11 +545,38 @@ pull-secrets: pull-aws-secrets pull-lastpass  ## ③ Pull all vault sources into
 #
 # NAME defaults to "kuri" (the current tech-lead's own vault).
 
-.PHONY: onboard unpack verify-lead
+.PHONY: onboard unpack verify-lead sync-vaults sync-langsmith
 
 # NAME must be set by the caller: NAME=matt make pull-secrets
 # Leaving NAME empty causes an explicit error instead of silently using the wrong vault.
 NAME ?=
+
+sync-langsmith:  ## ③ Snapshot LangSmith deployment shapes (auto-fetches admin key from AWS staging/platform/platform-core)
+	@echo "── Syncing LangSmith deployment snapshots ──"
+	@./scripts/snapshot_langsmith.sh
+
+sync-vaults: check-creds  ## ③ Refresh ALL vault sources (lastpass + AWS + dynamo + langsmith) into $(NAME)lead/
+	@echo "── Syncing all vaults into $(NAME)lead/ ──"
+	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=kuri make sync-vaults"; exit 2; fi
+	@if [ ! -d "$(LEAD_DIR)" ]; then echo "  [ERROR] $(LEAD_DIR)/ not found — only the TechLead's own lead dir can be re-synced from live sources"; exit 1; fi
+	@mkdir -p "$(LEAD_DIR)/lastpass-vault" "$(LEAD_DIR)/langsmith-vault"
+	@echo "  ▸ LastPass: lastpass-vault sync + export"
+	@./lastpass-vault/cli/secrets sync
+	@./lastpass-vault/cli/secrets export --output "$(LEAD_DIR)/lastpass-vault/lastpass_secrets.json"
+	@if [ -f "$(LEAD_DIR)/export_all.py" ]; then \
+		echo "  ▸ AWS Secrets Manager + DynamoDB: $(LEAD_DIR)/export_all.py"; \
+		$(PYTHON3) "$(LEAD_DIR)/export_all.py" all; \
+	else \
+		echo "  ⚠ $(LEAD_DIR)/export_all.py missing — skipping AWS / DynamoDB export (only the TechLead's lead dir has this)"; \
+	fi
+	@echo "  ▸ LangSmith deployment snapshots"
+	@./scripts/snapshot_langsmith.sh
+	@rm -rf "$(LEAD_DIR)/langsmith-vault" && cp -r langsmith-vault/data "$(LEAD_DIR)/langsmith-vault"
+	@find "$(LEAD_DIR)/langsmith-vault" -name ".gitkeep" -delete 2>/dev/null || true
+	@echo "  ▸ Verifying $(LEAD_DIR)/ completeness"
+	@$(PYTHON3) scripts/package_kurilead.py verify --name "$(NAME)" || true
+	@echo ""
+	@echo "  ✓ All vaults synced. Run \`NAME=$(NAME) make onboard\` to package."
 
 onboard:  ## ③ Package vault exports → {NAME}lead-export.zip.enc for new-leader handoff
 	@echo "── Packaging vault for $(NAME) ──"
