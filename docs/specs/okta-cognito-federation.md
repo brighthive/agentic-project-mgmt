@@ -27,8 +27,10 @@ by `token.sub → Neo4j UserNode keyed by id`. Native (password) users get a
 The unblock-by-Cypher used during BH-575 dogfood is not productizable — it
 requires Matt to manually `MATCH/CREATE` Neo4j nodes per user.
 
-In parallel: enterprise customers expect TOTP MFA on the platform pool. Today
-the pool has `MfaConfiguration: OFF` (Cognito default).
+In parallel: enterprise customers expect MFA on the platform pool. Today
+the pool has `MfaConfiguration: OFF` (Cognito default). V1 ships SMS only
+(lowest-friction for the BrightHive CDO buyer persona); TOTP is V2 with a
+placeholder spec already landed.
 
 ## Use Case / Goal
 
@@ -43,7 +45,7 @@ auth.staging.brighthive.net/oauth2/authorize?identity_provider=TrialOktaBH&...
   → user lands in their workspace
 ```
 
-Plus: TOTP MFA available (opt-in) for any user who wants it on the platform pool.
+Plus: SMS MFA (V1) available opt-in for any user who wants it on the platform pool. TOTP follows in V2.
 
 ## Current Situation
 
@@ -119,13 +121,20 @@ Config-driven: `VITE_SSO_PROVIDERS` env var (JSON array). Empty/unset =
 existing password-only login UI byte-identical. Callback handler does PKCE
 token exchange, stores tokens in same `localStorage` keys as password login.
 
-### MFA2 — Staging pool TOTP
+### MFA2 V1 — Staging pool SMS
 
 PR `platform-core#911`, Sherbiny-gated draft.
 
 Two-line CDK delta on `user_pool_stack.py`: `mfa=cognito.Mfa.OPTIONAL` +
-`MfaSecondFactor(sms=False, otp=True)`. Opt-in; native users only (federated
-inherit IdP's MFA). Reversible.
+`MfaSecondFactor(sms=True, otp=False)`. Opt-in; native users only (federated
+inherit IdP's MFA). Reversible. Spec at `SPEC-MFA2-staging-pool.md`.
+
+### MFA2 V2 — TOTP alongside SMS (placeholder)
+
+Placeholder spec at `SPEC-MFA2-V2-TOTP.md`. One-line delta from V1:
+`MfaSecondFactor(sms=True, otp=True)`. Adds TOTP without removing SMS so
+users pick. Open questions captured in the spec (recovery codes, default
+factor, deprecating SMS for TOTP-enrolled users).
 
 ### Single Sherbiny-gated unblock for end-to-end staging
 
@@ -171,7 +180,8 @@ Reversible.
 | BH-676 | `brighthive-okta-idp-cdk` codification of TrialOktaBH | `okta-idp-cdk#1` | ✅ Landed on staging |
 | BH-674 | Resolver-side federated Neo4j JIT | `platform-core#910` | Ready for review |
 | BH-675 | Webapp "Log in with Okta" button | `webapp#1207` | Ready for review |
-| MFA2 | Staging pool TOTP | `platform-core#911` | Sherbiny-gated draft |
+| MFA2 V1 | Staging pool SMS | `platform-core#911` | Sherbiny-gated draft |
+| MFA2 V2 | TOTP alongside SMS | placeholder spec landed | Not started |
 | GA-1 | `cognito_sub_aliases` UserNode field for email-collision merging | — | Not started |
 | GA-2 | Branded Cognito error page (Hosted-UI customization) | — | Not started |
 | GA-3 | Per-workspace SSO toggle (`WorkspaceNode.ssoEnabled`) | — | Not started |
@@ -186,7 +196,8 @@ Reversible.
 - `brighthive-platform-core/docs/local-dev/OKTA_LOCAL_TEST.md` — local E2E test runbook
 - `brighthive-platform-core/docs/MCP_OKTA_ONBOARDING_RUNBOOK.md` — per-customer ops runbook
 - `brighthive-platform-core/docs/specs/SPEC-BH-674-currentuser-federated-provisioning.md` — implementation spec
-- `brighthive-platform-core/docs/specs/SPEC-MFA2-staging-pool-totp.md` — MFA2 spec
+- `brighthive-platform-core/docs/specs/SPEC-MFA2-staging-pool.md` — MFA2 V1 spec (SMS)
+- `brighthive-platform-core/docs/specs/SPEC-MFA2-V2-TOTP.md` — MFA2 V2 placeholder (TOTP)
 - `brighthive-okta-idp-cdk/docs/specs/SPEC-BH-676-deploy-staging.md` — IdP CDK spec
 - `brighthive-webapp/docs/specs/okta-sso-login.md` — webapp spec
 - `brightbot/docs/OKTA_AUTH.md` — MCP token-validation reference
