@@ -1,0 +1,63 @@
+{
+  "account": "brighthive-staging",
+  "region": "us-east-1",
+  "captured": "2026-06-22",
+  "reason": "sync staging dbt/cloud-api/* to LastPass value brighthive_staging_token_062226 after manual-mutation drift",
+  "secrets": [
+    {
+      "name": "dbt/cloud-api/38835f90-f2bf-4adc-b5a4-93bb35c3f377",
+      "pre_version_id": "5849537e-b011-4222-b830-a4c1f16dd006",
+      "created_date": "2026-06-22T12:08:52.668000-06:00",
+      "payload_shape": [
+        "accountId",
+        "apiEndpoint",
+        "apiToken"
+      ],
+      "rollback": "aws secretsmanager get-secret-value --secret-id dbt/cloud-api/38835f90-f2bf-4adc-b5a4-93bb35c3f377 --version-id 5849537e-b011-4222-b830-a4c1f16dd006 --profile brighthive-staging --region us-east-1   # then put-secret-value with that SecretString"
+    },
+    {
+      "name": "dbt/cloud-api/9feecc7b-e748-424c-ad2d-1cdcf364239d",
+      "pre_version_id": "576ae6e9-94ab-4748-9b29-990256886194",
+      "created_date": "2026-06-22T12:08:53.994000-06:00",
+      "payload_shape": [
+        "accountId",
+        "apiEndpoint",
+        "apiToken"
+      ],
+      "rollback": "aws secretsmanager get-secret-value --secret-id dbt/cloud-api/9feecc7b-e748-424c-ad2d-1cdcf364239d --version-id 576ae6e9-94ab-4748-9b29-990256886194 --profile brighthive-staging --region us-east-1   # then put-secret-value with that SecretString"
+    },
+    {
+      "name": "dbt/cloud-api/b7278b3c-02a2-41f6-8afd-5c8a1314cf8a",
+      "pre_version_id": "a18f7418-e5b9-48b5-9c8f-02b88b1a268c",
+      "created_date": "2026-06-22T12:08:52.994000-06:00",
+      "payload_shape": [
+        "accountId",
+        "apiEndpoint",
+        "apiToken"
+      ],
+      "rollback": "aws secretsmanager get-secret-value --secret-id dbt/cloud-api/b7278b3c-02a2-41f6-8afd-5c8a1314cf8a --version-id a18f7418-e5b9-48b5-9c8f-02b88b1a268c --profile brighthive-staging --region us-east-1   # then put-secret-value with that SecretString"
+    },
+    {
+      "name": "dbt/cloud-api/dc50c185-ca8a-4f29-a733-dcfced2bcedc",
+      "pre_version_id": "31e06753-8539-49d6-ac03-c79ebffd71e4",
+      "created_date": "2026-06-22T12:08:53.326000-06:00",
+      "payload_shape": [
+        "accountId",
+        "apiEndpoint",
+        "apiToken"
+      ],
+      "rollback": "aws secretsmanager get-secret-value --secret-id dbt/cloud-api/dc50c185-ca8a-4f29-a733-dcfced2bcedc --version-id 31e06753-8539-49d6-ac03-c79ebffd71e4 --profile brighthive-staging --region us-east-1   # then put-secret-value with that SecretString"
+    },
+    {
+      "name": "dbt/cloud-api/f0d1f30c-177d-47d4-9849-4c617f8ff467",
+      "pre_version_id": "a5a819ac-7eeb-4281-8187-d85c28c27397",
+      "created_date": "2026-06-22T12:26:25.691000-06:00",
+      "payload_shape": [
+        "accountId",
+        "apiEndpoint",
+        "apiToken"
+      ],
+      "rollback": "aws secretsmanager get-secret-value --secret-id dbt/cloud-api/f0d1f30c-177d-47d4-9849-4c617f8ff467 --version-id a5a819ac-7eeb-4281-8187-d85c28c27397 --profile brighthive-staging --region us-east-1   # then put-secret-value with that SecretString"
+    }
+  ]
+}

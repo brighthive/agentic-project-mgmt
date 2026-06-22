@@ -251,8 +251,31 @@ for secret in secrets:
 - Use `--account` flag to limit to one account
 - Consider parallel fetching (see `lib/aws_client.py`)
 
+## Mutation Protocol (dbt/cloud-api/* and similar)
+
+**LastPass is canonical for credentials. AWS Secrets Manager is a deployment artifact, not a source of truth.** Direct mutations bypass that contract; drift detection is manual. Apply this protocol whenever a credential needs to land in AWS Secrets Manager:
+
+1. **Update LastPass first** with the new value.
+2. **Snapshot** all secrets you will touch to `snapshots/{YYYY-MM-DD}_{slug}/{secret-id}.json` — capture `SecretString` + `VersionId`. Files are gitignored (raw payloads contain live credential material).
+3. **Read-modify-write**: parse current `SecretString`, swap only the rotated field, preserve everything else. Never replace the whole payload from a template.
+4. **Verify**: re-`get-secret-value` each secret, assert the rotated field matches.
+5. **Commit `INDEX.json` only** — a redacted manifest with `Name` + `VersionId` + payload-shape per secret. That's enough for rollback (`aws secretsmanager get-secret-value --version-id <id>` recovers the prior `SecretString` for ~30 days, then `put-secret-value`). Never commit raw snapshot JSONs.
+
+Rollback path: read the prior `VersionId` from `INDEX.json` → `get-secret-value --version-id <id>` → `put-secret-value` with that payload. No INDEX = no mutation.
+
+### dbt Cloud API specifics
+
+- Secret name pattern: `dbt/cloud-api/{transformationServiceId}` — keyed off the **dbt transformation service UUID**, NOT workspace UUID. See `../../platform-saas-ai-context/docs/architecture/DBT_TRANSFORMATION_ARCHITECTURE.md` § Secret Storage.
+- Payload shape: `{ apiToken, accountId, apiEndpoint }`. Only rotate `apiToken`; account binding stays.
+- Resolve the right service ID via GraphQL `getTransformationServices(input:{workspaceId})` → `transformationServices[].id`.
+- UI symptom of drift: workspace `getTransformationServices` returns `configurations: null` / `apiKey: undefined` even when `status: CONNECTED`.
+- Parallel path `dbt/github-auth/{transformationServiceId}` stores GitHub auth for the same service.
+- Precedent: `snapshots/2026-06-22_dbt-cloud-api-staging-presync/` — 5 staging secrets bulk-mutated in AWS, synced back to the LastPass value `brighthive_staging_token_062226`.
+
 ## References
 
 - [AWS Secrets Manager](https://docs.aws.amazon.com/secretsmanager/)
 - [LastPass Vault Tool](../lastpass-vault/) - Similar pattern for LastPass
 - [BrightHive AWS Architecture](../../ARCHITECTURE.md)
+- [dbt Transformation Architecture](../../platform-saas-ai-context/docs/architecture/DBT_TRANSFORMATION_ARCHITECTURE.md) — secret naming reference
+- [LangSmith Deployment Snapshots](../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md) — parallel mutation-protocol precedent

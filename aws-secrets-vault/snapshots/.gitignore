@@ -1,0 +1,6 @@
+# Raw secret snapshots contain SecretString payloads (live credential material).
+# Commit only INDEX.json (Name + VersionId + payload shape) — that's enough for
+# rollback via `aws secretsmanager get-secret-value --version-id <id>`.
+*.json
+!*/INDEX.json
+!.gitignore
