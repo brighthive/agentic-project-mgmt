@@ -75,6 +75,7 @@ make status                 → confirm all sentinels green
 | **AWS Secrets Manager inventory** | `aws-secrets-vault/cli/secrets` |
 | **LangSmith deployment snapshots** | `langsmith-vault/` (shape only — no values) |
 | **LangSmith mutation protocol** | `docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md` |
+| **Workspace user-role ops (promote/demote)** | `docs/WORKSPACE_USER_ROLES.md` |
 | **Refresh ALL vaults (lastpass + AWS + dynamo + langsmith)** | `NAME=kuri make sync-vaults` |
 | **Refresh LangSmith only** | `LANGCHAIN_API_KEY=... make sync-langsmith` |
 | **Notion workspace page map** | `notion/pages.md` |
