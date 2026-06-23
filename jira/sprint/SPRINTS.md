@@ -1,8 +1,20 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 11 (released June 2, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 12 (released June 23, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 12 🫐 — Auth, MCP & BrightSignals (June 13–23, 2026)
+- **Duration**: 10 days (date-range cut, unofficial)
+- **Focus**: BrightSignals end-to-end SSE push + CloudWatch alarms, Okta SSO PKCE + resolver-side JIT, MCP connectivity card (tools/list + dedicated ingress), Engineering Agent Audit Trail (BH-695 epic — full decorator + dual-write emitter), dbt agent URL/scaffold fixes, Snowflake quality compat pass, Lambda 504 fixes, system admin feature flags
+- **Team**: Kuri, Marwan, Harbour, Ahmed
+- **PRs Merged**: 299 total (223 feature/fix + 76 staging release carriers, 7 repos)
+- **Lines Changed**: +67,654 / −12,111
+- **Highlights**: BrightSignals full stack live (SSE, CloudWatch, Notifications MVP all 3 repos), "Log in with Okta" PKCE in webapp (BH-675), resolver-side JIT Neo4j provisioning (BH-674), audit trail @audit_action decorator + dual-write emitter shipped in one day, MCP connectivity card with live tools/list + streamable-http parser, 27 retrospective tickets created (BH-713–739)
+- **Sprint Health**: Extremely high PR throughput. ~50 tickets in Needs Refinement = merged PRs not yet transitioned — needs 15-min sweep. Unofficial sprint, no Jira sprint object. Story points not estimated.
+- [Details →](./12/)
 
 ---
 

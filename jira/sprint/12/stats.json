@@ -1,0 +1,62 @@
+{
+  "sprint": 12,
+  "name": "Sprint 12 — Auth, MCP & BrightSignals",
+  "dates": {
+    "start": "2026-06-13",
+    "end": "2026-06-23",
+    "duration_days": 10
+  },
+  "note": "Unofficial sprint — no Jira sprint object. Scope derived from GitHub PRs merged June 13–23 + Jira tickets updated in same window.",
+  "goals": [
+    "BrightSignals end-to-end: SSE push delivery + CloudWatch alarms + notifications MVP",
+    "Auth hardening: Okta SSO PKCE, Slack service account auth, multi-workspace fixes",
+    "MCP connectivity: dedicated ingress, live tools/list, streamable-http parser",
+    "dbt agent: account-specific URLs, token probe, scaffold fixes",
+    "Audit trail: engineering agent @audit_action decorator (BH-695 epic)"
+  ],
+  "tickets": {
+    "total": 75,
+    "done": 18,
+    "in_progress": 2,
+    "needs_refinement": 50,
+    "code_review": 3,
+    "staging_qc": 1,
+    "canceled": 1,
+    "note": "27 tickets created retroactively (BH-713–739). Most Needs Refinement = merged PR, not yet transitioned."
+  },
+  "points": {
+    "total": 0,
+    "completed": 0,
+    "note": "Story points not assigned this sprint — fast-paced execution window, tickets created post-merge."
+  },
+  "completion": {
+    "tickets_pct": 24.0,
+    "prs_delivered": 223,
+    "note": "Ticket pct understates delivery — majority of work merged then retroactively ticketed. 223 feature PRs shipped."
+  },
+  "team": {
+    "drchinca": {"display": "Kuri", "prs": 145},
+    "Nano-233": {"display": "Harbour", "prs": 24},
+    "Marwan-Samih-Brighthive": {"display": "Marwan", "prs": 30},
+    "sherbiny-bh": {"display": "Ahmed", "prs": 24}
+  },
+  "prs": {
+    "total_merged": 299,
+    "feature_prs": 223,
+    "staging_release_carriers": 76,
+    "additions": 67654,
+    "deletions": 12111,
+    "lines_changed": 79765,
+    "repos_touched": ["brightbot", "brightbot-slack-server", "brighthive-webapp", "brighthive-platform-core", "brighthive-admin", "brighthive-data-organization-cdk", "brighthive-data-workspace-cdk"]
+  },
+  "themes": [
+    "BrightSignals end-to-end (SSE, CloudWatch, Notifications MVP)",
+    "Auth hardening (Okta SSO, Slack JWT, multi-workspace, OAuth guard)",
+    "MCP connectivity card (tools/list, streamable-http, dedicated ingress)",
+    "dbt Cloud agent (URLs, token probe, scaffold)",
+    "Audit trail epic BH-695 (decorator, emitter, citation chain, tests)",
+    "Snowflake quality (tableFQN, TIMESTAMP_NTZ, compat pass)",
+    "Platform-core reliability (504 fixes, OM webhook, getWorkspaces cap)",
+    "System admin portal + feature flags"
+  ]
+}
