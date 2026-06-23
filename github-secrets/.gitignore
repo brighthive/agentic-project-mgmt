@@ -1,0 +1,7 @@
+# Generated inventory (regenerable via ./cli/gh-secrets inventory; not committed)
+data/index.json
+data/*.md
+
+# Python
+__pycache__/
+*.pyc
