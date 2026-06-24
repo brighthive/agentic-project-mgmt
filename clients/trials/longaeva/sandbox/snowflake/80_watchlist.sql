@@ -1,8 +1,8 @@
 -- 80_watchlist.sql — REF.WATCHLIST seed
 --
--- Powers the "Sarah's Monday morning" UAT use case (Scenario 14, SARAH_DEMO.md).
+-- Powers the non-technical UAT (Scenario 14, NON_TECH_UAT.md).
 -- A non-technical analyst asks "any of these on a watchlist?" — this is the
--- ground-truth table the agent reads. Without it Q4 of the demo is hallucinated.
+-- ground-truth table the agent reads. Without it Bar 4 is hallucinated.
 --
 -- Idempotent: CREATE OR REPLACE + DELETE before INSERT.
 
@@ -18,7 +18,7 @@ CREATE OR REPLACE TABLE WATCHLIST (
     ADDED_DATE          DATE        NOT NULL,
     ADDED_BY            TEXT        NOT NULL,
     CONSTRAINT pk_watchlist PRIMARY KEY (INTERNAL_ISSUER_ID)
-) COMMENT = 'Analyst watchlist — issuers flagged for material attention. Grounds Q4 of the Sarah demo.';
+) COMMENT = 'Analyst watchlist — issuers flagged for material attention. Grounds Bar 4 of the non-technical UAT.';
 
 -- Seed: 60 entries spanning the four severities + 8 reason categories.
 -- Issuer IDs reference REF.IDENTIFIER_MAP (ISS-0000..ISS-0195, all active).

@@ -1,6 +1,6 @@
 -- 90_weekly_delta.sql — GOLD.MART_WEEKLY_EXPOSURE_DELTA
 --
--- Powers Q3 of Sarah's Monday morning ("what changed in the last week?").
+-- Powers Bar 3 of the non-technical UAT ("what changed in the last week?").
 -- One row per (portfolio × issuer) with today's exposure vs 7 calendar days
 -- earlier and the deltas. Idempotent: CREATE OR REPLACE.
 --

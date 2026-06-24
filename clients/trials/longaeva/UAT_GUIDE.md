@@ -24,6 +24,7 @@ notion_page: "TBD — mirror this file under the Longaeva GTM page"
 | **Where you test** | Slack (BrightAgent) + the BrightHive webapp (staging). Both pre-configured against the `LONGAEVA_POC` Snowflake. |
 | **Where feedback goes** | The **UAT Feedback** Notion database on the Longaeva GTM page. One row per scenario per tester. |
 | **Honest state (cycle-21)** | ~55% of golden cases are fully live (up from 27% as of cycle-19), ~25% partial, ~20% intentionally out-of-scope for this trial window. Longitudinal monitoring + BrightSignals push went live since the last audit. We tell you which is which up front — no green-washing. |
+| **Warehouse object names** | All UAT prompts reference **real** `LONGAEVA_POC` Snowflake objects (verified 2026-06-24): `GOLD.MART_DAILY_PORTFOLIO_EXPOSURE` (174,384 rows), `GOLD.MART_WEEKLY_EXPOSURE_DELTA` (692), `REF.WATCHLIST` (60), `REF.IDENTIFIER_MAP` (200), `BRONZE.RAW_REST_HOLDINGS` (4,536), `SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE`, `SV_WEEKLY_EXPOSURE_DELTA`, `SV_SECURITY_PRICES`. **Issuer names are synthetic** (`Synthetic Issuer 0000`–`0199`) — that's the seed by design, not a doc bug. |
 
 ---
 
@@ -49,7 +50,7 @@ notion_page: "TBD — mirror this file under the Longaeva GTM page"
 
 ## 2. The fourteen UAT scenarios
 
-> Scenarios 1–13 are engineering acceptance. **Scenario 14 ("Sarah's Monday morning") is the one a non-engineer can run cold** — sales, exec, GTM, prospect. See `SARAH_DEMO.md` for the full script with real numbers.
+> Scenarios 1–13 are engineering acceptance. **Scenario 14 (the non-technical UAT) is the one a non-technical user can run cold** — analyst, ops, exec. See `NON_TECH_UAT.md` for the full bars.
 
 Each scenario maps to a **golden case** in the PoC scorecard. Run any scenario in any order. **You do not have to be technical** — if your role lines up with the persona, just follow the prompt.
 
@@ -88,7 +89,7 @@ Legend: ✅ live · 🟡 partially live · 🔴 not in this window (we tell you 
 - **Maps to**: GC-3 (Snowflake DQ) + Q4 / BH-622
 - **What to do**:
   > *"Run QC on SV_DAILY_PORTFOLIO_EXPOSURE — row counts, nulls, freshness"*
-- **Expected**: Live read-only report against the 174k-row mart + 3 REF upstream tables. Real findings, including the `IDENTIFIER_MAP.EFFECTIVE_TO` 100%-null flag we surfaced in dev.
+- **Expected**: Live read-only report against the 174,384-row `GOLD.MART_DAILY_PORTFOLIO_EXPOSURE` + 3 REF upstream tables (`FISCAL_CALENDAR`, `GEO_CODES`, `IDENTIFIER_MAP`). Real findings, including the `IDENTIFIER_MAP.EFFECTIVE_TO` 100%-null flag (verified live via `qc_semantic_view_pipeline` MCP tool against staging on 2026-06-24).
 - **What "good" looks like**: You see at least one *real* anomaly flagged. If everything reports clean, the test isn't useful — tell us in the feedback row.
 
 ### Scenario 5 — "Build me a dbt model from raw data" 🟡
@@ -96,7 +97,7 @@ Legend: ✅ live · 🟡 partially live · 🔴 not in this window (we tell you 
 - **Persona**: data engineer
 - **Maps to**: GC-4 (silver time-series) / dbt agent
 - **What to do**:
-  > *"Build a dbt staging model from `RAW.PORTFOLIO_DAILY` and open a PR"*
+  > *"Build a dbt staging model from `BRONZE.RAW_REST_HOLDINGS` and open a PR"*
 - **Expected**: dbt agent introspects schema, generates a staging model, opens a PR against the longaeva-dbt repo. Live verified end-to-end against `LONGAEVA_POC`.
 - **Caveat**: Sometimes the `deep_agent` routes the question to memory instead of dbt — if your answer feels like a summary instead of a PR link, **that's the bug Marwan is fixing**. Log it. We need the data points.
 
@@ -115,7 +116,7 @@ Legend: ✅ live · 🟡 partially live · 🔴 not in this window (we tell you 
 - **Persona**: anyone — sales, exec, marketing, finance
 - **Maps to**: overall UX, trust calibration
 - **What to do**: Ask any natural-language question about the Longaeva PoC data you'd ask a real analyst:
-  - *"How many rows are in PORTFOLIO_DAILY for the last 30 days?"*
+  - *"How many rows are in `GOLD.MART_DAILY_PORTFOLIO_EXPOSURE` for the last 30 days?"*
   - *"What's the largest position by exposure right now?"*
   - *"Which tables have an `EFFECTIVE_TO` column?"*
 - **Expected**: Conversational answer with the SQL it ran, citations to the tables, honest "I don't know" when the data isn't there. **No hallucinations.**
@@ -209,7 +210,7 @@ Scenario owners on the BrightHive side (so you know who to ping if something beh
 | 11 — Projects / BrightStudio | Harbour | Q2 epic owner (not in this trial) |
 | 12 — RBAC | Ahmed | Owns Okta + tenant gate + role hierarchy |
 | 13 — Governance | Kuri | PR orchestrator, audit trail, redaction |
-| 14 — Sarah's Monday (non-tech) | Kuri | End-to-end product story for GTM / non-engineers |
+| 14 — Non-technical UAT | Kuri | End-to-end product bar for non-technical users |
 
 ---
 
@@ -234,15 +235,15 @@ Scenario owners on the BrightHive side (so you know who to ping if something beh
 
 ---
 
-## 10. Scenario 14 — Sarah's Monday morning (non-tech / GTM UAT) ✅
+## 10. Scenario 14 — Non-technical UAT ✅
 
-**Persona**: portfolio analyst. Bloomberg + Excel + Slack. No SQL, no platform terminology. Runs the demo in 15 minutes before the IC call.
+**Persona**: any non-technical BrightAgent user — portfolio analyst, ops lead, exec. Slack + plain English only. No SQL, no platform terminology.
 
-**Maps to**: end-to-end product value (positions + concentration + change + watchlist). Pulls from `SV_DAILY_PORTFOLIO_EXPOSURE` + `SV_WEEKLY_EXPOSURE_DELTA` + `REF.WATCHLIST`.
+**Maps to**: end-to-end production bars for the non-technical user surface (positions + concentration + change + watchlist). Pulls from `SV_DAILY_PORTFOLIO_EXPOSURE` + `SV_WEEKLY_EXPOSURE_DELTA` + `REF.WATCHLIST`.
 
-**Why this scenario exists**: scenarios 1–13 read like engineering acceptance tests. They are. Scenario 14 is the one a non-engineer (sales, exec, prospect) can run cold — and walk away saying *"that's what my Monday morning looks like."*
+**Why this scenario exists**: scenarios 1–13 are engineering acceptance — schema, lineage, governance, monitoring. Scenario 14 is the contract for what BrightAgent must do for *any* non-technical user, every time. A jargon leak here is a P0.
 
-**Full demo script with real numbers**: [`SARAH_DEMO.md`](./SARAH_DEMO.md).
+**Full bars**: [`NON_TECH_UAT.md`](./NON_TECH_UAT.md).
 
 ### The five steps
 
@@ -250,29 +251,25 @@ For each step, tester says the prompt verbatim to `@BrightBot` and verifies the 
 
 | # | Prompt | Pass bar | Fail signal |
 |---|---|---|---|
-| 1 | *"What are my top 10 positions today, ranked by dollar exposure?"* | Names + dollars + % match the SARAH_DEMO table within $1K | Bot says "semantic view" / "Snowflake" / "mart" |
+| 1 | *"What are my top 10 positions today, ranked by dollar exposure?"* | Names + dollars + % reconcile within $1K of `SV_DAILY_PORTFOLIO_EXPOSURE` for latest `AS_OF_DATE` | Bot says "semantic view" / "Snowflake" / "mart" |
 | 2 | *"Break those down by sector and by country — where is the concentration?"* | Two compact tables; percentages sum to 100% (±0.1%); callout matches table | Sums off; callout contradicts the table |
 | 3 | *"What changed in the last week? Anything I should look at first?"* | Top-5 movers by absolute $ change; honest narrative sentence | "I don't have that data" (delta mart not wired); random-looking picks |
 | 4 | *"Any of these names on a watchlist I should know about?"* | Every flagged issuer in `REF.WATCHLIST`; every unflagged NOT in it; reasons match the table | Bot invents reasons; misses flagged names |
 | 5 | *"Send this to my PM as a summary."* | ≤ 200 words; Slack-formatted; copy-paste-ready; no engineer language | Walls of text; jargon leaks; >200 words |
 
-### The hard prompt rule
+### The hard prompt rule (jargon firewall)
 
-In any of these five steps, if the bot uses *any* of these words in a user-facing reply, the demo fails immediately:
+In any of these five steps, if the bot uses *any* of these words in a user-facing reply, the test fails:
 
 `semantic view` · `Snowflake` · `gold mart` · `mart` · `silver` · `bronze` · `MCP` · `deep_agent` · `subagent` · `database` · `query` · `SQL` · `Atlas` · `YAML` · `embedding` · `vector` · `Bedrock` · `LangGraph` · `agent loop`
 
-The one allowed platform sentence — *only if asked* — is in `SARAH_DEMO.md` under "Where the numbers come from".
+The one allowed platform sentence — *only if the user asks "how did you know that?"* — is in `NON_TECH_UAT.md` under "The hard prompt rule".
 
 ### Tester verdict
 
-Log to the **UAT Feedback** Notion DB (same as scenarios 1–13). Use scenario name `14 — Sarah Monday`. Verdict rubric is identical (✅ Met / 🟡 Partial / 🔴 Missed / ⏸ Blocked).
+Log to the **UAT Feedback** Notion DB (same as scenarios 1–13). Use scenario name `S14 — Non-tech UAT`. Verdict rubric is identical (✅ Met / 🟡 Partial / 🔴 Missed / ⏸ Blocked).
 
-**One extra column** for this scenario: `Jargon leaked?` (Y/N). Any Y is a P0 — file in `#engineering`, do not continue the demo.
-
-### Sales reuse
-
-The same five steps ship as a sales asset — see `SARAH_DEMO.md` §"Reusing this beyond Longaeva". One persona, four questions, swap the warehouse and the watchlist per prospect. Matt or Kuri can run the dry-run cold.
+**One extra column** for this scenario: `Jargon leaked?` (Y/N). Any Y is a P0 — file under [BH-744](https://brighthiveio.atlassian.net/browse/BH-744), do not continue the test.
 
 ---
 
