@@ -1,196 +1,170 @@
 ---
-title: "Sarah's Monday morning — a real use case anyone can run"
-audience: "Sales, exec, prospect — anyone who wants to see what BrightHive does without engineer-speak"
-last_reviewed: "2026-06-17"
-purpose: "A 20-minute live demo. One persona, four questions, real numbers, no jargon."
-runs_against: "LONGAEVA_POC Snowflake — but the script is reusable against any FS prospect's data"
+title: "Non-technical UAT — Longaeva PoC production bars"
+audience: "Anyone running BrightAgent without engineering vocabulary — analysts, ops leads, exec testers"
+last_reviewed: "2026-06-24"
+purpose: "The contract for what BrightAgent must be able to do for a non-technical user, end-to-end, in production."
+runs_against: "LONGAEVA_POC Snowflake (staging) via Slack `@BrightBot` or the BrightHive webapp"
+ticket: "BH-745 — renamed from SARAH_DEMO.md (was framed as a sales asset; this is the production UAT)"
 ---
 
-# Sarah's Monday morning
+# Non-technical UAT — Longaeva PoC
 
-## Who Sarah is
+> **This is a production UAT contract, not a demo script.** Every prompt below must work, every time, with the bars met. If a non-technical user asks one of these questions in Slack and the answer fails the bar, that is a production bug — file it under [BH-601](https://brighthiveio.atlassian.net/browse/BH-601).
 
-**Sarah Chen.** Portfolio analyst. $12B multi-asset fund. She covers the North American equity sleeve.
+## What this covers
 
-It's Monday at 8:45am. The investment committee call is at 9:00am. She has fifteen minutes to figure out if anything moved meaningfully in her book over the weekend, and to walk in with a defensible point of view.
+A non-technical user (portfolio analyst, ops lead, exec) asks BrightAgent four questions in Slack, in order, and forwards the result to a colleague. No SQL, no platform terminology, no follow-ups required.
 
-Sarah uses Bloomberg, Excel, and Slack. She does not know what a semantic view is. She does not care.
+The four questions, in order:
 
-This persona is **synthetic and reusable**. Swap her name and the fund size to match any prospect you're showing.
+1. *"What are my top 10 positions today, ranked by dollar exposure?"*
+2. *"Break those down by sector and by country — where is the concentration?"*
+3. *"What changed in the last week? Anything I should look at first?"*
+4. *"Any of these names on a watchlist I should know about?"*
 
-## What she does in fifteen minutes
+Then a summary request: *"Send this to my PM as a summary."*
 
-She opens Slack. DMs `@BrightBot`. Asks four questions in order. Reads the answers. Pastes a summary into her PM's DMs. Walks into the IC call.
+## The hard prompt rule (jargon firewall)
 
-That's the demo.
+In ANY of the five steps above, if the bot uses any of these words in a user-facing reply, the test **fails**:
 
----
+`semantic view` · `Snowflake` · `gold mart` · `mart` · `silver` · `bronze` · `MCP` · `deep_agent` · `subagent` · `database` · `query` · `SQL` · `Atlas` · `YAML` · `embedding` · `vector` · `Bedrock` · `LangGraph` · `agent loop`
 
-## The four questions
+A jargon leak is a **P0** — file under [BH-744](https://brighthiveio.atlassian.net/browse/BH-744).
 
-### Question 1 — *"What are my top 10 positions today, ranked by dollar exposure?"*
-
-**What she sees back**:
-
-| # | Issuer | Sector | Country | Exposure | % of book |
-|---|---|---|---|---|---|
-| 1 | Synthetic Issuer 0142 | Energy | Hong Kong | $1.27M | 8.0% |
-| 2 | Synthetic Issuer 0109 | Comms | Spain | $1.24M | 7.8% |
-| 3 | Synthetic Issuer 0038 | Real Estate | Poland | $1.19M | 7.5% |
-| 4 | Synthetic Issuer 0082 | Energy | France | $1.19M | 7.5% |
-| 5 | Synthetic Issuer 0001 | Financials | Canada | $1.13M | 7.1% |
-| 6 | Synthetic Issuer 0032 | Energy | France | $1.11M | 7.0% |
-| 7 | Synthetic Issuer 0129 | Comms | Argentina | $1.10M | 6.9% |
-| 8 | Synthetic Issuer 0159 | Comms | Spain | $1.04M | 6.6% |
-| 9 | Synthetic Issuer 0183 | Health | Switzerland | $1.01M | 6.3% |
-| 10 | Synthetic Issuer 0192 | Energy | Hong Kong | $1.01M | 6.3% |
-
-> *Top 10 represents 71% of P-000. Concentrated book, mostly cross-border.*
-
-**Pass bar**: numbers match what she'd get from her Bloomberg query, to within $1K of rounding. No mention of databases, marts, or tools.
-
-### Question 2 — *"Break those down by sector and by country — where is the concentration?"*
-
-**What she sees back**:
-
-By sector:
-
-| Sector | % of book |
-|---|---|
-| Energy | 28.8% |
-| Comms | 21.3% |
-| Financials | 12.6% |
-| Materials | 8.7% |
-| Real Estate | 7.5% |
-| Health | 6.3% |
-| Industrials | 5.3% |
-| Consumer | 5.3% |
-| Utilities | 4.4% |
-
-> *Concentration is in Energy + Comms — together 50% of the book. Tech is absent.*
-
-By country: Spain, France, Hong Kong, and Canada each anchor a top-2 position. The book is geographically diversified within the concentrated sectors.
-
-**Pass bar**: percentages sum to 100%. The "stands out" callout matches what the table shows.
-
-### Question 3 — *"What changed in the last week? Anything I should look at first?"*
-
-**What she sees back**:
-
-| Issuer | Change | What happened |
-|---|---|---|
-| Synthetic Issuer 0167 | **−$681K (−55%)** | Materials cut back hard — likely trimmed for sector rebalance |
-| Synthetic Issuer 0109 | **+$611K (+97%)** | Doubled position in Spanish comms |
-| Synthetic Issuer 0159 | **+$520K (+99%)** | Doubled position in Spanish comms |
-| Synthetic Issuer 0036 | **−$463K (−40%)** | Reduced utilities exposure |
-| Synthetic Issuer 0137 | **−$434K (−34%)** | Reduced Swedish materials |
-
-> *The book got more concentrated in Spanish comms this week, less in materials/utilities. Two of the five biggest moves (issuers 0109 and 0036) are on the watchlist — see next question.*
-
-**Pass bar**: the five movers are the actual top-5 by absolute dollar change in the warehouse. The narrative sentence is honest.
-
-### Question 4 — *"Any of these names on a watchlist I should know about?"*
-
-**What she sees back**:
-
-| Issuer | Severity | Reason |
-|---|---|---|
-| Issuer 0142 (top position) | 🔴 critical | Top position at 8.0% of P-000, above soft cap |
-| Issuer 0109 (#2 + +97% mover) | 🟡 elevated | Position 7.78% of P-000, at soft cap |
-| Issuer 0038 (#3) | 🟡 elevated | Position 7.5% of P-000, at soft cap |
-| Issuer 0082 (#4) | 🟡 elevated | Top-10 position in 3 portfolios concurrently |
-| Issuer 0001 (#5) | 🟡 elevated | Credit downgrade — Moody's cut to Baa3 |
-| Issuer 0129 (#7) | 🟢 monitor | 6.91% of P-000, watching trajectory |
-| Issuer 0159 (#8 + +99% mover) | 🟢 monitor | 6.56% of P-000 |
-| Issuer 0183 (#9) | 🟢 monitor | 6.33% of P-000, monitor for trim |
-| Issuer 0192 (#10) | 🟢 monitor | 6.32% of P-000, at watchpoint |
-| Issuer 0036 (−40% mover) | 🟢 monitor | Q1 EPS below model, guidance maintained |
-
-> *9 of the top 10 names are on the watchlist. The critical one is Issuer 0142 — above its concentration cap. Issuer 0109 doubled into the soft cap this week; that's the action item for the IC call.*
-
-**Pass bar**: every flagged name appears in the watchlist table. Every unflagged name does NOT. The reasons match the table verbatim — no invention.
-
----
-
-## What she does next
-
-> *"Send this to my PM as a summary."*
-
-**What she gets back** (one Slack message, ≤ 200 words, ready to forward):
-
-> *Monday update — P-000.*
->
-> *Book is concentrated: top 10 = 71%, Energy + Comms = 50%, all cross-border.*
->
-> *Week's moves: doubled into Spanish comms (Issuers 0109 + 0159, +$1.1M combined), trimmed materials and utilities (Issuers 0167, 0036, 0137, −$1.6M combined). Net direction: deeper into comms, lighter in defensives.*
->
-> *Watchlist hits in the top 10: 9 of 10. One critical — Issuer 0142, top position at 8.0%, above our soft cap. One elevated and trending up — Issuer 0109, doubled into the cap this week. Recommend discussing trim.*
->
-> *No new positions opened, no closures. Full table available if helpful.*
-
-She copies it. Pastes to her PM. Walks into the IC call at 8:58am.
-
-**That's the demo.** Twenty minutes from cold open, four questions, a defensible point of view, no spreadsheet.
-
----
-
-## Why this lands
-
-| What buyers ask | What Sarah just got |
-|---|---|
-| "Will my analysts actually use this?" | Yes — Slack, plain English, two clicks to share. |
-| "Is it pulling from real data?" | Yes — every number above is `snow sql` verifiable. No fixtures, no mocks. |
-| "What about hallucinations?" | The watchlist names appear because they're in the ground-truth table. None invented. |
-| "What's the platform doing under the hood?" | Doesn't matter for this demo. She never sees it. |
-| "Can I run this myself?" | Yes — same Slack, same prompts. Doesn't need engineer help. |
-
----
-
-## How to run the demo yourself (sales dry-run)
-
-1. **Open Slack**. DM `@BrightBot` in `brighthive.slack.com`. Or use the `#longaeva-poc` channel for the customer-facing version.
-2. **Ask the four questions verbatim**, in order. Don't paraphrase — the demo's strength is reproducibility.
-3. **For each answer**, verify against the table above (numbers should match within $1K).
-4. **Last step**: ask the summary question. Copy what comes back. That's the share artifact.
-
-If anything in the answer mentions "semantic view", "Snowflake", "mart", "MCP", or any other internal name, **stop the demo** and ping `@kuri` — the prompt rule isn't holding.
-
-If the numbers don't match within $1K, **stop the demo** — the data layer drifted.
-
-If you're running this against a different customer's data, the persona stays the same. The numbers will differ. The four questions do not change.
-
----
-
-## Where the numbers come from (only if asked)
-
-A buyer occasionally asks "how did you know that?" Honest one-sentence answer:
+The one allowed platform sentence — *only if the user asks "how did you know that?"* — is:
 
 > *"We connect to your warehouse, expose a small number of business views like 'positions' and 'changes', and the assistant queries them when you ask a question — same way a senior analyst would, just without the SQL step."*
 
-That's the only platform sentence allowed in the demo. Everything else stays in Sarah's vocabulary.
+Everything else stays in business vocabulary.
 
 ---
 
-## Files this demo depends on
+## Bar 1 — Top 10 positions
 
-| What | Where |
+**Prompt**: *"What are my top 10 positions today, ranked by dollar exposure?"*
+
+**Pass bar**:
+- Returns a 10-row table: issuer name, sector, country, exposure ($), % of book.
+- Numbers reconcile within $1K of `LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE` for the latest `AS_OF_DATE`.
+- Reply contains zero firewall terms.
+
+**Fail signals**:
+- Bot says "semantic view" or "Snowflake" anywhere.
+- A name appears that isn't actually in the warehouse for that date.
+- Numbers don't sum to 100% (±0.1%) when the user asks for percentages.
+
+**Source data**: `LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE` (built on `GOLD.MART_DAILY_PORTFOLIO_EXPOSURE`, 174,384 rows). Issuer names come from `REF.IDENTIFIER_MAP` (200 issuers, currently seeded as synthetic placeholders — the seed will be replaced when Longaeva provides their real issuer universe).
+
+---
+
+## Bar 2 — Concentration breakdown
+
+**Prompt**: *"Break those down by sector and by country — where is the concentration?"*
+
+**Pass bar**:
+- Two compact tables: by sector, by country.
+- Percentages sum to 100% (±0.1%).
+- Narrative callout (1–2 sentences) matches the table — no contradictions.
+- Reply contains zero firewall terms.
+
+**Fail signals**:
+- Sums off by more than 0.1%.
+- Callout ("the book is concentrated in X") contradicts what the table shows.
+- Bot mentions schema names, mart names, or join semantics.
+
+**Source data**: same SV; aggregations done in-query, not invented post-hoc.
+
+---
+
+## Bar 3 — Week-over-week changes
+
+**Prompt**: *"What changed in the last week? Anything I should look at first?"*
+
+**Pass bar**:
+- Top 5 movers by absolute dollar change (positions opened, closed, scaled).
+- Honest narrative sentence summarizing direction (more X, less Y).
+- Reply contains zero firewall terms.
+
+**Fail signals**:
+- "I don't have that data" (the delta mart is wired — see [BH-743](https://brighthiveio.atlassian.net/browse/BH-743) if it's not).
+- The five movers don't match the actual top-5 by `|delta_amount_usd|` in `MART_WEEKLY_EXPOSURE_DELTA`.
+- Random-looking picks not grounded in the warehouse.
+
+**Source data**: `LONGAEVA_POC.SEMANTIC.SV_WEEKLY_EXPOSURE_DELTA` (built on `GOLD.MART_WEEKLY_EXPOSURE_DELTA`, 692 rows of week-over-week deltas across 30 portfolios).
+
+---
+
+## Bar 4 — Watchlist crosscheck
+
+**Prompt**: *"Any of these names on a watchlist I should know about?"*
+
+**Pass bar**:
+- Every flagged issuer appears in `REF.WATCHLIST` (60 rows currently, seeded with realistic watchlist reasons across critical/elevated/monitor severities).
+- Every unflagged issuer is NOT in `REF.WATCHLIST`.
+- Severity and reason match the table verbatim — no inventing reasons.
+- Reply contains zero firewall terms.
+
+**Fail signals**:
+- Hallucinated reasons ("Moody's downgrade" for an issuer not flagged for credit).
+- Missing flagged names from the top-10.
+- Inventing severity levels not in `REF.WATCHLIST.SEVERITY`.
+
+**Source data**: `LONGAEVA_POC.REF.WATCHLIST` (60 issuers; columns: `INTERNAL_ISSUER_ID`, `ISSUER_NAME`, `WATCHLIST_REASON`, `SEVERITY`, `ADDED_DATE`, `ADDED_BY`).
+
+---
+
+## Bar 5 — Forwardable summary
+
+**Prompt**: *"Send this to my PM as a summary."*
+
+**Pass bar**:
+- ≤ 200 words, Slack-formatted, copy-paste-ready.
+- References the prior four answers without contradiction.
+- One clear "watch this first" recommendation tied to the watchlist crosscheck.
+- Reply contains zero firewall terms.
+
+**Fail signals**:
+- Walls of text > 200 words.
+- Engineer language in what's supposed to be a PM-facing summary.
+- "Recommendation" not tied to anything in the prior four answers.
+
+---
+
+## Where this fits in the regression suite
+
+Codified as `tests/integration/golden_cases/test_longaeva_uat_mcp.py::test_uat_s14_sarah_no_jargon_in_chat` in brightbot. The test:
+
+- Pulls the prompt verbatim from this file.
+- Hits the live staging MCP (`brightagent-mcp.staging.brighthive.net/mcp`) via the `deep_agent` entrypoint.
+- Checks the reply against the firewall list.
+- Hard-fails on any leak.
+
+Run:
+```bash
+BH_MCP_URL=https://brightagent-mcp.staging.brighthive.net/mcp \
+BH_MCP_AUTH_VIA_GRAPHQL=1 \
+BH_MCP_WORKSPACE_ID_HEADER=4d7ffd13-73d0-4f14-8f0e-63bfddceca7c \
+RUN_LIVE_MCP=1 \
+uv run pytest tests/integration/golden_cases/test_longaeva_uat_mcp.py::test_uat_s14_sarah_no_jargon_in_chat -v
+```
+
+Last run (2026-06-24): **failing** — `deep_agent` appeared in a user-facing reply. Tracked under [BH-744](https://brighthiveio.atlassian.net/browse/BH-744).
+
+---
+
+## Tester verdict
+
+Log to the **UAT Feedback** Notion DB on the Longaeva GTM page. Use scenario name `S14 — Non-tech UAT`.
+
+**Required columns** (same rubric as the other UAT scenarios — see `UAT_GUIDE.md §3`) plus one extra:
+
+| Column | Notes |
 |---|---|
-| Top-10 + sector + country | `LONGAEVA_POC.SEMANTIC.SV_DAILY_PORTFOLIO_EXPOSURE` |
-| Week-over-week change | `LONGAEVA_POC.SEMANTIC.SV_WEEKLY_EXPOSURE_DELTA` (new, this PR) |
-| Watchlist crosscheck | `LONGAEVA_POC.REF.WATCHLIST` (new, this PR) |
-| The UAT script | [`UAT_GUIDE.md`](./UAT_GUIDE.md) Scenario 14 |
-| Plan that produced this | `~/.claude/plans/wobbly-launching-widget.md` |
+| `Jargon leaked?` | Y/N. Any Y is a P0 — file under [BH-744](https://brighthiveio.atlassian.net/browse/BH-744), do not continue the test. |
 
 ---
 
-## Reusing this beyond Longaeva
+## Issuer names — current state
 
-Sarah is portable. The script is portable. For a new prospect:
-
-1. Point the warehouse connection at their data
-2. Reseed `REF.WATCHLIST` from their actual watchlist (or curate ~60 entries based on a first-call conversation)
-3. The four questions don't change
-4. Update the table in Question 1 with their real top 10
-5. Run the dry-run, then run live
-
-For the first-meeting deck: a one-page PDF version of this doc (just the four questions + the table snapshots), plus a 90-second screen recording of the actual Slack thread. Both are downstream artifacts; this doc is the source.
+The seeded `REF.IDENTIFIER_MAP` carries 200 placeholder names of the form `Synthetic Issuer 0000`–`0199`. The non-tech UAT therefore tests *the agent's behavior on real warehouse rows*, not the realism of the names. When Longaeva provides their actual issuer universe (or we curate a public-company list for general prospects), the seed will be replaced and this doc will not need to change — the bars are about behavior, not specific names.
