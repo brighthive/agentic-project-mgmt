@@ -103,11 +103,15 @@ does anything READ it and ACT, or is it write-only metadata? (BH-766/767/768/769
 
 ## Incident 2026-06-29 — Demo data catalog empty on staging (OM workspace scoping, BH-646)
 
+> **STATUS: RESOLVED on staging (2026-06-29).** Fix #948 deployed (`v2.9.0.48-pre-release`); Demo
+> warehouse re-registered canonically; deployed lambda verified (Demo→127, OneTen→0, blank-id rejected).
+> Prod is intentionally NOT touched (1:1 per-client OM; gate below). Optional legacy-service cleanup pending.
+
 **Symptom (reported by Sherbiny):** "data catalog and files upload not working on staging."
 
-**Root cause (catalog):** the deployed OM workspace-scoping (`#881`, on `develop`+`staging`) decides
-which OM tables a workspace sees by **OM team ownership** — a service belongs to a workspace iff its
-`owners[]` contains a team whose `name == workspaceId`, fail-closed (no owned service → empty catalog).
+**Root cause (catalog):** the then-deployed OM workspace-scoping (`#881`, was on `develop`+`staging`)
+decided which OM tables a workspace sees by **OM team ownership** — a service belongs to a workspace iff
+its `owners[]` contains a team whose `name == workspaceId`, fail-closed (no owned service → empty catalog).
 Staging OM holds exactly **one** service, `"Staging Demo Workspace"` (legacy human name, 148 Redshift
 tables), owned by team `setup`. No team named after the Demo workspace exists → Demo's catalog scopes
 to **zero tables**. Not a code crash — a data-attribution mismatch the fail-closed filter surfaces.
@@ -142,26 +146,28 @@ Neo4j node id, the secret-store key, and the OM service's live connection are **
 on Demo — a blind re-register either throws (no matching node) or registers an incomplete connection.
 **Resolve the intended (Neo4j warehouse-node ↔ secret-store key) pair before re-registering.**
 
-### Remediation runbook (additive, reversible-by-rescan) — NOT yet executed
+### Remediation runbook (additive, reversible-by-rescan) — ✅ EXECUTED on staging 2026-06-29
 
-> Decision (2026-06-29): re-register canonically (not revert, not assign-team). Staging only this round;
-> prod handled via the gate below. Held pending resolution of the ID tangle above.
+> Decision: re-register canonically (not revert, not assign-team). Staging only this round; prod handled
+> via the gate below. **Done + verified live** — code (#948) deployed `v2.9.0.48-pre-release`; Demo
+> warehouse re-registered canonically; deployed lambda confirmed Demo→127, OneTen→0, blank-id rejected.
 
 1. **Read-only audit first:** `brighthive-platform-core/scripts/audit-om-service-workspaces.ts` against
-   staging OM → confirms one ORPHAN (`Staging Demo Workspace`, 148 tables).
-2. **Pick the right warehouse pair:** decide which Neo4j `WarehouseServiceNode` + secret-store key holds
-   the correct Demo Redshift connection (likely the `1c7cb12e-…` secret block; confirm the Neo4j node it
-   should bind to). Do NOT proceed until this is unambiguous.
-3. **Re-register (additive, NOT delete+recreate):** call `upsertWarehouseConfigAsAdmin` (admin) with the
-   resolved `warehouseId` → registers `1c7cb12e-…_redshift_ingestion` + triggers AutoPilot. OM 1.8.9 has
-   **no non-destructive rename**, so this creates a *second*, canonical service beside the legacy one.
-4. **Wait for the AutoPilot scan (~5–15 min)** — verifying before it finishes shows a false-empty catalog.
-5. **`syncDataAssets(workspaceId=1c7cb12e-…)`** to backfill DataAssetNodes from the now-in-scope service.
-6. **Cleanup LAST (optional):** hard-delete the legacy `"Staging Demo Workspace"` service via OM REST and
-   purge orphaned DataAssetNodes (FQN prefix `Staging Demo Workspace.*`). Reversible by rescan.
+   staging OM → confirmed one ORPHAN (`Staging Demo Workspace`, 148 tables). ✅
+2. **Pick the right warehouse pair:** the match is Neo4j node `2edd100d-…` (schema `database_340752819582`),
+   but its secret block was incomplete — so instead of rebuilding from the mismatched pair, we **cloned
+   the legacy service's known-good connection verbatim** under the canonical name. ✅
+3. **Re-register (additive, NOT delete+recreate):** POSTed `1c7cb12e-…_redshift_ingestion` to OM with the
+   cloned connection + triggered AutoPilot. OM 1.8.9 has **no non-destructive rename**, so this created a
+   *second*, canonical service beside the legacy one (legacy left intact). ✅
+4. **AutoPilot scan completed** → 127 tables under the canonical service (all real `database_340752819582`). ✅
+5. **`syncDataAssets(1c7cb12e-…)`** → `syncedCount=127`; ran via both a local-to-staging harness AND the
+   deployed staging lambda (post-deploy verification). Demo now has 196 DataAssetNodes (181 OM-backed). ✅
+6. **Cleanup LAST (optional, NOT yet done):** hard-delete the legacy `"Staging Demo Workspace"` service via
+   OM REST + purge orphaned DataAssetNodes (FQN prefix `Staging Demo Workspace.*`). Reversible by rescan.
 
-**Hazard:** re-registration mints NEW OM table UUIDs → existing `DataAssetNode.openMetadataTableId`
-links go stale; `syncDataAssets` creates new nodes (name/FQN fallback matchers may relink some).
+**Observed:** of 127 OM tables, ~20 became net-new `database_340752819582` nodes; the rest upserted onto
+pre-existing nodes (correct). Re-registration minted new OM table UUIDs as expected.
 
 ### Prod-deploy gate (MANDATORY before BH-646 scoping reaches `main`)
 
