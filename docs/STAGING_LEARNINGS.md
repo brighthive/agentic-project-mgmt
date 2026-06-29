@@ -98,3 +98,86 @@
 contracts, the glossary, project targetSchemas, and `applyOnSchedule` flags were all stored + displayed
 but never injected into agent reasoning / enforced at execution. When auditing a "feature", always check:
 does anything READ it and ACT, or is it write-only metadata? (BH-766/767/768/769/775/779.)
+
+---
+
+## Incident 2026-06-29 — Demo data catalog empty on staging (OM workspace scoping, BH-646)
+
+**Symptom (reported by Sherbiny):** "data catalog and files upload not working on staging."
+
+**Root cause (catalog):** the deployed OM workspace-scoping (`#881`, on `develop`+`staging`) decides
+which OM tables a workspace sees by **OM team ownership** — a service belongs to a workspace iff its
+`owners[]` contains a team whose `name == workspaceId`, fail-closed (no owned service → empty catalog).
+Staging OM holds exactly **one** service, `"Staging Demo Workspace"` (legacy human name, 148 Redshift
+tables), owned by team `setup`. No team named after the Demo workspace exists → Demo's catalog scopes
+to **zero tables**. Not a code crash — a data-attribution mismatch the fail-closed filter surfaces.
+
+**"File upload" is a separate path — not this bug.** Onboarding (`onboardDataAssetToWorkspace` →
+presigned S3 → `updateDataAssetCatalogCache`) never calls `getAllDataAssets`. Investigate uploads
+independently (presigned S3 / permissions / DynamoDB account lookup); don't fold it into BH-646.
+
+**The decision:** move scoping off OM teams to the **canonical service name**
+(`<workspaceId>_<provider>_ingestion`), which already self-describes ownership and is what the webhook
+resolver parses — one nomenclature, one source of truth. See `platform-saas-ai-context` **ADR-011** and
+`brighthive-platform-core` PR #948 (`om-tenant-scope.ts` → `om-workspace-scope.ts`). The code change is
+**independent** of the staging unbreak below: the legacy-named service resolves to no workspace under
+*either* model, so it must be re-registered canonically regardless.
+
+### The ID tangle (why re-registration is NOT a one-liner) — verified live 2026-06-29
+
+Three identifiers must agree for a workspace to see its catalog, and on staging Demo they don't:
+
+| Thing | Value |
+|---|---|
+| Demo workspace uuid | `1c7cb12e-6d1a-4922-98a8-cff4de70f24d` (Neo4j name: "Brighthive Demo Environment") |
+| Staging Neo4j workspaces (only 2) | Demo `1c7cb12e-…` + OneTen `4d7ffd13-…` |
+| OM service (the only one) | `"Staging Demo Workspace"` — legacy name, owner team `setup`, connects as Redshift user `admin`, `schemaFilterPattern includes ^database_.*` → pulls 4 schemas (`database_340752819582`=124 real + `dbt_hchinca`/`public`/`dbt_ctan` dev sandboxes) |
+| Demo Neo4j `WarehouseServiceNode`s | **4** — incl. `2edd100d-…` "Demo workspace Redshift" (schema `database_340752819582`, the match) + `ca16037f-…` |
+| Secret-store key with COMPLETE Redshift creds | `workspace_secret_store/1c7cb12e-…` → `warehouses[1c7cb12e-…]` (the **workspace** uuid, user `redshift_readonly_user`, db `workspace-database`) |
+| Secret-store block for `2edd100d-…` | present but **incomplete** (blank `apiEndpoint`/`accountId`) |
+
+`upsertWarehouseServiceConfig(workspaceId, warehouseId)` resolves the connection by `warehouseId`
+against BOTH the Neo4j node list (`find(ws => ws.id === warehouseId)`) and the secret-store key. The
+Neo4j node id, the secret-store key, and the OM service's live connection are **three different things**
+on Demo — a blind re-register either throws (no matching node) or registers an incomplete connection.
+**Resolve the intended (Neo4j warehouse-node ↔ secret-store key) pair before re-registering.**
+
+### Remediation runbook (additive, reversible-by-rescan) — NOT yet executed
+
+> Decision (2026-06-29): re-register canonically (not revert, not assign-team). Staging only this round;
+> prod handled via the gate below. Held pending resolution of the ID tangle above.
+
+1. **Read-only audit first:** `brighthive-platform-core/scripts/audit-om-service-workspaces.ts` against
+   staging OM → confirms one ORPHAN (`Staging Demo Workspace`, 148 tables).
+2. **Pick the right warehouse pair:** decide which Neo4j `WarehouseServiceNode` + secret-store key holds
+   the correct Demo Redshift connection (likely the `1c7cb12e-…` secret block; confirm the Neo4j node it
+   should bind to). Do NOT proceed until this is unambiguous.
+3. **Re-register (additive, NOT delete+recreate):** call `upsertWarehouseConfigAsAdmin` (admin) with the
+   resolved `warehouseId` → registers `1c7cb12e-…_redshift_ingestion` + triggers AutoPilot. OM 1.8.9 has
+   **no non-destructive rename**, so this creates a *second*, canonical service beside the legacy one.
+4. **Wait for the AutoPilot scan (~5–15 min)** — verifying before it finishes shows a false-empty catalog.
+5. **`syncDataAssets(workspaceId=1c7cb12e-…)`** to backfill DataAssetNodes from the now-in-scope service.
+6. **Cleanup LAST (optional):** hard-delete the legacy `"Staging Demo Workspace"` service via OM REST and
+   purge orphaned DataAssetNodes (FQN prefix `Staging Demo Workspace.*`). Reversible by rescan.
+
+**Hazard:** re-registration mints NEW OM table UUIDs → existing `DataAssetNode.openMetadataTableId`
+links go stale; `syncDataAssets` creates new nodes (name/FQN fallback matchers may relink some).
+
+### Prod-deploy gate (MANDATORY before BH-646 scoping reaches `main`)
+
+`#881` is already on `develop`+`staging` and flows to `main` on the next promotion. Both the team model
+AND name-based scoping fail-closed → **any prod service that is legacy-named (or not owned by a
+workspace-named team) makes that customer's catalog go empty on deploy.**
+
+1. Run the read-only audit against **prod** OM before the `staging→main` PR:
+   ```
+   OMD_API_URL=https://openmetadata.app.brighthive.net/api/v1 \
+   OMD_TOKEN=<prod ingestion-bot JWT> \
+   npx ts-node scripts/audit-om-service-workspaces.ts
+   ```
+2. **Safe to deploy:** `orphan=0` (every prod service with tables is CANONICAL).
+3. **Will break:** any ORPHAN-with-tables → each is a customer whose catalog will empty. Re-register each
+   canonically (runbook above) BEFORE the deploy, or hold the PR.
+
+Architecture detail + cloud-resource map: `platform-saas-ai-context/docs/architecture/SNOWFLAKE_OMD_INGESTION.md`
+→ "Service ownership signal & ID mapping". Decision: ADR-011 in that repo's `docs/decisions/decisions.md`.
