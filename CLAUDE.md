@@ -335,7 +335,14 @@ gh pr list --repo brighthive/$REPO --state merged --search "merged:$START..$END"
 | Ahmed Elsherbiny | `ahmed-brighthive` | Sr. Engineer | Infrastructure, unstructured data, DevOps, security |
 | Harbour Wang | `Nano-233` | Engineer | Projects, BrightStudio, CDK, UI/UX |
 
-**Jira IDs**: Kuri: `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264`
+**Jira account IDs** (for `assignee=` on ticket creation):
+
+| Member | Account ID |
+|---|---|
+| Kuri | `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264` |
+| Marwan | `712020:dff1a867-eb10-4a4a-aa2d-c0603206e4f1` |
+| Ahmed | `712020:906373f4-4ecd-4c31-8415-089069ad2c4e` |
+| Harbour | `712020:5e1dd706-529f-4adb-8d1c-03bb3c7b78dc` |
 
 ---
 
