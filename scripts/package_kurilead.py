@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package or unpack the kurilead/ vault export directory.
+"""Package or unpack a {name}lead/ vault export directory.
 
 Commands:
     package   Bundle {name}lead/ into an encrypted zip for handoff to a new engineering leader.
@@ -19,7 +19,7 @@ Or directly:
 The name determines:
   - Source vault directory: {name}lead/  (e.g. mattlead/, kurilead/)
   - Default output/input file: {name}lead-export.zip.enc
-  - --name is required; there is no default owner
+  - Name is required to avoid accidentally using the wrong vault
 
 The package command:
   1. Reads existing JSON exports from {name}lead/secrets-manager/ + lastpass-vault/ + dynamo-vault/.
@@ -181,7 +181,7 @@ def cmd_package(args: argparse.Namespace) -> int:
             missing.append(f"{dir_pattern}/ (empty)")
 
     if missing:
-        print(f"[WARN] {len(missing)} expected files not found in kurilead/:", file=sys.stderr)
+        print(f"[WARN] {len(missing)} expected files not found in {src_dir.name}/:", file=sys.stderr)
         for m in missing:
             print(f"  - {m}", file=sys.stderr)
         if not files:
@@ -196,7 +196,7 @@ def cmd_package(args: argparse.Namespace) -> int:
         # Metadata
         meta = {
             "created_at": datetime.now(tz=timezone.utc).isoformat(),
-            "files": [name for name, _ in files],
+            "files": [arc_name for arc_name, _ in files],
             "missing": missing,
         }
         zf.writestr("PACKAGE_META.json", json.dumps(meta, indent=2))
@@ -256,7 +256,7 @@ def cmd_unpack(args: argparse.Namespace) -> int:
             dest.write_bytes(zf.read(arc_name))
             print(f"  [OK] unpacked {arc_name}")
 
-    print(f"\n[OK] {dest_dir.name}/ populated. Run `make pull-secrets` to copy into secrets/.")
+    print(f"\n[OK] {dest_dir.name}/ populated. Run `NAME={name} make pull-secrets` to copy into secrets/.")
     return 0
 
 
@@ -296,18 +296,18 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p_pack = sub.add_parser("package", help="Bundle {name}lead/ into an encrypted handoff zip")
-    p_pack.add_argument("--name", required=True, help="Lead name (e.g. matt → mattlead/)")
+    p_pack.add_argument("--name", required=True, help="Lead name (e.g. matt -> mattlead/)")
     p_pack.add_argument("--output", default="", help="Output path (default: {name}lead-export.zip.enc)")
     p_pack.add_argument("--password", default="", help="Encryption password (omit to prompt)")
 
     p_unpack = sub.add_parser("unpack", help="Decrypt and extract into {name}lead/")
-    p_unpack.add_argument("--name", required=True, help="Lead name (e.g. matt → mattlead/)")
+    p_unpack.add_argument("--name", required=True, help="Lead name (e.g. matt -> mattlead/)")
     p_unpack.add_argument("--input", default="", help="Input path (default: {name}lead-export.zip.enc)")
     p_unpack.add_argument("--password", default="", help="Decryption password (omit to prompt)")
     p_unpack.add_argument("--force", action="store_true", help="Overwrite existing files")
 
     p_verify = sub.add_parser("verify", help="Check {name}lead/ completeness")
-    p_verify.add_argument("--name", required=True, help="Lead name (e.g. matt → mattlead/)")
+    p_verify.add_argument("--name", required=True, help="Lead name (e.g. matt -> mattlead/)")
 
     args = ap.parse_args()
     # Apply name-derived defaults for output/input paths

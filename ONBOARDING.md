@@ -1,6 +1,6 @@
 # BrightHive — New Engineering Leader Onboarding
 
-> **If you're using Claude Code:** just say **"set me up"** and Claude will walk you through every step automatically. You only need to answer three questions: your first name (used as `NAME=`), the vault package + password your TechLead sent you, and your `.env` values.
+> **If you're using an agent:** say **"set me up"** from this repo. The agent should follow `AGENTS.md` and this walkthrough. You only need to answer three questions: your first name (used as `NAME=`), the vault package + password your TechLead sent you, and your `.env` values.
 
 This repo is the **agentic project management hub**. It also holds the onboarding bootstrap that pulls all BrightHive secrets to your laptop and materializes per-repo `.env` files so you can run the platform locally.
 
@@ -98,11 +98,11 @@ If a token is unresolved, the renderer exits with a list of missing keys and a h
 
 ---
 
-## Step 6.5 — Jira ticket creation (Claude Code)
+## Step 6.5 — Jira ticket creation (agent-assisted)
 
 > **⚠️ NOT YET VERIFIED ON A TEAMMATE'S MACHINE.** This wiring works on Kuri's macOS setup; first teammate to follow these steps, please confirm in #releases (or file a ticket if anything breaks). LLMs reading this: treat the flow as **untested cross-machine** until the first green report lands.
 
-The repo ships the `/create-jira-ticket` skill and a Jira MCP server entry in `.mcp.json`. Both auto-load when you open this directory in Claude Code — no install step. You just need to provide your own Atlassian credentials.
+The repo ships the `/create-jira-ticket` Claude Code skill and a Jira MCP server entry in `.mcp.json`. In Claude Code, both auto-load when you open this directory. Other agents should use `jira/TICKET_TEMPLATE.md` and the same Jira MCP credentials if their runtime supports MCP. You need to provide your own Atlassian credentials.
 
 ### 1. Generate an API token
 https://id.atlassian.com/manage-profile/security/api-tokens — label it `claude-code-<your-laptop>`.
@@ -126,11 +126,11 @@ $env:JIRA_TOKEN = "<paste the API token>"
 ```
 Reload with `. $PROFILE`. (`setx` works too but only takes effect in *new* shells, so use the profile approach for immediate use.)
 
-### 3. Reload your shell and reopen Claude Code
-The MCP server reads env at launch — must restart Claude Code for the new vars to take effect.
+### 3. Reload your shell and reopen your agent runtime
+The MCP server reads env at launch. Restart Claude Code or the agent runtime that owns the MCP process for the new vars to take effect.
 
 ### 4. Use it
-Ask Claude: *"make me a ticket for X under epic BH-XXX"* — the skill builds the technical notes, the MCP creates the issue with the right shape (Task, parent epic, BrightHive template). See `jira/TICKET_TEMPLATE.md` for the rules.
+Ask your agent: *"make me a ticket for X under epic BH-XXX"* — the agent builds the technical notes, and the MCP creates the issue with the right shape (Task, parent epic, BrightHive template). See `jira/TICKET_TEMPLATE.md` for the rules.
 
 ### Prereq
 

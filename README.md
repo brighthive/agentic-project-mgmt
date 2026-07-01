@@ -1,6 +1,6 @@
 # Agentic Project Management
 
-BrightHive's agentic hub for sprint management, release automation, onboarding, and multi-repo coordination. Claude Code skills, agents, and vault-driven tooling replace traditional project management ceremony.
+BrightHive's agentic hub for sprint management, release automation, onboarding, and multi-repo coordination. Agent contracts, Claude Code skills, and vault-driven tooling replace traditional project management ceremony.
 
 For permanent platform architecture, see [`../platform-saas-ai-context`](../platform-saas-ai-context).
 
@@ -30,8 +30,8 @@ See `ONBOARDING.md` for the full 7-step walkthrough.
 agentic-project-mgmt/
 ├── Makefile                      # All orchestration — see `make help`
 ├── ONBOARDING.md                 # New-leader setup walkthrough (7 steps)
-├── CLAUDE.md                     # Navigation contract for Claude Code
-├── AGENTS.md                     # Agent contract (scope rules, cross-repo nav)
+├── AGENTS.md                     # Portable agent contract (scope, onboarding, cross-repo nav)
+├── CLAUDE.md                     # Claude Code navigation mirror and lookup tables
 ├── .env.example                  # Template: fill in your AWS profiles + LastPass user
 │
 ├── config/
@@ -49,13 +49,15 @@ agentic-project-mgmt/
 │
 ├── jira/                         # Sprint data & Jira tooling
 │   ├── TICKET_TEMPLATE.md        # Canonical Jira ticket format
-│   ├── CLAUDE.md                 # Sprint data schema + release artifact spec
+│   ├── AGENTS.md                 # Portable sprint/Jira workflow contract
+│   ├── CLAUDE.md                 # Claude Code sprint schema mirror
 │   └── sprint/
 │       ├── SPRINTS.md            # Master velocity table (all sprints)
 │       └── {1..10}/              # Per-sprint: stats, tickets, release notes, Slack post
 │
 ├── docs/                         # Documentation & strategy hub
-│   ├── CLAUDE.md                 # Spec/feature/POC workflow guide
+│   ├── AGENTS.md                 # Portable spec/feature/POC workflow contract
+│   ├── CLAUDE.md                 # Claude Code spec/feature/POC workflow mirror
 │   ├── specs/                    # Implementation specs (written before code)
 │   ├── features/                 # Shipped feature documentation
 │   ├── bedrock/                  # Bedrock migration diary
@@ -66,6 +68,8 @@ agentic-project-mgmt/
 ├── lastpass-vault/               # CLI: LastPass credential vault
 ├── notion/                       # Notion workspace page map
 ├── clients/                      # Per-client trial + active-customer artifacts
+│   ├── AGENTS.md                 # Portable client-ops workflow contract
+│   ├── CLAUDE.md                 # Claude Code client navigation mirror
 │   └── trials/
 │       └── longaeva/             # 14-day POC starting 2026-06-15 — see README.md
 └── archive/                      # Historical sprints + old specs (read-only)
@@ -87,7 +91,11 @@ Each trial folder follows the same convention: `README.md` is the entry point, w
 
 ---
 
-## Skills (Claude Code)
+## Agent Workflows
+
+Claude Code slash commands are accelerators for these flows. Other agents should
+follow `AGENTS.md`, `docs/AGENTS.md`, and `jira/AGENTS.md` manually with the
+same templates and artifacts.
 
 | Skill | What it does |
 |---|---|

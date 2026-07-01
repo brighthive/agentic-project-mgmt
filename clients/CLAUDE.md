@@ -1,5 +1,8 @@
 # Clients — Navigation Contract
 
+> Agent-neutral instructions live in `AGENTS.md`. This file keeps the detailed
+> navigation table used by Claude Code and legacy agent sessions.
+
 > Operational tracking for leads, active trials, and paying customers.
 > For client **architecture profiles** (stack, capability maps, integration patterns),
 > see `../platform-saas-ai-context/clients/`.

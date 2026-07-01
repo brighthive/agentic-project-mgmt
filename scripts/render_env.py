@@ -115,7 +115,7 @@ def set_aws_key(env_data: dict[str, Any], key: str, value: Any) -> None:
 # ---------------------------------------------------------------------------
 
 def flatten_aws_export(entries: list[dict[str, Any]]) -> dict[str, Any]:
-    """Flatten kurilead-style Secrets Manager exports into a template-friendly map.
+    """Flatten *lead-style Secrets Manager exports into a template-friendly map.
 
     Each entry has shape {"name": "...", "value_parsed": {...}, "value": "..."}.
 
@@ -198,7 +198,7 @@ def flatten_aws_export(entries: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def load_aws_export(path: Path) -> dict[str, Any]:
-    """Load either flat env JSON or kurilead-style secret-entry exports.
+    """Load either flat env JSON or *lead-style secret-entry exports.
 
     `Any` is intentional: the JSON shape is unknown until inspected.
     """

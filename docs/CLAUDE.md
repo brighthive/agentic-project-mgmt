@@ -1,9 +1,13 @@
 # Docs — Documentation & Strategy Hub
 
+> Agent-neutral instructions live in `AGENTS.md`. This file keeps the
+> Claude Code skill mapping and detailed workflow notes.
+
 ## Directory Structure
 
 ```
 docs/
+├── AGENTS.md                        # Agent-neutral workflow contract
 ├── CLAUDE.md                        # This file
 ├── specs/                           # Context generation specs (write BEFORE code)
 │   └── SPEC_TEMPLATE.md            # Spec template

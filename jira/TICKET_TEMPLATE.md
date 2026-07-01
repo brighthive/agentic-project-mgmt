@@ -1,6 +1,6 @@
 # Jira Ticket Template
 
-How any team member (Kuri, Marwan, Ahmed, Harbour) creates a Jira ticket through Claude Code.
+How any team member (Kuri, Marwan, Ahmed, Harbour) creates a Jira ticket through an agent and Jira MCP.
 
 ---
 
@@ -85,9 +85,9 @@ Links to specs, designs, screenshots, related PRs.
 
 ---
 
-## How to Create a Ticket (via Claude)
+## How to Create a Ticket (via an agent)
 
-Three steps. Claude does them all if you say "make me a ticket for X":
+Three steps. The agent does them all if you say "make me a ticket for X":
 
 ### 1. Find the right Epic
 

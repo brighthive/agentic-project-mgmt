@@ -1,10 +1,14 @@
 # Jira Sprint Tracking
 
+> Agent-neutral instructions live in `AGENTS.md`. This file keeps the
+> Claude Code sprint-release mapping and detailed schema notes.
+
 ## Structure
 
 ```
 jira/
 ├── TICKET_TEMPLATE.md  # Canonical Jira ticket format
+├── AGENTS.md           # Agent-neutral sprint/Jira contract
 ├── CLAUDE.md           # This file — sprint data format spec
 ├── sprint/
 │   ├── SPRINTS.md      # Master velocity table (all sprints)
