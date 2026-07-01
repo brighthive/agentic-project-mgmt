@@ -174,7 +174,7 @@ Regressions are visible the day they happen. Niche elasticity is visible the mom
 | Architecture (this doc) | `./CAPABILITY_MAP.md` |
 | Flows + per-step contracts | `./FLOWS.md` |
 | Decision record | `./ADR.md` |
-| Skill orchestrator | `~/.claude/skills/synth-warehouse/` |
+| Skill orchestrator (**not yet built** — planned, no target version assigned below) | `~/.claude/skills/synth-warehouse/` |
 
 ## Versioning roadmap
 
