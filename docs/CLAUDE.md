@@ -39,15 +39,22 @@ docs/
 **Template**: `specs/SPEC_TEMPLATE.md`
 **Naming**: `{feature-slug}.md`
 
-**Structure**: Problem → Use Case/Goal → Current Situation (how it works today, hard limitations, gaps) → Proposals/Solutions → Areas Involved → AC → Ticket Breakdown
+**Structure**: 10 sections per `~/.claude/rules/spec-driven.md` — (1) Context, (2) Interface
+Contract (MDE), (3) Invariants (DbC), (4) Acceptance Criteria (Gherkin), (5) Out of Scope,
+(6) Dependencies, (7) Correctness Properties (conditional), (8) Eval Criteria (conditional,
+LLM/agent specs), (9) Observability Contract (conditional, production surfaces), (10) Test
+Coverage Update (mandatory — extends real suites: `brightbot/tests/` + `brightbot/brightbot/evals/`,
+`brighthive-webapp/tests/e2e` Playwright + `cypress/`, `brighthive-platform-core/tests/`,
+`brighthive-e2e/e2e/` cross-repo).
 
 **Workflow**:
 1. Run `/write-spec` or `/write-spec feature-name` or `/write-spec --from BH-XXX`
 2. Skill reads codebase, gathers context, fills template
 3. Review with team or `/review-code`
-4. Generate Jira tickets with `/create-jira-ticket`
-5. Plan sprint with `/scrum-master`
-6. After shipping, run `/write-feature-doc`
+4. §10 is not optional — new test cases land in the relevant repo's suite(s) above, and all suites run green before the spec is "done"
+5. Generate Jira tickets with `/create-jira-ticket`
+6. Plan sprint with `/scrum-master`
+7. After shipping, run `/write-feature-doc`
 
 ---
 
