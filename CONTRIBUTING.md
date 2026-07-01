@@ -43,7 +43,7 @@ else's unreviewed work into your PR.
 Branch off `master`. Naming: `name/BH-XXX/short-description` — a ticket is mandatory, not optional. If no ticket exists yet, file one first (see `jira/TICKET_TEMPLATE.md`), then branch. Examples: `drchinca/BH-745/longaeva-operator-runbook`, `marwan/BH-409/sprint-9-release-notes`.
 
 ```bash
-git checkout -b drchinca/BH-XXX/<short-description>
+git checkout -b <your-name>/BH-XXX/<short-description>
 ```
 
 ### 3. Commit using Conventional Commits
@@ -63,11 +63,13 @@ Never amend a commit that's already been pushed. Never `git push --force` withou
 This is mandatory, not optional. After the first meaningful commit:
 
 ```bash
-git push -u origin drchinca/BH-XXX/<short-description>
+git push -u origin <your-name>/BH-XXX/<short-description>
 gh pr create --draft --base master --title "type(scope): description"
-gh pr edit --add-assignee drchinca \
-  --add-reviewer Marwan-Samih-Brighthive,sherbiny-bh,Nano-233,matthewgee
+gh pr edit --add-assignee "$(gh api user --jq .login)" \
+  --add-reviewer <everyone else on the team roster below>
 ```
+
+The team roster (GitHub handles): `drchinca`, `Marwan-Samih-Brighthive`, `sherbiny-bh`, `Nano-233`, `matthewgee`. Assignee is always the PR author (self-assign); reviewers are the rest of the roster minus the author.
 
 Why draft + reviewers immediately:
 - CI runs from commit one — catches failures while the work is still in your head
@@ -97,13 +99,13 @@ Reviewer approves → squash-merge to `master`. The PR title becomes the single 
 | Change type | Required reviewers |
 |---|---|
 | Sprint artifacts (`jira/sprint/{N}/`) | Whoever ran the sprint-release skill, plus one engineering lead |
-| Client trial docs (`clients/trials/{slug}/`) | drchinca + the trial owner |
-| Specs (`docs/specs/`) | drchinca + the senior engineer who'll implement |
-| Vault CLI changes | drchinca + sherbiny-bh (security review) |
-| Onboarding scripts | drchinca + one fresh joiner who can validate the flow |
+| Client trial docs (`clients/trials/{slug}/`) | The TechLead + the trial owner |
+| Specs (`docs/specs/`) | The TechLead + the senior engineer who'll implement |
+| Vault CLI changes | The TechLead + `sherbiny-bh` (security review) |
+| Onboarding scripts | The TechLead + one fresh joiner who can validate the flow |
 | Notion / Jira tooling | Whoever uses the tooling most |
 
-Default reviewer set for PRs that don't fit a category: `Marwan-Samih-Brighthive`, `sherbiny-bh`, `Nano-233`, `matthewgee`. Assignee always: `drchinca`.
+Default reviewer set for PRs that don't fit a category: the rest of the team roster minus the PR author (see roster above). Assignee is always the PR author, not a fixed name.
 
 ## Standards
 

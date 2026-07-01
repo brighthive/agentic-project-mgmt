@@ -136,7 +136,7 @@ criterion's pass condition met against the real target — or an explicit blocke
 
 Per `rules/git-workflow.md` + `rules/pr-templates.md`.
 - Push; open a **draft PR** immediately (`gh pr create --draft --base <base>`).
-- Assignee `drchinca`; reviewers `Marwan-Samih-Brighthive,sherbiny-bh,Nano-233,matthewgee`.
+- Assignee: the PR author (self-assign); reviewers: the rest of the team roster (see `CONTRIBUTING.md`).
 - PR body: link the spec, the Jira key, the scorecard criterion, and **paste the Gate 5
   proof** (test counts + live transcript). Size ≤900 lines; split if larger.
 - Iterate on CI / review until green. Squash-merge only with explicit user go.
