@@ -20,17 +20,33 @@ If your change doesn't fit one of these, ask in `#engineering` before opening a 
 
 ## Workflow
 
-### 1. Branch
+### 1. Sync + scan before branching
 
-Branch off `master`. Naming: `name/topic/short-description` — e.g. `drchinca/longaeva/operator-runbook`, `marwan/sprint-9/release-notes`.
+Always `git fetch`/`pull` before starting work — never branch off a stale local `master`. Then
+skim recent team activity with `git log` so you know what landed since you last looked (avoids
+duplicate work, conflicting specs, or missing a teammate's in-flight change on the same area):
 
 ```bash
 git checkout master
+git fetch origin
 git pull --ff-only
-git checkout -b drchinca/<topic>/<short-description>
+git log --oneline -15                 # what's landed recently
+git log --oneline origin/master..master   # catch any of YOUR unpushed commits before branching off them
 ```
 
-### 2. Commit using Conventional Commits
+If `master` is ahead of `origin/master` (an unpushed commit sitting locally), resolve that first —
+push it or ask the author — before branching, so your new branch doesn't silently carry someone
+else's unreviewed work into your PR.
+
+### 2. Branch
+
+Branch off `master`. Naming: `name/BH-XXX/short-description` — a ticket is mandatory, not optional. If no ticket exists yet, file one first (see `jira/TICKET_TEMPLATE.md`), then branch. Examples: `drchinca/BH-745/longaeva-operator-runbook`, `marwan/BH-409/sprint-9-release-notes`.
+
+```bash
+git checkout -b drchinca/BH-XXX/<short-description>
+```
+
+### 3. Commit using Conventional Commits
 
 `type(scope): description` under 72 chars, imperative mood. Types: `feat | fix | docs | style | refactor | test | chore | perf | ci | build`. Example:
 
@@ -38,16 +54,16 @@ git checkout -b drchinca/<topic>/<short-description>
 docs(longaeva): operator runbook for trial Day 1 — pre-flight + 4-mutation demo script
 ```
 
-The first commit on the branch is meaningful work. After that commit, **push and open a draft PR immediately** before any further work — see §3.
+The first commit on the branch is meaningful work. After that commit, **push and open a draft PR immediately** before any further work — see §4.
 
-Never amend a commit that's already been pushed. Never `git push --force` without explicit permission. Never commit `Co-Authored-By: Claude` or "Generated with Claude" attribution.
+Never amend a commit that's already been pushed. Never `git push --force` without explicit permission. Never commit AI attribution such as `Co-Authored-By: Claude`, `Co-Authored-By: Codex`, or "Generated with ..." text.
 
-### 3. Open a draft PR on the first push
+### 4. Open a draft PR on the first push
 
 This is mandatory, not optional. After the first meaningful commit:
 
 ```bash
-git push -u origin drchinca/<topic>/<short-description>
+git push -u origin drchinca/BH-XXX/<short-description>
 gh pr create --draft --base master --title "type(scope): description"
 gh pr edit --add-assignee drchinca \
   --add-reviewer Marwan-Samih-Brighthive,sherbiny-bh,Nano-233,matthewgee
@@ -60,9 +76,9 @@ Why draft + reviewers immediately:
 
 Continue working with additional commits; each push updates the same draft PR. When you think it's done, mark **Ready for review**.
 
-### 4. PR description
+### 5. PR description
 
-Match template to PR size (per `~/.claude/rules/pr-templates.md`):
+Match template to PR size (per [`PR_RULES.md`](./PR_RULES.md)):
 
 | Size | Files | Lines | Template |
 |---|---|---|---|
@@ -72,7 +88,7 @@ Match template to PR size (per `~/.claude/rules/pr-templates.md`):
 
 PRs over 900 lines must be split. PRs over 500 lines need a strong reason in the description.
 
-### 5. Merge
+### 6. Merge
 
 Reviewer approves → squash-merge to `master`. The PR title becomes the single squash-commit message — keep it conventional and clean. Never merge directly without a PR. Never merge to `master` without explicit review approval (admin-merge override exists but should leave a comment explaining why).
 
@@ -96,7 +112,7 @@ Default reviewer set for PRs that don't fit a category: `Marwan-Samih-Brighthive
 - **No AI attribution** in commits or PR bodies
 - **No proactive `.md` files** — this repo is a doc hub; create new `.md` only when there's a real consumer for it (a runbook, a spec, an index)
 - **Bash standards** for `scripts/*.sh` per `~/.claude/rules/bash-scripts.md`: `set -euo pipefail`, quoted `"${vars}"`, `mktemp` + `trap` cleanup, `require_commands` gate
-- **Frontmatter required** on client trial docs (see `clients/CLAUDE.md`)
+- **Frontmatter required** on client trial docs (see `clients/AGENTS.md`)
 
 ## Adding a new client trial
 
@@ -104,19 +120,19 @@ Default reviewer set for PRs that don't fit a category: `Marwan-Samih-Brighthive
 2. Add `clients/trials/<slug>/README.md` as the folder index (follow `clients/trials/longaeva/README.md` shape)
 3. Update `clients/README.md` with the new client row
 4. File the trial epic in Jira; link the epic key in the trial-folder frontmatter
-5. Open a draft PR per §3
+5. Open a draft PR per §4
 
 ## Adding a new spec
 
 1. `cp docs/specs/SPEC_TEMPLATE.md docs/specs/SPEC-<NAME>.md`
-2. Fill all 6+ sections (Context, Interface Contract, Invariants, Acceptance Criteria, Out of Scope, Dependencies; plus optional Correctness Properties / Eval / Observability per `~/.claude/rules/spec-driven.md`)
+2. Fill all required sections from `docs/specs/SPEC_TEMPLATE.md` and `docs/AGENTS.md` (Context, Interface Contract, Invariants, Acceptance Criteria, Out of Scope, Dependencies, and required test coverage; add Correctness Properties / Eval / Observability when the template calls for them)
 3. Open a draft PR — specs ship as PRs even when no code yet exists
 4. Reviewer approves → §10 questions get resolved by the spec author and pasted back into the spec body
 5. Squash-merge once §10 is signed off
 
 ## Adding a new sprint
 
-The sprint-release skill (`/sprint-release`) handles this end-to-end. If you're authoring artifacts manually, see `jira/CLAUDE.md` for the schema and `jira/sprint/SPRINTS.md` for the velocity table.
+The sprint-release skill (`/sprint-release`) handles this end-to-end in Claude Code. If you're authoring artifacts manually or using another agent, see `jira/AGENTS.md` for the process, `jira/CLAUDE.md` for legacy schema detail, and `jira/sprint/SPRINTS.md` for the velocity table.
 
 ## Reporting issues
 
