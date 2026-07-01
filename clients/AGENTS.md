@@ -70,7 +70,7 @@ Dates use `YYYY-MM-DD`. `jira_epic` is required before trial Day 1.
 - Trial engineering work goes under that epic.
 - Find live epics with `mcp__jira__jira_get_epics(boardId=152, done=false)`.
 - Use `../jira/TICKET_TEMPLATE.md` for ticket shape.
-- Link Notion GTM pages by ID; do not duplicate Notion content here.
+- Trials link to the Go-To-Market section: `19302437-dde4-80e5-b46d-de6c7e701ebf`. Link Notion GTM pages by ID; do not duplicate Notion content here.
 - DynamoDB remains the source of truth for live workspace and account data.
 - Feature coverage claims should link to platform feature docs or be marked as
   missing feature-doc work.
