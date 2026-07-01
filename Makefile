@@ -543,7 +543,8 @@ pull-secrets: pull-aws-secrets pull-lastpass  ## ③ Pull all vault sources into
 #   make unpack  NAME=matt          Unpack into mattlead/ (new leader runs this)
 #   make verify-lead                Check that your *lead/ directory is complete
 #
-# NAME defaults to "kuri" (the current tech-lead's own vault).
+# NAME has no default — every caller must pass NAME=<your-name> explicitly.
+# Whoever holds the TechLead role uses their own name; there is no hardcoded owner.
 
 .PHONY: onboard unpack verify-lead sync-vaults sync-langsmith
 
@@ -557,7 +558,7 @@ sync-langsmith:  ## ③ Snapshot LangSmith deployment shapes (auto-fetches admin
 
 sync-vaults: check-creds  ## ③ Refresh ALL vault sources (lastpass + AWS + dynamo + langsmith) into $(NAME)lead/
 	@echo "── Syncing all vaults into $(NAME)lead/ ──"
-	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=kuri make sync-vaults"; exit 2; fi
+	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=<your-name> make sync-vaults"; exit 2; fi
 	@if [ ! -d "$(LEAD_DIR)" ]; then echo "  [ERROR] $(LEAD_DIR)/ not found — only the TechLead's own lead dir can be re-synced from live sources"; exit 1; fi
 	@mkdir -p "$(LEAD_DIR)/lastpass-vault" "$(LEAD_DIR)/langsmith-vault"
 	@echo "  ▸ LastPass: lastpass-vault sync + export"

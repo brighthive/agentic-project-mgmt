@@ -134,16 +134,16 @@ If the ticket needs a sub-team review, comment with `@mentions` after creation.
 
 ## Team Account IDs (for `assignee=`)
 
-Reference these from `CLAUDE.md` (single source of truth). Today:
+Reference these from `CLAUDE.md` (single source of truth):
 
 | Member | Account ID |
 |---|---|
 | Kuri | `712020:b4b1b0de-6936-4d70-be9f-5d96ccec7264` |
-| Marwan | look up via `mcp__jira__jira_search_users(query="Marwan")` |
-| Ahmed | look up via `mcp__jira__jira_search_users(query="Ahmed")` |
-| Harbour | look up via `mcp__jira__jira_search_users(query="Harbour")` |
+| Marwan | `712020:dff1a867-eb10-4a4a-aa2d-c0603206e4f1` |
+| Ahmed | `712020:906373f4-4ecd-4c31-8415-089069ad2c4e` |
+| Harbour | `712020:5e1dd706-529f-4adb-8d1c-03bb3c7b78dc` |
 
-Only Kuri's ID is in memory; the others should be queried once and added to `CLAUDE.md` when you confirm them.
+If a new team member joins, look them up once via `mcp__jira__jira_search_users(query="<name>")` and add their ID to `CLAUDE.md`.
 
 ---
 

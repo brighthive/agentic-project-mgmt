@@ -19,7 +19,7 @@ Or directly:
 The name determines:
   - Source vault directory: {name}lead/  (e.g. mattlead/, kurilead/)
   - Default output/input file: {name}lead-export.zip.enc
-  - Name defaults to "kuri" (the current tech-lead's vault)
+  - --name is required; there is no default owner
 
 The package command:
   1. Reads existing JSON exports from {name}lead/secrets-manager/ + lastpass-vault/ + dynamo-vault/.
@@ -296,18 +296,18 @@ def main() -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p_pack = sub.add_parser("package", help="Bundle {name}lead/ into an encrypted handoff zip")
-    p_pack.add_argument("--name", default="kuri", help="Lead name (e.g. matt → mattlead/)")
+    p_pack.add_argument("--name", required=True, help="Lead name (e.g. matt → mattlead/)")
     p_pack.add_argument("--output", default="", help="Output path (default: {name}lead-export.zip.enc)")
     p_pack.add_argument("--password", default="", help="Encryption password (omit to prompt)")
 
     p_unpack = sub.add_parser("unpack", help="Decrypt and extract into {name}lead/")
-    p_unpack.add_argument("--name", default="kuri", help="Lead name (e.g. matt → mattlead/)")
+    p_unpack.add_argument("--name", required=True, help="Lead name (e.g. matt → mattlead/)")
     p_unpack.add_argument("--input", default="", help="Input path (default: {name}lead-export.zip.enc)")
     p_unpack.add_argument("--password", default="", help="Decryption password (omit to prompt)")
     p_unpack.add_argument("--force", action="store_true", help="Overwrite existing files")
 
     p_verify = sub.add_parser("verify", help="Check {name}lead/ completeness")
-    p_verify.add_argument("--name", default="kuri", help="Lead name (e.g. matt → mattlead/)")
+    p_verify.add_argument("--name", required=True, help="Lead name (e.g. matt → mattlead/)")
 
     args = ap.parse_args()
     # Apply name-derived defaults for output/input paths
