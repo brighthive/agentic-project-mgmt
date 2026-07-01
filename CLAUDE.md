@@ -1,5 +1,9 @@
 # Claude Navigation Guide - Agentic Project Management
 
+> Agent-neutral instructions live in `AGENTS.md` and path-scoped
+> `*/AGENTS.md` files. Claude Code should read those first, then use this file
+> for Claude-specific skill names, lookup tables, and legacy details.
+
 ---
 
 ## Onboarding Protocol
@@ -68,7 +72,7 @@ make status                 → confirm all sentinels green
 | **Sprint N release notes** | `jira/sprint/N/RELEASE_NOTES.md` |
 | **Sprint N marketing notes** | `jira/sprint/N/MARKETING_RELEASE_NOTES.md` |
 | **Jira ticket template** | `jira/TICKET_TEMPLATE.md` |
-| **Sprint data format spec** | `jira/CLAUDE.md` |
+| **Sprint data format spec** | `jira/AGENTS.md` + `jira/CLAUDE.md` |
 | **Sprint close skill** | `/sprint-release` (Claude Code skill) |
 | **AWS accounts & infrastructure** | `dynamo-vault/INFRASTRUCTURE.md` |
 | **DynamoDB workspace configs** | `dynamo-vault/cli/secrets` |
@@ -106,7 +110,7 @@ make status                 → confirm all sentinels green
 | **Bedrock journal template** | `docs/bedrock/BEDROCK_TEMPLATE.md` |
 | **Bedrock topic index** | `docs/bedrock/INDEX.md` |
 | **POC template** | `docs/pocs/POC_TEMPLATE.md` |
-| **Docs workflow guide** | `docs/CLAUDE.md` |
+| **Docs workflow guide** | `docs/AGENTS.md` + `docs/CLAUDE.md` |
 | **Q1 roadmap scorecard** | `jira/sprint/Q1_ROADMAP_SCORECARD.md` |
 
 ---
@@ -117,8 +121,8 @@ make status                 → confirm all sentinels green
 agentic-project-mgmt/
 ├── Makefile                      # All orchestration — run `make help`
 ├── ONBOARDING.md                 # New-leader setup walkthrough (7 steps)
-├── CLAUDE.md                     # This file — navigation contract
-├── AGENTS.md                     # Agent contract (scope rules, cross-repo nav)
+├── AGENTS.md                     # Portable agent contract (scope, onboarding, cross-repo nav)
+├── CLAUDE.md                     # This file — Claude Code navigation mirror
 ├── README.md                     # Entry point — overview + quick-start
 ├── .env.example                  # Fill in your AWS profiles + LastPass user
 │
@@ -137,6 +141,7 @@ agentic-project-mgmt/
 │
 ├── jira/                         # Sprint data & tracking
 │   ├── TICKET_TEMPLATE.md        # Canonical Jira ticket format
+│   ├── AGENTS.md                 # Portable sprint/Jira workflow contract
 │   ├── CLAUDE.md                 # Sprint data schema + release artifact spec
 │   └── sprint/
 │       ├── SPRINTS.md            # Master velocity table (all sprints)
@@ -144,6 +149,7 @@ agentic-project-mgmt/
 │       └── {1..10}/              # Per-sprint: stats.json, tickets.json, SUMMARY.md, etc.
 │
 ├── docs/                         # Documentation & strategy hub
+│   ├── AGENTS.md                 # Portable spec/feature/POC workflow contract
 │   ├── CLAUDE.md                 # Spec/feature/POC workflow guide
 │   ├── specs/                    # Implementation specs (write before code)
 │   │   ├── SPEC_TEMPLATE.md
@@ -162,7 +168,7 @@ agentic-project-mgmt/
 │   └── INFRASTRUCTURE.md         # AWS accounts, tables, client registry
 ├── lastpass-vault/               # CLI: LastPass credential vault
 ├── archive/                      # Completed sprints, old specs (read-only)
-└── kurilead/                     # Personal vault dump (gitignored)
+└── {name}lead/                   # Personal vault dump (gitignored)
 ```
 
 ---
@@ -182,7 +188,7 @@ agentic-project-mgmt/
 
 ### Creating Jira Tickets
 
-**For any team member (Kuri, Marwan, Ahmed, Harbour) making a ticket via Claude:** see [`jira/TICKET_TEMPLATE.md`](jira/TICKET_TEMPLATE.md) — it has the rules, escape-character handling, and three real examples (bug, feature, refactor).
+**For any team member (Kuri, Marwan, Ahmed, Harbour) making a ticket via an agent:** see [`jira/TICKET_TEMPLATE.md`](jira/TICKET_TEMPLATE.md) — it has the rules, escape-character handling, and three real examples (bug, feature, refactor).
 
 Hard rules (also in the template):
 1. **Every ticket MUST have `parentKey="BH-XXX"`** — the Epic key. Tickets without an epic parent are rejected.
@@ -213,14 +219,15 @@ Hard rules (also in the template):
 4. `../platform-saas-ai-context/docs/architecture/INGESTION_AGENT_BRIGHTBOT.md` — Ingestion agent design
 
 ### Spec-Driven Development
-1. `docs/CLAUDE.md` — Full workflow guide for all 4 doc modules
-2. `docs/specs/SPEC_TEMPLATE.md` — Write specs BEFORE implementation
-3. `docs/features/FEATURE_TEMPLATE.md` — Document shipped capabilities
-4. `docs/bedrock/BEDROCK_TEMPLATE.md` — Migration journal entries
-5. `docs/pocs/POC_TEMPLATE.md` — Experiment write-ups (keep even if No-Go)
-6. Lifecycle: `/write-poc` → `/write-spec` → `/create-jira-ticket` → Implement → `/write-feature-doc`
+1. `docs/AGENTS.md` — Portable workflow guide for all 4 doc modules
+2. `docs/CLAUDE.md` — Claude Code skill mirror and details
+3. `docs/specs/SPEC_TEMPLATE.md` — Write specs BEFORE implementation
+4. `docs/features/FEATURE_TEMPLATE.md` — Document shipped capabilities
+5. `docs/bedrock/BEDROCK_TEMPLATE.md` — Migration journal entries
+6. `docs/pocs/POC_TEMPLATE.md` — Experiment write-ups (keep even if No-Go)
+7. Lifecycle: `/write-poc` → `/write-spec` → `/create-jira-ticket` → Implement → `/write-feature-doc`
 
-**Skills for doc generation:**
+**Claude Code skills for doc generation:**
 - `/write-spec` — Generate spec from conversation/Jira context
 - `/write-feature-doc` — Document shipped features from sprint/PR data
 - `/bedrock-journal` — Record migration decisions, phases, experiments
@@ -247,7 +254,7 @@ Each sprint directory `jira/sprint/N/` contains:
 
 ## Scope
 
-This repo is the **agentic project management hub** — replaces traditional PMs and scrum masters with Claude Code skills, agents, and automation.
+This repo is the **agentic project management hub** — replaces traditional PMs and scrum masters with agent contracts, Claude Code skills, and automation.
 
 | This repo | platform-saas-ai-context |
 |-----------|--------------------------|

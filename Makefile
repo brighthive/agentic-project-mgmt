@@ -333,10 +333,19 @@ check-prereqs:  ## ⓪ Check all prerequisites are installed (read-only, no inst
 #  workstation does nothing except verify state.)
 # ══════════════════════════════════════════════════════════════
 
+# Preserve NAME passed as an environment prefix (`NAME=matt make unpack`) so a
+# local `.env` cannot silently redirect onboarding commands to another cache.
+NAME_ENV_ORIGIN := $(origin NAME)
+NAME_ENV_VALUE  := $(NAME)
+
 # Load user .env if present (provides AWS_*_PROFILE, LASTPASS_USER, etc.)
 ifneq (,$(wildcard ./.env))
     include .env
     export
+endif
+
+ifneq (,$(findstring environment,$(NAME_ENV_ORIGIN)))
+    override NAME := $(NAME_ENV_VALUE)
 endif
 
 # Profile defaults (override in your .env)
@@ -541,7 +550,7 @@ pull-secrets: pull-aws-secrets pull-lastpass  ## ③ Pull all vault sources into
 # Usage:
 #   make onboard NAME=matt          Package vault → mattlead-export.zip.enc
 #   make unpack  NAME=matt          Unpack into mattlead/ (new leader runs this)
-#   make verify-lead                Check that your *lead/ directory is complete
+#   make verify-lead NAME=matt      Check that your *lead/ directory is complete
 #
 # NAME has no default — every caller must pass NAME=<your-name> explicitly.
 # Whoever holds the TechLead role uses their own name; there is no hardcoded owner.
@@ -558,7 +567,7 @@ sync-langsmith:  ## ③ Snapshot LangSmith deployment shapes (auto-fetches admin
 
 sync-vaults: check-creds  ## ③ Refresh ALL vault sources (lastpass + AWS + dynamo + langsmith) into $(NAME)lead/
 	@echo "── Syncing all vaults into $(NAME)lead/ ──"
-	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=<your-name> make sync-vaults"; exit 2; fi
+	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=matt make sync-vaults"; exit 2; fi
 	@if [ ! -d "$(LEAD_DIR)" ]; then echo "  [ERROR] $(LEAD_DIR)/ not found — only the TechLead's own lead dir can be re-synced from live sources"; exit 1; fi
 	@mkdir -p "$(LEAD_DIR)/lastpass-vault" "$(LEAD_DIR)/langsmith-vault"
 	@echo "  ▸ LastPass: lastpass-vault sync + export"
@@ -608,6 +617,7 @@ unpack:  ## ③ Decrypt + extract a vault package into {NAME}lead/ (new leaders 
 	fi
 
 verify-lead:  ## ③ Check that {NAME}lead/ has all expected vault export files
+	@if [ -z "$(NAME)" ]; then echo "  [ERROR] NAME is required. Example: NAME=matt make verify-lead"; exit 2; fi
 	@$(PYTHON3) scripts/package_kurilead.py verify --name "$(NAME)"
 
 # ── Env materialization ───────────────────────────────────────
