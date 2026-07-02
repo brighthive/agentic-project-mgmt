@@ -76,6 +76,16 @@ WorkflowSpec project. The schedule fires through EventBridge, starts
 `executeWorkflow`, records final status back on the schedule row, publishes a
 notification, and never stores a user token at rest.
 
+### At a Glance
+
+```mermaid
+flowchart LR
+    A[Create schedule] --> B[Scheduler fires]
+    B --> C[Run the workflow]
+    C --> D[Update schedule status]
+    D --> E[Notify user]
+```
+
 ### End-to-End Flow
 
 Who does what, ticket by ticket, across the create → fire → run → notify path:
