@@ -76,6 +76,88 @@ WorkflowSpec project. The schedule fires through EventBridge, starts
 `executeWorkflow`, records final status back on the schedule row, publishes a
 notification, and never stores a user token at rest.
 
+### End-to-End Flow
+
+Who does what, ticket by ticket, across the create → fire → run → notify path:
+
+```mermaid
+sequenceDiagram
+    actor User as Admin/Collaborator
+    participant Webapp as brighthive-webapp<br/>(BH-880)
+    participant BB as brightbot<br/>scheduled_agents_routes<br/>(BH-877)
+    participant Lambda as scheduled_agent_dispatcher<br/>Lambda + LangGraphWebhookSink<br/>(BH-879)
+    participant Core as brighthive-platform-core<br/>executeWorkflowAsOwner<br/>(BH-878)
+    participant WF as WorkflowSpec run<br/>(MANUAL / AGENT step)
+    participant Bridge as Terminal bridge<br/>notifyScheduleOfRunCompletion<br/>(BH-879)
+    participant Slack as brightbot-slack-server<br/>(BH-879)
+
+    User->>Webapp: Create schedule for a WorkflowSpec project
+    Webapp->>BB: POST /manage/scheduled-agents<br/>{action_type: execute_workflow, project_id}
+    Note over Webapp,BB: workspace_id + owner_user_id are<br/>auth-derived server-side, never client-submitted
+    BB->>BB: Reject forbidden token fields recursively
+    BB->>BB: Upsert EventBridge Scheduler cron (enabled)
+    BB-->>Webapp: RoutineSchedule row (no secrets)
+
+    BB->>Lambda: EventBridge cron fire, or POST .../run (manual)
+    Lambda->>Lambda: Acquire overlap lock<br/>(skip if already running — Invariant 4)
+    Lambda->>Core: executeWorkflowAsOwner(workspace_id, project_id,<br/>owner_user_id, schedule_id) via x-service-key
+    Core->>Core: Revalidate owner membership + role + project ownership
+    alt owner still valid
+        Core->>WF: Start WorkflowSpec run
+        alt run completes synchronously (MANUAL step)
+            WF-->>Core: SUCCESS/FAILED (inline)
+            Core-->>Lambda: status: success/error
+            Lambda->>Lambda: record_terminal() directly<br/>(NOT record_dispatch — no webhook will ever arrive)
+        else run is async (AGENT step)
+            WF-->>Core: RUNNING
+            Core-->>Lambda: status: running
+            Lambda->>Lambda: record_dispatch() — last_run_status="running"
+            WF->>Bridge: Terminal callback when run reaches SUCCESS/FAILED/CANCELLED
+            Bridge->>BB: POST /webhook/run-complete<br/>(idempotent by schedule_id+run_id)
+        end
+        Bridge->>Bridge: writeNotificationSignal<br/>(scheduled_workflow_success/_error, display_name)
+        Bridge-->>Webapp: Inbox card (workflow_run type)
+        Bridge-->>Slack: scheduled_workflow_success/_error formatting
+        Slack->>User: Slack message
+    else owner revoked/demoted
+        Core-->>Lambda: GraphQL ForbiddenError
+        Lambda->>Lambda: record_terminal(status="error",<br/>"owner permission must be restored")
+    end
+```
+
+Ticket ownership per hop — status as of this writing (all 6 PRs open, draft,
+CI-green, and verified end-to-end against a real local stack — no AWS SSO
+required):
+
+```mermaid
+flowchart LR
+    subgraph BH877["BH-877 · brightbot"]
+        A["Action descriptors +\nScheduleRoutineRequest validation +\noverlap lock (local-dev parity)"]
+    end
+    subgraph BH878["BH-878 · platform-core"]
+        B["executeWorkflowAsOwner\nservice-auth + revalidation"]
+    end
+    subgraph BH879a["BH-879 · platform-core"]
+        C["Terminal bridge +\ndispatcher sink sync/async routing +\nnotification signal publish"]
+    end
+    subgraph BH879b["BH-879 · slack-server"]
+        S["scheduled_workflow_success/_error\nBlock Kit formatting"]
+    end
+    subgraph BH880["BH-880 · webapp"]
+        D["Workflow task label +\nproject picker + deep-link prefill +\nworkflow_run inbox card"]
+    end
+    subgraph BH881["BH-881 · e2e"]
+        E["Local no-SSO e2e:\ncreate to run to notify to DynamoDB"]
+    end
+
+    D -- "creates schedule via" --> A
+    A -- "dispatcher calls" --> B
+    B -- "sync or async result" --> C
+    C -- "notifies" --> D
+    C -- "notifies" --> S
+    A & B & C & S & D -. "verified together by" .-> E
+```
+
 ### Non-Goals
 
 - No `ProactiveSignal` capture.
