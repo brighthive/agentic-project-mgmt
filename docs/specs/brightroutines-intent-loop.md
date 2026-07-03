@@ -768,3 +768,89 @@ concluded 6/10 week-1 retention as currently specified. One anchor quote +
 count and manager-graph awareness are the two other retention levers. All
 three are spec-level, not implementation choices, and should land before
 BH-885 (webapp UI) starts.
+
+---
+
+## 15. W/P/U Scoring Layer (BH-950, 2026-07-03)
+
+Rollup layer on top of §6's per-pattern outputs. Answers *"which
+workspace / project / user has the strongest routine adoption?"* without
+scanning raw signals. Composite score in `[0, 1]` per scope, computed
+nightly at the tail of the detector pass.
+
+### 15.1 Score DTO shape (counts-only, §9 invariant 3 compliant)
+
+`RoutineScore` (`brightbot/routines/scoring/dtos.py`) — frozen Pydantic
+with no field capable of carrying raw text:
+
+- `scope: ScoreScope` — `WORKSPACE` | `PROJECT` | `USER`
+- `workspace_id`, `scope_id` — always workspace-scoped (cross-workspace comparability lives in BH-942)
+- `window_start`, `window_end`, `computed_at`
+- Raw counts: `signals_count`, `schedulable_signals_count`,
+  `distinct_users_count`, `distinct_projects_count`,
+  `patterns_ready_count`, `suggestions_offered_count`,
+  `suggestions_scheduled_count`, `suggestions_dismissed_count`
+- Averages: `avg_judge_confidence`, `avg_recurrence_score` (nullable)
+- `composite_score: float ∈ [0, 1]`
+
+### 15.2 Composite formula (module-level, single tuning surface)
+
+```
+composite = schedulable_rate  * 0.4
+          + avg_confidence    * 0.3
+          + avg_recurrence    * 0.2
+          + activation_rate   * 0.1   # scheduled / offered
+```
+
+Weights sum to 1.0 (unit test enforces). None → 0 for the missing
+channels; inputs clamped to `[0, 1]` so rounding cannot push composite
+past 1.0. Same shape as `quality_utils.py`'s `overall_score` precedent.
+
+### 15.3 Persistence (audit-approved, non-conflicting with §4.1/4.2/4.3)
+
+Under existing `PK=WORKSPACE#<workspace_id>`:
+
+- `SK = SCORE#<scope>#<scope_id>#<window_end_iso>` — append-only per
+  window, so history / trend / EWMA is computable without re-scanning
+  signals.
+- `GSI5PK = SCORE_SCOPE#<scope>#<workspace_id>`
+- `GSI5SK = <inverted_composite_5-digit>#<scope_id>` — lexicographic
+  DESC by composite for leaderboard queries.
+
+CDK: `BrightroutinesDataStack` provisions GSI5 alongside GSI1–4.
+
+### 15.4 Aggregation + wiring
+
+`compute_scores_for_workspace()` runs at the tail of `run_detection`
+sharing the same 28-day window and the same OTel parent span. Emits a
+`brightroutines.score.compute` child span with `workspace_id`,
+`window_days`, `signals.total`, `signals.in_window`, `scores.written`,
+`scores.projects`, `scores.users` attributes. Never emits raw
+`intent.summary` on span attributes — the score row itself is
+counts-only by construction.
+
+Backward-compatible: `run_detection`'s new `score_store` parameter is
+optional. Existing callers get exactly pre-BH-950 behaviour.
+
+### 15.5 Read API
+
+- MCP tool `get_routine_scores(scope="WORKSPACE" | "PROJECT" | "USER")`
+  in `_CORE_TOOL_MODULES` (always-on), returns the top-N leaderboard.
+- `RoutineScoreStore.history(scope, scope_id, since=)` for trend
+  reads. No GraphQL resolver yet — that's BH-885's concern.
+
+### 15.6 Follow-ups (not in BH-950, tracked separately)
+
+- **Per-recipient suggestion status** → user-level offered/scheduled/dismissed counts (currently zero — BH-885 wires per-recipient).
+- **Per-signal recurrence score** → `avg_recurrence_score` populated (currently None — depends on BH-946 capture-time embedding).
+- **EWMA / trend view** over `history()` output — dashboard concern, not shipped in BH-950.
+- **Manager→reports gate 9** in the detector (spec §6 gate 2 refinement per BH-949) will consume `user_score.composite_score` as input; DTO shape is already designed for that consumer.
+
+### 15.7 Rationale for not fanning out on skill/agent surfaces
+
+Same argument as §6's non-adoption of Nano's skill framework: scoring is
+a headless nightly aggregation with a deterministic input contract, not
+a chat-turn capability. Wrapping it in a skill (`brightbot/skills/`) or
+subagent (`docs/CREATING_SUBAGENTS.md`) would add a conversational loop
+with no user to converse with. Pure Python module + Protocol store +
+MCP read-tool is the right encapsulation.
