@@ -462,7 +462,7 @@ ticketing — nothing below is speculative.
 | [BH-918](https://brighthiveio.atlassian.net/browse/BH-918) | High | No timeout for an AGENT step whose runtime never calls back — can hang RUNNING forever, permanently disabling that schedule | platform-core | ✅ Fixed, merged to `develop` |
 | [BH-919](https://brighthiveio.atlassian.net/browse/BH-919) | High | 4th instance of the non-constant-time secret-comparison bug class, in `notifications.ts` (pre-existing, not introduced by this epic, same `x-service-key` attack surface family) | platform-core | ✅ Fixed, merged to `develop` |
 | [BH-920](https://brighthiveio.atlassian.net/browse/BH-920) | High | Webapp lets a user create an `execute_workflow` schedule against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero warning at creation time | webapp | ✅ Fixed — [PR #1254](https://github.com/brighthive/brighthive-webapp/pull/1254) (draft) |
-| [BH-921](https://brighthiveio.atlassian.net/browse/BH-921) | Medium | `execute_workflow` has zero e2e coverage against a real deployed dev/staging environment — only the local-only lifecycle test exists | e2e | Open |
+| [BH-921](https://brighthiveio.atlassian.net/browse/BH-921) | Medium | `execute_workflow` has zero e2e coverage against a real deployed dev/staging environment — only the local-only lifecycle test exists | e2e | ✅ Fixed — [PR #27](https://github.com/brighthive/brighthive-e2e/pull/27) (draft) |
 | [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` (and other producer-supplied fields) in Slack mrkdwn — link/formatting injection risk | slack-server | ✅ Fixed — [PR #106](https://github.com/brighthive/brightbot-slack-server/pull/106) (draft) |
 | [BH-923](https://brighthiveio.atlassian.net/browse/BH-923) | Medium | Rejected dbt trigger mishandled as RUNNING instead of failing immediately (Datapiary was already correct) | platform-core | ✅ Fixed — [PR #973](https://github.com/brighthive/brighthive-platform-core/pull/973) (draft) |
 | [BH-924](https://brighthiveio.atlassian.net/browse/BH-924) | Medium | A transport-level (not GraphQL-rejection) call failure before a `WorkflowRun` exists is invisible to the poller/retry-sweep recovery path | platform-core | ✅ Fixed — [PR #974](https://github.com/brighthive/brighthive-platform-core/pull/974) (draft) |
@@ -473,7 +473,8 @@ Gherkin scenarios there pass against real local infra (see §0). They are
 real gaps found by testing *beyond* the original spec's explicit scope,
 surfaced because this epic's own verification discipline (real local infra,
 no mocks) is thorough enough to find them. All 4 High-severity items
-(BH-917/918/919/920) and three Mediums (BH-922 security-relevant, BH-923,
-BH-924) are now fixed or in draft PR awaiting review; only BH-921/925
-remain open. Independent of these, the epic still needs the staging-deploy
-blockers in §0 resolved before it's genuinely production-ready.
+(BH-917/918/919/920) and all 4 Mediums (BH-921, BH-922 security-relevant,
+BH-923, BH-924) are now fixed or in draft PR awaiting review; only BH-925
+(Low) remains open. Independent of these, the epic still needs the
+staging-deploy blockers in §0 resolved before it's genuinely
+production-ready.
