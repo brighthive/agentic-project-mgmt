@@ -466,15 +466,18 @@ ticketing — nothing below is speculative.
 | [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` (and other producer-supplied fields) in Slack mrkdwn — link/formatting injection risk | slack-server | ✅ Fixed — [PR #106](https://github.com/brighthive/brightbot-slack-server/pull/106) (draft) |
 | [BH-923](https://brighthiveio.atlassian.net/browse/BH-923) | Medium | Rejected dbt trigger mishandled as RUNNING instead of failing immediately (Datapiary was already correct) | platform-core | ✅ Fixed — [PR #973](https://github.com/brighthive/brighthive-platform-core/pull/973) (draft) |
 | [BH-924](https://brighthiveio.atlassian.net/browse/BH-924) | Medium | A transport-level (not GraphQL-rejection) call failure before a `WorkflowRun` exists is invisible to the poller/retry-sweep recovery path | platform-core | ✅ Fixed — [PR #974](https://github.com/brighthive/brighthive-platform-core/pull/974) (draft) |
-| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | Open |
+| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | ✅ Fixed — [PR #107](https://github.com/brighthive/brightbot-slack-server/pull/107), [PR #1255](https://github.com/brighthive/brighthive-webapp/pull/1255) (draft) |
 
 **None of these block the epic's own P1 acceptance criteria** (§4) — all 4
 Gherkin scenarios there pass against real local infra (see §0). They are
 real gaps found by testing *beyond* the original spec's explicit scope,
 surfaced because this epic's own verification discipline (real local infra,
-no mocks) is thorough enough to find them. All 4 High-severity items
-(BH-917/918/919/920) and all 4 Mediums (BH-921, BH-922 security-relevant,
-BH-923, BH-924) are now fixed or in draft PR awaiting review; only BH-925
-(Low) remains open. Independent of these, the epic still needs the
-staging-deploy blockers in §0 resolved before it's genuinely
-production-ready.
+no mocks) is thorough enough to find them. **All 9 UAT findings are now
+fixed or in draft PR awaiting review** — 4 High (BH-917–920), 4 Medium
+(BH-921–924), 1 Low (BH-925). Every fix shipped with at least one real test
+(unit, real-infra, or real-HTTP) and a matching Jira comment; none has
+merged yet — all 9 PRs are open drafts pending review. Independent of this,
+the epic still needs the staging-deploy blockers in §0 resolved before it's
+genuinely production-ready — that work remains blocked on explicit
+secret-edit approval per this org's standing LangSmith/Secrets-Manager
+hard rule.
