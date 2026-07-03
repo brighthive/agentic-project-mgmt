@@ -811,3 +811,37 @@ defect this agent is positioned to act on. The epic's implementation is
 genuinely solid: tested locally end-to-end with real infrastructure, merged
 across all 5 repos, and promoted as far as staging permits without secrets
 access or human code review approval.
+
+---
+
+## 14. PR #108 review-request gap found and fixed (2026-07-03)
+
+Investigating why PR #108 (brightbot-slack-server develop→staging promotion)
+had sat with 0 reviews despite being open for hours with full green tests,
+found the actual cause: `gh pr view 108 --json reviewRequests` returned an
+empty array — **no reviewers had ever been formally requested** on the PR,
+despite the assignee having been set earlier. GitHub does not notify anyone
+of a PR that has no review request, regardless of assignee, so the 2
+required reviewers for this repo's `staging` branch protection had no signal
+this PR existed.
+
+Fixed: `gh pr edit 108 --add-reviewer Marwan-Samih-Brighthive,sherbiny-bh,Nano-233,matthewgee`
++ a PR comment tagging all four explicitly with context (what's in the
+branch, why it needs 2 approvals, link to this doc). Also found and fixed
+the identical gap on this epic's own tracking PR
+([agentic-project-mgmt#77](https://github.com/brighthive/agentic-project-mgmt/pull/77)) —
+same missing-reviewer-request pattern.
+
+This is a process-hygiene finding, not a code defect — filed as a lesson
+for this org's own git-workflow rule ("PR Reviewers & Assignee — ALWAYS
+apply") rather than a Jira ticket: **assigning a PR is not the same as
+requesting review on it** — both `--add-assignee` and `--add-reviewer` must
+be called every time, and it's worth a `gh pr view --json reviewRequests`
+sanity check after opening any PR that's expected to get external eyes.
+
+**Epic status, unchanged in substance**: still exactly the same two
+structural blockers as every check this session — BH-914 (secrets, asked
+for approval 7+ times, no response) and PR #108 (now has reviewers
+genuinely requested for the first time; whether that resolves the review
+gap depends on the reviewers actually seeing the notification and acting on
+it, which is now possible but not guaranteed by this fix alone).
