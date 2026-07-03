@@ -40,11 +40,35 @@ related:
 
 ---
 
-## 0. Shipped Status (2026-07-03)
+## 0. Shipped Status (2026-07-03, updated after 6 UAT passes — see §9-14)
 
-All P1 tickets (BH-877/878/879/880/881) plus 4 follow-on tickets are merged
-to `develop` (and `staging` branch) in all 5 repos. **Not yet confirmed live
-on the deployed staging environment** — see Staging Deploy Gaps below.
+All P1 tickets (BH-877/878/879/880/881) are Done, merged to `develop` in
+all 5 repos, and verified with a real local no-SSO e2e chain (4/4 passing,
+zero mocks, re-confirmed live as recently as this same day — see §6 Test
+Plan and §13). Six independent UAT/pre-prod passes beyond the original P1
+scope (§9-13) produced 29 tickets (BH-917–940); 26 are resolved and merged.
+
+**Staging, as of this revision — partially confirmed live, not fully**:
+- `brighthive-webapp` — **confirmed live**: every fix through BH-940 is on
+  `staging` and deployed via Amplify (`v2.9.0.24-pre-release`), verified
+  with a direct `curl` returning 200 on `staging.brighthive.io` /
+  `stagingapp.brighthive.io`. This resolves BH-916's core ask (canonical
+  URL + "did it deploy" confirmation) even though BH-916 itself stays open
+  for its CI-visibility AC.
+- `brighthive-platform-core` — **NOT confirmed live**. The `staging` branch
+  carries every fix through BH-937, but every CDK deploy attempt this epic
+  (6 attempts, `v2.9.0.55` through `.58`) has failed on the same BH-914
+  secrets gap and rolled back cleanly (staging's prior Lambda code keeps
+  serving unaffected — zero downtime, confirmed 200 on `/graphql`
+  throughout). This is the epic's one substantive remaining "not live" gap.
+- `brightbot-slack-server` — **NOT on staging at all**. Merges through
+  BH-932 sit on PR #108's branch (`tmp-staging-merge-check`), blocked on 2
+  required human reviews (§14: reviewers weren't actually requested until
+  this was caught and fixed; still 0 reviews as of this revision).
+- `brightbot` — staging branch updated directly (its deploys auto-trigger
+  on push); BH-915's `/info` revision-staleness concern remains
+  unconfirmed either way (needs LangSmith deployments API access this
+  agent doesn't have).
 
 ### What actually shipped, beyond this spec's original scope
 
@@ -104,20 +128,25 @@ Each was fixed and regression-tested before merge:
 Full detail and commit references: see PR #964's description on
 `brighthive-platform-core` and PR #749 on `brightbot`.
 
-### Staging Deploy Gaps (open, ticketed, blocking live verification)
+### Staging Deploy Gaps (updated — 2 of 3 have real progress, 1 is the hard blocker)
 
-- **BH-914** (High): platform-core's CDK deploy to staging fails —
-  `SCHEDULER_SERVICE_API_KEY`/`SCHEDULER_WEBHOOK_SECRET` are read from the
-  `staging/platform/platform-core` secret but were never added there. This
-  was a self-documented known gap in PR #964's own commit message. Needs
-  explicit secret-edit approval per this org's env-var rule before fixing.
-- **BH-915** (Medium): cannot confirm brightbot's staging LangGraph
-  deployment picked up the `develop`→`staging` merge — `/info`'s
-  `revision_id` was unchanged 30+ minutes after merge. Needs LangSmith
-  deployments API access to investigate further.
-- **BH-916** (Low): no way to confirm brighthive-webapp's Amplify staging
-  build succeeded, or even find the canonical staging URL, without AWS
-  console access.
+- **BH-914** (High, **still fully open**): platform-core's CDK deploy to
+  staging fails — now missing 3 keys, not 2 (§9's follow-on work added
+  `LANGGRAPH_BASE_URL` to the same gap). 6 deploy attempts this epic
+  (`v2.9.0.55` through `.58`) have all failed identically and rolled back
+  cleanly. Explicit secret-edit approval requested 8+ times across this
+  epic's UAT passes; no response received. This is the epic's sole
+  remaining hard blocker on a fully-live platform-core staging deploy.
+- **BH-915** (Medium, **still open, not re-investigated**): brightbot's
+  `/info` `revision_id` staleness concern is unresolved either way — still
+  needs LangSmith deployments API access this agent doesn't have.
+- **BH-916** (Low, **core AC now satisfied, ticket stays open for its
+  remaining AC**): the canonical staging webapp URL is now confirmed and
+  documented (`staging.brighthive.io` / `stagingapp.brighthive.io`, both
+  live, verified via direct `curl` after every webapp release this epic).
+  Ticket stays open only for its second AC item — a CI-visible "did the
+  Amplify build succeed" check without console access — which is a
+  separate, smaller ask than the original "can't even find the URL" gap.
 
 **Until BH-914/915/916 close, this epic is code-complete and exhaustively
 verified locally (see §6 Test Plan and the UAT findings appendix below) but
