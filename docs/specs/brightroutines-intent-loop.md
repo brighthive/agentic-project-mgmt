@@ -71,6 +71,18 @@ creates a `RoutineSchedule` that runs headlessly and delivers results.
 
 ## 2. Current Situation
 
+> **BH-942 note (added 2026-07-03)**: `ProactiveSignal` (defined in this
+> spec's §3) is the platform's first user-shaped per-turn record. A
+> proposed foundational spec —
+> [`user-activity-event-store.md`](./user-activity-event-store.md) —
+> generalizes it into a canonical `UserActivityEvent` store consumed by
+> BrightRoutines detector + scoring, plus future features (prompt
+> catalog, cost attribution, HITL replay). Once approved, ProactiveSignal
+> becomes a Pydantic view over `CHAT_TURN`-kind rows rather than a
+> separately-persisted DTO. This spec's §4 storage keys survive the
+> rename verbatim; only the table name and the addition of GSI6–GSI8
+> change downstream.
+
 ### Existing Reuse
 
 - `deep_agent` middleware has `before_agent` and `after_agent` hooks and
