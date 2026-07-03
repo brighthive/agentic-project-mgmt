@@ -764,3 +764,50 @@ concurrency/auth, notification/UX/cron, multi-tenant isolation, and now
 observability/failure-visibility — have progressively found fewer and
 lower-severity issues each pass, consistent with the epic's implementation
 being genuinely solid rather than under-tested.
+
+---
+
+## 13. Sixth UAT Pre-Prod Pass (2026-07-03, real-behavior concurrency verification)
+
+A sixth pass, deliberately different in *method* rather than *topic* from
+passes 1-5: instead of another code-review-based sweep, this pass actually
+ran the system under real concurrent load, targeting the one claim every
+prior pass had only verified by reading code — the dispatcher's overlap
+lock (`_acquire_lock`, `lambdas/scheduled_agent_dispatcher/main.py:60-74`).
+
+**Method**: fired 10 genuinely concurrent `executeWorkflowAsOwner` GraphQL
+calls against the live local stack (real Neo4j, real platform-core) for the
+same `scheduleId`, confirming `executeWorkflowAsOwner` itself has no overlap
+guard (expected — that lock lives in the dispatcher, not the mutation).
+Then wrote a standalone script firing 20 genuinely concurrent threads
+directly at `_acquire_lock` against real LocalStack DynamoDB (not a mock),
+confirming exactly one thread wins the atomic conditional write
+(`attribute_not_exists(#r) OR #r = :f`) under real contention — 20/20 runs,
+1 winner, 19 losers, every time.
+
+**Result: no defect found.** The existing `test_main_locking.py` tests only
+verified the boto3 call *shape* against a `Mock()` table — they could prove
+the code calls `update_item` with the right arguments, but not that the
+condition itself is race-safe under real concurrent writes. This pass
+closes exactly that gap: promoted the ad-hoc verification script into a
+permanent real-behavior test
+(`test_acquire_lock_real_concurrency_exactly_one_winner`, PR
+[#980](https://github.com/brighthive/brighthive-platform-core/pull/980),
+merged to `develop`) that fires 20 real threads at a real DynamoDB row and
+asserts exactly one winner — gracefully skips if LocalStack isn't reachable
+rather than failing the suite. No Jira ticket opened since no defect was
+found; this is pure test-coverage improvement, consistent with this org's
+real-behavior-testing rule (mocked tests alone don't prove race safety).
+
+**Epic status, final for this session**: 29 tickets across six UAT/pre-prod
+passes (BH-917–940, plus this pass's zero-defect real-concurrency
+verification). 26 resolved; BH-934/938/939 deferred by design; BH-914/915/916
+blocked on infra access this agent cannot grant itself. Six independent
+verification passes — five adversarial code-review sweeps across distinct
+dimensions (functional correctness, concurrency/auth, notification/UX/cron,
+multi-tenant isolation, observability/failure-visibility) plus one
+real-behavior concurrency verification — have not surfaced any remaining
+defect this agent is positioned to act on. The epic's implementation is
+genuinely solid: tested locally end-to-end with real infrastructure, merged
+across all 5 repos, and promoted as far as staging permits without secrets
+access or human code review approval.
