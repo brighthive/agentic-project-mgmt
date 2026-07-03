@@ -416,23 +416,46 @@ Dismiss flow:
 
 ## 8. Offer Surfaces
 
-### Webapp
+### Webapp — home is `/context/workflows` (FormulasPage)
 
-Extend `src/Schedules/SchedulesPage.tsx`:
+The intended UI home is `/workspace/:workspaceId/context/workflows`, rendered
+by `src/Context/pages/FormulasPage.tsx`. That page is today an **inspirational
+preview** — a static grid of Formula categories (Data Transformations,
+Calculated Metrics, **Scheduled Actions**, Custom Prompts, Document Pipelines,
+Report Templates), every one marked `status: "coming_soon"`. It sets the
+product vocabulary for automations in BrightHive; BrightRoutines is the first
+*real* implementation of the **Scheduled Actions** category shown there.
 
-- Add "Suggested Routines" above the schedules table.
-- Use `useRoutineSuggestions`, modeled after `useSchedules`.
-- Suggestion card shows title, aggregate evidence, inferred cadence, and
-  actions: Schedule, Dismiss.
-- Schedule opens `AddScheduleDialog` prefilled with cadence and workflow task
-  details, then commits through the schedule route.
-- Cards are single-column on 320px, chips wrap, and action buttons stack under
-  480px.
+Delivery shape:
+
+- Introduce a `SchedulesPage`-style companion or an in-place upgrade of the
+  Scheduled Actions card on FormulasPage. Either way, when a workspace has
+  active `RoutineSuggestion` rows (status = `OFFERED`) or accepted routines
+  (any `ScheduleRoutineRequest` derived from a suggestion), the Scheduled
+  Actions card must switch from `coming_soon` to `active` with a count.
+- Click-through lands on a "Suggested Routines" list styled to match the
+  FormulasPage aesthetic (rounded cards, category color `#F47721` per current
+  mock). Each card shows the fields on `RoutineSuggestion`: title, aggregate
+  evidence (`RoutineEvidenceSummary` — counts only, no raw text — §9
+  invariant 3), inferred cadence, primary actions **Schedule** and **Dismiss**.
+- Schedule opens the existing `AddScheduleDialog` prefilled with cadence and
+  workflow task details, then commits through the schedule route. This reuses
+  the shipped scheduling infrastructure (BH-877/BH-878 execute_workflow) and
+  keeps the routine → schedule handoff a one-liner.
+- Mobile: cards are single-column on 320px, chips wrap, action buttons stack
+  under 480px, tap target ≥ 44px.
+
+Cross-repo consequence: BH-948's `RoutineSuggestion` contract snapshot in
+`brightbot/routines/contracts/routine_suggestion.json` is the wire shape the
+webapp binds against. Any field rename on the DTO must not land without a
+matching webapp update.
 
 Extend Notifications inbox:
 
 - Platform Core `formatSignal` returns `display.type = "workflow_suggestion"`.
-- Webapp registers `workflow_suggestion` card with Schedule/Dismiss actions.
+- Webapp registers `workflow_suggestion` card with Schedule/Dismiss actions
+  that deep-link into `/context/workflows` so the inbox click leaves the user
+  on the canonical routines home.
 
 ### Slack
 
