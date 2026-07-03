@@ -1,10 +1,11 @@
 ---
 title: BrightRoutines Execute Workflow Scheduling
 epic: BH-876
-tickets: [BH-877, BH-878, BH-879, BH-880, BH-881]
+tickets: [BH-877, BH-878, BH-879, BH-880, BH-881, BH-908, BH-909, BH-910, BH-911, BH-914, BH-915, BH-916]
 author: codex
-status: draft
+status: implemented-pending-staging-verification
 created: 2026-06-30
+last-reviewed: 2026-07-03
 generates: tickets
 tags:
   - brightagent
@@ -36,6 +37,91 @@ related:
 | [BH-881](https://brighthiveio.atlassian.net/browse/BH-881) | `brighthive-e2e` | Extend scheduler specs/tests for `execute_workflow` create/read/run lifecycle, forbidden secrets, auth scoping, terminal state, and notification delivery using ground truth and cleanup. | P1 | BH-877, BH-878, BH-879, BH-880 |
 
 **Execution order**: BH-877 -> BH-878 -> BH-879; BH-880 can start after BH-877; BH-881 is the final gate.
+
+---
+
+## 0. Shipped Status (2026-07-03)
+
+All P1 tickets (BH-877/878/879/880/881) plus 4 follow-on tickets are merged
+to `develop` (and `staging` branch) in all 5 repos. **Not yet confirmed live
+on the deployed staging environment** — see Staging Deploy Gaps below.
+
+### What actually shipped, beyond this spec's original scope
+
+- **BH-908**: `deliver()` in `lambdas/notification_dispatcher/delivery.py`
+  was refactored from a hardcoded if/elif channel-type chain into an
+  injectable adapter registry (matching the pre-existing pattern in
+  `brightbot-slack-server/src/notifications/channels.ts`), and a Teams
+  delivery adapter (Adaptive Card) was added on the same seam. Channel
+  subscription-creation UI is separate, pre-existing work (BH-415, epic
+  BH-409) this rides on, not re-scoped here.
+- **BH-910**: a throwaway demo script
+  (`brightbot/scripts/demo_workflow_from_intent.py`) proving BH-897's future
+  "AI-authored WorkflowSpec from a prompt" direction works against real
+  local infra — explicitly NOT shippable BH-897 code, see
+  `brightroutines-ai-authored-workflowspec.md`.
+- **BH-911**: `checkPolicies()` in `compiler.ts` gained a deterministic
+  BLOCKER for DBT/PYTHON/INGEST runtimes (their `checkStatus()` adapters
+  never reach a terminal state — see Real Bugs Found below) and a WARNING
+  for report-generating AGENT steps missing `store_artifact` output.
+
+### Real bugs found and fixed during implementation (not in the original spec)
+
+Verification against real local infra (Docker Neo4j/Redis/LocalStack, no
+mocks) surfaced defects the original interface contract didn't anticipate.
+Each was fixed and regression-tested before merge:
+
+1. **Unauthenticated callback-forgery vulnerability** (security,
+   `callback-handler.ts`) — `workflowStepCallbackHandler` skipped HMAC
+   validation entirely whenever a step run had no `callbackSecret` (true
+   for every EXTERNAL-runtime step). Anyone knowing a `stepRunId` UUID
+   could forge that step's completion with zero auth. This code predates
+   BH-876 (merged via #785) — the fix landed as part of BH-879 (#964), so
+   promoting this epic to staging is also what fixes this pre-existing,
+   already-deployed bug.
+2. **Dead retry-sweep path** — the poller's "recently completed" query
+   compared a Neo4j `DateTime` to a raw ISO string via `>=`, which
+   evaluates to `NULL` in Cypher (not `true`/`false`). Invariant 7's entire
+   recovery mechanism for a once-failed webhook delivery had never worked.
+3. **Non-constant-time secret comparisons** (2 instances) — brightbot's
+   webhook token check (`routes/scheduled_agents_routes.py`) and
+   platform-core's `SCHEDULER_SERVICE_API_KEY` check both used plain
+   `!=`/`!==` instead of `hmac.compare_digest`/`crypto.timingSafeEqual`,
+   this codebase's own established pattern. Both fixed.
+4. **Forbidden-field guard bypassed by camelCase** — `_find_forbidden_fields`
+   lowercased raw keys only, so a client sending `authToken` (camelCase)
+   never matched the snake_case `FORBIDDEN_PAYLOAD_FIELDS` set (`auth_token`).
+5. **`executeWorkflowAsOwner` never initialized its REST data sources** —
+   any DBT/Datapiary-backed scheduled step would throw on first HTTP call.
+6. **Schema-generation gap** — `emit-schema-sdl.ts`/`codegen.yaml` only
+   loaded the base `typedefs.ts`, silently omitting `executeWorkflowAsOwner`
+   from the SDL brightbot's introspection-disabled consumers rely on.
+7. **`WorkflowSpecStatus` enum missing `BLOCKED`** — `compiler.ts` writes
+   this value on any BLOCKER-level compile issue; any workflow with so much
+   as a missing SQL template 500'd on `compileWorkflow` instead of
+   returning the issue list. Pre-existing, surfaced by this epic's testing.
+
+Full detail and commit references: see PR #964's description on
+`brighthive-platform-core` and PR #749 on `brightbot`.
+
+### Staging Deploy Gaps (open, ticketed, blocking live verification)
+
+- **BH-914** (High): platform-core's CDK deploy to staging fails —
+  `SCHEDULER_SERVICE_API_KEY`/`SCHEDULER_WEBHOOK_SECRET` are read from the
+  `staging/platform/platform-core` secret but were never added there. This
+  was a self-documented known gap in PR #964's own commit message. Needs
+  explicit secret-edit approval per this org's env-var rule before fixing.
+- **BH-915** (Medium): cannot confirm brightbot's staging LangGraph
+  deployment picked up the `develop`→`staging` merge — `/info`'s
+  `revision_id` was unchanged 30+ minutes after merge. Needs LangSmith
+  deployments API access to investigate further.
+- **BH-916** (Low): no way to confirm brighthive-webapp's Amplify staging
+  build succeeded, or even find the canonical staging URL, without AWS
+  console access.
+
+**Until BH-914/915/916 close, this epic is code-complete and exhaustively
+verified locally (see §6 Test Plan and the UAT findings appendix below) but
+not confirmed live on staging.**
 
 ---
 
@@ -231,9 +317,24 @@ new stages and routes buttons through the existing `bh_notif_*` handler pattern.
 6. The Routine uses `StepRuntime.AGENT` for agent work; deprecated Datapiary
    runtime is not used.
 7. Every scheduled workflow run reaches a terminal schedule state or records a
-   terminal bridge error within the polling timeout.
+   terminal bridge error within the polling timeout. *(Implementation note:
+   this invariant's entire recovery path — the poller's retry-sweep for a
+   once-failed webhook delivery — was dead code until fixed during BH-879;
+   see §0 Real Bugs Found #2. DBT/PYTHON/INGEST runtimes are excluded from
+   scheduling entirely via a `checkPolicies()` BLOCKER, BH-911, because
+   their adapters' `checkStatus()` never returns a terminal state — a
+   WorkflowSpec using one of these would otherwise violate this invariant
+   permanently, not just recoverably.)*
 8. Notification and schedule-state writes are idempotent for a retried
    workflow completion.
+9. **(Added post-implementation, BH-879)** Any callback claiming to complete
+   a `WorkflowStepRunNode` must present a valid HMAC signature keyed to that
+   step run's `callbackSecret`; a step run with no `callbackSecret` rejects
+   all callbacks rather than skipping validation. See §0 Real Bugs Found #1.
+10. **(Added post-implementation, BH-877/878)** All secret/token comparisons
+    on this epic's auth paths (webhook token, scheduler service key) use
+    constant-time comparison (`hmac.compare_digest`/`crypto.timingSafeEqual`),
+    never `==`/`!=`. See §0 Real Bugs Found #3.
 
 ---
 
@@ -344,3 +445,33 @@ Keep one PR per repo and under the BrightHive PR-size rules.
 | 4 | `brighthive-webapp` | metadata-driven workflow schedule UI | [BH-880](https://brighthiveio.atlassian.net/browse/BH-880) | <500 lines |
 | 5 | `brightbot-slack-server` | scheduled workflow notification formatting | [BH-879](https://brighthiveio.atlassian.net/browse/BH-879) | <300 lines |
 | 6 | `brighthive-e2e` | P1 scheduler workflow contract | [BH-881](https://brighthiveio.atlassian.net/browse/BH-881) | <300 lines |
+
+---
+
+## 9. UAT Pre-Prod Findings (2026-07-03)
+
+Extensive UAT-style pre-prod sweep run after all P1 tickets merged to `develop`
+across all 5 repos, before staging verification (blocked, see §0). Combined a
+3-agent parallel code review (platform-core, brightbot, webapp+slack-server+e2e)
+with direct-code-read verification of every High-severity claim before
+ticketing — nothing below is speculative.
+
+| Ticket | Severity | Finding | Repo |
+|---|---|---|---|
+| [BH-917](https://brighthiveio.atlassian.net/browse/BH-917) | High | Deleting a schedule mid-run resurrects a malformed row — no existence/running guard on the dispatcher's DynamoDB `update_item` calls | brightbot, platform-core |
+| [BH-918](https://brighthiveio.atlassian.net/browse/BH-918) | High | No timeout for an AGENT step whose runtime never calls back — can hang RUNNING forever, permanently disabling that schedule | platform-core |
+| [BH-919](https://brighthiveio.atlassian.net/browse/BH-919) | High | 4th instance of the non-constant-time secret-comparison bug class, in `notifications.ts` (pre-existing, not introduced by this epic, same `x-service-key` attack surface family) | platform-core |
+| [BH-920](https://brighthiveio.atlassian.net/browse/BH-920) | High | Webapp lets a user create an `execute_workflow` schedule against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero warning at creation time | webapp |
+| [BH-921](https://brighthiveio.atlassian.net/browse/BH-921) | Medium | `execute_workflow` has zero e2e coverage against a real deployed dev/staging environment — only the local-only lifecycle test exists | e2e |
+| [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` in Slack mrkdwn — link/formatting injection risk | slack-server |
+| [BH-923](https://brighthiveio.atlassian.net/browse/BH-923) | Medium | Rejected async triggers (dbt/Datapiary) mishandled as RUNNING instead of failing immediately | platform-core |
+| [BH-924](https://brighthiveio.atlassian.net/browse/BH-924) | Medium | A GraphQL call failure before a `WorkflowRun` exists is invisible to the poller/retry-sweep recovery path | brightbot, platform-core |
+| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server |
+
+**None of these block the epic's own P1 acceptance criteria** (§4) — all 4
+Gherkin scenarios there pass against real local infra (see §0). They are
+real gaps found by testing *beyond* the original spec's explicit scope,
+surfaced because this epic's own verification discipline (real local infra,
+no mocks) is thorough enough to find them. Recommend resolving High-severity
+items (BH-917/918/919/920) before this epic is considered production-ready,
+independent of the staging-deploy blockers in §0.
