@@ -564,3 +564,39 @@ findings. Also re-ran platform-core's own integration suite
 (`tests/integration/execute-workflow-as-owner.test.ts`, 7/7) and unit suite
 (`tests/unit/update-workflow-run-step.test.ts`, 7/7) against the same live
 local stack.
+
+---
+
+## 10. Third UAT Pre-Prod Sweep (2026-07-03, adversarial pass #2)
+
+A third UAT pass, run after the second pass's 15 findings (BH-917–931) were
+all fixed and merged. Targeted 4 fresh angles the first two passes didn't
+cover: notification content correctness, terminal-bridge/webhook retry
+semantics, webapp UX edge cases beyond BH-920/930's existing guards, and
+cron/timezone edge cases. Each finding was independently verified against
+the actual code (file:line read, not the sweep agent's word) before
+ticketing — same discipline as passes 1 and 2.
+
+| Ticket | Severity | Finding | Repo | Status |
+|---|---|---|---|---|
+| [BH-932](https://brighthiveio.atlassian.net/browse/BH-932) | Low | `renderScheduledWorkflowDetails` never read `event.timestamp` — the Slack card for a scheduled workflow completion showed no completion time, contradicting spec §2.6's `display.subtitle = "<status> at <timestamp>"` | slack-server | ✅ Fixed, PR [#111](https://github.com/brighthive/brightbot-slack-server/pull/111) (draft, not yet merged) |
+| [BH-933](https://brighthiveio.atlassian.net/browse/BH-933) | Medium | `writeNotificationSignal` generated a fresh random `event_id` every call, so its own dedup conditional-write could never collide — a lost ack + poller retry after a genuinely successful webhook delivery could double-fire the notification signal. Receiver (`run_complete_webhook`) also had no dedup by `run_id`. | platform-core, brightbot | ✅ Fixed both sides: platform-core PR [#978](https://github.com/brighthive/brighthive-platform-core/pull/978) (draft), brightbot PR [#757](https://github.com/brighthive/brightbot/pull/757) (draft) |
+| [BH-934](https://brighthiveio.atlassian.net/browse/BH-934) | Low | Batch: a rejected `GET_WORKFLOW_SPEC` query (e.g. deleted project) left Save/Select enabled with zero error — worse than the intended BH-920/930 guard, since it silently falls through the same default-`true` path as "not yet checked." Warning copy also doesn't distinguish "deleted" from "never compiled." Schedules list shows a stale `project_name` snapshot forever if the project is renamed. | webapp | Ticketed, not yet fixed — deferred, lower severity, needs a design decision on the staleness-indicator UX (not just a one-line code fix) |
+| [BH-935](https://brighthiveio.atlassian.net/browse/BH-935) | Medium | Three related cron/timezone gaps: `getNextRuns`'s hourly loop had no guard against `every <= 0` (would hang the tab); `scheduleConfigToCron` silently substituted "SUN" for an empty `daysOfWeek`, contradicting the dialog's own "never fires" preview; `formFromSchedule` never parsed `every` back out of a saved cron string, so editing any existing hourly/daily schedule silently reset its interval to the default on save | webapp | ✅ Fixed, PR [#1258](https://github.com/brighthive/brighthive-webapp/pull/1258) (draft, not yet merged) |
+
+**3 of 4 findings fixed** (BH-932/933/935), each with new tests — including
+a real-behavior test against local LocalStack DynamoDB for BH-933's
+dedup-key fix (`tests/unit/notification-signal-idempotency.test.ts`), not a
+mock. BH-934 is deferred: it's real but the fix isn't a mechanical one-liner
+— the "stale project_name" half needs a UX decision (live-refresh vs. a
+staleness badge) that's out of scope for a UAT-sweep fix-it-immediately pass.
+
+**Verification after all 4 fixes**: re-ran the full local e2e lifecycle
+suite (4/4, `--writes`, real Neo4j + LocalStack + brightbot) and
+platform-core's integration suite (7/7) against the live local stack with
+BH-933's fix applied — no regression to the existing idempotency guarantees
+that pass 2's BH-926 test already covered.
+
+**All 4 PRs are drafts, not yet merged** — this section will be updated once
+they land and are promoted through staging, following the same pattern as
+passes 1 and 2.
