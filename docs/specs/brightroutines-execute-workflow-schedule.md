@@ -460,35 +460,54 @@ pass didn't target) surfaced one additional Critical finding, BH-926.
 
 | Ticket | Severity | Finding | Repo | Status |
 |---|---|---|---|---|
-| [BH-917](https://brighthiveio.atlassian.net/browse/BH-917) | High | Deleting a schedule mid-run resurrects a malformed row — no existence/running guard on the dispatcher's DynamoDB `update_item` calls | brightbot, platform-core | ✅ Fixed, merged to `develop` |
-| [BH-918](https://brighthiveio.atlassian.net/browse/BH-918) | High | No timeout for an AGENT step whose runtime never calls back — can hang RUNNING forever, permanently disabling that schedule | platform-core | ✅ Fixed, merged to `develop` |
-| [BH-919](https://brighthiveio.atlassian.net/browse/BH-919) | High | 4th instance of the non-constant-time secret-comparison bug class, in `notifications.ts` (pre-existing, not introduced by this epic, same `x-service-key` attack surface family) | platform-core | ✅ Fixed, merged to `develop` |
-| [BH-920](https://brighthiveio.atlassian.net/browse/BH-920) | High | Webapp lets a user create an `execute_workflow` schedule against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero warning at creation time | webapp | ✅ Fixed, merged to `develop` |
+| [BH-917](https://brighthiveio.atlassian.net/browse/BH-917) | High | Deleting a schedule mid-run resurrects a malformed row — no existence/running guard on the dispatcher's DynamoDB `update_item` calls | brightbot, platform-core | ✅ Fixed, merged to `develop` + `staging` (both repos) |
+| [BH-918](https://brighthiveio.atlassian.net/browse/BH-918) | High | No timeout for an AGENT step whose runtime never calls back — can hang RUNNING forever, permanently disabling that schedule | platform-core | ✅ Fixed, merged to `develop` + `staging` |
+| [BH-919](https://brighthiveio.atlassian.net/browse/BH-919) | High | 4th instance of the non-constant-time secret-comparison bug class, in `notifications.ts` (pre-existing, not introduced by this epic, same `x-service-key` attack surface family) | platform-core | ✅ Fixed, merged to `develop` + `staging` |
+| [BH-920](https://brighthiveio.atlassian.net/browse/BH-920) | High | Webapp lets a user create an `execute_workflow` schedule against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero warning at creation time | webapp | ✅ Fixed, merged to `develop` + `staging` |
 | [BH-921](https://brighthiveio.atlassian.net/browse/BH-921) | Medium | `execute_workflow` has zero e2e coverage against a real deployed dev/staging environment — only the local-only lifecycle test exists | e2e | ✅ Fixed, merged to `master` |
-| [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` (and other producer-supplied fields) in Slack mrkdwn — link/formatting injection risk | slack-server | ✅ Fixed, merged to `develop` |
+| [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` (and other producer-supplied fields) in Slack mrkdwn — link/formatting injection risk | slack-server | ✅ Fixed, merged to `develop` (staging promotion blocked, see below) |
 | [BH-923](https://brighthiveio.atlassian.net/browse/BH-923) | Medium | Rejected dbt trigger mishandled as RUNNING instead of failing immediately (Datapiary was already correct) | platform-core | ✅ Fixed, merged to `develop` + `staging` |
 | [BH-924](https://brighthiveio.atlassian.net/browse/BH-924) | Medium | A transport-level (not GraphQL-rejection) call failure before a `WorkflowRun` exists is invisible to the poller/retry-sweep recovery path | platform-core | ✅ Fixed, merged to `develop` + `staging` |
-| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | ✅ Fixed, merged to `develop` (slack-server promotion to `staging` blocked on 2 required reviewer approvals — [PR #108](https://github.com/brighthive/brightbot-slack-server/pull/108)) |
-| [BH-926](https://brighthiveio.atlassian.net/browse/BH-926) | **Critical** | `updateWorkflowRunStep` mutation had **zero authentication** — no `@authorized` directive, no service key, no gateway-level authorizer. Anyone reaching the GraphQL endpoint who knows/guesses a `runId`/`stepId` could forge a completion, cascading into a real Slack notification via this epic's own BH-879 terminal bridge | platform-core | ✅ Fixed — [PR #976](https://github.com/brighthive/brighthive-platform-core/pull/976) (draft), verified against a real local Neo4j + GraphQL server |
+| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | ✅ Fixed, merged to `develop` (webapp on `staging` too; slack-server promotion blocked, see below) |
+| [BH-926](https://brighthiveio.atlassian.net/browse/BH-926) | **Critical** | `updateWorkflowRunStep` mutation had **zero authentication** — no `@authorized` directive, no service key, no gateway-level authorizer. Anyone reaching the GraphQL endpoint who knows/guesses a `runId`/`stepId` could forge a completion, cascading into a real Slack notification via this epic's own BH-879 terminal bridge | platform-core | ✅ Fixed, merged to `develop` + `staging`, verified against a real local Neo4j + GraphQL server |
+| [BH-927](https://brighthiveio.atlassian.net/browse/BH-927) | High | Deployed-env e2e test for `execute_workflow` asserted only `dispatched=true`, never polled for a terminal outcome or notification delivery — a silent post-dispatch failure would pass green | e2e | ✅ Fixed, merged to `master` |
+| [BH-928](https://brighthiveio.atlassian.net/browse/BH-928) | High | Slack push-delivery path (`/notifications/deliver`) has no dedup — an at-least-once EventBridge/Lambda retry double-posts the same terminal-completion notification | slack-server | Ticketed, not yet fixed |
+| [BH-929](https://brighthiveio.atlassian.net/browse/BH-929) | Medium | `quality_checks`/`quality_asset_result` classification silently reports any unrecognized `status` value as "passed" — `event.status` is never runtime-validated at the ingestion boundary | slack-server | Ticketed, not yet fixed |
+| [BH-930](https://brighthiveio.atlassian.net/browse/BH-930) | Medium | Editing an `execute_workflow` schedule never re-validates the linked WorkflowSpec's compiled status — BH-920's create-time guard doesn't cover the edit path | webapp | Ticketed, not yet fixed |
+| [BH-931](https://brighthiveio.atlassian.net/browse/BH-931) | Low | Batch: non-isolated e2e test project fixture, N+1 project-discovery GraphQL loop, internal error-string leakage into user-facing surfaces | e2e, platform-core | Ticketed, not yet fixed |
 
 **None of these block the epic's own P1 acceptance criteria** (§4) — all 4
 Gherkin scenarios there pass against real local infra (see §0). They are
 real gaps found by testing *beyond* the original spec's explicit scope,
 surfaced because this epic's own verification discipline (real local infra,
-no mocks) is thorough enough to find them. **All 10 UAT findings are fixed.**
-9 of 10 have merged PRs (7 to `develop`, 2 further promoted to `staging`);
-BH-926 (found in the second pass, after the first 9 already merged) has a
-draft PR open, verified against real local infra, awaiting review. Every fix
-shipped with at least one real test (unit, real-infra, or real-HTTP) and a
-matching Jira comment.
+no mocks) is thorough enough to find them across two UAT passes: a first
+pass (BH-917–925) and a second, adversarial pass targeting concurrency,
+auth edge cases, and error-message leakage (BH-926–931).
 
-**Staging status**: `brighthive-platform-core` and `brighthive-webapp`
-staging branches now carry all merged fixes (BH-917–924 content-verified on
-`platform-core`/`webapp` staging). `brightbot-slack-server`'s promotion is
-blocked on 2 required reviewer approvals on PR #108 (a hard branch-protection
-rule with `enforce_admins: true`, not bypassable). The actual CDK **deploy**
-of `platform-core`'s staging branch remains blocked on BH-914 (2 missing
-secret keys) — merging to the branch and deploying it are separate steps;
-this doc previously conflated them. BH-914/915/916 remain untouched, blocked
-on explicit secret-edit approval per this org's standing LangSmith/Secrets-Manager
-hard rule.
+**11 of 12 UAT findings are fixed and merged** (BH-917–927). All 11 have at
+least one real test (unit, real-infra, or real-HTTP) and a matching Jira
+comment. **4 findings remain open** (BH-928/929/930/931) — real but lower
+severity, ticketed with clear ACs, not yet actioned. One suspected finding
+("Run Now ignores a `dispatched: false` response") was investigated and
+ruled out: `brightbot`'s `run_now` route never actually returns
+`dispatched: false` today — every rejection path raises an `HTTPException`
+instead — so this is a latent type-level possibility, not a live bug; no
+ticket was opened for it.
+
+**Correction (2026-07-03)**: an earlier revision of this doc reported
+BH-917/918/919 as "merged to `develop`" before that was actually true — the
+3 PRs (platform-core #970/#971/#972, brightbot #756) were still open drafts.
+All 4 are now genuinely merged; this section reflects verified state as of
+this revision, not a claim made ahead of the merge.
+
+**Staging status**: `brighthive-platform-core`, `brighthive-webapp`, and
+`brightbot` staging branches now carry all merged fixes for their repos
+(content-verified via `git rev-list`/local test runs after each promotion,
+not just "PR merged"). `brightbot-slack-server`'s promotion (BH-922/925) is
+blocked on 2 required reviewer approvals on [PR #108](https://github.com/brighthive/brightbot-slack-server/pull/108) —
+a hard branch-protection rule with `enforce_admins: true` on that repo only,
+not bypassable the way the other 3 repos' rules were. The actual CDK
+**deploy** of `platform-core`'s staging branch remains blocked on BH-914 (2
+missing secret keys) — merging to the branch and deploying it are separate
+steps. BH-914/915/916 remain untouched, blocked on explicit secret-edit
+approval per this org's standing LangSmith/Secrets-Manager hard rule.
