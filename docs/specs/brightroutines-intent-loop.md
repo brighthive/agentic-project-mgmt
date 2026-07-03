@@ -711,3 +711,60 @@ all fixed (each in a green PR; the one live-harm item merged + deployed):
 §8 originally targeted `src/Schedules/SchedulesPage.tsx`; the shipped surface
 is `src/Context/pages/FormulasPage.tsx` at `/context/workflows` — the first
 real implementation of that page's "Scheduled Actions" category.
+
+---
+
+## 15. Post-audit Appendix (BH-884 implementation, 2026-07-03)
+
+A four-lens architectural audit (solutions-architect / llm-systems-engineer /
+qa / end-user-persona) ran against BH-884's implementation branch. Six
+code-level P0 findings landed on PR #759; the remaining findings are open
+for spec-level revisit before the webapp UI ticket (BH-885+) ships. Each
+open item has a dedicated follow-up ticket rather than being decided in
+this document — the spec sections it questions (§6, §9, §10) are unchanged
+until those tickets land.
+
+**Findings that landed in code (BH-884 PR #759):**
+
+- Judge is model-agnostic (renamed `LLMSchedulabilityJudge`, tier is
+  `BRIGHTROUTINES_JUDGE_MODEL` env var, sonnet/haiku registry) — was
+  "Sonnet judge" prior. Spec §6 gate 6 wording ("Sonnet schedulability
+  judge confidence >= 0.85") should be read as "LLM judge with configurable
+  tier."
+- N=3 sample quorum with median confidence for the judge — smooths
+  near-threshold variance a single call at temp=0 still exhibits.
+- Typed `JudgeUnavailableError` distinct from low-confidence — a judge
+  outage is no longer indistinguishable from "gate 6 fail, confidence=0.0".
+- Prompt-injection defense: user-derived fields wrapped in
+  `<untrusted_input>` delimiters at prompt render time (spec §9 invariant 3
+  is enforced by type; this is defense-in-depth against injected
+  instructions inside the redacted summary field).
+- Within-run embedding memoization — reduces N+1 OpenAI cost during a
+  single detection run. Capture-time embedding (spec §4.1's reserved
+  `embedding` field) is [BH-946](https://brighthiveio.atlassian.net/browse/BH-946).
+- `run_detector` graph node is `async def` — mandatory under LangGraph
+  Cloud's live event loop.
+
+**Findings open for spec-level revisit** — do not act on these in code
+until the linked ticket lands a decision:
+
+| Finding (from audit) | Spec section touched | Ticket |
+|---|---|---|
+| Evidence panel: counts-only reads as surveillance; add one anchor quote | §9 invariant on counts-only evidence | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| Suppress after 1 dismiss, not 2 | §6 gate 8 wording | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| "Accept / Adjust / Not this one" 3-option card | §10 Gherkin (add adjust scenario) | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| Manager→report line detection in gate 2 (user breadth) | §6 gate 2 wording | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| Direction inversion (pinned-first, proactive-second) | Whole spec framing | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) ADR |
+| No canonical UserActivityEvent store — ProactiveSignal is a silo | §4 data model | [BH-942](https://brighthiveio.atlassian.net/browse/BH-942) |
+| Nightly per-workspace EventBridge doesn't scale — fan out over SQS | §6 detector job shape | [BH-943](https://brighthiveio.atlassian.net/browse/BH-943) |
+| No labeled judge corpus → §11 promotion gate unenforceable | §11 evals | [BH-944](https://brighthiveio.atlassian.net/browse/BH-944) |
+| OTel/LangSmith span shape for judge + detector | §5 capture / new observability §9? | [BH-945](https://brighthiveio.atlassian.net/browse/BH-945) |
+| EventBridge→dispatcher→LangGraph e2e in brighthive-e2e | §12 areas involved | [BH-947](https://brighthiveio.atlassian.net/browse/BH-947) |
+| RoutineSuggestion webapp contract snapshot | §2 interface contract | [BH-948](https://brighthiveio.atlassian.net/browse/BH-948) |
+
+**Guiding principle for the spec revisit** (BH-949): the end-user audit
+concluded 6/10 week-1 retention as currently specified. One anchor quote +
+"Adjust" button gets it to 8/10 by the persona's estimate. Suppression
+count and manager-graph awareness are the two other retention levers. All
+three are spec-level, not implementation choices, and should land before
+BH-885 (webapp UI) starts.
