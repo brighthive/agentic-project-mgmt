@@ -444,10 +444,16 @@ entry has a corresponding new test case, and confirm all suites are green.
 
 ## Ticket Breakdown
 
-| Ticket | Summary | Points | Epic |
-|---|---|---|---|
-| — | `brighthive-platform-core`: `WorkflowSpecNode.authoredBy` field + `checkPolicies()` runtime-allowlist BLOCKER branch (~150 lines) | 2 | BH-897 |
-| — | `brightbot`: `ground` node — Stage A catalog RAG call + Stage B fingerprint lookup against P2's pattern/suggestion links, no LLM (~300 lines incl. tests) | 3 | BH-897 |
+**Status as of 2026-07-03**: 2 of 7 tickets shipped (as a demo/backstop, not
+the full agent) — see below. The `ground`/`draft`/`validate` LangGraph nodes
+themselves remain unbuilt; real BH-897 is still its own epic pending approval
+of this spec's direction.
+
+| Ticket | Summary | Points | Epic | Status |
+|---|---|---|---|---|
+| [BH-911](https://brighthiveio.atlassian.net/browse/BH-911) | `brighthive-platform-core`: `WorkflowSpecNode.authoredBy` field + `checkPolicies()` runtime-allowlist BLOCKER branch, bundled with an artifact-presence WARNING (~200 lines) | 2 | BH-897 | **Shipped**, merged to develop |
+| [BH-910](https://brighthiveio.atlassian.net/browse/BH-910) | `brightbot`: throwaway demo script (`scripts/demo_workflow_from_intent.py`) hand-simulating ground→draft→validate with 3 real calls — proves the concept against real local infra, explicitly non-shippable | 2 | BH-897 | **Shipped** (demo only), merged to develop |
+| — | `brightbot`: `ground` node — Stage A catalog RAG call + Stage B fingerprint lookup against P2's pattern/suggestion links, no LLM (~300 lines incl. tests) | 3 | BH-897 | Not started |
 | — | `brightbot`: `draft` node — constrained ReAct loop, AGENT_REGISTRY-restricted config drafting, `sqlglot` AST SQL validator (~500 lines) | 5 | BH-897 |
 | — | `brightbot`: `validate` node — WorkflowSpec GraphQL client (create/upsert/bind/compile round-trip), bounded BLOCKER-retry loop, streaming middleware wiring (~450 lines) | 5 | BH-897 |
 | — | `brightbot`: supervisor registration (`deep_agent.py::init_agent_graphs`) + routing description + L1 shape evals (~250 lines) | 3 | BH-897 |
