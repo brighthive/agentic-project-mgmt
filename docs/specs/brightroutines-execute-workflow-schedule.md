@@ -471,10 +471,30 @@ pass didn't target) surfaced one additional Critical finding, BH-926.
 | [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | ✅ Fixed, merged to `develop` (webapp on `staging` too; slack-server promotion blocked, see below) |
 | [BH-926](https://brighthiveio.atlassian.net/browse/BH-926) | **Critical** | `updateWorkflowRunStep` mutation had **zero authentication** — no `@authorized` directive, no service key, no gateway-level authorizer. Anyone reaching the GraphQL endpoint who knows/guesses a `runId`/`stepId` could forge a completion, cascading into a real Slack notification via this epic's own BH-879 terminal bridge | platform-core | ✅ Fixed, merged to `develop` + `staging`, verified against a real local Neo4j + GraphQL server |
 | [BH-927](https://brighthiveio.atlassian.net/browse/BH-927) | High | Deployed-env e2e test for `execute_workflow` asserted only `dispatched=true`, never polled for a terminal outcome or notification delivery — a silent post-dispatch failure would pass green | e2e | ✅ Fixed, merged to `master` |
-| [BH-928](https://brighthiveio.atlassian.net/browse/BH-928) | High | Slack push-delivery path (`/notifications/deliver`) has no dedup — an at-least-once EventBridge/Lambda retry double-posts the same terminal-completion notification | slack-server | Ticketed, not yet fixed |
-| [BH-929](https://brighthiveio.atlassian.net/browse/BH-929) | Medium | `quality_checks`/`quality_asset_result` classification silently reports any unrecognized `status` value as "passed" — `event.status` is never runtime-validated at the ingestion boundary | slack-server | Ticketed, not yet fixed |
-| [BH-930](https://brighthiveio.atlassian.net/browse/BH-930) | Medium | Editing an `execute_workflow` schedule never re-validates the linked WorkflowSpec's compiled status — BH-920's create-time guard doesn't cover the edit path | webapp | Ticketed, not yet fixed |
-| [BH-931](https://brighthiveio.atlassian.net/browse/BH-931) | Low | Batch: non-isolated e2e test project fixture, N+1 project-discovery GraphQL loop, internal error-string leakage into user-facing surfaces | e2e, platform-core | Ticketed, not yet fixed |
+| [BH-928](https://brighthiveio.atlassian.net/browse/BH-928) | High | Slack push-delivery path (`/notifications/deliver`) has no dedup — an at-least-once EventBridge/Lambda retry double-posts the same terminal-completion notification | slack-server | ✅ Fixed, merged to `develop` (staging promotion blocked, see below). First version of the fix had its own P1 bug — see note below. |
+| [BH-929](https://brighthiveio.atlassian.net/browse/BH-929) | Medium | `quality_checks`/`quality_asset_result` classification silently reports any unrecognized `status` value as "passed" — `event.status` is never runtime-validated at the ingestion boundary | slack-server | ✅ Fixed, merged to `develop` (staging promotion blocked, see below) |
+| [BH-930](https://brighthiveio.atlassian.net/browse/BH-930) | Medium | Editing an `execute_workflow` schedule never re-validates the linked WorkflowSpec's compiled status — BH-920's create-time guard doesn't cover the edit path | webapp | ✅ Fixed, merged to `develop` + `staging`. Had its own follow-up P2 — see note below. |
+| [BH-931](https://brighthiveio.atlassian.net/browse/BH-931) | Low | Batch: non-isolated e2e test project fixture, N+1 project-discovery GraphQL loop, internal error-string leakage into user-facing surfaces | e2e, platform-core | ✅ Item 3 (error-string leakage) fixed, merged to `develop` (staging deploy blocked, see below). Items 1/2 (non-isolated fixture, N+1 loop) explicitly deferred — documented in `SPEC-E2E-SCHEDULER.md` §6, need a provisioned e2e-dedicated project pair to close. |
+
+**Automated-review follow-ups on the BH-928/BH-930 fixes** (caught by CodeRabbit/Codex bots on
+the PRs, independently verified against the actual code before acting — same rigor as the UAT
+sweep itself, never trusted blindly):
+
+- **BH-928, P1**: the first version of the dedup fix wrote a durable "delivered" marker via
+  `PutItemCommand` *before* `chat.postMessage` ran — a failed Slack post (rate limit, outage)
+  meant the marker was already in place, so a legitimate at-least-once retry would be silently
+  dropped as "already delivered" when it was never actually delivered. Fixed by decomposing into
+  `claimDelivery` (short-lived lease only) + `confirmDelivery` (durable, only after real success)
+  + `isDeliveryConfirmed` (read-check) + `releaseDeliveryClaim` (clear lease on failure) — mirrors
+  `poller.ts`'s pre-existing, already-correct pattern. 2 new regression tests; full suite
+  458/458 passing.
+- **BH-930, P2**: `selectedSpecRunnable` defaulted to `true` during the async spec-check's
+  loading window (not just once it resolved negatively), and the Save/Create button's `disabled`
+  prop only checked `!selectedSpecRunnable` — so a fast click could beat the network response and
+  persist a schedule against a DRAFT/deleted spec, defeating the original fix's whole point. Fixed
+  by adding `selectedSpecPending` (true only while a check is genuinely in-flight) and gating both
+  `handleSubmit` and the button's `disabled` prop on it. New regression test asserts the button is
+  disabled synchronously, before the mocked network response resolves.
 
 **None of these block the epic's own P1 acceptance criteria** (§4) — all 4
 Gherkin scenarios there pass against real local infra (see §0). They are
@@ -484,15 +504,14 @@ no mocks) is thorough enough to find them across two UAT passes: a first
 pass (BH-917–925) and a second, adversarial pass targeting concurrency,
 auth edge cases, and error-message leakage (BH-926–931).
 
-**11 of 12 UAT findings are fixed and merged** (BH-917–927). All 11 have at
-least one real test (unit, real-infra, or real-HTTP) and a matching Jira
-comment. **4 findings remain open** (BH-928/929/930/931) — real but lower
-severity, ticketed with clear ACs, not yet actioned. One suspected finding
-("Run Now ignores a `dispatched: false` response") was investigated and
-ruled out: `brightbot`'s `run_now` route never actually returns
-`dispatched: false` today — every rejection path raises an `HTTPException`
-instead — so this is a latent type-level possibility, not a live bug; no
-ticket was opened for it.
+**All 15 UAT findings are now fixed and merged to `develop`** (BH-917–931,
+including both automated-review follow-ups above). All have at least one
+real test (unit, real-infra, or real-HTTP) and a matching Jira comment. One
+suspected finding ("Run Now ignores a `dispatched: false` response") was
+investigated and ruled out: `brightbot`'s `run_now` route never actually
+returns `dispatched: false` today — every rejection path raises an
+`HTTPException` instead — so this is a latent type-level possibility, not a
+live bug; no ticket was opened for it.
 
 **Correction (2026-07-03)**: an earlier revision of this doc reported
 BH-917/918/919 as "merged to `develop`" before that was actually true — the
@@ -500,14 +519,48 @@ BH-917/918/919 as "merged to `develop`" before that was actually true — the
 All 4 are now genuinely merged; this section reflects verified state as of
 this revision, not a claim made ahead of the merge.
 
-**Staging status**: `brighthive-platform-core`, `brighthive-webapp`, and
-`brightbot` staging branches now carry all merged fixes for their repos
-(content-verified via `git rev-list`/local test runs after each promotion,
-not just "PR merged"). `brightbot-slack-server`'s promotion (BH-922/925) is
-blocked on 2 required reviewer approvals on [PR #108](https://github.com/brighthive/brightbot-slack-server/pull/108) —
-a hard branch-protection rule with `enforce_admins: true` on that repo only,
-not bypassable the way the other 3 repos' rules were. The actual CDK
-**deploy** of `platform-core`'s staging branch remains blocked on BH-914 (2
-missing secret keys) — merging to the branch and deploying it are separate
-steps. BH-914/915/916 remain untouched, blocked on explicit secret-edit
-approval per this org's standing LangSmith/Secrets-Manager hard rule.
+**Staging status (2026-07-03, second promotion pass)**: `brighthive-webapp`
+now carries every fix in this table on `staging`, deployed via Amplify
+release `v2.9.0.22-pre-release` (confirmed live: `staging.brighthive.io` /
+`stagingapp.brighthive.io` both return 200). `brighthive-platform-core`'s
+`staging` *branch* carries every fix, but the CDK **deploy** to the staging
+Lambda failed and cleanly rolled back — see below, this is the pre-existing
+BH-914 secrets gap, not a code defect; `api.staging.brighthive.net/graphql`
+remains healthy on its prior good deployment. `brightbot-slack-server`'s
+promotion (BH-922/925/928/929) is staged and ready on
+[PR #108](https://github.com/brighthive/brightbot-slack-server/pull/108)
+(full 458/458 suite green on the resolved merge) but blocked on 2 required
+reviewer approvals — a hard branch-protection rule with `enforce_admins:
+true` on that repo only, confirmed non-bypassable by testing both `--admin`
+PR-merge and a direct branch push. `brightbot` needed no promotion (develop
+already matched staging).
+
+**Platform-core staging deploy failure (2026-07-03)** — CloudFormation
+`UPDATE_FAILED` / `Could not find a value associated with JSONKey in
+SecretString` on `StagingBrighthiveCoreSubgraphLambda`, rolled back cleanly
+(`UPDATE_ROLLBACK_COMPLETE`, verified live via a 200 from `/graphql`
+afterward — staging was never down). Root cause, confirmed by reading
+`brighthive_core/core_subgraph_api_stack.py:160-166`: the stack reads
+`SCHEDULER_SERVICE_API_KEY` / `LANGGRAPH_BASE_URL` / `SCHEDULER_WEBHOOK_SECRET`
+from the staging `platform-core` secret — this is the pre-existing BH-914
+gap. Per this org's standing Secrets-Manager hard rule, three separate
+requests for explicit approval to edit the secret went unanswered this
+session; the deploy remains paused rather than acted on unilaterally.
+BH-914/915/916 remain untouched.
+
+**Real local e2e verification (2026-07-03, no SSO)**: booted the full local
+stack — `brighthive-platform-core` (`docker compose -f
+docker-compose.local.yml up`, real Neo4j + LocalStack, `npm run deploy:local`
+with `SCHEDULER_SERVICE_API_KEY`/`SCHEDULER_WEBHOOK_URL`/`SCHEDULER_WEBHOOK_SECRET`
+set) and `brightbot` (`LOCAL_DEV_MODE=true`, `WEBHOOK_SECRET` matching,
+`langgraph dev --port 2725`) — then ran
+`brighthive-e2e/e2e/features/scheduler/test_execute_workflow_local_lifecycle.py`
+with `--writes` against a real seeded project/spec. All 4 scenarios passed,
+including `test_full_chain_create_run_execute_terminal_bridge` — the entire
+epic's chain (create schedule → run-now → `executeWorkflowAsOwner`
+service-auth → terminal completion bridge → webhook updates the schedule row
+→ DynamoDB notification signal) exercised live end-to-end, zero mocks, zero
+findings. Also re-ran platform-core's own integration suite
+(`tests/integration/execute-workflow-as-owner.test.ts`, 7/7) and unit suite
+(`tests/unit/update-workflow-run-step.test.ts`, 7/7) against the same live
+local stack.
