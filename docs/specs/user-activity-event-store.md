@@ -428,10 +428,38 @@ not raw table rows.
 ## 14. Explicit non-goals for this ticket
 
 - No implementation code in this PR — spec-only.
-- No decision on the "prompt catalog UI/API" surface — that's a
-  separate design pass once this store is live.
 - No decision on BH-943 (SQS fan-out for scale). The store spec is
   neutral on capture concurrency; the fan-out ticket can proceed
   against either the current or the migrated table.
 - No product-side changes to §9 (BH-949) — those live on a
   parallel product-decision path.
+- No LLM value-tagging on this ticket — the `value_score` axis is
+  scoped separately (see §15).
+
+## 15. Downstream: value-tagging + browsable catalog
+
+Kuri's 2026-07-03 question — *"do we have 1-shot prompts worth 95%
+prioritization, and do we need to catalog every prompt?"* — is
+answered by this store **only in part**. This spec covers foundational
+capture (Approach B of the POC below). One-shot-value inference and a
+browsable catalog surface are downstream work that depends on this
+spec shipping first.
+
+See `../pocs/prompt-catalog-value-detection.md` for the 3-approach
+comparison and the reasoning behind the phased sequencing. Summary
+of downstream scope (not this ticket):
+
+- **Value-score axis** — LLM judge for "if this ask were scheduled,
+  how valuable would that be?" Reuses the BH-884 judge pattern
+  (Protocol + Fake + real triad, model-agnostic tier, offline
+  calibration corpus). New GSI `VALUE_SCORE#<workspace_id>` for
+  leaderboard reads. Separate ticket, filed after BH-942 merges.
+- **Browsable catalog surface** — MCP tool
+  `get_high_value_activity(workspace_id, since, kind, min_score)` +
+  optional webapp UI. Separate ticket per repo.
+- **One-observation escalation** — the product-decision path in
+  BH-949 that becomes viable once value-scoring exists. Route the
+  BH-949 question back to product with the POC as context.
+
+None of the above changes §2/§3/§9 of this spec. They ADD fields and
+GSIs on top of the foundational shape defined here.
