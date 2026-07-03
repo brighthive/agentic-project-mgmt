@@ -243,7 +243,16 @@ Platform Core must revalidate, for every run:
 
 1. `owner_user_id` is still an active member of `workspace_id`.
 2. Owner role is still Admin or Collaborator.
-3. Owner has the permissions required by `executeWorkflow`.
+3. Owner has the permissions required by `executeWorkflow` — implemented as
+   the workspace policy's `projectUpdate` field (`assertWorkspacePermission`,
+   `workflow-spec-execution.ts`). There is no dedicated `executeWorkflow`
+   permission scope in the OGM/API schema — `projectUpdate` is the single
+   toggle that gates both editing a project and running its workflow, for
+   both this path and the regular (non-scheduler) `executeWorkflow`
+   mutation. Confirmed by a fourth UAT sweep (BH-936) not to be a
+   cross-tenant gap — the check is live, workspace-scoped, and re-run on
+   every call — just a narrower-sounding spec name than what's actually
+   enforced.
 4. `project_id` belongs to `workspace_id`.
 
 Implementation options:
@@ -657,3 +666,48 @@ real infrastructure (not mocks), and merged. What remains is exactly two
 kinds of blocker — one needing explicit secrets-edit approval, one needing
 either 2 human code reviews or a UX design call — neither of which this
 agent can or should resolve unilaterally.
+
+---
+
+## 11. Fourth UAT Pre-Prod Sweep (2026-07-03, multi-tenant isolation)
+
+A fourth pass, targeting a dimension none of the first three covered:
+cross-workspace isolation and permission-boundary correctness. Traced 4 real
+call paths end-to-end — schedule CRUD (`brightbot/routes/scheduled_agents_routes.py`),
+`executeWorkflowAsOwner`'s project/workspace/owner revalidation
+(`workflow-spec-execution.ts`), the notification-signal write/read paths
+(`scheduler-bridge.ts`, `notifications.ts`), and all 4 of BH-878's required
+owner-permission revalidations.
+
+**Result: 3 of 4 areas verified fully correct, no cross-tenant gap found.**
+Every schedule route derives `workspace_id` from the authenticated request
+only, never a client-supplied param; every fetch-by-id path re-checks
+`item.workspace_id` and 403s on mismatch; `owner_user_id` is pinned at
+creation and preserved through every PATCH. `executeWorkflowAsOwner`'s
+project lookup is a genuine graph-relationship filter
+(`Project-[:IN_WORKSPACE]->Workspace`), not a workspace-existence check — a
+schedule row pointing `project_id` at a different workspace than its own
+`workspace_id` is rejected with `UserInputError` before any execution
+starts. The notification signal's `workspaceId` is sourced exclusively from
+the persisted `WorkflowRun.scheduleWorkspaceId` field (never re-threaded
+client input), and the DynamoDB notifications table uses `workspace_id` as
+the actual partition key — cross-workspace rows are physically unreachable,
+not filtered client-side after a broader fetch.
+
+**One finding, documentation-only, no code change needed**:
+[BH-936](https://brighthiveio.atlassian.net/browse/BH-936) — the spec's
+"owner has the permissions required by `executeWorkflow`" (§2.3, check #3)
+implied a dedicated permission scope. The actual (and correct, and
+pre-existing) implementation enforces `projectUpdate` — the same toggle the
+regular non-scheduler `executeWorkflow` mutation already used before this
+epic. Not a security gap; the check is live, workspace-scoped, and re-run
+every call. Resolved by amending §2.3 above to name the real enforced
+permission rather than an implied-but-nonexistent one.
+
+**Epic status, updated**: 25 tickets now span this epic's UAT history
+(BH-917–936). 24 are resolved (fixed-and-merged, or resolved-via-doc-fix for
+BH-936); BH-934 remains deferred pending a UX decision; BH-914/915/916
+remain blocked on infra access this agent cannot grant itself. Four
+independent adversarial sweeps — functional correctness, concurrency/auth,
+notification/UX/cron, and now multi-tenant isolation — have not surfaced
+any unresolved cross-tenant or privilege-escalation defect.
