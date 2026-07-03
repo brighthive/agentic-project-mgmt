@@ -451,33 +451,44 @@ Keep one PR per repo and under the BrightHive PR-size rules.
 ## 9. UAT Pre-Prod Findings (2026-07-03)
 
 Extensive UAT-style pre-prod sweep run after all P1 tickets merged to `develop`
-across all 5 repos, before staging verification (blocked, see §0). Combined a
-3-agent parallel code review (platform-core, brightbot, webapp+slack-server+e2e)
-with direct-code-read verification of every High-severity claim before
-ticketing — nothing below is speculative.
+across all 5 repos, before staging verification. Combined a 3-agent parallel
+code review (platform-core, brightbot, webapp+slack-server+e2e) with
+direct-code-read verification of every High-severity claim before ticketing —
+nothing below is speculative. A second, adversarial pass (focused on
+concurrency, auth edge cases, and error-message leakage — areas the first
+pass didn't target) surfaced one additional Critical finding, BH-926.
 
 | Ticket | Severity | Finding | Repo | Status |
 |---|---|---|---|---|
 | [BH-917](https://brighthiveio.atlassian.net/browse/BH-917) | High | Deleting a schedule mid-run resurrects a malformed row — no existence/running guard on the dispatcher's DynamoDB `update_item` calls | brightbot, platform-core | ✅ Fixed, merged to `develop` |
 | [BH-918](https://brighthiveio.atlassian.net/browse/BH-918) | High | No timeout for an AGENT step whose runtime never calls back — can hang RUNNING forever, permanently disabling that schedule | platform-core | ✅ Fixed, merged to `develop` |
 | [BH-919](https://brighthiveio.atlassian.net/browse/BH-919) | High | 4th instance of the non-constant-time secret-comparison bug class, in `notifications.ts` (pre-existing, not introduced by this epic, same `x-service-key` attack surface family) | platform-core | ✅ Fixed, merged to `develop` |
-| [BH-920](https://brighthiveio.atlassian.net/browse/BH-920) | High | Webapp lets a user create an `execute_workflow` schedule against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero warning at creation time | webapp | ✅ Fixed — [PR #1254](https://github.com/brighthive/brighthive-webapp/pull/1254) (draft) |
-| [BH-921](https://brighthiveio.atlassian.net/browse/BH-921) | Medium | `execute_workflow` has zero e2e coverage against a real deployed dev/staging environment — only the local-only lifecycle test exists | e2e | ✅ Fixed — [PR #27](https://github.com/brighthive/brighthive-e2e/pull/27) (draft) |
-| [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` (and other producer-supplied fields) in Slack mrkdwn — link/formatting injection risk | slack-server | ✅ Fixed — [PR #106](https://github.com/brighthive/brightbot-slack-server/pull/106) (draft) |
-| [BH-923](https://brighthiveio.atlassian.net/browse/BH-923) | Medium | Rejected dbt trigger mishandled as RUNNING instead of failing immediately (Datapiary was already correct) | platform-core | ✅ Fixed — [PR #973](https://github.com/brighthive/brighthive-platform-core/pull/973) (draft) |
-| [BH-924](https://brighthiveio.atlassian.net/browse/BH-924) | Medium | A transport-level (not GraphQL-rejection) call failure before a `WorkflowRun` exists is invisible to the poller/retry-sweep recovery path | platform-core | ✅ Fixed — [PR #974](https://github.com/brighthive/brighthive-platform-core/pull/974) (draft) |
-| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | ✅ Fixed — [PR #107](https://github.com/brighthive/brightbot-slack-server/pull/107), [PR #1255](https://github.com/brighthive/brighthive-webapp/pull/1255) (draft) |
+| [BH-920](https://brighthiveio.atlassian.net/browse/BH-920) | High | Webapp lets a user create an `execute_workflow` schedule against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero warning at creation time | webapp | ✅ Fixed, merged to `develop` |
+| [BH-921](https://brighthiveio.atlassian.net/browse/BH-921) | Medium | `execute_workflow` has zero e2e coverage against a real deployed dev/staging environment — only the local-only lifecycle test exists | e2e | ✅ Fixed, merged to `master` |
+| [BH-922](https://brighthiveio.atlassian.net/browse/BH-922) | Medium | Unescaped user-controlled `display_name` (and other producer-supplied fields) in Slack mrkdwn — link/formatting injection risk | slack-server | ✅ Fixed, merged to `develop` |
+| [BH-923](https://brighthiveio.atlassian.net/browse/BH-923) | Medium | Rejected dbt trigger mishandled as RUNNING instead of failing immediately (Datapiary was already correct) | platform-core | ✅ Fixed, merged to `develop` + `staging` |
+| [BH-924](https://brighthiveio.atlassian.net/browse/BH-924) | Medium | A transport-level (not GraphQL-rejection) call failure before a `WorkflowRun` exists is invisible to the poller/retry-sweep recovery path | platform-core | ✅ Fixed, merged to `develop` + `staging` |
+| [BH-925](https://brighthiveio.atlassian.net/browse/BH-925) | Low | Batch: unescaped IDs, missing click-through links, route-visibility UX inconsistency, missing regression tests | webapp, slack-server | ✅ Fixed, merged to `develop` (slack-server promotion to `staging` blocked on 2 required reviewer approvals — [PR #108](https://github.com/brighthive/brightbot-slack-server/pull/108)) |
+| [BH-926](https://brighthiveio.atlassian.net/browse/BH-926) | **Critical** | `updateWorkflowRunStep` mutation had **zero authentication** — no `@authorized` directive, no service key, no gateway-level authorizer. Anyone reaching the GraphQL endpoint who knows/guesses a `runId`/`stepId` could forge a completion, cascading into a real Slack notification via this epic's own BH-879 terminal bridge | platform-core | ✅ Fixed — [PR #976](https://github.com/brighthive/brighthive-platform-core/pull/976) (draft), verified against a real local Neo4j + GraphQL server |
 
 **None of these block the epic's own P1 acceptance criteria** (§4) — all 4
 Gherkin scenarios there pass against real local infra (see §0). They are
 real gaps found by testing *beyond* the original spec's explicit scope,
 surfaced because this epic's own verification discipline (real local infra,
-no mocks) is thorough enough to find them. **All 9 UAT findings are now
-fixed or in draft PR awaiting review** — 4 High (BH-917–920), 4 Medium
-(BH-921–924), 1 Low (BH-925). Every fix shipped with at least one real test
-(unit, real-infra, or real-HTTP) and a matching Jira comment; none has
-merged yet — all 9 PRs are open drafts pending review. Independent of this,
-the epic still needs the staging-deploy blockers in §0 resolved before it's
-genuinely production-ready — that work remains blocked on explicit
-secret-edit approval per this org's standing LangSmith/Secrets-Manager
+no mocks) is thorough enough to find them. **All 10 UAT findings are fixed.**
+9 of 10 have merged PRs (7 to `develop`, 2 further promoted to `staging`);
+BH-926 (found in the second pass, after the first 9 already merged) has a
+draft PR open, verified against real local infra, awaiting review. Every fix
+shipped with at least one real test (unit, real-infra, or real-HTTP) and a
+matching Jira comment.
+
+**Staging status**: `brighthive-platform-core` and `brighthive-webapp`
+staging branches now carry all merged fixes (BH-917–924 content-verified on
+`platform-core`/`webapp` staging). `brightbot-slack-server`'s promotion is
+blocked on 2 required reviewer approvals on PR #108 (a hard branch-protection
+rule with `enforce_admins: true`, not bypassable). The actual CDK **deploy**
+of `platform-core`'s staging branch remains blocked on BH-914 (2 missing
+secret keys) — merging to the branch and deploying it are separate steps;
+this doc previously conflated them. BH-914/915/916 remain untouched, blocked
+on explicit secret-edit approval per this org's standing LangSmith/Secrets-Manager
 hard rule.
