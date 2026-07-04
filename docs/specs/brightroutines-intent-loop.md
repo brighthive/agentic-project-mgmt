@@ -593,6 +593,20 @@ Promotion gates:
 Snapshot of what's built vs. designed. The sections above are the target
 contract; this tracks reality against it.
 
+### ✅ Verified live end-to-end on staging (2026-07-04)
+
+The full loop is proven on `brightagent-staging` + `api.staging.brighthive.net`,
+capture flag ON (`FEATURE_FLAG_BRIGHTROUTINES_CAPTURE=true`):
+chat turn → capture (Bedrock classify → secret-scrub → fingerprint → embed →
+`brightroutines-stg`) → detector (`detect_recurring_patterns`: GSI1 fetch →
+cohesion → 8 gates → Bedrock judge quorum) → OFFERED `RoutineSuggestion` →
+`routineSuggestionsForWorkspace` GraphQL returns it. Two deploy-only bugs were
+found + fixed during this pass, neither catchable without driving the real
+system: (a) `IntentCaptureMiddleware.after_agent` was async but the middleware
+runner invokes it sync → `InvalidUpdateError` (brightbot #775/#776); (b) the
+Apollo Lambda had `BRIGHTROUTINES_TABLE_NAME` unset → read query degraded to []
+(platform-core #997/#998).
+
 ### Merged to develop
 - **Detector + judge** (BH-884): recurring-automation detector (embedding
   cohesion clustering @0.86) + `RoutineJudge` (Protocol + LLM adapter + fake,
