@@ -518,11 +518,23 @@ LLM-powered pieces: automation-intent extractor and schedulability judge.
 
 Promotion gates:
 
-- P2 -> P3: shadow precision >= 0.70 against human labels for two weeks.
+- P2 -> P3: shadow **precision >= 0.70 AND recall >= 0.50 AND ECE <= 0.30**
+  against human labels for two weeks, over >= 25 evaluated cases.
 - P3 -> P4: live schedule rate >= 25 percent and false-offer complaint rate <
   5 percent.
 - Circuit breaker: if live precision falls below 0.60, stop surfacing offers and
   keep shadow detection only.
+
+> **BH-956 hardening.** The P2->P3 gate was originally precision-only. That was
+> a blind spot: a conservative judge that offers almost nothing trivially maxes
+> precision (everything it does offer is right), so precision alone cannot see
+> under-offering. The live judge shipped at recall 0.188 / ECE 0.772 —
+> offering ~1 in 5 valid routines — while still "passing". The recall floor
+> catches under-offering; the ECE ceiling catches a judge whose stated
+> confidence doesn't track reality (a mis-set threshold). Enforced in
+> `JudgeCalibrationReport.passes_shadow_promotion_gate()`
+> (`brightbot/evals/routines/judge_evaluator.py`); the recalibrated judge
+> (MIN_JUDGE_CONFIDENCE 0.85 -> 0.70) measures recall 1.0 / ECE well under 0.30.
 
 ---
 
