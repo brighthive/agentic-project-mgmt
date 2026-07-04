@@ -1,10 +1,11 @@
 ---
 title: BrightRoutines Intent Loop
 epic: BH-876
-tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889]
+tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970]
 author: codex
-status: draft
+status: in-progress
 created: 2026-06-30
+last-reviewed: 2026-07-03
 generates: tickets
 tags:
   - brightagent
@@ -586,3 +587,52 @@ Promotion gates:
 | 6 | `brighthive-webapp` | notification card for workflow suggestions | [BH-886](https://brighthiveio.atlassian.net/browse/BH-886) | <300 lines |
 | 7 | `brightbot-slack-server` | Slack formatter/buttons/action handlers | [BH-887](https://brighthiveio.atlassian.net/browse/BH-887) | <500 lines |
 | 8 | `brighthive-e2e` | P2/P3 spec coverage and tracker bindings | [BH-889](https://brighthiveio.atlassian.net/browse/BH-889) | <400 lines |
+
+## 14. Implementation Status (2026-07-03)
+
+Snapshot of what's built vs. designed. The sections above are the target
+contract; this tracks reality against it.
+
+### Shipped / in review
+- **Detector + judge** (BH-884): recurring-automation detector (embedding
+  cohesion clustering) + `RoutineJudge` (Protocol + LLM adapter + fake, N=3
+  quorum, model-agnostic via `BRIGHTROUTINES_JUDGE_MODEL`). In review.
+- **Judge calibration corpus** (BH-944), **OTel spans** (BH-945),
+  **capture-time embedding + min-token gate** (BH-946), **RoutineSuggestion
+  contract snapshot** (BH-948), **W/P/U scoring** (BH-950): in review.
+- **DynamoDB single-table** (BH-882) + **GSI5 for scores** (BH-985): in review.
+- **Read query** — `routineSuggestionsForWorkspace` (platform-core PR #986):
+  paginated GSI4 read, decodes to camelCase DTO, **gated on workspace
+  membership** via `@authenticated(workspaceIdLoc)`. Exposes
+  `proposedActionKind`/`proposedOutputArtifact` and `ownership` (null on
+  OFFERED). Full local-dev data flow (LocalStack table + seed + per-client
+  endpoint override). In review.
+- **Suggested Routines UI** — `/context/workflows` FormulasPage (webapp PR
+  #1262): Suggested + always-anchored "Your routines" sections; card shows
+  cadence rail, cadence/channel chips, the outcome "what is it" chip
+  (amber when it changes data), and the ownership line. Live data only.
+  In review.
+
+### Design added this cycle (not in §1–§13 above)
+- **§3 extension — action/artifact axes** (BH-963/964): `ActionKind` ×
+  `OutputArtifact`, inferred at OFFER, resolved at SCHEDULE. The UI renders the
+  *outcome*, never the pipeline noun.
+- **§7/§9 extension — accountability model** (BH-963/965): owner / accepter /
+  recipients / contributors; unowned routine forbidden; Neo4j
+  `OWNS`/`ACCEPTED`/`RECEIVES`/`DERIVED_FROM` edges as SSOT. Read-side
+  `RoutineOwnership` shipped; persistence is BH-968.
+
+### Not yet built (next phase)
+- **BH-955** — canned read-only `summary-agent` graph (prereq: gives a real
+  WorkflowSpec for the schedule flow; today §7 step 3's graph doesn't exist).
+- **BH-967** — `scheduleRoutineSuggestion` + `dismissRoutineSuggestion`
+  mutations (the write half of §7; webapp currently updates local state only).
+- **BH-968** — ownership persistence + Neo4j edges.
+- **BH-969** — resolve action/artifact from the WorkflowSpec at schedule time.
+- **BH-970** — editable recipient at schedule ("send to Maria, not me").
+- **§11 online eval / circuit breaker** — designed, unbuilt (BH-956/957).
+
+### §8 correction
+§8 originally targeted `src/Schedules/SchedulesPage.tsx`; the shipped surface
+is `src/Context/pages/FormulasPage.tsx` at `/context/workflows` — the first
+real implementation of that page's "Scheduled Actions" category.
