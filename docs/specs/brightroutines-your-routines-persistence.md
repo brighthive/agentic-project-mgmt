@@ -96,13 +96,55 @@ unscheduleRoutine(
   @authenticated(workspaceIdLoc: ["args", "workspaceId"])
 ```
 
-- **Effect**: `SCHEDULED → OFFERED`; deletes the backing `execute_workflow`
-  schedule in brightbot; clears `linked_schedule_id` and ownership fields; moves
-  the GSI4 partition `SUGGESTION_STATUS#{ws}#SCHEDULED → #OFFERED`.
-- **Return**: the updated `RoutineSuggestion` (status now `OFFERED`), so the
-  webapp can move it back into "Suggested" without a refetch.
-- **Idempotent**: calling on a row already `OFFERED` (or absent) returns it
-  unchanged / a typed not-found; never errors on a double-tap.
+**Effect**: turns a `SCHEDULED` routine off, returning it to `OFFERED` with a
+live re-offer, and deletes the backing `execute_workflow` schedule so it can
+never fire again.
+
+**Transition machine (mirrors the forward OFFERED→SCHEDULING→SCHEDULED lock —
+`routine-suggestion.ts` L478-522 lock, L637-660 rollback).** A naive
+"delete then flip" or "flip then delete" both leave a broken state on
+partial failure, so unschedule runs the symmetric three-step:
+
+1. **Lock**: conditional write `SCHEDULED → UNSCHEDULING`, condition
+   `#status = :scheduled`. `UNSCHEDULING` is a transient, **non-firing** state
+   (the cron is deleted in step 2 but the row is not yet re-offered). This
+   single conditional write is the concurrency guard — at most one of N
+   concurrent taps wins; the losers see the condition fail and return the
+   current row.
+2. **Delete the schedule** in brightbot via a new `deleteRoutineSchedule`
+   client (see §6). **Delete-before-flip** is deliberate: if we flipped first
+   and the delete failed, the row would read `OFFERED` while the cron kept
+   firing — a routine the user turned off still emailing recipients (violates
+   §3 Invariant 3 / §7 Property 2, the worst trust outcome). The delete MUST be
+   **404-tolerant** (an already-absent schedule is success) so a retry after a
+   partial failure can complete.
+3. **Commit**: conditional write `UNSCHEDULING → OFFERED`, and in the same
+   `UpdateExpression` **`REMOVE` every scheduled-only field** so the row
+   decodes as a clean fresh offer:
+   `linked_schedule_id, owner_user_id, recipient_user_ids, accepted_by,
+   accepted_at, resolved_action_kind, resolved_output_artifact`. Also `SET
+   offered_at` to now and rewrite `GSI4SK` so the re-offer sorts to the TOP of
+   "Suggested" (the schedule commit never rewrites the sort key —
+   `routine-suggestion.ts` L374 — so a stale `offered_at` would bury it at the
+   bottom, effectively invisible).
+
+**Failure / rollback**: if the delete (step 2) fails after retries, roll
+`UNSCHEDULING → SCHEDULED` (the honest state — it IS still running) and surface
+a typed retryable error. A stale `UNSCHEDULING` lock self-heals via a reclaim
+window mirroring `SCHEDULING_LOCK_STALE_MS` (`routine-schedule-state.ts` L48).
+
+- **Auth on the write**: needs `jwtToken` from context (as
+  `scheduleRoutineSuggestion` does — `routine-suggestion.ts` L430/548) to
+  authenticate the brightbot delete call.
+- **Who may turn off**: the routine **owner** (`owner_user_id == token.sub`) or
+  a workspace **admin**. Any-member turn-off is NOT allowed — a routine another
+  member owns is theirs to stop. (`getSuggestion` keys on `WORKSPACE#{ws}`, so
+  cross-workspace ids already 404; this is the intra-workspace rule.)
+- **Return**: the updated `RoutineSuggestion` (status `OFFERED`, scheduled
+  fields cleared), so the webapp moves it back into "Suggested" without a
+  refetch.
+- **Idempotent**: on a row already `OFFERED` (or absent) it is a no-op that
+  returns the current row / typed not-found; never errors on a double-tap.
 
 ### 2.3 Webapp hook surface
 
@@ -143,6 +185,27 @@ export interface UseRoutineSuggestionsResult {
    mutation and reconciled on the next query result.
 7. Counts-only evidence still holds (parent §9 invariant 3): the SCHEDULED read
    returns the same redacted `evidence_summary` shape as OFFERED — no raw text.
+8. `unscheduleRoutine` is a **single conditional write from `SCHEDULED`**
+   (condition `#status = :scheduled`). At most one of N concurrent calls
+   deletes the schedule and flips; the rest see the condition fail and return
+   the current row. (Concurrency guarantee — spec-driven §7 concurrency-sensitive.)
+9. `WHILE a routine is in the transient UNSCHEDULING state, THE System SHALL NOT
+   allow it to fire` (the cron is already deleted) `AND SHALL NOT strand it` —
+   commit → OFFERED, or roll back → SCHEDULED on delete failure, or self-heal a
+   stale lock via the reclaim window. Mirror of the forward "never stranded in
+   SCHEDULING" guarantee.
+10. **Clean re-offer**: after a successful unschedule the row decodes with
+    `ownership == null` and `resolved_action_kind == resolved_output_artifact ==
+    null` (all scheduled-only fields `REMOVE`d), and `offered_at` refreshed so it
+    sorts to the top of "Suggested". A row returned to OFFERED with stale
+    ownership/resolved fields renders a wrong card — this invariant forbids it.
+11. **Delete idempotency**: deleting an already-absent `execute_workflow`
+    schedule (HTTP 404 from brightbot) is treated as success, so a retry after a
+    partial failure can complete.
+12. **Detector non-duplication**: a routine returned to OFFERED does not cause
+    the nightly detector to create a *second* OFFERED suggestion for the same
+    `pattern_id`. (Must be verified against the brightbot `RoutineSuggestionStore`
+    before the mutation PR lands — see §6.)
 
 ## 4. Acceptance Criteria (BDD)
 
@@ -198,8 +261,26 @@ Feature: "Your routines" persists across reloads
   mutations + `routineSuggestionsForWorkspace` query (BH-885 write/read slices,
   live on staging). The `SUGGESTION_STATUS#{ws}#SCHEDULED` GSI4 partition
   already exists — the schedule mutation writes it.
-- **Shipped**: `execute_workflow` schedule create/delete in brightbot (P1,
-  BH-877/878) — `unscheduleRoutine` calls the existing delete path.
+- **Shipped**: `execute_workflow` schedule **create** in brightbot (P1,
+  BH-877/878), consumed by platform-core's `routine-scheduler-client.ts`
+  (`createRoutineSchedule`, POST `/manage/scheduled-agents`).
+- **⚠️ NOT confirmed shipped — verify before the mutation PR**:
+  1. **brightbot exposes `DELETE /manage/scheduled-agents/{id}`.** If BH-877/878
+     shipped create-only, that endpoint is a **cross-repo brightbot
+     dependency** this ticket must add first (a blocking prerequisite, not part
+     of the platform-core PR). Confirm against brightbot's scheduled-agents
+     routes.
+  2. **platform-core has NO delete client seam.** `routine-scheduler-client.ts`
+     exports only `createRoutineSchedule`. The mutation PR must add a
+     `deleteRoutineSchedule(scheduleId, jwtToken)` (mirror the create seam,
+     404-tolerant per §3 Invariant 11). Grep confirms no existing
+     `deleteRoutineSchedule` / DELETE-against-scheduled-agents anywhere in
+     `src/graphql`.
+  3. **Detector idempotency against a resurrected OFFERED row** (§3 Invariant
+     12) — confirm the brightbot `RoutineSuggestionStore` / detector does not
+     insert a duplicate suggestion for a `pattern_id` that already has an
+     OFFERED row. If it does, unschedule needs a guard or a light cooldown; if
+     it keys on "no live OFFERED/SCHEDULED row for the pattern," we're safe.
 - **Reuse, do not duplicate**:
   - `RoutineSuggestionModel.listForWorkspace`-style GSI4 pagination
     (`routine-suggestion.ts` ~L220) — the new query is the same shape with a
@@ -229,8 +310,21 @@ and only if `c` is a member of `w`; otherwise FORBIDDEN with zero rows.
 
 *For any* SCHEDULED routine `r`, a successful `unscheduleRoutine(r)` leaves no
 live `execute_workflow` schedule that can fire `r`, and `r.status == OFFERED`.
+This is enforced by the ordering in §2.2: the schedule is deleted **before** the
+row commits to OFFERED, and a delete failure rolls the row back to SCHEDULED
+(never OFFERED-with-a-live-cron). The intermediate UNSCHEDULING state is
+non-firing, so there is no window where `r` is both "off" and able to fire.
 
-**Validates: §3 Invariant 3, §4 Scenario "Turning a routine off…"**
+**Validates: §3 Invariant 3, §3 Invariant 9, §4 Scenario "Turning a routine off…"**
+
+### Property 4: Turn-off is race-free and never stranded
+
+*For any* set of concurrent `unscheduleRoutine(r)` calls plus any concurrent
+forward re-schedule attempt, exactly one unschedule commits (the conditional
+`SCHEDULED → UNSCHEDULING` write), and `r` ends in a terminal-for-this-op state
+(OFFERED on success, SCHEDULED on rollback) — never stuck in UNSCHEDULING.
+
+**Validates: §3 Invariant 8, §3 Invariant 9**
 
 ### Property 3: Server is the source of truth for on/off
 
@@ -305,11 +399,15 @@ means the contract wasn't enforced.
 
 | PR | Repo | Scope | Est. lines |
 |---|---|---|---:|
+| 0 | `brightbot` | **(only if §6 verification finds it missing)** `DELETE /manage/scheduled-agents/{id}`, 404-tolerant + idempotent | ~150 |
 | 1 | `brighthive-platform-core` | `scheduledRoutinesForWorkspace` query + resolver + model read, LocalStack L2 | ~250 |
-| 2 | `brighthive-platform-core` | `unscheduleRoutine` mutation + reverse transition + schedule-delete client + LocalStack L2 | ~300 |
+| 2 | `brighthive-platform-core` | `unscheduleRoutine` mutation: UNSCHEDULING lock + rollback + stale-reclaim + field `REMOVE`s + `deleteRoutineSchedule` client (404-tolerant) + owner/admin gate + LocalStack L2 | ~400 |
 | 3 | `brighthive-webapp` | hook `scheduledRoutines` + `unscheduleRoutine`; `SuggestedRoutinesSection` drops local state; jest L2 | ~250 |
-| 4 | `brighthive-e2e` | surface + feature + FORBIDDEN cases against staging | ~150 |
+| 4 | `brighthive-e2e` | surface + feature + FORBIDDEN + off-means-off cases against staging | ~150 |
 
-Split so each PR stays well under the 900-line ceiling and the backend read
-(PR 1) can land + deploy before the webapp (PR 3) depends on it. PR 2
-(unschedule) is independent of PR 1 and can proceed in parallel.
+Split so each PR stays under the 900-line ceiling and the backend read (PR 1)
+can land + deploy before the webapp (PR 3) depends on it. PR 2 (unschedule) is
+independent of PR 1 and can proceed in parallel — but PR 0 (if needed) blocks
+PR 2. PR 2's estimate rose from the naive ~300 to ~400 once the full reverse
+state machine (lock/rollback/reclaim, per the architecture review) is in scope;
+if it approaches the ceiling, split the client seam into its own PR.
