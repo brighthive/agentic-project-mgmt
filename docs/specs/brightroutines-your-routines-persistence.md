@@ -133,6 +133,13 @@ partial failure, so unschedule runs the symmetric three-step:
 a typed retryable error. A stale `UNSCHEDULING` lock self-heals via a reclaim
 window mirroring `SCHEDULING_LOCK_STALE_MS` (`routine-schedule-state.ts` L48).
 
+**Run-in-progress (409)**: brightbot's DELETE returns **409** when a dispatched
+run's terminal bridge hasn't landed (deleting mid-run would resurrect a
+malformed schedule row — BH-917). On 409, `unscheduleRoutine` rolls back to
+`SCHEDULED` and returns a typed **retryable** "can't turn off while a run is in
+progress" error — the user retries once the run completes. It does NOT flip the
+row to OFFERED (that would claim the routine is off while a run is still live).
+
 - **Auth on the write**: needs `jwtToken` from context (as
   `scheduleRoutineSuggestion` does — `routine-suggestion.ts` L430/548) to
   authenticate the brightbot delete call.
@@ -204,8 +211,12 @@ export interface UseRoutineSuggestionsResult {
     partial failure can complete.
 12. **Detector non-duplication**: a routine returned to OFFERED does not cause
     the nightly detector to create a *second* OFFERED suggestion for the same
-    `pattern_id`. (Must be verified against the brightbot `RoutineSuggestionStore`
-    before the mutation PR lands — see §6.)
+    `pattern_id`. The detector duplicates by default (§6 finding 3), so
+    unschedule MUST set a short pattern-level `cooldown_until` to suppress the
+    re-offer while the resurrected OFFERED row is already visible.
+13. `WHEN a dispatched run is in progress for the routine, THE System SHALL NOT
+    turn it off` — the DELETE returns 409, unschedule rolls back to SCHEDULED
+    and returns a retryable error (never flips to OFFERED with a run still live).
 
 ## 4. Acceptance Criteria (BDD)
 
@@ -238,6 +249,19 @@ Feature: "Your routines" persists across reloads
     Then it returns the routine unchanged
     And no error is raised
 
+  Scenario: Cannot turn off while a run is in progress
+    Given a SCHEDULED routine whose dispatched run has not completed
+    When I turn it off
+    Then I receive a retryable "run in progress" error
+    And the routine is still SCHEDULED
+    And its schedule is not deleted
+
+  Scenario: Turning off does not spawn a duplicate suggestion
+    Given a SCHEDULED routine whose pattern still recurs
+    When I turn it off
+    And the nightly detector next runs
+    Then exactly one OFFERED suggestion exists for that pattern
+
   Scenario: Empty scheduled list renders the anchored empty state
     Given a workspace with no SCHEDULED routines
     When I load the Workflows page
@@ -264,23 +288,40 @@ Feature: "Your routines" persists across reloads
 - **Shipped**: `execute_workflow` schedule **create** in brightbot (P1,
   BH-877/878), consumed by platform-core's `routine-scheduler-client.ts`
   (`createRoutineSchedule`, POST `/manage/scheduled-agents`).
-- **⚠️ NOT confirmed shipped — verify before the mutation PR**:
-  1. **brightbot exposes `DELETE /manage/scheduled-agents/{id}`.** If BH-877/878
-     shipped create-only, that endpoint is a **cross-repo brightbot
-     dependency** this ticket must add first (a blocking prerequisite, not part
-     of the platform-core PR). Confirm against brightbot's scheduled-agents
-     routes.
-  2. **platform-core has NO delete client seam.** `routine-scheduler-client.ts`
-     exports only `createRoutineSchedule`. The mutation PR must add a
-     `deleteRoutineSchedule(scheduleId, jwtToken)` (mirror the create seam,
-     404-tolerant per §3 Invariant 11). Grep confirms no existing
-     `deleteRoutineSchedule` / DELETE-against-scheduled-agents anywhere in
-     `src/graphql`.
-  3. **Detector idempotency against a resurrected OFFERED row** (§3 Invariant
-     12) — confirm the brightbot `RoutineSuggestionStore` / detector does not
-     insert a duplicate suggestion for a `pattern_id` that already has an
-     OFFERED row. If it does, unschedule needs a guard or a light cooldown; if
-     it keys on "no live OFFERED/SCHEDULED row for the pattern," we're safe.
+- **Verified against the real code (2026-07-04) — three findings that shape the build**:
+  1. **`DELETE /manage/scheduled-agents/{schedule_id}` already exists** in
+     brightbot (`routes/scheduled_agents_routes.py` L988). **No brightbot PR 0
+     needed** — PR 0 is removed from §11. Two response codes the platform-core
+     client MUST handle:
+     - **404** ("Schedule not found", L1012) — the schedule is already gone;
+       treat as success (§3 Invariant 11). The EventBridge layer is likewise
+       404-tolerant (`_delete_scheduler_schedule` swallows
+       `ResourceNotFoundException`, L555).
+     - **409** ("run in progress", L1024) — a dispatched run whose terminal
+       bridge hasn't landed yet cannot be deleted (deleting mid-run would let
+       the dispatcher's unconditioned `update_item` resurrect a malformed
+       schedule row — BH-917). `unscheduleRoutine` MUST surface 409 as a typed
+       **retryable "can't turn off while a run is in progress"** error and roll
+       the row back to `SCHEDULED` — it must NOT proceed to flip status.
+  2. **platform-core still has NO delete client seam.** `routine-scheduler-client.ts`
+     exports only `createRoutineSchedule`. The mutation PR adds
+     `deleteRoutineSchedule(scheduleId, jwtToken)` mapping 200/404→success,
+     409→retryable error, other non-2xx→502.
+  3. **Detector DOES duplicate — a guard is required (not optional).** Confirmed
+     in `brightbot/routines/detector.py` L541-551: on an existing pattern the
+     detector reuses `pattern_id` but always mints a **new**
+     `routine_suggestion_id` and `put_suggestion`s a fresh row; gate 7
+     (`has_recent_other_suggestion`, L491) only blocks suggestions for a
+     *different* pattern. So a turned-off→OFFERED row plus a still-recurring
+     pattern yields a **second** OFFERED row for the same pattern. §3 Invariant
+     12 therefore needs an explicit guard. Recommended (least-surprise, honors
+     §4 "reappears under Suggested"): on unschedule, set a **short
+     pattern-level cooldown** (e.g. one detection window) so the detector skips
+     re-offering while the resurrected OFFERED row is already visible — reuses
+     the existing `cooldown_until` mechanism the dismiss path already drives
+     (`detector.py` L476-480), no new field. A broader same-pattern-live-OFFERED
+     dedup in the detector is the more general fix but is out of this slice's
+     scope; file it separately if wanted.
 - **Reuse, do not duplicate**:
   - `RoutineSuggestionModel.listForWorkspace`-style GSI4 pagination
     (`routine-suggestion.ts` ~L220) — the new query is the same shape with a
@@ -399,15 +440,16 @@ means the contract wasn't enforced.
 
 | PR | Repo | Scope | Est. lines |
 |---|---|---|---:|
-| 0 | `brightbot` | **(only if §6 verification finds it missing)** `DELETE /manage/scheduled-agents/{id}`, 404-tolerant + idempotent | ~150 |
 | 1 | `brighthive-platform-core` | `scheduledRoutinesForWorkspace` query + resolver + model read, LocalStack L2 | ~250 |
-| 2 | `brighthive-platform-core` | `unscheduleRoutine` mutation: UNSCHEDULING lock + rollback + stale-reclaim + field `REMOVE`s + `deleteRoutineSchedule` client (404-tolerant) + owner/admin gate + LocalStack L2 | ~400 |
+| 2 | `brighthive-platform-core` | `unscheduleRoutine` mutation: UNSCHEDULING lock + rollback + stale-reclaim + field `REMOVE`s + short pattern cooldown + `deleteRoutineSchedule` client (404→ok / 409→retryable) + owner/admin gate + LocalStack L2 | ~400 |
 | 3 | `brighthive-webapp` | hook `scheduledRoutines` + `unscheduleRoutine`; `SuggestedRoutinesSection` drops local state; jest L2 | ~250 |
-| 4 | `brighthive-e2e` | surface + feature + FORBIDDEN + off-means-off cases against staging | ~150 |
+| 4 | `brighthive-e2e` | surface + feature + FORBIDDEN + off-means-off + run-in-progress cases against staging | ~150 |
 
-Split so each PR stays under the 900-line ceiling and the backend read (PR 1)
-can land + deploy before the webapp (PR 3) depends on it. PR 2 (unschedule) is
-independent of PR 1 and can proceed in parallel — but PR 0 (if needed) blocks
-PR 2. PR 2's estimate rose from the naive ~300 to ~400 once the full reverse
-state machine (lock/rollback/reclaim, per the architecture review) is in scope;
-if it approaches the ceiling, split the client seam into its own PR.
+The brightbot `DELETE /manage/scheduled-agents/{id}` endpoint already exists
+(§6 finding 1), so there is **no brightbot PR** in this slice. Split so each PR
+stays under the 900-line ceiling and the backend read (PR 1) can land + deploy
+before the webapp (PR 3) depends on it. PR 2 (unschedule) is independent of
+PR 1 and can proceed in parallel. PR 2's estimate rose from the naive ~300 to
+~400 once the full reverse state machine (lock/rollback/reclaim + cooldown) is
+in scope; if it approaches the ceiling, split the `deleteRoutineSchedule` client
+seam into its own PR.
