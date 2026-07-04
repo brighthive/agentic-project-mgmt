@@ -26,6 +26,15 @@ related:
 > `brightroutines-intent-loop.md` §7). This spec closes the one remaining gap
 > that makes scheduled routines feel unreal: they vanish on reload.
 
+**Terms.** The `RoutineSuggestion` DTO, its status lifecycle
+(`OFFERED / SCHEDULING / SCHEDULED / DISMISSED / EXPIRED / SUPPRESSED`), the
+`brightroutines-{env}` single-table layout (`GSI4`, `pattern_id`,
+`cooldown_until`, `offered_at`), and the `execute_workflow` schedule are all
+defined in the parent spec `brightroutines-intent-loop.md` §3–§4 — this spec
+does not redefine them. The one net-new term is **`UNSCHEDULING`**: a transient,
+non-firing status this spec adds for the reverse `SCHEDULED → OFFERED`
+transition (defined in §2.2).
+
 ## 1. Context
 
 **Problem.** On the Workflows surface (`/context/workflows`), the "Your
@@ -336,6 +345,10 @@ Feature: "Your routines" persists across reloads
 
 ## 7. Correctness Properties
 
+> (§8 Eval Criteria is omitted — this is not an LLM-behavior spec; the §3
+> invariants cover behavior. Section numbers otherwise follow the canonical SDD
+> layout.)
+
 State machine + a cross-tenant boundary are both in play, so this section
 applies (per spec-driven §7 required-when).
 
@@ -358,6 +371,14 @@ non-firing, so there is no window where `r` is both "off" and able to fire.
 
 **Validates: §3 Invariant 3, §3 Invariant 9, §4 Scenario "Turning a routine off…"**
 
+### Property 3: Server is the source of truth for on/off
+
+*For any* sequence of schedule/unschedule actions, a fresh page load with an
+empty client cache renders "Your routines" identical to
+`scheduledRoutinesForWorkspace`'s result.
+
+**Validates: §3 Invariant 5, §3 Invariant 6, §4 Scenario "survives a reload"**
+
 ### Property 4: Turn-off is race-free and never stranded
 
 *For any* set of concurrent `unscheduleRoutine(r)` calls plus any concurrent
@@ -366,14 +387,6 @@ forward re-schedule attempt, exactly one unschedule commits (the conditional
 (OFFERED on success, SCHEDULED on rollback) — never stuck in UNSCHEDULING.
 
 **Validates: §3 Invariant 8, §3 Invariant 9**
-
-### Property 3: Server is the source of truth for on/off
-
-*For any* sequence of schedule/unschedule actions, a fresh page load with an
-empty client cache renders "Your routines" identical to
-`scheduledRoutinesForWorkspace`'s result.
-
-**Validates: §3 Invariant 5, §3 Invariant 6, §4 Scenario "survives a reload"**
 
 ## 9. Observability Contract
 
