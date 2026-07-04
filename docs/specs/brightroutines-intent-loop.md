@@ -607,6 +607,32 @@ runner invokes it sync → `InvalidUpdateError` (brightbot #775/#776); (b) the
 Apollo Lambda had `BRIGHTROUTINES_TABLE_NAME` unset → read query degraded to []
 (platform-core #997/#998).
 
+### 🔍 Post-merge adversarial audit + remediation (BH-973, 2026-07-04)
+
+Three independent agents (Python correctness, TS/security, QA/coverage) were
+tasked to *disprove* "complete". Cross-tenant gating (P0), counts-only evidence
+(§9), and the sync-hook fix were CONFIRMED solid. Eight defects were found and
+all fixed (each in a green PR; the one live-harm item merged + deployed):
+
+- **`scrub_text` credential leak (HIGH)** — the capture scrubber caught only a
+  few shapes; AWS/OpenAI-proj/Anthropic/Stripe/DB-URL/`password=` etc. leaked
+  into DynamoDB + OpenAI embeddings, making the "secret-scrubbed" label false.
+  Expanded patterns + scrub the signature fields. brightbot #777 → **deployed to
+  staging #778** (serving revision verified to contain the fix).
+- **schedule double-create** on retry-after-partial-success (no idempotency
+  key) → `scheduleCreationPlan` reuses an existing schedule. platform-core #999.
+- **stranded-SCHEDULING lock** (rollback-also-failed) → self-healing reclaim of
+  a stale lock via `scheduling_started_at` + `SCHEDULING_LOCK_STALE_MS`. #999.
+- **raw AWS error leak** on the schedule read path → sanitized. #999.
+- **`detector_task.py` had zero tests** → LocalStack round-trip guarding the
+  store-write ⇄ read-mapper contract. brightbot #779.
+- **detector embedded sync on the event loop** → `asyncio.to_thread`. #780.
+- **capture spawned unbounded threads**, no timeout, shared boto3 resource, and
+  an inline Secrets-Manager fetch → bounded pool + deadline + per-worker store +
+  off-loop flag check. brightbot #781.
+- **e2e chain test "missing"** — it existed as a conflicting draft (BH-947);
+  rescued/rebased → mergeable. brighthive-e2e #30.
+
 ### Merged to develop
 - **Detector + judge** (BH-884): recurring-automation detector (embedding
   cohesion clustering @0.86) + `RoutineJudge` (Protocol + LLM adapter + fake,
