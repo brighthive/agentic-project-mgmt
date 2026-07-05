@@ -711,3 +711,146 @@ all fixed (each in a green PR; the one live-harm item merged + deployed):
 §8 originally targeted `src/Schedules/SchedulesPage.tsx`; the shipped surface
 is `src/Context/pages/FormulasPage.tsx` at `/context/workflows` — the first
 real implementation of that page's "Scheduled Actions" category.
+
+---
+
+## 15. Post-audit Appendix (BH-884 implementation, 2026-07-03)
+
+A four-lens architectural audit (solutions-architect / llm-systems-engineer /
+qa / end-user-persona) ran against BH-884's implementation branch. Six
+code-level P0 findings landed on PR #759; the remaining findings are open
+for spec-level revisit before the webapp UI ticket (BH-885+) ships. Each
+open item has a dedicated follow-up ticket rather than being decided in
+this document — the spec sections it questions (§6, §9, §10) are unchanged
+until those tickets land.
+
+**Findings that landed in code (BH-884 PR #759):**
+
+- Judge is model-agnostic (renamed `LLMSchedulabilityJudge`, tier is
+  `BRIGHTROUTINES_JUDGE_MODEL` env var, sonnet/haiku registry) — was
+  "Sonnet judge" prior. Spec §6 gate 6 wording ("Sonnet schedulability
+  judge confidence >= 0.85") should be read as "LLM judge with configurable
+  tier."
+- N=3 sample quorum with median confidence for the judge — smooths
+  near-threshold variance a single call at temp=0 still exhibits.
+- Typed `JudgeUnavailableError` distinct from low-confidence — a judge
+  outage is no longer indistinguishable from "gate 6 fail, confidence=0.0".
+- Prompt-injection defense: user-derived fields wrapped in
+  `<untrusted_input>` delimiters at prompt render time (spec §9 invariant 3
+  is enforced by type; this is defense-in-depth against injected
+  instructions inside the redacted summary field).
+- Within-run embedding memoization — reduces N+1 OpenAI cost during a
+  single detection run. Capture-time embedding (spec §4.1's reserved
+  `embedding` field) is [BH-946](https://brighthiveio.atlassian.net/browse/BH-946).
+- `run_detector` graph node is `async def` — mandatory under LangGraph
+  Cloud's live event loop.
+
+**Findings open for spec-level revisit** — do not act on these in code
+until the linked ticket lands a decision:
+
+| Finding (from audit) | Spec section touched | Ticket |
+|---|---|---|
+| Evidence panel: counts-only reads as surveillance; add one anchor quote | §9 invariant on counts-only evidence | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| Suppress after 1 dismiss, not 2 | §6 gate 8 wording | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| "Accept / Adjust / Not this one" 3-option card | §10 Gherkin (add adjust scenario) | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| Manager→report line detection in gate 2 (user breadth) | §6 gate 2 wording | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
+| Direction inversion (pinned-first, proactive-second) | Whole spec framing | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) ADR |
+| No canonical UserActivityEvent store — ProactiveSignal is a silo | §4 data model | [BH-942](https://brighthiveio.atlassian.net/browse/BH-942) |
+| Nightly per-workspace EventBridge doesn't scale — fan out over SQS | §6 detector job shape | [BH-943](https://brighthiveio.atlassian.net/browse/BH-943) |
+| No labeled judge corpus → §11 promotion gate unenforceable | §11 evals | [BH-944](https://brighthiveio.atlassian.net/browse/BH-944) |
+| OTel/LangSmith span shape for judge + detector | §5 capture / new observability §9? | [BH-945](https://brighthiveio.atlassian.net/browse/BH-945) |
+| EventBridge→dispatcher→LangGraph e2e in brighthive-e2e | §12 areas involved | [BH-947](https://brighthiveio.atlassian.net/browse/BH-947) |
+| RoutineSuggestion webapp contract snapshot | §2 interface contract | [BH-948](https://brighthiveio.atlassian.net/browse/BH-948) |
+
+**Guiding principle for the spec revisit** (BH-949): the end-user audit
+concluded 6/10 week-1 retention as currently specified. One anchor quote +
+"Adjust" button gets it to 8/10 by the persona's estimate. Suppression
+count and manager-graph awareness are the two other retention levers. All
+three are spec-level, not implementation choices, and should land before
+BH-885 (webapp UI) starts.
+
+---
+
+## 15. W/P/U Scoring Layer (BH-950, 2026-07-03)
+
+Rollup layer on top of §6's per-pattern outputs. Answers *"which
+workspace / project / user has the strongest routine adoption?"* without
+scanning raw signals. Composite score in `[0, 1]` per scope, computed
+nightly at the tail of the detector pass.
+
+### 15.1 Score DTO shape (counts-only, §9 invariant 3 compliant)
+
+`RoutineScore` (`brightbot/routines/scoring/dtos.py`) — frozen Pydantic
+with no field capable of carrying raw text:
+
+- `scope: ScoreScope` — `WORKSPACE` | `PROJECT` | `USER`
+- `workspace_id`, `scope_id` — always workspace-scoped (cross-workspace comparability lives in BH-942)
+- `window_start`, `window_end`, `computed_at`
+- Raw counts: `signals_count`, `schedulable_signals_count`,
+  `distinct_users_count`, `distinct_projects_count`,
+  `patterns_ready_count`, `suggestions_offered_count`,
+  `suggestions_scheduled_count`, `suggestions_dismissed_count`
+- Averages: `avg_judge_confidence`, `avg_recurrence_score` (nullable)
+- `composite_score: float ∈ [0, 1]`
+
+### 15.2 Composite formula (module-level, single tuning surface)
+
+```
+composite = schedulable_rate  * 0.4
+          + avg_confidence    * 0.3
+          + avg_recurrence    * 0.2
+          + activation_rate   * 0.1   # scheduled / offered
+```
+
+Weights sum to 1.0 (unit test enforces). None → 0 for the missing
+channels; inputs clamped to `[0, 1]` so rounding cannot push composite
+past 1.0. Same shape as `quality_utils.py`'s `overall_score` precedent.
+
+### 15.3 Persistence (audit-approved, non-conflicting with §4.1/4.2/4.3)
+
+Under existing `PK=WORKSPACE#<workspace_id>`:
+
+- `SK = SCORE#<scope>#<scope_id>#<window_end_iso>` — append-only per
+  window, so history / trend / EWMA is computable without re-scanning
+  signals.
+- `GSI5PK = SCORE_SCOPE#<scope>#<workspace_id>`
+- `GSI5SK = <inverted_composite_5-digit>#<scope_id>` — lexicographic
+  DESC by composite for leaderboard queries.
+
+CDK: `BrightroutinesDataStack` provisions GSI5 alongside GSI1–4.
+
+### 15.4 Aggregation + wiring
+
+`compute_scores_for_workspace()` runs at the tail of `run_detection`
+sharing the same 28-day window and the same OTel parent span. Emits a
+`brightroutines.score.compute` child span with `workspace_id`,
+`window_days`, `signals.total`, `signals.in_window`, `scores.written`,
+`scores.projects`, `scores.users` attributes. Never emits raw
+`intent.summary` on span attributes — the score row itself is
+counts-only by construction.
+
+Backward-compatible: `run_detection`'s new `score_store` parameter is
+optional. Existing callers get exactly pre-BH-950 behaviour.
+
+### 15.5 Read API
+
+- MCP tool `get_routine_scores(scope="WORKSPACE" | "PROJECT" | "USER")`
+  in `_CORE_TOOL_MODULES` (always-on), returns the top-N leaderboard.
+- `RoutineScoreStore.history(scope, scope_id, since=)` for trend
+  reads. No GraphQL resolver yet — that's BH-885's concern.
+
+### 15.6 Follow-ups (not in BH-950, tracked separately)
+
+- **Per-recipient suggestion status** → user-level offered/scheduled/dismissed counts (currently zero — BH-885 wires per-recipient).
+- **Per-signal recurrence score** → `avg_recurrence_score` populated (currently None — depends on BH-946 capture-time embedding).
+- **EWMA / trend view** over `history()` output — dashboard concern, not shipped in BH-950.
+- **Manager→reports gate 9** in the detector (spec §6 gate 2 refinement per BH-949) will consume `user_score.composite_score` as input; DTO shape is already designed for that consumer.
+
+### 15.7 Rationale for not fanning out on skill/agent surfaces
+
+Same argument as §6's non-adoption of Nano's skill framework: scoring is
+a headless nightly aggregation with a deterministic input contract, not
+a chat-turn capability. Wrapping it in a skill (`brightbot/skills/`) or
+subagent (`docs/CREATING_SUBAGENTS.md`) would add a conversational loop
+with no user to converse with. Pure Python module + Protocol store +
+MCP read-tool is the right encapsulation.
