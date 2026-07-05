@@ -1,10 +1,11 @@
 ---
 title: BrightRoutines Intent Loop
 epic: BH-876
-tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889]
+tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970]
 author: codex
-status: draft
+status: in-progress
 created: 2026-06-30
+last-reviewed: 2026-07-03
 generates: tickets
 tags:
   - brightagent
@@ -70,6 +71,18 @@ creates a `RoutineSchedule` that runs headlessly and delivers results.
 ---
 
 ## 2. Current Situation
+
+> **BH-942 note (added 2026-07-03)**: `ProactiveSignal` (defined in this
+> spec's §3) is the platform's first user-shaped per-turn record. A
+> proposed foundational spec —
+> [`user-activity-event-store.md`](./user-activity-event-store.md) —
+> generalizes it into a canonical `UserActivityEvent` store consumed by
+> BrightRoutines detector + scoring, plus future features (prompt
+> catalog, cost attribution, HITL replay). Once approved, ProactiveSignal
+> becomes a Pydantic view over `CHAT_TURN`-kind rows rather than a
+> separately-persisted DTO. This spec's §4 storage keys survive the
+> rename verbatim; only the table name and the addition of GSI6–GSI8
+> change downstream.
 
 ### Existing Reuse
 
@@ -404,23 +417,46 @@ Dismiss flow:
 
 ## 8. Offer Surfaces
 
-### Webapp
+### Webapp — home is `/context/workflows` (FormulasPage)
 
-Extend `src/Schedules/SchedulesPage.tsx`:
+The intended UI home is `/workspace/:workspaceId/context/workflows`, rendered
+by `src/Context/pages/FormulasPage.tsx`. That page is today an **inspirational
+preview** — a static grid of Formula categories (Data Transformations,
+Calculated Metrics, **Scheduled Actions**, Custom Prompts, Document Pipelines,
+Report Templates), every one marked `status: "coming_soon"`. It sets the
+product vocabulary for automations in BrightHive; BrightRoutines is the first
+*real* implementation of the **Scheduled Actions** category shown there.
 
-- Add "Suggested Routines" above the schedules table.
-- Use `useRoutineSuggestions`, modeled after `useSchedules`.
-- Suggestion card shows title, aggregate evidence, inferred cadence, and
-  actions: Schedule, Dismiss.
-- Schedule opens `AddScheduleDialog` prefilled with cadence and workflow task
-  details, then commits through the schedule route.
-- Cards are single-column on 320px, chips wrap, and action buttons stack under
-  480px.
+Delivery shape:
+
+- Introduce a `SchedulesPage`-style companion or an in-place upgrade of the
+  Scheduled Actions card on FormulasPage. Either way, when a workspace has
+  active `RoutineSuggestion` rows (status = `OFFERED`) or accepted routines
+  (any `ScheduleRoutineRequest` derived from a suggestion), the Scheduled
+  Actions card must switch from `coming_soon` to `active` with a count.
+- Click-through lands on a "Suggested Routines" list styled to match the
+  FormulasPage aesthetic (rounded cards, category color `#F47721` per current
+  mock). Each card shows the fields on `RoutineSuggestion`: title, aggregate
+  evidence (`RoutineEvidenceSummary` — counts only, no raw text — §9
+  invariant 3), inferred cadence, primary actions **Schedule** and **Dismiss**.
+- Schedule opens the existing `AddScheduleDialog` prefilled with cadence and
+  workflow task details, then commits through the schedule route. This reuses
+  the shipped scheduling infrastructure (BH-877/BH-878 execute_workflow) and
+  keeps the routine → schedule handoff a one-liner.
+- Mobile: cards are single-column on 320px, chips wrap, action buttons stack
+  under 480px, tap target ≥ 44px.
+
+Cross-repo consequence: BH-948's `RoutineSuggestion` contract snapshot in
+`brightbot/routines/contracts/routine_suggestion.json` is the wire shape the
+webapp binds against. Any field rename on the DTO must not land without a
+matching webapp update.
 
 Extend Notifications inbox:
 
 - Platform Core `formatSignal` returns `display.type = "workflow_suggestion"`.
-- Webapp registers `workflow_suggestion` card with Schedule/Dismiss actions.
+- Webapp registers `workflow_suggestion` card with Schedule/Dismiss actions
+  that deep-link into `/context/workflows` so the inbox click leaves the user
+  on the canonical routines home.
 
 ### Slack
 
@@ -581,3 +617,97 @@ Promotion gates:
 | 6 | `brighthive-webapp` | notification card for workflow suggestions | [BH-886](https://brighthiveio.atlassian.net/browse/BH-886) | <300 lines |
 | 7 | `brightbot-slack-server` | Slack formatter/buttons/action handlers | [BH-887](https://brighthiveio.atlassian.net/browse/BH-887) | <500 lines |
 | 8 | `brighthive-e2e` | P2/P3 spec coverage and tracker bindings | [BH-889](https://brighthiveio.atlassian.net/browse/BH-889) | <400 lines |
+
+## 14. Implementation Status (2026-07-04)
+
+Snapshot of what's built vs. designed. The sections above are the target
+contract; this tracks reality against it.
+
+### ✅ Verified live end-to-end on staging (2026-07-04)
+
+The full loop is proven on `brightagent-staging` + `api.staging.brighthive.net`,
+capture flag ON (`FEATURE_FLAG_BRIGHTROUTINES_CAPTURE=true`):
+chat turn → capture (Bedrock classify → secret-scrub → fingerprint → embed →
+`brightroutines-stg`) → detector (`detect_recurring_patterns`: GSI1 fetch →
+cohesion → 8 gates → Bedrock judge quorum) → OFFERED `RoutineSuggestion` →
+`routineSuggestionsForWorkspace` GraphQL returns it. Two deploy-only bugs were
+found + fixed during this pass, neither catchable without driving the real
+system: (a) `IntentCaptureMiddleware.after_agent` was async but the middleware
+runner invokes it sync → `InvalidUpdateError` (brightbot #775/#776); (b) the
+Apollo Lambda had `BRIGHTROUTINES_TABLE_NAME` unset → read query degraded to []
+(platform-core #997/#998).
+
+### 🔍 Post-merge adversarial audit + remediation (BH-973, 2026-07-04)
+
+Three independent agents (Python correctness, TS/security, QA/coverage) were
+tasked to *disprove* "complete". Cross-tenant gating (P0), counts-only evidence
+(§9), and the sync-hook fix were CONFIRMED solid. Eight defects were found and
+all fixed (each in a green PR; the one live-harm item merged + deployed):
+
+- **`scrub_text` credential leak (HIGH)** — the capture scrubber caught only a
+  few shapes; AWS/OpenAI-proj/Anthropic/Stripe/DB-URL/`password=` etc. leaked
+  into DynamoDB + OpenAI embeddings, making the "secret-scrubbed" label false.
+  Expanded patterns + scrub the signature fields. brightbot #777 → **deployed to
+  staging #778** (serving revision verified to contain the fix).
+- **schedule double-create** on retry-after-partial-success (no idempotency
+  key) → `scheduleCreationPlan` reuses an existing schedule. platform-core #999.
+- **stranded-SCHEDULING lock** (rollback-also-failed) → self-healing reclaim of
+  a stale lock via `scheduling_started_at` + `SCHEDULING_LOCK_STALE_MS`. #999.
+- **raw AWS error leak** on the schedule read path → sanitized. #999.
+- **`detector_task.py` had zero tests** → LocalStack round-trip guarding the
+  store-write ⇄ read-mapper contract. brightbot #779.
+- **detector embedded sync on the event loop** → `asyncio.to_thread`. #780.
+- **capture spawned unbounded threads**, no timeout, shared boto3 resource, and
+  an inline Secrets-Manager fetch → bounded pool + deadline + per-worker store +
+  off-loop flag check. brightbot #781.
+- **e2e chain test "missing"** — it existed as a conflicting draft (BH-947);
+  rescued/rebased → mergeable. brighthive-e2e #30.
+
+### Merged to develop
+- **Detector + judge** (BH-884): recurring-automation detector (embedding
+  cohesion clustering @0.86) + `RoutineJudge` (Protocol + LLM adapter + fake,
+  N=3 quorum, model-agnostic via `BRIGHTROUTINES_JUDGE_MODEL`).
+- **DynamoDB single-table** (BH-882) + **GSI5 for scores** (BH-985); judge
+  calibration corpus (BH-944), OTel spans (BH-945), capture-time embedding +
+  min-token gate (BH-946), contract snapshot (BH-948), W/P/U scoring (BH-950).
+- **`summary-agent` graph** (BH-955, brightbot #763): read-only graph the
+  schedule flow targets — registered in `langgraph.json` as `summary_agent`.
+- **Write path** (§7): `scheduleRoutineSuggestion` (platform-core #991) +
+  `dismissRoutineSuggestion` (#988) mutations, and **ownership persistence** —
+  Neo4j `OWNS`/`ACCEPTED`/`RECEIVES`/`DERIVED_FROM` edges + DynamoDB mirror
+  (BH-968, #992). Schedule state machine OFFERED→SCHEDULING→SCHEDULED with
+  rollback; conditional-write lock prevents double-schedule.
+- **Read query** — `routineSuggestionsForWorkspace` (platform-core #986):
+  paginated GSI4 read, **gated on workspace membership** via
+  `@authenticated(workspaceIdLoc)`. Exposes proposed action/artifact + ownership.
+
+### In review (open PRs)
+- **Capture path** (BH-960): `IntentCaptureMiddleware` `after_agent` hook on
+  `deep_agent` + `LLMIntentClassifier` write the `ProactiveSignal` the detector
+  clusters. Default-off behind the `BRIGHTROUTINES_CAPTURE` flag; best-effort,
+  off-loop, secret-scrubbed. brightbot #770 (core) + #771 (wiring). **This is
+  the last new code before the loop closes end-to-end.**
+- **Resolve action/artifact at schedule** (BH-969): platform-core #994 +
+  webapp #1264. Maps the scheduled graph id → resolved `ActionKind`/`OutputArtifact`.
+- **Editable recipient** (BH-970): platform-core #995 + webapp #1265. Recipients
+  are **validated to be workspace members** before delivery (owner always
+  included) — cross-tenant leak guard.
+- **Suggested Routines UI** — `/context/workflows` FormulasPage (webapp #1262):
+  Suggested + always-anchored "Your routines"; cadence rail, cadence/channel
+  chips, outcome chip (amber when it changes data), ownership line.
+
+### Design added this cycle (not in §1–§13 above)
+- **§3 extension — action/artifact axes** (BH-963/964): `ActionKind` ×
+  `OutputArtifact`, inferred at OFFER, resolved at SCHEDULE. The UI renders the
+  *outcome*, never the pipeline noun.
+- **§7/§9 extension — accountability model** (BH-963/965): owner / accepter /
+  recipients / contributors; unowned routine forbidden; Neo4j edges as SSOT.
+
+### Not yet built (next phase)
+- **§11 online eval / circuit breaker** — designed, unbuilt (BH-956/957).
+- **Capture OTel spans** (BH-972) — classify + write path spans (spec §9).
+
+### §8 correction
+§8 originally targeted `src/Schedules/SchedulesPage.tsx`; the shipped surface
+is `src/Context/pages/FormulasPage.tsx` at `/context/workflows` — the first
+real implementation of that page's "Scheduled Actions" category.

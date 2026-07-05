@@ -1,6 +1,6 @@
 # LangSmith Deployment Snapshot Index
 
-_Generated: 2026-06-19T15:26:25+00:00_
+_Generated: 2026-07-04T19:11:33+00:00_
 
 | Env | Deployment | Secrets | Env Vars | Snapshot At | Latest Revision |
 |-----|------------|---------|----------|-------------|-----------------|
@@ -12,4 +12,4 @@ _Generated: 2026-06-19T15:26:25+00:00_
 | main | `cron-jobs-quality-agent-poc` | 45 | 0 | 2026-06-19T15:26:24+00:00 | `299dd60c-a1f` |
 | main | `ibm-watsonx` | 30 | 0 | 2026-06-19T15:26:24+00:00 | `58ea0cd5-18c` |
 | prod | `brightagent-prod` | 54 | 0 | 2026-06-19T15:26:23+00:00 | `d2e2434a-bb4` |
-| staging | `brightagent-staging` | 72 | 0 | 2026-06-19T15:26:22+00:00 | `b69657dc-0fc` |
+| staging | `brightagent-staging` | 77 | 0 | 2026-07-04T19:11:33+00:00 | `89ccca0c-a1d` |
