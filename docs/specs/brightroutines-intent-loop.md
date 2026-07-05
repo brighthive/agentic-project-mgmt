@@ -518,11 +518,41 @@ LLM-powered pieces: automation-intent extractor and schedulability judge.
 
 Promotion gates:
 
-- P2 -> P3: shadow precision >= 0.70 against human labels for two weeks.
+- P2 -> P3: shadow **precision >= 0.70 AND recall >= 0.50** against human labels
+  for two weeks, over >= 25 evaluated cases, measured at the detector's live
+  operating point. ECE is **reported, not gated** (see the hardening note).
 - P3 -> P4: live schedule rate >= 25 percent and false-offer complaint rate <
   5 percent.
 - Circuit breaker: if live precision falls below 0.60, stop surfacing offers and
   keep shadow detection only.
+
+> **BH-956 hardening.** The P2->P3 gate was originally precision-only. That was
+> a blind spot: a conservative judge that offers almost nothing trivially maxes
+> precision (everything it does offer is right), so precision alone cannot see
+> under-offering. The live judge (pre-recalibration) offered ~1 in 5 valid
+> routines while still "passing". The **recall floor** (>= 0.50) closes that.
+>
+> Two things were validated by running the REAL Bedrock judge over the 60-case
+> corpus (not just unit fakes):
+>
+> 1. **The evaluator must measure at the detector's operating point.** The
+>    recalibration moved the detector 0.85 -> 0.70 but the evaluator's
+>    `DEFAULT_THRESHOLD` initially stayed 0.85, so the live eval read recall
+>    0.138 (scoring 0.78-0.82 verdicts against a 0.85 bar) even though
+>    production offers correctly at 0.70. `DEFAULT_THRESHOLD` is now bound to
+>    `MIN_JUDGE_CONFIDENCE` so the two can never drift.
+> 2. **ECE is reported, not gated.** The real judge measures ECE ~0.46 at the
+>    0.70 operating point — an excellent *classifier* (precision 0.931 / recall
+>    0.931 / accuracy 0.933 over 60 cases) whose raw self-reported confidences
+>    are not calibrated probabilities (normal for an LLM without post-hoc
+>    temperature/isotonic scaling). A hard ECE ceiling would permanently block a
+>    judge that decides correctly, so ECE is surfaced on the report and worth an
+>    alert if it drifts, but classification quality — not probability
+>    calibration — is the promotion bar.
+>
+> Enforced in `JudgeCalibrationReport.passes_shadow_promotion_gate()`
+> (`brightbot/evals/routines/judge_evaluator.py`), verified via the live eval in
+> `tests/integration/routines/test_judge_calibration.py` (`BH_RUN_LIVE_EVALS=1`).
 
 ---
 
