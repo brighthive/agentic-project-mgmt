@@ -1,11 +1,11 @@
 ---
 title: BrightRoutines Intent Loop
 epic: BH-876
-tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970]
+tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-949, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970]
 author: codex
 status: in-progress
 created: 2026-06-30
-last-reviewed: 2026-07-03
+last-reviewed: 2026-07-06
 generates: tickets
 tags:
   - brightagent
@@ -359,8 +359,13 @@ Pattern detection window:
 Trust gates:
 
 1. `intent.intent_kind` is REPORT, EXTRACT, or MONITOR.
-2. At least 3 distinct users in 28 days, or one user at least 5 times across at
-   least 3 weeks.
+2. At least 3 distinct users in 28 days AND those users are not all members of
+   a single manager→reports chain, or one user at least 5 times across at
+   least 3 weeks. **No reporting-hierarchy data source exists yet (§17.4,
+   BH-949) — until one is wired in, the manager-chain sub-clause fails
+   closed: user-breadth alone cannot pass gate 2. Only the single-user
+   5×/3wk cadence path is currently reliable.** Flagged as a P0 follow-up,
+   not backlog — the live detector (BH-884) has no hierarchy check today.
 3. `outcome_ok_rate >= 0.8` for rows with known outcome.
 4. Pattern cohesion >= 0.86.
 5. Cadence consistency >= 60 percent when cadence is inferred.
@@ -479,7 +484,11 @@ Extend BrightSignals:
 2. Viewer queries may count toward recurrence, but Viewers can never see, own,
    schedule, or receive a Routine.
 3. Raw cross-user text never appears in suggestion copy, judge prompts, Slack,
-   webapp cards, notifications, or logs.
+   webapp cards, notifications, or logs. **Exception (§17.1, BH-949)**: a
+   suggestion card MAY show one truncated line (≤140 chars) of the *viewing
+   user's own* most-recent matching message as an anchor quote — never
+   another user's text, and never in Slack/notification copy (webapp card
+   only).
 4. Raw excerpts are redacted, capped, and TTL-deleted after 35 days.
 5. A Routine executes under the scheduling owner's current permissions,
    rechecked on every run by the P1 schedule execution contract.
@@ -537,6 +546,16 @@ Feature: BrightRoutines Intent Loop
     When eligible users dismiss it twice
     Then the suggestion status is SUPPRESSED
     And the detector does not re-offer it
+
+  Scenario: User adjusts an offered routine before scheduling (§17.3, BH-949)
+    Given a RoutineSuggestion status is OFFERED
+    When a Collaborator clicks "Adjust"
+    Then AddScheduleDialog opens prefilled with the suggestion's inferred cadence and recipients
+    And the user may change cadence, recipients, or delivery before submitting
+    When the user submits
+    Then the suggestion is scheduled with the user's chosen values, not the inferred ones
+    And which fields differed from the inferred values is recorded as adjustment feedback
+    And the suggestion status is SCHEDULED
 ```
 
 ---
@@ -750,11 +769,11 @@ until the linked ticket lands a decision:
 
 | Finding (from audit) | Spec section touched | Ticket |
 |---|---|---|
-| Evidence panel: counts-only reads as surveillance; add one anchor quote | §9 invariant on counts-only evidence | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
-| Suppress after 1 dismiss, not 2 | §6 gate 8 wording | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
-| "Accept / Adjust / Not this one" 3-option card | §10 Gherkin (add adjust scenario) | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
-| Manager→report line detection in gate 2 (user breadth) | §6 gate 2 wording | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) |
-| Direction inversion (pinned-first, proactive-second) | Whole spec framing | [BH-949](https://brighthiveio.atlassian.net/browse/BH-949) ADR |
+| Evidence panel: counts-only reads as surveillance; add one anchor quote | §9 inv. 3 (revised) + §17.1 | **Decided 2026-07-06 — [BH-949](https://brighthiveio.atlassian.net/browse/BH-949)**: add anchor quote |
+| Suppress after 1 dismiss, not 2 | §6 gate 8 (reaffirmed) + §17.2 | **Decided 2026-07-06 — [BH-949](https://brighthiveio.atlassian.net/browse/BH-949)**: kept 2-dismiss |
+| "Accept / Adjust / Not this one" 3-option card | §10 Gherkin (added) + §17.3 | **Decided 2026-07-06 — [BH-949](https://brighthiveio.atlassian.net/browse/BH-949)**: add Adjust |
+| Manager→report line detection in gate 2 (user breadth) | §6 gate 2 (revised) + §17.4 | **Decided 2026-07-06 — [BH-949](https://brighthiveio.atlassian.net/browse/BH-949)**: block gate 2, P0 |
+| Direction inversion (pinned-first, proactive-second) | §17.5 ADR | **Decided 2026-07-06 — [BH-949](https://brighthiveio.atlassian.net/browse/BH-949)**: rejected, stay proactive-first |
 | No canonical UserActivityEvent store — ProactiveSignal is a silo | §4 data model | [BH-942](https://brighthiveio.atlassian.net/browse/BH-942) |
 | Nightly per-workspace EventBridge doesn't scale — fan out over SQS | §6 detector job shape | [BH-943](https://brighthiveio.atlassian.net/browse/BH-943) |
 | No labeled judge corpus → §11 promotion gate unenforceable | §11 evals | [BH-944](https://brighthiveio.atlassian.net/browse/BH-944) |
@@ -854,3 +873,159 @@ a chat-turn capability. Wrapping it in a skill (`brightbot/skills/`) or
 subagent (`docs/CREATING_SUBAGENTS.md`) would add a conversational loop
 with no user to converse with. Pure Python module + Protocol store +
 MCP read-tool is the right encapsulation.
+
+## 17. BH-949 Spec Revisit — Kuri's Decisions (2026-07-06)
+
+The end-user audit (§15's table) flagged four product decisions that were
+supposed to land before the webapp UI (BH-954) shipped. BH-954 shipped
+first with the pre-revisit behavior (counts-only evidence, binary
+Accept/Dismiss, 2-dismiss escalation) — this section is the retroactive
+decision record plus the delta each decision opens against the shipped
+code. Each decision below closes one BH-949 AC bullet.
+
+### 17.1 Decision 1 — Evidence panel: add one anchor quote
+
+**Decided: add one anchor quote.** The card gains one truncated line of the
+**viewer's own** most-recent matching message, alongside the existing
+counts — never another user's text, so the cross-user redaction guarantee
+(§9 invariant 3) is unchanged. Hidden counts alone read as surveillance;
+seeing your own words read back builds trust that the system understood
+the actual request.
+
+**§9 invariant 3 revised**:
+
+> Raw cross-user text never appears in suggestion copy, judge prompts,
+> Slack, webapp cards, notifications, or logs. **Exception**: a suggestion
+> card MAY show one truncated line (≤140 chars) of the *viewing user's own*
+> most-recent matching message as an anchor quote — never another user's
+> text, and never in Slack/notification copy (webapp card only).
+
+**Implementation delta** (not yet built — new ticket, not this session's
+scope): `RoutineSuggestion` needs a per-viewer-resolved
+`viewer_anchor_excerpt: str | None` field, populated by looking up the
+requesting user's own `ProactiveSignal` row matching the pattern's
+fingerprint at read time (never stored on the shared suggestion row itself,
+to avoid leaking one user's excerpt to another reader of the same
+suggestion).
+
+### 17.2 Decision 2 — Suppression: keep 2-dismiss escalation
+
+**Decided: keep the current 2-dismiss escalation** (first dismiss →
+90-day cooldown, second dismiss for the same pattern → permanent
+SUPPRESSED). Rejects the audit's 1-dismiss proposal — a single dismiss is
+often just bad timing ("not right now, I'm mid-report"), and going straight
+to permanent suppression on one click costs more true positives than it
+saves in \"the product isn't listening\" sentiment. The existing behavior
+already ships correctly (BH-967's `nextDismissStatus` — see §15's
+implementation status) — no code change from this decision.
+
+**§6 gate 8 reaffirmed as-is**, no revision. This decision overrides the
+audit's specific ask; the counter-argument above is the record of why.
+
+### 17.3 Decision 3 — Card actions: add "Adjust"
+
+**Decided: add a third "Adjust" option.** Cards move from binary
+Accept/Dismiss to **Accept / Adjust / Not this one**. "Not this one" is
+Dismiss renamed for clarity (no behavior change — still feeds §6 gate 8).
+"Adjust" opens the existing `AddScheduleDialog` (already shipped, verified
+working end-to-end this session — BH-975/976/977/982) prefilled with the
+suggestion's inferred cadence/recipients, and **captures which fields the
+user actually changed** as structured feedback before committing the
+schedule — not just a silent edit. This is the refinement from Kuri's
+2026-07-06 note: the Adjust flow isn't only "edit and go," it's a signal
+capture point — *what was off* (cadence, recipients, relevance) feeds back
+into future suggestion tuning, distinct from a clean Accept.
+
+**§10 Gherkin addition**:
+
+```gherkin
+  Scenario: User adjusts an offered routine before scheduling
+    Given a RoutineSuggestion status is OFFERED
+    When a Collaborator clicks "Adjust"
+    Then AddScheduleDialog opens prefilled with the suggestion's inferred cadence and recipients
+    And the user may change cadence, recipients, or delivery before submitting
+    When the user submits
+    Then the suggestion is scheduled with the user's chosen values, not the inferred ones
+    And which fields differed from the inferred values is recorded as adjustment feedback
+    And the suggestion status is SCHEDULED
+```
+
+**Implementation delta** (new ticket, not this session's scope): webapp
+`RoutineSuggestionCard.tsx` gains the third button; `AddScheduleDialog`
+needs a diff step comparing submitted values against the suggestion's
+`proposed_cadence`/inferred recipients, and a new field on the schedule
+mutation (or a side-channel event) to record which fields were adjusted.
+
+### 17.4 Decision 4 — Manager→report gate: block gate 2 until hierarchy-aware
+
+**Decided: block gate 2 until hierarchy-aware** — the stricter of the two
+options. Gate 2 ("at least 3 distinct users in 28 days") must not fire on
+user-breadth alone if those users are a manager + their direct reports,
+since that's one person's reporting chain surfacing across threads, not
+organic multi-user demand. Until a reporting-hierarchy signal exists (no
+HRIS/org-chart data source is currently wired into BrightHive), gate 2
+requires an explicit hierarchy check to pass, not just a raw distinct-user
+count.
+
+**§6 gate 2 revised**:
+
+> 2. At least 3 distinct users in 28 days AND those users are not all
+>    members of a single manager→reports chain (no hierarchy data source
+>    yet → **this sub-clause fails closed: gate 2 cannot pass on
+>    user-breadth alone until a reporting-hierarchy signal is available**),
+>    OR one user at least 5 times across at least 3 weeks.
+
+**Consequence**: until the hierarchy signal ships, gate 2's user-breadth
+path is effectively gated off for any workspace where BrightHive cannot
+prove the ≥3 users are independent. The single-user cadence path (5×/3wk)
+remains fully available. This is a real, immediate behavior change from
+what's shipped today — **flagging as a P0 follow-up ticket**, not
+optional cleanup, since the currently-live detector (BH-884, verified this
+session) has no hierarchy check and gate 2 can fire on a manager's own
+repeated ask surfacing through report threads right now.
+
+**Implementation delta** (new ticket, P0 not backlog): needs (a) a
+hierarchy data source — even a coarse one, e.g. Neo4j `REPORTS_TO` edges
+if that relationship exists anywhere in the platform today, or an explicit
+non-goal if it doesn't — and (b) a detector-side check in gate 2 before
+the next production run. Until this ticket lands, gate 2's user-breadth
+path should be treated as a known false-positive source, not a solved gate.
+
+### 17.5 ADR: proactive-first vs pinned-first (considered and rejected)
+
+**Status: Rejected — staying proactive-first.**
+
+**Considered**: invert the architecture so a user manually "pins" a chat
+thread as a routine (no detector involved in that path), with proactive
+detection layered on as a secondary/optional discovery mechanism. This
+would remove the "surveillance" framing entirely — nothing is offered
+that wasn't explicitly asked for.
+
+**Why rejected**: the detector → judge → suggestion pipeline (BH-884 and
+its dependents) is built, tested (60-case judge corpus, calibration eval,
+real-behavior LocalStack + real-staging verification this session), and
+deployed. A pinned-first inversion would not extend this pipeline — it
+would replace its primary entry point, discarding verified production
+code to chase a UX framing problem that decisions 17.1 (anchor quote) and
+17.3 (Adjust option) already address most of: the surveillance smell came
+from *opaque* proactive offers, not from proactivity itself. Anchor quotes
+make the evidence legible; the Adjust option makes acceptance reversible
+and reviewable. Both are cheaper than a rearchitecture and ship the same
+trust improvement.
+
+**Not closed forever**: if user research after 17.1/17.2/17.3/17.4 ship
+still shows meaningful "why is this suggesting things to me" friction,
+revisit pinned-first as an *additive* v2 entry point (both paths coexist)
+rather than a replacement — the DTOs (`RoutineSuggestion`,
+`RoutineSchedule`) don't structurally prevent a user-initiated creation
+path being added later.
+
+### 17.6 Summary of what's now open (new tickets, not filed by this spec edit)
+
+| Decision | Spec delta | Code delta | Priority |
+|---|---|---|---|
+| 17.1 Anchor quote | §9 inv. 3 exception (this edit) | `viewer_anchor_excerpt` field + resolver + card render | Backlog |
+| 17.2 Suppression | None — reaffirmed | None | N/A |
+| 17.3 Adjust option | §10 Gherkin scenario (this edit) | 3rd card button + dialog diff step + feedback capture | Backlog |
+| 17.4 Manager gate | §6 gate 2 (this edit) | Hierarchy data source + detector gate check | **P0** — live detector has no hierarchy check today |
+| 17.5 ADR | This section | None (rejected) | N/A |
