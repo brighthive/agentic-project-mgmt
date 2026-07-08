@@ -39,19 +39,18 @@ related:
 
 ## 1. Context
 
-The BrightRoutines P1 epic (BH-876, 6 PRs open for review, CI-green, independently re-verified —
-see §6 Dependencies for current per-PR status) makes an *existing* WorkflowSpec schedulable
-end-to-end. It assumes a human has already hand-built a compiled WorkflowSpec in the webapp's
-Workflow Studio before any of that scheduling machinery is useful — every routine still starts
-with human authoring.
+The BrightRoutines P1 epic (BH-876, merged to develop as of 2026-07-07 — see §6 Dependencies for
+current status) makes an *existing* WorkflowSpec schedulable end-to-end. It assumes a human has
+already hand-built a compiled WorkflowSpec in the webapp's Workflow Studio before any of that
+scheduling machinery is useful — every routine still starts with human authoring.
 
 The `#releases` post announcing P1 named this out loud as the next gap: AI generation of workflow
 content itself — steps, bindings, SQL/agent config — rather than a human hand-building the
 WorkflowSpec DAG before it can be scheduled. This spec owns that gap. It sits between the P2
 intent-loop spec (`brightroutines-intent-loop.md`, BH-882–889 — detects *that* a routine should
-exist) and the P1 scheduling substrate (BH-876, PRs open for review — runs a routine once it
-exists): P2 says "the user keeps asking for X," this spec turns that into a runnable, compiled
-WorkflowSpec, and P1 schedules it.
+exist) and the P1 scheduling substrate (BH-876, merged — runs a routine once it exists): P2 says
+"the user keeps asking for X," this spec turns that into a runnable, compiled WorkflowSpec, and
+P1 schedules it.
 
 ```mermaid
 sequenceDiagram
@@ -101,7 +100,7 @@ perspective) from one a human built by hand.
 
 ### How it works today
 
-- **BH-876/BH-877/BH-878/BH-879 (P1, PRs open for review, not yet merged)**: `executeWorkflowAsOwner`
+- **BH-876/BH-877/BH-878/BH-879 (P1, Done, merged to develop)**: `executeWorkflowAsOwner`
   schedules and runs an *existing* `VALIDATED` WorkflowSpec. It has no opinion on how that spec
   was authored.
 - **`WorkflowCompiler.compile()`** (`brighthive-platform-core/src/graphql/service/workflow/compiler.ts`)
@@ -340,9 +339,9 @@ Feature: AI-authored WorkflowSpec generation from intent
 
 | Dependency | Type | Status |
 |---|---|---|
-| BH-876 P1 scheduling substrate (`executeWorkflowAsOwner`, terminal bridge, notification fanout) | Blocking | 6 PRs open for review, CI-green, not yet merged |
-| P2 intent-loop spec (`brightroutines-intent-loop.md`), specifically `AutomationSignature.fingerprint` and `RoutineSuggestion` DTOs (BH-882–884) | Blocking | Drafted, not implemented |
-| BH-885 `RoutineSuggestion` schedule/dismiss routes (this spec's PR 5 wires into its §7 step 3) | Blocking for PR 5 only | Drafted, not implemented — this spec's ticket 5 must sequence after BH-885 merges |
+| BH-876 P1 scheduling substrate (`executeWorkflowAsOwner`, terminal bridge, notification fanout) | Blocking | **Done** — merged to develop (BH-877/878/879), verified 2026-07-07 |
+| P2 intent-loop spec (`brightroutines-intent-loop.md`), specifically `AutomationSignature.fingerprint` and `RoutineSuggestion` DTOs (BH-882–884) | Blocking | **Done** — merged to develop, verified 2026-07-07 |
+| BH-885 `RoutineSuggestion` schedule/dismiss routes (this spec's PR 5 wires into its §7 step 3) | Blocking for PR 5 only | **Done** — schedule/dismiss mutations live in `routine-suggestion.ts` (`scheduleRoutineSuggestion`/`dismissRoutineSuggestion`), verified 2026-07-07. Note: as of BH-1001 the mutation signature carries an additional `actingUserId` service-key auth mode (Slack scheduling) — PR 5's wiring should account for the current signature, not the one at spec-authoring time. |
 | `EnhancedMetadataRetrievalTool` (Stage A catalog RAG) | Blocking | Live, reused unmodified |
 | `WorkflowCompiler.compile()` / `checkPolicies()` extension point | Blocking | Live; this spec adds one new branch |
 | `sqlglot` (SQL AST validation) | Blocking | Already a brightbot dependency (used only in `evals/online/gates.py` today; this spec adds a second call site) |
@@ -444,15 +443,22 @@ entry has a corresponding new test case, and confirm all suites are green.
 
 ## Ticket Breakdown
 
-**Status as of 2026-07-03**: 2 of 7 tickets shipped (as a demo/backstop, not
-the full agent) — see below. The `ground`/`draft`/`validate` LangGraph nodes
-themselves remain unbuilt; real BH-897 is still its own epic pending approval
-of this spec's direction.
+**Status as of 2026-07-07 (corrected — see verification below)**: 0 of 7 tickets
+shipped. All BH-897 sub-tickets (BH-897, BH-898, BH-899, BH-900, BH-901, BH-902,
+BH-903, BH-904, BH-910, BH-911) remain **Needs Refinement** in Jira. The
+`brightbot/scripts/demo_workflow_from_intent.py` file referenced by BH-910
+exists in the repo, but per its own docstring it is explicitly a non-shippable
+proof-of-concept, not a merged deliverable — and `WorkflowSpecNode.authoredBy`
+(BH-911) does not exist anywhere in `workflow-spec-typedefs.ts` or the Core API
+schema as of this correction. The `ground`/`draft`/`validate` LangGraph nodes
+themselves remain entirely unbuilt; real BH-897 is still its own epic pending
+approval of this spec's direction — nothing in this ticket breakdown should be
+treated as a build starting point without re-confirming current Jira status.
 
 | Ticket | Summary | Points | Epic | Status |
 |---|---|---|---|---|
-| [BH-911](https://brighthiveio.atlassian.net/browse/BH-911) | `brighthive-platform-core`: `WorkflowSpecNode.authoredBy` field + `checkPolicies()` runtime-allowlist BLOCKER branch, bundled with an artifact-presence WARNING (~200 lines) | 2 | BH-897 | **Shipped**, merged to develop |
-| [BH-910](https://brighthiveio.atlassian.net/browse/BH-910) | `brightbot`: throwaway demo script (`scripts/demo_workflow_from_intent.py`) hand-simulating ground→draft→validate with 3 real calls — proves the concept against real local infra, explicitly non-shippable | 2 | BH-897 | **Shipped** (demo only), merged to develop |
+| [BH-911](https://brighthiveio.atlassian.net/browse/BH-911) | `brighthive-platform-core`: `WorkflowSpecNode.authoredBy` field + `checkPolicies()` runtime-allowlist BLOCKER branch, bundled with an artifact-presence WARNING (~200 lines) | 2 | BH-897 | Not started — `authoredBy` field confirmed absent from schema as of 2026-07-07 |
+| [BH-910](https://brighthiveio.atlassian.net/browse/BH-910) | `brightbot`: throwaway demo script (`scripts/demo_workflow_from_intent.py`) hand-simulating ground→draft→validate with 3 real calls — proves the concept against real local infra, explicitly non-shippable | 2 | BH-897 | Demo script exists in repo (non-shippable per its own docstring); ticket itself still Needs Refinement, not Done |
 | — | `brightbot`: `ground` node — Stage A catalog RAG call + Stage B fingerprint lookup against P2's pattern/suggestion links, no LLM (~300 lines incl. tests) | 3 | BH-897 | Not started |
 | — | `brightbot`: `draft` node — constrained ReAct loop, AGENT_REGISTRY-restricted config drafting, `sqlglot` AST SQL validator (~500 lines) | 5 | BH-897 |
 | — | `brightbot`: `validate` node — WorkflowSpec GraphQL client (create/upsert/bind/compile round-trip), bounded BLOCKER-retry loop, streaming middleware wiring (~450 lines) | 5 | BH-897 |
@@ -467,6 +473,6 @@ BH-885 itself being merged (not concurrent, to avoid both PRs racing the same sc
 
 ## Related
 
-- **Predecessor spec (P1, PRs open for review)**: `docs/specs/brightroutines-execute-workflow-schedule.md`
-- **Predecessor spec (P2, drafted)**: `docs/specs/brightroutines-intent-loop.md`
+- **Predecessor spec (P1, Done — merged to develop)**: `docs/specs/brightroutines-execute-workflow-schedule.md`
+- **Predecessor spec (P2, Done — merged to develop)**: `docs/specs/brightroutines-intent-loop.md`
 - **Jira epic**: BH-876; this spec's ticket parent: BH-897
