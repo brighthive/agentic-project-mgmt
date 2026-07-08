@@ -3,8 +3,9 @@ title: BrightRoutines — "Your routines" Persistence
 epic: BH-876
 tickets: [BH-885]
 author: kuri
-status: draft
+status: implemented-verified-staging
 created: 2026-07-04
+last-reviewed: 2026-07-08
 generates: tickets
 tags:
   - brightagent

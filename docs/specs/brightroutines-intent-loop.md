@@ -1,11 +1,11 @@
 ---
 title: BrightRoutines Intent Loop
 epic: BH-876
-tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970]
+tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970, BH-1001, BH-1002, BH-1003, BH-1004]
 author: codex
-status: in-progress
+status: implemented-verified-staging
 created: 2026-06-30
-last-reviewed: 2026-07-03
+last-reviewed: 2026-07-08
 generates: tickets
 tags:
   - brightagent
@@ -704,6 +704,9 @@ all fixed (each in a green PR; the one live-harm item merged + deployed):
   recipients / contributors; unowned routine forbidden; Neo4j edges as SSOT.
 
 ### Not yet built (next phase)
+> These two items are tracked as separate follow-up tickets, not blockers on
+> the epic's Done status — BH-876 itself shipped and is verified live on
+> staging without them.
 - **§11 online eval / circuit breaker** — designed, unbuilt (BH-956/957).
 - **Capture OTel spans** (BH-972) — classify + write path spans (spec §9).
 
@@ -771,7 +774,7 @@ BH-885 (webapp UI) starts.
 
 ---
 
-## 15. W/P/U Scoring Layer (BH-950, 2026-07-03)
+## 16. W/P/U Scoring Layer (BH-950, 2026-07-03)
 
 Rollup layer on top of §6's per-pattern outputs. Answers *"which
 workspace / project / user has the strongest routine adoption?"* without

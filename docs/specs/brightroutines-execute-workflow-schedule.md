@@ -3,9 +3,9 @@ title: BrightRoutines Execute Workflow Scheduling
 epic: BH-876
 tickets: [BH-877, BH-878, BH-879, BH-880, BH-881, BH-908, BH-909, BH-910, BH-911, BH-914, BH-915, BH-916]
 author: codex
-status: implemented-pending-staging-verification
+status: implemented-verified-staging
 created: 2026-06-30
-last-reviewed: 2026-07-03
+last-reviewed: 2026-07-08
 generates: tickets
 tags:
   - brightagent
@@ -24,6 +24,13 @@ related:
 > WorkflowSpec executable on a schedule, with no ML/proactive detection. The
 > proactive automation-intent learning loop is specified separately in
 > `brightroutines-intent-loop.md`.
+>
+> **Status (2026-07-08)**: the P1 core (BH-877–881) is Done and verified live
+> on staging. BH-908/909 (Teams channel adapter) and BH-910/911 (AI-authored
+> WorkflowSpec demo/policy work) are a separate, later-scoped initiative
+> (BH-897) tracked on its own timeline — not part of BH-876's P1 delivery.
+> BH-915/916 (deploy-visibility tooling gaps) remain open follow-ups,
+> unrelated to whether P1 itself works.
 
 ## Jira Tickets
 

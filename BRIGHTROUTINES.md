@@ -142,7 +142,7 @@ if off, off everywhere; if on, check **per-workspace** override in AWS Secrets
   gate fails. Prod: PR `staging`→`main` + a full release.
 - **webapp** → merge to `staging` → Amplify auto-deploys. Prod: `main`.
 
-## Status (2026-07-05)
+## Status (2026-07-08) — Epic Done in Jira, Verified on Staging, Not Yet in Prod
 
 - **Capture + detect + judge**: live on staging. Judge recalibrated 0.85→0.70
   (BH-956), promotion gate hardened (precision + recall floors; ECE reported not
@@ -151,18 +151,34 @@ if off, off everywhere; if on, check **per-workspace** override in AWS Secrets
   staging (platform-core `v2.9.0.65`, webapp Amplify), **verified live** — 10/10
   surface + 3/3 write-path (lifecycle · concurrency · stale-lock) green against
   the staging API.
-- **Not yet in prod** — `staging`→`main` promotion pending an explicit release.
-- **Open tech-debt**: BH-979 (split platform-core `typedefs.ts`, >1300 lines).
+- **Inbox card + Slack cards** (BH-886/887, split into BH-1001–1004 once the
+  Slack-scheduling auth gap was found — Slack has no BrightHive Bearer JWT):
+  merged, deployed to staging (platform-core `v2.9.0.68`), **verified live** —
+  a real `workflow_suggestion` Slack card with working Schedule/Dismiss buttons
+  was posted in `#notifications_brightagent` and confirmed directly, then a
+  real `dismissRoutineSuggestion` call via the new service-key + `actingUserId`
+  auth mode succeeded against a live suggestion with zero Bearer token.
+- **Not yet in prod** — `staging`→`main` promotion pending an explicit release
+  (confirmed: none of BH-876's commits are in platform-core's `main` as of
+  2026-07-08).
+- **Open tech-debt**: BH-1005 (split platform-core `typedefs.ts`, >1300 lines —
+  supersedes the earlier BH-979 entry, same underlying issue re-filed).
+- **Out of scope for this epic**: BH-897–911 ("AI-authored WorkflowSpec
+  generation") shares BH-876 as its Jira parent but is a separate, larger,
+  still-unbuilt initiative with its own spec
+  (`brightroutines-ai-authored-workflowspec.md`) and review cycle.
 
 ## Ticket map
 
 | Ticket | Scope |
 |---|---|
-| BH-876 | Epic |
+| BH-876 | Epic — **Done** |
 | BH-882 | DynamoDB single-table store (CDK) |
 | BH-883 | DTOs, stores, capture queue, redaction |
 | BH-884 | Shadow detector + judge + trust gates |
 | BH-885 | Suggestion API (list/schedule/dismiss) + "Your routines" persistence |
+| BH-886 | Webapp Suggested Routines cards + inbox card |
+| BH-887 | Slack workflow_suggestion cards + Schedule/Dismiss handlers |
 | BH-956 | Judge recalibration + promotion-gate hardening |
 | BH-960 | Intent capture wired into the supervisor |
 | BH-967 | Schedule/dismiss state machine + `execute_workflow` schedule |
@@ -171,4 +187,8 @@ if off, off everywhere; if on, check **per-workspace** override in AWS Secrets
 | BH-976 | `unscheduleRoutine` mutation |
 | BH-977 | Webapp server-derived "Your routines" |
 | BH-978 | e2e surface + lifecycle + concurrency |
-| BH-979 | (tech-debt) split `typedefs.ts` |
+| BH-1001 | platform-core: service-key + `actingUserId` auth on schedule/dismiss |
+| BH-1002 | brightbot: `x-acting-user-id` auth mode on `/manage/scheduled-agents` |
+| BH-1003 | brightbot-slack-server: routine-suggestion Slack action route + cards |
+| BH-1004 | brighthive-e2e: local no-SSO chain test for the Slack auth path |
+| BH-1005 | (tech-debt) split `typedefs.ts` |
