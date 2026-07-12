@@ -579,15 +579,48 @@ async def check_pipeline_health(
 #      beyond what Invariant 8 already required, but it should not be assumed "already solved
 #      by the dispatcher" either — confirmed there is no dispatcher-level mechanism to lean on.
 
-# TYPE NOTE (fixed pass 34, cold-read gap): `Capability` and `RequestContext` below are NOT
-# existing brightbot types — they come from pluggable-scalable.md's canonical Ports & Adapters
-# ILLUSTRATION, not a real importable module. Both are NEW, to be defined by whoever builds
-# BH-1042, in `pipeline_watchdog_node.py` or a sibling module:
+# TYPE NOTE (fixed pass 34, cold-read gap, SHARPENED pass 37): `Capability` and
+# `RequestContext` below are NOT existing brightbot types — they come from
+# pluggable-scalable.md's canonical Ports & Adapters ILLUSTRATION (`~/.claude/rules/
+# pluggable-scalable.md:11`), not a real importable module. Both are NEW, to be defined by
+# whoever builds BH-1042, in `pipeline_watchdog_node.py` or a sibling module.
+#
+# CORRECTED pass 37 — the earlier draft's RequestContext was a THINNED-DOWN version of the
+# canonical illustration, dropping 2 of 6 fields without flagging the omission. The REAL
+# canonical shape (rules file, verbatim): "the ambient bundle every port call carries —
+# workspace_id, correlation_id, principal, deadline, budget_remaining, tenant_tier.
+# Propagated via contextvar; stamped onto spans per ai-observability." The earlier draft
+# below only had workspace_id + optional deadline — missing correlation_id (needed to trace
+# a single watchdog poll cycle across its async calls to dbt_cloud_tools.py/
+# quality_tools.py/the dual-write, exactly the kind of cross-call tracing this spec's own §9
+# Observability Contract needs) and principal (needed for THIS SPEC'S OWN Invariant 14 —
+# "workspace scoping SHALL be resolved exclusively from the validated MCP principal," which
+# requires a principal object to resolve FROM; omitting it from RequestContext while
+# requiring it in Invariant 14 is an internal inconsistency, not a deliberate simplification).
 #   Capability = Literal["JOB_STATUS", "DISK_METRICS"]  # plain string enum, no need for more
 #   @dataclass(frozen=True)
 #   class RequestContext:
 #       workspace_id: str
+#       principal: "Principal"          # RESTORED pass 37 — required by this spec's own
+#                                        # Invariant 14; the MCP principal object, not a
+#                                        # caller-supplied workspace_id (per get_anomalies'/
+#                                        # get_pipeline_health's corrected convention)
+#       correlation_id: str | None = None  # RESTORED pass 37 — for tracing one poll cycle
+#                                        # across the watchdog's async calls; optional here
+#                                        # only because no existing brightbot correlation-id
+#                                        # generator was confirmed to exist for this pass —
+#                                        # do NOT treat "optional" as "skip it," wire a real
+#                                        # generator (e.g. uuid4()) at implementation time
 #       deadline: datetime | None = None  # optional; wire up only if a real timeout need appears
+#       budget_remaining: float | None = None  # OMITTED deliberately for THIS spec — no
+#                                        # per-workspace $ budget concept exists yet in
+#                                        # brightbot's pipeline-watchdog context; do not
+#                                        # invent one here, this is a genuine, scoped omission
+#                                        # (unlike correlation_id/principal, which were
+#                                        # accidental)
+#       tenant_tier: str | None = None  # OMITTED deliberately for THIS spec, same reasoning
+#                                        # as budget_remaining — no tenant-tier concept is
+#                                        # consumed anywhere in this spec's invariants
 # Do not go looking for these in an existing brightbot module — they don't exist yet.
 
 # PipelineSource: discriminated union over existing connection types, no new vendor SDK at call sites
