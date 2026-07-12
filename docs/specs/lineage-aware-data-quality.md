@@ -121,18 +121,37 @@ number in front of a customer or exec) has already happened.
 
 ### Implementation sequence (the 3 new tickets, in order)
 
-```
-BH-1062                        BH-1063                         BH-1064
-Fetch + parse          ──────▶ Load DAG into Neo4j    ──────▶  Wire anomaly → graph walk
-manifest.json/                 as queryable graph               (closes BH-673, the
-catalog.json                   (nodes = models/cols,             already-deferred bridge)
-                                edges = depends_on)
+**CORRECTED, triple-click-zoom pass 1**: BH-1063 is genuinely 2-repo work, not brightbot-only
+— brightbot has no direct Neo4j write access outside one narrow exception, and the original
+"mirrors DataAssetNode" precedent doesn't exist. Diagram below reflects the real repo boundary.
 
-"brightbot already      "we have a graph store       "we already have both halves —
- knows how to fetch       (Neo4j) and existing         longitudinal monitoring fires
- dbt Cloud artifacts —    DataAsset sync patterns —    events, dbt already wrote its
- just never asked for     add a sibling node type,     own lineage — this ticket is
- manifest.json before"    don't invent a new store"    purely the connective glue"
+```
+  brightbot                      brightbot ──HTTP──▶ platform-core        brightbot
+  ┌──────────┐                   ┌──────────┐        ┌──────────────┐    ┌──────────┐
+  │ BH-1062  │                   │ BH-1063a │        │ BH-1063b     │    │ BH-1064  │
+  │ Fetch +  │──────────────────▶│ call OGM │───────▶│ NEW           │───▶│ Wire      │
+  │ parse    │                   │ mutation │        │ DbtLineageNode│    │ anomaly → │
+  │ manifest │                   │ (existing│        │ + DEPENDS_ON  │    │ graph walk│
+  │ .json /  │                   │  ogm_api │        │ + delete-then-│    │ (closes   │
+  │ catalog  │                   │  .py     │        │ MERGE mutation│    │  BH-673)  │
+  │ .json    │                   │  plumbing│        │ (mirrors      │    │           │
+  └──────────┘                   │  — no new│        │ WorkflowStep  │    └──────────┘
+                                  │  driver) │        │ Node's own    │
+                                  └──────────┘        │ DEPENDS_ON,   │
+                                                        │ workflow-spec │
+                                                        │ .ts:299-317)  │
+                                                        └──────────────┘
+
+"brightbot already      "brightbot calls a NEW       "platform-core owns the    "we already have
+ knows how to fetch       platform-core mutation       Neo4j schema + upsert —    both halves —
+ dbt Cloud artifacts —    the same way it calls        brightbot NEVER touches    longitudinal
+ just never asked for     every other OGM write —      Neo4j directly for this"   monitoring fires
+ manifest.json before"    no new Neo4j driver code"                               events, dbt
+                                                                                   already wrote
+                                                                                   its own lineage —
+                                                                                   this ticket is
+                                                                                   purely the
+                                                                                   connective glue"
 ```
 
 ### Use Case / Goal
@@ -208,13 +227,35 @@ class DbtModelNode:
     depends_on: list[str]                 # upstream unique_ids
     columns: list[str] | None             # None if catalog.json didn't have this model
 
-# BH-1063: Neo4j load
+# BH-1063: Neo4j load — CORRECTED pass 1 of the triple-click-zoom loop, verified against
+# real code, not assumed:
+# 1. "Mirrors DataAssetNode's sync pattern" was WRONG — DataAssetNode has no DEPENDS_ON/
+#    LINEAGE relationship anywhere (confirmed by reading platform-core's OGM typedefs.ts).
+#    "(DataAsset)-[:HAS_LINEAGE]->(DataAsset)" in platform-core's own CLAUDE.md architecture
+#    diagram is ASPIRATIONAL — zero code hits, same doc-vs-reality gap found repeatedly
+#    elsewhere in this investigation.
+# 2. The REAL, concrete precedent is WorkflowStepNode's own DEPENDS_ON relationship —
+#    delete-then-MERGE Cypher, hand-written (not OGM @relationship decorator):
+#    platform-core/src/graphql/models/workflow-spec.ts:299-317. Same idempotent-replace
+#    shape this ticket needs. Copy THIS, not a DataAssetNode pattern that doesn't exist.
+# 3. CRITICAL ARCHITECTURAL CORRECTION: brightbot does NOT have general Neo4j write access.
+#    It reaches Neo4j almost exclusively through platform-core's OGM GraphQL HTTP API
+#    (brightbot/tools/ogm_api.py:34-70, Cognito-authed HTTP, not a direct driver). The one
+#    exception (workflow_agent/tools.py:23,92-95, a direct bolt driver) is scoped to simple
+#    :Column description writes, not OGM-typed node/relationship creation — NOT a precedent
+#    to reuse for DbtLineageNode. THEREFORE: this ticket is NOT purely a brightbot ticket as
+#    originally scoped. The Neo4j-side schema + upsert mutation must be added to
+#    PLATFORM-CORE (a new OGM type + a GraphQL mutation, following workflow-spec.ts's
+#    delete-then-MERGE shape), and brightbot calls that mutation over its existing
+#    Cognito-authed OGM HTTP path — the same way it reaches every other Neo4j write today.
 async def upsert_dbt_lineage_graph(
     *, workspace_id: str, artifacts: DbtLineageArtifacts,
 ) -> None: ...
-# New Neo4j node type DbtLineageNode (mirrors existing DataAssetNode sync pattern —
-# idempotent upsert on every dbt run, not a one-time import).
-# Relationship: (DbtLineageNode)-[:DEPENDS_ON]->(DbtLineageNode)
+# brightbot-side: calls a NEW platform-core GraphQL mutation over the existing OGM HTTP
+# path (ogm_api.py) — it does not touch Neo4j directly.
+# platform-core-side (NEW scope, not previously called out): a mutation implementing the
+# delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new DbtLineageNode
+# type + DEPENDS_ON relationship.
 
 # BH-1064: the bridge (closes BH-673)
 async def find_downstream_impact(
@@ -243,6 +284,12 @@ async def find_downstream_impact(
    append-only).`
 5. `THE System SHALL NOT attempt to compute lineage independently of dbt/Databricks' own
    artifacts — if dbt's manifest doesn't have an edge, BrightHive does not infer one.`
+6. `WHEN brightbot needs to write lineage data into Neo4j, THE System SHALL call platform-core's
+   OGM GraphQL mutation over the existing Cognito-authed HTTP path (ogm_api.py) — it SHALL NOT
+   open a new direct Neo4j driver connection. Verified pass 1 (triple-click-zoom loop): brightbot
+   has exactly one existing direct-driver exception (workflow_agent/tools.py), scoped to plain
+   :Column description writes only — this is NOT a precedent for creating typed nodes/relationships
+   and must not be extended for this spec's DbtLineageNode writes.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -289,16 +336,19 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | Longitudinal monitoring (GC-12, BH-601) | Blocking (this spec enriches its alerts) | Shipped + staging-verified |
 | BH-673 (anomaly→lineage bridge) | This spec's BH-1064 closes it | Deferred, now actively scoped |
 | `_fetch_artifact()` plumbing (dbt_cloud_tools.py) | Non-blocking (reused, not built here) | Live |
-| Existing Neo4j DataAsset sync pattern | Non-blocking (mirrored, not reinvented) | Live |
+| `WorkflowStepNode`'s `DEPENDS_ON` delete-then-MERGE precedent (`workflow-spec.ts:299-317`) | Non-blocking (pattern mirrored, not reinvented) — corrected pass 1, was wrongly cited as DataAssetNode | Live |
+| brightbot's OGM HTTP path (`ogm_api.py:34-70`) | Blocking — BH-1063's brightbot half MUST go through this, no new Neo4j driver | Live |
+| **platform-core engineering capacity** (verified pass 1: BH-1063 is 2-repo work) | Blocking — this spec cannot ship with brightbot-only resourcing | New dependency, not previously called out |
 | BH-1044 (Databricks connection decision) | Blocking for the Databricks half only | Open decision, not yet confirmed |
 
 ## Areas Involved
 
 | Area | Repo | Impact |
 |---|---|---|
-| Manifest/catalog fetch + parse | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
-| Lineage graph | `brightbot` + Neo4j | New `DbtLineageNode`/`DEPENDS_ON` structure, mirrors DataAsset sync |
-| Anomaly-alert enrichment | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
+| Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
+| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | New `DbtLineageNode` OGM type + `DEPENDS_ON` relationship + delete-then-MERGE mutation, mirrors `WorkflowStepNode`'s real precedent (`workflow-spec.ts:299-317`), NOT a nonexistent DataAssetNode pattern |
+| Lineage graph call site (BH-1063a) | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code |
+| Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
 ## Ticket Breakdown
 
