@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-12 20:25 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-12 23:47 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -92,7 +92,7 @@ _Decision gate._
 | 🔲 | 2026-07-17 | Demo delivered to Frank | _manual_ |
 | 🔲 | Post | Decision recorded (Won / Lost / Extended) with rationale | _manual_ |
 
-### Track C — Lineage-aware data quality (post-demo, honest framing for 7/17) (0/4 🟢)
+### Track C — Lineage-aware data quality (post-demo, honest framing for 7/17) (0/7 🟢)
 
 _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with ZERO errors while a source column silently degrades (NULLs where real values used to be), poisoning Gold/Diamond numbers with no alert anywhere. NOT achievable by 7/17 — this is genuinely new, multi-week work. Full spec: docs/specs/lineage-aware-data-quality.md. For the demo: show the anomaly-detection half (real, shipped, GC-12) and frame the lineage-tracing half honestly as "we glue dbt/Databricks' own lineage to what they can't see themselves" — a real differentiator, not a gap to hide._
 
@@ -102,6 +102,9 @@ _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with
 | ⬜ | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
 | ⬜ | Post-demo | BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) |
 | ⬜ | Post-demo | BH-1066 — CONFIRMED pass 5: GC-12 anomaly notifications have zero rendering in Slack/webapp today, independent of this epic's own changes. BH-1064's enrichment has nothing to enrich that a human sees until this ships. | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) |
+| ⬜ | Post-demo | BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half, reuses the existing SnowflakeConnection | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) |
+| ⬜ | Post-demo | BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) |
+| ⬜ | Post-demo | BH-1070 — test coverage gap: metric-snapshot.ts (BH-1063b's own cited precedent) has zero existing tests; non-blocking tech debt, tracked for visibility | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) |
 
 ### Non-blocking, tracked separately (0/7 🟢)
 
@@ -127,19 +130,21 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 3 | 30 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 1 | 33 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
-- **1/34** tickets done · 0 in progress · 33 to do
-- PRs: 0 merged · 0 ready for review · 4 draft
+- **1/35** tickets done · 0 in progress · 34 to do
+- PRs: 4 merged · 0 ready for review · 1 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (30)
+### 🟡 To Do (33)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
+| [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Monitoring Agents — proactive pipeline discovery &amp; health (dbt,… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#96](https://github.com/brighthive/agentic-project-mgmt/pull/96)<br>[🟢 Merged agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
+| [BH-1037](https://brighthiveio.atlassian.net/browse/BH-1037) | Ingestion Observability — source syncs, batch, and event-processing… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
 | [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038) | spec(routines): MCP/A2A surface for routine suggestions — list/schedu… | Kuri Chinca | — |
 | [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039) | feat(mcp): expose routineSuggestionsForWorkspace + schedule/dismiss… | Kuri Chinca | — |
 | [BH-1040](https://brighthiveio.atlassian.net/browse/BH-1040) | feat(mcp): expose scheduledRoutinesForWorkspace + unscheduleRoutine… | Kuri Chinca | — |
@@ -170,14 +175,13 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) | feat(lineage): Snowflake-native lineage adapter (Snowpipe/Tasks/Strea… | Kuri Chinca | — |
 | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) | feat(lineage): brightbot call site for upsert_lineage_graph (BH-1063a) | Kuri Chinca | — |
 | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) | test: add missing unit/integration test coverage for metric-snapshot.… | Kuri Chinca | — |
+| [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe… | Kuri Chinca | — |
 
-### 🔵 In Review (3)
+### 🔵 In Review (1)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
-| [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Monitoring Agents — proactive pipeline discovery &amp; health (dbt,… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#96](https://github.com/brighthive/agentic-project-mgmt/pull/96)<br>[🟡 Draft agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
-| [BH-1037](https://brighthiveio.atlassian.net/browse/BH-1037) | Ingestion Observability — source syncs, batch, and event-processing… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
-| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) |
+| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#97](https://github.com/brighthive/agentic-project-mgmt/pull/97)<br>[🟢 Merged agentic-project-mgmt#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) |
 
 ### ✅ Done (1)
 
@@ -188,28 +192,28 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
-- **2026-07-12** · [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1049](https://brighthiveio.atlassian.net/browse/BH-1049) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) — To Do · Kuri Chinca
-- **2026-07-12** · [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1043](https://brighthiveio.atlassian.net/browse/BH-1043) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) — Done · Kuri Chinca
-- **2026-07-12** · [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) — To Do · Kuri Chinca
-- **2026-07-10** · [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) — Needs Refinement · Kuri Chinca
-- **2026-07-10** · [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) — To Do · Kuri Chinca
-- **2026-07-10** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) — To Do · Kuri Chinca
+- **2026-07-12** · [BH-1052](https://brighthiveio.atlassian.net/browse/BH-1052) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1049](https://brighthiveio.atlassian.net/browse/BH-1049) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1044](https://brighthiveio.atlassian.net/browse/BH-1044) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1050](https://brighthiveio.atlassian.net/browse/BH-1050) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
 
-_(+14 older updates not shown.)_
+_(+15 older updates not shown.)_
 
 ## 📝 Daily Notes
 

@@ -1,8 +1,9 @@
 {
   "pr_states": {
-    "agentic-project-mgmt#94": "DRAFT",
-    "agentic-project-mgmt#95": "DRAFT",
-    "agentic-project-mgmt#96": "DRAFT"
+    "agentic-project-mgmt#94": "MERGED",
+    "agentic-project-mgmt#95": "MERGED",
+    "agentic-project-mgmt#96": "MERGED",
+    "agentic-project-mgmt#97": "DRAFT"
   },
   "ticket_statuses": {
     "BH-1036": "Needs Refinement",
@@ -38,7 +39,8 @@
     "BH-1067": "Needs Refinement",
     "BH-1068": "Needs Refinement",
     "BH-1069": "Needs Refinement",
-    "BH-1070": "Needs Refinement"
+    "BH-1070": "Needs Refinement",
+    "BH-1071": "Needs Refinement"
   },
-  "timestamp": "2026-07-12T20:25:44+00:00"
+  "timestamp": "2026-07-12T23:47:13+00:00"
 }

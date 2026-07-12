@@ -94,32 +94,43 @@ number in front of a customer or exec) has already happened.
                                    consume it, don't rebuild it)      walk logic)
 
   ┌──────────────┐              ┌─────────────────────────┐        ┌──────────────────┐
-  │ Longitudinal  │              │  dbt manifest.json /     │        │ Gold / Diamond    │
-  │ monitoring    │   detects    │  catalog.json            │  walk  │ tables named as   │
-  │ (null_spike,  │─────────────▶│  (model + column DAG,    │───────▶│ "affected" in the │
-  │ row_count_    │   anomaly    │  dbt already wrote this) │ forward│ SAME alert that   │
-  │ drift, etc.)  │   on column  │                          │        │ fired the anomaly  │
-  │  SHIPPED      │   X          │  Databricks Unity        │        │  NEW (BH-1064)     │
-  └──────────────┘              │  Catalog system tables   │        └──────────────────┘
-                                  │  (table_lineage /        │
-                                  │  column_lineage) — same   │
-                                  │  idea, once a Databricks  │
-                                  │  connection exists        │
+  │ Longitudinal  │              │  LineageSource PORT       │        │ Gold / Diamond    │
+  │ monitoring    │   detects    │  (Ports & Adapters,       │  walk  │ tables named as   │
+  │ (null_spike,  │─────────────▶│  engine-agnostic):        │───────▶│ "affected" in the │
+  │ row_count_    │   anomaly    │                          │ forward│ SAME alert that   │
+  │ drift, etc.)  │   on column  │  1. dbt manifest.json/    │        │ fired the anomaly  │
+  │  SHIPPED      │   X          │     catalog.json          │        │  NEW (BH-1064)     │
+  └──────────────┘              │     — BH-1062, CONFIRMED  │        └──────────────────┘
+                                  │     buildable this pass   │
+                                  │  2. Databricks Unity      │
+                                  │     Catalog system tables │
+                                  │     — DatabricksLineage-  │
+                                  │     Source, greenfield    │
+                                  │     connector, independent│
+                                  │     of BH-1044 decision   │
+                                  │  3. Snowflake ACCOUNT_    │
+                                  │     USAGE (Snowpipe/Tasks/│
+                                  │     Streams/Dynamic       │
+                                  │     Tables) — BH-1068,     │
+                                  │     CHEAPEST (reuses live  │
+                                  │     SnowflakeConnection,  │
+                                  │     no new connector)      │
                                   │                          │
-                                  │  BrightHive: fetch +      │
-                                  │  parse this artifact,     │
-                                  │  load into Neo4j as a     │
-                                  │  queryable graph          │
-                                  │   NEW (BH-1062, BH-1063)  │
+                                  │  All 3 feed the SAME       │
+                                  │  LineageGraph shape →      │
+                                  │  BrightHive: load into    │
+                                  │  Neo4j as a queryable      │
+                                  │  graph — NEW (BH-1063)     │
                                   └─────────────────────────┘
 
-  Net result (CORRECTED pass 4 — no rendered Slack message exists to quote today):
-  the anomaly's JSON metadata blob gains a new key —
+  Net result (CORRECTED pass 4, CONFIRMED pass 5 — no longer "unverified"): the
+  anomaly's JSON metadata blob gains a new key —
   metadata["longitudinal"]["downstream_tables"] = ["mart.customer_ltv",
   "mart.revenue_by_segment"] — attached to the SAME notification event as the
-  null_spike, before a human looks at the wrong number. Whatever renders that
-  JSON into visible Slack/webapp text (if anything does today) is OUTSIDE
-  brightbot/platform-core backend code — unverified, flagged for a future pass.
+  null_spike, before a human looks at the wrong number. CONFIRMED (BH-1065): NEITHER
+  brightbot-slack-server NOR brighthive-webapp renders ANY anomaly/longitudinal
+  notification into visible text today — this is a real, pre-existing gap, not
+  merely unverified. BH-1066 (filed) builds the missing renderer.
 ```
 
 **CONFIRMED pass 5 (BH-1065), not merely "unverified" anymore — this is worse than flagged**:
@@ -209,10 +220,16 @@ already computed, not a new BrightHive-built lineage engine.
 
 ### Hard Limitations
 
-- Column-level lineage only exists in dbt's `catalog.json` for newer dbt versions/configs —
-  older projects may only have model-level `depends_on`, not column-level edges. The
-  implementation must degrade gracefully to model-level tracing when column data isn't
-  available, not silently produce wrong/incomplete results.
+- **CORRECTED pass 36 — this bullet's original framing was wrong: catalog.json never
+  contains column-level LINEAGE (edges) at all, in ANY dbt version.** It only contains
+  column-level METADATA (existence, type, per model) — a warehouse schema snapshot. What
+  varies by dbt version/config is whether catalog.json exists or is populated for a given
+  model at all (`has_column_metadata`), not whether it contains a column-DEPENDENCY graph —
+  no dbt version's catalog.json has ever contained that. This spec's implementation
+  degrades gracefully to MODEL-level tracing always (see Invariant 14) — column existence
+  data (`LineageModelNode.columns`) is retained for future use (e.g. surfacing "column X in
+  this affected table" in a future enrichment) but is NEVER the basis for the downstream
+  traversal itself, which is model/table-level end to end.
 - **CORRECTED pass 7 — Databricks is NOT "gated on BH-1044 resolving," it is a genuinely
   greenfield build regardless of that decision.** Verified by direct code check: zero
   Databricks code exists in brightbot or platform-core outside vendored third-party deps.
@@ -293,7 +310,14 @@ class LineageSource(Protocol):
 @dataclass(frozen=True)
 class LineageGraph:
     nodes: dict[str, LineageNode]   # keyed by a source-agnostic unique_id
-    has_column_lineage: bool
+    has_column_metadata: bool         # RENAMED pass 36, CRITICAL — see the correction before
+                                       # LineageModelNode.columns below. This field means
+                                       # "we know which columns EXIST per model," NOT
+                                       # "we have column-to-column DEPENDENCY lineage" — dbt's
+                                       # catalog.json contains no column-dependency data at
+                                       # all. The old name has_column_lineage was a real,
+                                       # unverified false claim about what this artifact
+                                       # provides.
     fetch_error: str | None
     source_engine: str               # "dbt" | "databricks" | future engines — for observability only,
                                       # never branched on by downstream consumers (BH-1063/1064)
@@ -303,7 +327,11 @@ class LineageNode:
     unique_id: str
     name: str
     depends_on: list[str]
-    columns: list[str] | None
+    columns: dict[str, "ColumnMetadata"] | None  # CORRECTED pass 36 — see LineageModelNode's
+                                       # own correction below for the full finding; this was
+                                       # `list[str] | None`, which doesn't match dbt's real
+                                       # catalog.json shape (a dict keyed by column name, not
+                                       # a flat name list).
     relation_name: str | None         # ADDED pass 10, see LineageModelNode's field for the
                                        # full CRITICAL bug this closes — this is the field
                                        # BH-1064's traversal actually matches against, NOT
@@ -401,7 +429,38 @@ def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
 # BH-1062 needs a THIN wrapper around _fetch_artifact() (not a modification to the shared
 # function, which other callers depend on) that re-derives the status code itself (a second,
 # minimal precheck HTTP call, or logging a WARNING distinguishing 404 from other failures) so
-# a real error doesn't get silently absorbed into "has_column_lineage=False."
+# a real error doesn't get silently absorbed into "has_column_metadata=False."
+#
+# GAP FOUND 3, pass 23 (triple-click-zoom) — a real scale mismatch, verified against
+# _fetch_artifact()'s ACTUAL implementation, not assumed. `_fetch_artifact()`
+# (dbt_cloud_tools.py:256-280) is a plain blocking `requests.get(..., timeout=30)` — NO
+# `stream=True`, returns `response.text` (the entire decoded body as one string, line 278).
+# Callers then do a SECOND full-memory pass: `json.loads(...)` on that string
+# (dbt_cloud_tools.py:372's pattern for run_results.json). Zero size cap, zero chunking. This
+# has NEVER been exercised at scale — `_fetch_artifact()`'s only 2 existing callers fetch
+# run_results.json/sources.json, both typically KB-scale. manifest.json (and catalog.json,
+# for large dbt projects with hundreds of models) can be TENS OF MEGABYTES — an order of
+# magnitude+ larger than anything this function has ever actually handled in production.
+# TWO CONCRETE RISKS BH-1062 MUST ACCOUNT FOR, not silently inherit:
+#   (a) The hardcoded `timeout=30` (line 274) applies UNIFORMLY regardless of artifact size —
+#       a slow/throttled multi-MB manifest.json download plausibly needs longer than 30s,
+#       and this function gives BH-1062's implementer no seam to override it per-call.
+#   (b) Double full-memory buffering (once in `requests`, once in `json.loads`) of a
+#       tens-of-MB payload is a real memory-pressure risk. brightbot deploys to LangGraph
+#       Cloud SaaS (`langgraph.json`, long-running container/service model, NOT a
+#       Lambda-style hard memory ceiling per this repo's own docs) — this softens but does
+#       NOT eliminate the risk, since this repo's docs don't state a per-instance memory
+#       limit for LangGraph Cloud deployments either; the actual ceiling is UNVERIFIED, not
+#       confirmed safe.
+# RESOLUTION, same shape as GAP 2's thin-wrapper approach: do NOT modify `_fetch_artifact()`
+# itself (other callers depend on its current behavior/timeout). BH-1062's own wrapper
+# (`fetch_lineage_artifacts` below) should either (i) call a size-aware variant with a
+# longer, artifact-specific timeout and streaming JSON parse (e.g. `ijson` or manual
+# chunked `requests.get(..., stream=True)` + incremental decode) for manifest.json/
+# catalog.json specifically, or (ii) if profiling against a REAL large project's manifest
+# shows the existing blocking pattern is fine in practice, explicitly DOCUMENT that
+# decision with the real measured size/latency, rather than silently reusing a
+# small-artifact-tuned function at 100x the data volume without checking.
 async def fetch_lineage_artifacts(
     *, workspace_id: str, job_id: str, run_id: str,
 ) -> LineageArtifacts: ...
@@ -412,10 +471,23 @@ async def fetch_lineage_artifacts(
 @dataclass(frozen=True)
 class LineageArtifacts:
     models: dict[str, LineageModelNode]       # keyed by unique_id
-    has_column_lineage: bool              # False if catalog.json lacked column metadata
+    has_column_metadata: bool             # RENAMED pass 36 — see CRITICAL note below.
+                                           # False if catalog.json lacked column metadata
+                                           # for this model.
     fetch_error: str | None               # NEW: non-None if a real error occurred (not a
                                            # genuine 404-absent-artifact case) — surfaced so
                                            # callers don't silently treat "errored" as "absent"
+
+@dataclass(frozen=True)
+class ColumnMetadata:                     # ADDED pass 36 — general dbt catalog.json
+                                           # knowledge, confirmed: catalog.json's
+                                           # nodes.<unique_id>.columns is a DICT keyed by
+                                           # column name, each value a metadata object —
+                                           # NOT a flat list of name strings.
+    name: str
+    type: str                             # the warehouse column type, e.g. "NUMBER", "VARCHAR"
+    index: int
+    comment: str | None
 
 @dataclass(frozen=True)
 class LineageModelNode:
@@ -427,7 +499,31 @@ class LineageModelNode:
                                            # before treating this shape as final.)
     name: str
     depends_on: list[str]                 # upstream unique_ids (manifest's depends_on.nodes)
-    columns: list[str] | None             # None if catalog.json didn't have this model
+    columns: dict[str, ColumnMetadata] | None  # CRITICAL, CORRECTED pass 36 (triple-click-
+                                           # zoom) — this was `list[str] | None`, WRONG on
+                                           # two counts, verified against general dbt
+                                           # platform knowledge (this repo has zero
+                                           # catalog.json parsing precedent to check
+                                           # against — confirmed by search, this shape was
+                                           # never checked before this pass either):
+                                           # (1) catalog.json's real shape is a DICT keyed
+                                           # by column name, not a flat list — fixed above.
+                                           # (2) MORE IMPORTANT: catalog.json contains ZERO
+                                           # column-to-column DEPENDENCY information at all
+                                           # — it only proves "this model currently HAS
+                                           # these columns" (a warehouse schema snapshot via
+                                           # information_schema), never "output column X is
+                                           # DERIVED FROM upstream column Y." True
+                                           # column-level lineage (the dependency graph) is
+                                           # NOT available from catalog.json alone — it
+                                           # would require dbt Cloud's separate, proprietary
+                                           # "Column-Level Lineage" feature (SQL-compilation-
+                                           # based, not a public JSON artifact) or a
+                                           # third-party SQL parser (e.g. sqlglot) statically
+                                           # analyzing compiled SQL. NEITHER is in scope for
+                                           # this spec. See has_column_metadata's rename
+                                           # above and Invariant 14 below for the full
+                                           # consequence.
     relation_name: str | None              # ADDED pass 10 — CRITICAL FIX, a real blocking bug
                                            # found by verification, not a nice-to-have. dbt's
                                            # manifest.json carries `relation_name` per compiled
@@ -521,11 +617,17 @@ async def upsert_lineage_graph(
 #                                      # (@constraint or a manual :LineageNode(relationName)
 #                                      # index) since it's the traversal's match key, not
 #                                      # a cosmetic field.
-#     hasColumnLineage: Boolean! @default(value: false)
+#     hasColumnMetadata: Boolean! @default(value: false)
 #     createdAt: DateTime! @timestamp(operations: [CREATE])
 #     modifiedAt: DateTime! @timestamp(operations: [CREATE, UPDATE])
 #     dependsOn: [LineageNode!]! @relationship(type: "DEPENDS_ON", direction: OUT)
 #   }
+# CORRECTED pass 20 (triple-click-zoom) — this quoted type ALWAYS included the
+# @relationship-decorated `dependsOn` shown above, and that is the RECOMMENDED final shape
+# (see the decorated-vs-undecorated decision, resolved below) — earlier passes' prose
+# elsewhere in this section said "leave dependsOn undecorated," which CONTRADICTED this
+# quoted type. That contradiction is now resolved: keep `dependsOn` DECORATED as shown here.
+#
 # CONFIRMED: WorkflowStepNode has NO native workspaceId field either — scoping is transitive
 # via a parent relationship (step.spec.project.workspaceId). LineageNode has the same
 # problem (no natural parent to scope through) — the mutation's INPUT must carry workspaceId
@@ -589,42 +691,91 @@ async def upsert_lineage_graph(
 #
 #   Concrete file list for a cold engineer implementing BH-1063b:
 #     1. `src/graphql/ogm/typedefs.ts` — add `LineageNode` type (~15-20 lines, mirrors
-#        AnomalyEventNode's shape at typedefs.ts:713-727). Decide here whether the
-#        DEPENDS_ON edge is declared as an OGM `@relationship` directive (gets a
-#        free auto-generated `connect`/`disconnect` mutation shape, but the auto-generated
-#        upsert does NOT enforce the delete-then-MERGE replace semantics Invariant 4/9
-#        require — @neo4j/graphql's `connectOrCreate` is additive, not idempotent-replace)
-#        or left undecorated with a HAND-WRITTEN Cypher service (full control over the
-#        atomic delete-then-MERGE transaction, costs one extra file). RECOMMENDATION:
-#        undecorated + hand-written, because Invariant 9's atomicity fix is not
-#        expressible through the auto-generated mutation — confirm this trade-off at
-#        implementation time rather than defaulting to the decorator for convenience.
-#     2. `src/graphql/service/neo4j/lineage-graph.ts` — NEW file if hand-written Cypher is
-#        chosen (per step 1): the delete-then-MERGE upsert per Invariant 9, modeled on
-#        `metric-snapshot.ts`'s shape (194 lines).
+#        AnomalyEventNode's shape at typedefs.ts:713-728).
+#
+#        CORRECTED pass 20 (triple-click-zoom) — the "undecorated vs. decorated" framing
+#        below was internally self-contradictory (the quoted type above always showed
+#        `dependsOn` WITH `@relationship`) and one precedent claim was imprecise. Resolved,
+#        verified against real code:
+#        - `AnomalyEventNode` (typedefs.ts:713-728) and `MetricSnapshotNode` (typedefs.ts:
+#          698-711) are NOT relationship-free — both DO carry exactly ONE
+#          `@relationship`-decorated field each (`dataAsset`, `HAS_ANOMALY_EVENT`/whatever
+#          MetricSnapshotNode's equivalent is). Earlier passes' "OGM-only, no relationship"
+#          description of this precedent was imprecise — the real precedent is "one
+#          decorated relationship field alongside several plain scalar fields," which is
+#          EXACTLY LineageNode's own shape (one `dependsOn` relationship + several scalars).
+#        - Confirmed via `AnomalyEventNodeCreateInput` (ogm-types.ts:23085-23095): having a
+#          `@relationship` field does NOT corrupt or complicate the generated mutation for
+#          the type's OTHER fields — it's purely additive (the relationship gets its own
+#          optional `connect`/`create` sub-input; the 9 scalar fields are untouched). The
+#          earlier fear that decorating `dependsOn` would somehow break the whole type's
+#          generated CRUD was UNFOUNDED.
+#        - Confirmed: NO existing OGM type in this repo leaves a graph-shaped reference
+#          undecorated as a plain scalar array (e.g. `dependsOnIds: [String!]!`) while
+#          relying on hand-written Cypher to create the real relationship separately — this
+#          would be a genuinely novel, unprecedented shape, not a pattern to copy from
+#          anywhere. `TransformationNode.dbtDependencies` (typedefs.ts:843) LOOKS similar but
+#          is confirmed to be a real plain-string-array PROPERTY (not edges) at
+#          `transformation.ts:37` — a different, unrelated case, not evidence FOR the
+#          undecorated approach.
+#        - **DECISION, resolved pass 20: KEEP `dependsOn` DECORATED with `@relationship`**,
+#          matching the quoted type above and the real AnomalyEventNode/MetricSnapshotNode
+#          precedent exactly. Do NOT leave it undecorated — that path has no precedent and
+#          was based on an incorrect premise (that decorating it would complicate the rest
+#          of the type's generated mutation, which is false).
+#        - Invariant 9's atomicity requirement STILL applies and is STILL not satisfiable
+#          through the auto-generated `connectOrCreate` mutation alone (that part of the
+#          original reasoning was correct) — but the fix is NOT "leave the field
+#          undecorated." The fix is: the HAND-WRITTEN Cypher service (step 2 below) performs
+#          the atomic delete-then-MERGE directly against the `:DEPENDS_ON` relationship type
+#          the decorated field declares, using raw Cypher — NOT via the auto-generated
+#          mutation's `connect`/`create` inputs. The OGM decorator and the write PATH are
+#          separate concerns: decorate for schema/read-query correctness (so
+#          `dependsOn` is queryable via the generated read API), but write through
+#          hand-written Cypher for the atomicity guarantee, exactly like
+#          `upsertWorkflowStep`/`deleteWorkflowStep` already do for `WorkflowStepNode`'s own
+#          real, decorated `dependsOn` relationship — those functions bypass the
+#          auto-generated mutation for writes too, while the type itself stays decorated for
+#          reads. This is NOT a new pattern; it is the exact WorkflowStepNode precedent,
+#          confirmed correctly cited from the start.
+#     2. `src/graphql/service/neo4j/lineage-graph.ts` — NEW file: the delete-then-MERGE
+#        upsert per Invariant 9, modeled on `metric-snapshot.ts`'s shape (194 lines), writing
+#        directly against the `:DEPENDS_ON` relationship the decorated `dependsOn` field
+#        declares — bypassing the auto-generated mutation for this specific write, per the
+#        decision above.
 #
 #     RESOLVED pass 9 (triple-click-zoom) — the atomic-transaction API was under-specified;
 #     now confirmed against real code, not generic Neo4j docs. `session.writeTransaction(...)`
 #     (what earlier passes of this spec recommended) is DEPRECATED for this repo's actual
 #     driver (`package.json:47`, `neo4j-driver: ^5.0.0` — v5 prefers `session.executeWrite`).
-#     BUT a simpler, ALREADY-PROVEN option exists in this exact repo and should be preferred:
-#     `workflow-spec.ts:557-581` (`deleteWorkflowStep`) already chains
-#     `OPTIONAL MATCH ... DELETE dep WITH step, b, iss DETACH DELETE step, b, iss` as ONE
-#     Cypher string in a SINGLE `session.run()` call — Neo4j auto-commits one submitted
-#     query string as one implicit transaction, closing the crash window without introducing
-#     any new driver API. RECOMMENDATION, supersedes earlier `writeTransaction` guidance: write
-#     the delete-then-MERGE as ONE multi-statement Cypher string
+#     `workflow-spec.ts:557-581` (`deleteWorkflowStep`) proves ONE HALF of the needed
+#     approach — a pure DELETE-only Cypher string, one `session.run()` call, auto-committed as
+#     one implicit transaction, no new driver API. RECOMMENDATION, supersedes earlier
+#     `writeTransaction` guidance: write the delete-then-MERGE as ONE multi-statement Cypher
+#     string
 #     (`MATCH (n:LineageNode {uniqueId: $id})-[r:DEPENDS_ON]->() DELETE r WITH n UNWIND $depIds
 #     AS depId MATCH (dep:LineageNode {uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one
-#     `session.run()` call — matches this repo's OWN existing style exactly
-#     (`workflow-spec.ts:573-580`), needs zero new driver API, and is strictly simpler than
-#     `executeWrite`. Fall back to `session.executeWrite(tx => ...)` only if the upsert
-#     genuinely needs to read an intermediate result back into JS before the MERGE (not
-#     expected here — confirm at implementation time, don't default to it for convenience).
+#     `session.run()` call.
+#     **CORRECTED pass 34 (triple-click-zoom) — this EXACT combined shape (DELETE + WITH +
+#     UNWIND + MERGE, all in ONE string) has NO literal precedent anywhere in this repo,
+#     verified by direct search — do not cite `deleteWorkflowStep` as proof it does.**
+#     `deleteWorkflowStep` is DELETE-only (no MERGE, no UNWIND — confirmed by reading it in
+#     full). The TWO real delete-then-recreate-from-a-list precedents that exist
+#     (`upsertWorkflowStep`'s own DEPENDS_ON sync, `workflow-spec.ts:299-327`; and
+#     `routine-ownership.ts:117-139`'s RECEIVES-edge sync, same shape) BOTH split delete and
+#     recreate into TWO separate `session.run()` calls — the exact non-atomic pattern this
+#     spec's Invariant 9 says NOT to copy. So: the GENERAL PRINCIPLE ("Neo4j auto-commits one
+#     submitted multi-statement string as one implicit transaction, closing the crash window,
+#     no new driver API needed") is real and correctly cited from `deleteWorkflowStep`. But
+#     the SPECIFIC combined DELETE+UNWIND+MERGE query text above has no template anywhere in
+#     this codebase to copy verbatim — BH-1063's implementer is writing this exact shape for
+#     the first time in this repo, following the general pattern, not adapting an existing
+#     example. Confirm the query syntax works as intended against a real Neo4j instance before
+#     assuming it's "proven" merely because the general one-string principle is proven
+#     elsewhere. Fall back to `session.executeWrite(tx => ...)` only if the upsert genuinely
+#     needs to read an intermediate result back into JS before the MERGE (not expected here).
 #     CONFIRMED pass 9: zero `executeWrite`/`writeTransaction`/`CALL {...} IN TRANSACTIONS`
-#     usage exists anywhere in this repo today — there is no other transactional precedent to
-#     copy, which makes the single-string approach doubly preferable: it requires learning
-#     nothing new, whereas `executeWrite` would be a first-of-its-kind pattern in this repo.
+#     usage exists anywhere in this repo today.
 #     3. `src/common/types.ts` — shared type refs if `LineageNode`/`LineageGraph` types
 #        need to cross module boundaries within platform-core.
 #   Total: 2-3 files, zero public-schema files, zero resolver boilerplate if the
@@ -639,11 +790,15 @@ async def upsert_lineage_graph(
 # same gap would mean a crash mid-upsert could silently leave a dbt model with NO lineage
 # edges, which downstream (BH-1064) would read as "nothing depends on this" — a false
 # negative that suppresses a real alert. THIS SPEC SHALL NOT silently copy the non-atomic
-# version. FIX (confirmed pass 9): the SAME repo already proves the fix elsewhere —
-# `workflow-spec.ts:557-581` (`deleteWorkflowStep`) chains DELETE + further Cypher clauses as
-# ONE multi-statement string in ONE `session.run()` call, which Neo4j auto-commits as one
-# implicit transaction. BH-1063's upsert should follow THIS precedent (one string, one call),
-# not `upsertWorkflowStep`'s own two-call pattern — see Invariant 9 below.
+# version. FIX (confirmed pass 9, CORRECTED pass 34): the SAME repo proves the GENERAL
+# PRINCIPLE elsewhere — `workflow-spec.ts:557-581` (`deleteWorkflowStep`) chains DELETE +
+# further Cypher clauses as ONE multi-statement string in ONE `session.run()` call, which
+# Neo4j auto-commits as one implicit transaction. BH-1063's upsert should follow THIS
+# PRINCIPLE (one string, one call, not `upsertWorkflowStep`'s own two-call pattern — see
+# Invariant 9 below) — but `deleteWorkflowStep` itself is DELETE-only, no MERGE/UNWIND, so it
+# does NOT literally demonstrate BH-1063's actual delete-then-recreate-a-list shape. That
+# combined shape has no template anywhere in this repo (confirmed pass 34) — write it fresh
+# from the principle, don't expect a copy-paste source.
 
 # BH-1064: the bridge (closes BH-673)
 #
@@ -716,8 +871,26 @@ async def find_downstream_impact(
 # lives in). BH-1062 must populate `relation_name` from the manifest node's own field; BH-1064
 # must match against it, not `name`/`uniqueId`:
 #   MATCH (start:LineageNode {relationName: $anomaly_dataset})
-#                   <-[:DEPENDS_ON*1..]-(downstream:LineageNode)
-#                   RETURN downstream
+#                   <-[:DEPENDS_ON*1..50]-(downstream:LineageNode)
+#                   RETURN DISTINCT downstream
+#
+# CORRECTED pass 33 (triple-click-zoom) — the original `*1..` (unbounded) query, verified
+# against this repo's real Cypher conventions and general Neo4j semantics, needed two fixes:
+#   1. **Bounded to `*1..50`**: confirmed NO precedent for variable-length hops exists
+#      anywhere in this repo — every real DEPENDS_ON traversal (workflow-spec.ts:88,303,311,
+#      336,576,597) is a fixed SINGLE-hop pattern, never `*`. At a real dbt project's actual
+#      scale (a few hundred models, 10-20 hop depth), an unbounded `*1..` is NOT a
+#      performance risk at Neo4j's execution-engine level (bounded by real graph size, not
+#      the missing upper bound) — but it IS a real correctness risk: if the DAG is ever not
+#      guaranteed acyclic (bad data, a bug, a self-referencing model), `MATCH` with an
+#      unbounded variable-length pattern enumerates PATHS, not just reachable nodes, and can
+#      blow up exponentially on a cycle. `*1..50` is defensive insurance — cheap, and a real
+#      dbt DAG should never approach 50 hops of transitive depth in practice, so this bound
+#      is not expected to ever clip a genuine result.
+#   2. **`DISTINCT` added**: without it, a downstream node reachable via MULTIPLE paths
+#      (a common, normal shape in any real DAG with diamond dependencies) would be RETURNED
+#      MULTIPLE TIMES — the original query would have silently produced duplicate
+#      downstream-table entries in the anomaly's enrichment metadata.
 # REMAINING GAP, flagged not silently assumed solved: dbt's `relation_name` format
 # (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) may not exactly string-match
 # `asset_details.get("snowflakeTableName")`'s format (unverified in this pass — no code path
@@ -738,7 +911,7 @@ async def find_downstream_impact(
 1. `WHEN manifest.json/catalog.json is fetched, THE System SHALL reuse the existing
    _fetch_artifact() plumbing — no new HTTP client, no new auth path.`
 2. `IF catalog.json lacks column-level metadata for a model, THEN THE System SHALL degrade to
-   model-level tracing and SHALL set has_column_lineage=False — it SHALL NOT silently produce
+   model-level tracing and SHALL set has_column_metadata=False — it SHALL NOT silently produce
    a column-level claim it cannot back.`
 3. `WHEN an AnomalyEventNode fires on a monitored column, THE System SHALL attempt a
    downstream-impact lookup via the lineage graph before publish_completion_notification's
@@ -763,7 +936,7 @@ async def find_downstream_impact(
    and must not be extended for this spec's LineageNode writes.`
 7. `WHEN fetching manifest.json/catalog.json returns None from _fetch_artifact(), THE System
    SHALL distinguish a genuine 404 (artifact never generated — e.g. run failed pre-compile)
-   from any other HTTP failure (auth error, 500, timeout) before recording has_column_lineage
+   from any other HTTP failure (auth error, 500, timeout) before recording has_column_metadata
    or fetch_error. Verified pass 2: _fetch_artifact()'s existing exception handling collapses
    ALL failure modes to None — this spec's wrapper (BH-1062) MUST NOT inherit that conflation;
    a real error surfaces as fetch_error, never silently as "column lineage unavailable."`
@@ -785,10 +958,19 @@ async def find_downstream_impact(
    and MERGE as two separate auto-commit calls with a crash window between them. Verified
    pass 3: that precedent has a real correctness gap (a process crash mid-upsert leaves zero
    DEPENDS_ON edges, which BH-1064 would read as "nothing depends on this" — a false negative
-   that suppresses a real alert). RESOLVED pass 9: the fix is confirmed already proven
-   elsewhere in the SAME repo — workflow-spec.ts:557-581 (deleteWorkflowStep) chains its
-   DELETE + further clauses as one string, one call. Follow THAT precedent's shape (one
-   string, one call), not upsertWorkflowStep's two-call shape. session.executeWrite(...) (the
+   that suppresses a real alert). RESOLVED pass 9, CORRECTED pass 34: the GENERAL PRINCIPLE
+   (one Cypher string, one session.run() call, auto-committed as one implicit transaction) is
+   confirmed proven elsewhere in the SAME repo — workflow-spec.ts:557-581 (deleteWorkflowStep)
+   chains DELETE + further clauses as one string, one call. Follow THAT PRINCIPLE (one
+   string, one call), not upsertWorkflowStep's two-call shape. BUT: deleteWorkflowStep is
+   DELETE-only (no MERGE/UNWIND) — the SPECIFIC combined DELETE+UNWIND+MERGE shape this
+   invariant requires (delete existing edges, then recreate a NEW SET from a list) has NO
+   literal template anywhere in this repo, confirmed pass 34 — the two real
+   delete-then-recreate-from-a-list precedents that DO exist (upsertWorkflowStep's own
+   DEPENDS_ON sync; routine-ownership.ts's RECEIVES-edge sync) both split delete and
+   recreate into TWO separate calls, the exact non-atomic pattern this invariant forbids.
+   Write the combined single-string shape fresh from the principle; verify it against a
+   real Neo4j instance before assuming correctness. session.executeWrite(...) (the
    non-deprecated driver-v5 API, per package.json:47's neo4j-driver ^5.0.0 — NOT
    session.writeTransaction, which is deprecated at this version) is the fallback ONLY if the
    upsert needs to read an intermediate result back into JS before the MERGE, which is not
@@ -818,6 +1000,43 @@ async def find_downstream_impact(
     fires because no exception was raised. Copying this precedent as-is means the lineage
     upsert could silently no-op on every call, indistinguishable from success. THIS SPEC
     SHALL NOT inherit that silent-failure gap.`
+12. `WHEN fetching manifest.json/catalog.json for a real dbt project, THE System SHALL NOT
+    assume _fetch_artifact()'s existing 30-second timeout and non-streaming
+    requests.get()+json.loads() double-buffering pattern is safe at manifest.json scale
+    (potentially tens of MB for large projects) merely because it works for run_results.json/
+    sources.json (KB-scale, its only existing callers). CRITICAL, found pass 23: this
+    function has NEVER been exercised at manifest.json's real scale in production. BH-1062
+    SHALL EITHER (a) measure real latency/memory against an actual large project's
+    manifest.json and explicitly document that the existing pattern is acceptable, with the
+    measured numbers, OR (b) build a size-aware fetch path (longer artifact-specific
+    timeout, streaming JSON parse) for manifest.json/catalog.json specifically — it SHALL
+    NOT silently reuse the small-artifact-tuned function at 100x+ the data volume without
+    doing one of these two things first.`
+13. `WHEN BH-1064's downstream-impact traversal walks LineageNode's DEPENDS_ON edges, THE
+    System SHALL use a BOUNDED variable-length pattern (e.g. *1..50, not an unbounded *1..)
+    AND SHALL return DISTINCT results. CRITICAL, found pass 33: confirmed no precedent for
+    variable-length Cypher hops exists anywhere in platform-core - every real DEPENDS_ON
+    traversal is a fixed single-hop pattern. An unbounded variable-length MATCH enumerates
+    PATHS, not just reachable nodes - if the DAG is ever not guaranteed acyclic (bad data, a
+    bug, a self-referencing model), this can blow up exponentially on a cycle. Without
+    DISTINCT, a downstream node reachable via multiple paths (a normal shape in any DAG with
+    diamond dependencies) would be returned multiple times, producing duplicate
+    downstream-table entries in the anomaly's enrichment metadata.`
+14. `THE System SHALL NOT claim, imply, or name any field as "column lineage" for data
+    sourced from dbt's catalog.json — catalog.json contains ZERO column-to-column
+    DEPENDENCY information (general dbt platform knowledge, confirmed pass 36: it is a
+    warehouse schema snapshot — "this model has these columns, with these types" — sourced
+    from information_schema, not from parsing SQL derivation logic). `has_column_metadata`
+    (RENAMED pass 36 from the misleading `has_column_lineage`) means ONLY "we know which
+    columns exist for this model" — column EXISTENCE metadata, never column-level lineage
+    (which output column derives from which upstream column). This spec's downstream-impact
+    traversal (BH-1064) operates at the MODEL level only — it names which Gold/Diamond
+    TABLES are affected, never which specific COLUMN within them is affected — and this
+    invariant makes that limitation an explicit, permanent contract, not a temporary gap
+    "flagged for a future pass." True column-level lineage would require dbt Cloud's
+    separate, proprietary Column-Level Lineage feature or a third-party SQL parser (e.g.
+    sqlglot) statically analyzing compiled SQL — genuinely new scope, out of this spec
+    entirely (see §5 Out of Scope).`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -843,11 +1062,22 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       (CRITICAL, found pass 10 — this is the exact bug that silently returns zero downstream
       tables for every real anomaly if regressed)
 
-  Scenario: graceful degradation when column-level lineage isn't available
+  Scenario: the traversal is bounded and deduplicated
+    Given a LineageNode with two separate DEPENDS_ON paths converging on the SAME downstream
+      node (a diamond-shaped dependency, a normal real-world DAG shape)
+    When BH-1064's traversal walks DEPENDS_ON edges forward from the anomaly's starting node
+    Then the downstream node appears EXACTLY ONCE in the result, not once per path
+    And the traversal uses a bounded hop count (e.g. *1..50), not an unbounded *1.., so a
+      future data bug introducing a DEPENDS_ON cycle cannot cause exponential path blowup
+
+  Scenario: graceful degradation when column-level metadata isn't available
     Given a dbt project whose catalog.json lacks column-level metadata
     When an anomaly fires on a column in that project
     Then the system traces impact at the MODEL level only
-    And has_column_lineage=False is recorded, not silently claimed otherwise
+    And has_column_metadata=False is recorded, not silently claimed otherwise
+    And this is unaffected by Invariant 14 — the traversal is ALWAYS model-level regardless
+      of has_column_metadata's value, since catalog.json never contains column-DEPENDENCY
+      data in any dbt version
 
   Scenario: stale lineage edges are replaced, not accumulated
     Given a model's manifest.json previously depended on table A
@@ -860,7 +1090,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     Given dbt Cloud returns a 500 (not a 404) when fetching manifest.json for a run
     When BH-1062's fetch wrapper receives this failure
     Then fetch_error is set to a non-None value describing the real failure
-    And has_column_lineage is NOT silently set to False as if the artifact were simply absent
+    And has_column_metadata is NOT silently set to False as if the artifact were simply absent
 
   Scenario: the correct run step is selected before fetching artifacts
     Given a dbt Cloud run with 3 steps, real step["name"] values confirmed against a live
@@ -892,6 +1122,15 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       node.py:299-323), which does NOT check "errors" and would silently treat this as success
       because OGMAPISession.mutation() only raises on transport-level HTTP failure, never on
       a GraphQL-level error inside a 200 response
+
+  Scenario: fetching a real, large manifest.json does not silently reuse an unproven pattern
+    Given a dbt project with hundreds of models, whose manifest.json is tens of megabytes
+    When BH-1062 fetches this manifest via a wrapper around _fetch_artifact()
+    Then EITHER real latency/memory was measured against an actual large project's
+      manifest.json and documented as acceptable, OR a size-aware fetch path (longer
+      timeout, streaming parse) was built for this artifact class specifically
+    And the existing 30-second timeout tuned for KB-scale run_results.json/sources.json is
+      NOT silently assumed safe at 100x+ that data volume without one of the above
 ```
 
 ## 5. Out of Scope
@@ -905,6 +1144,14 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 - **Databricks lineage consumption** until BH-1044's connection-model decision resolves.
 - **Any UI/visualization of the lineage graph** — this spec is about the alert-enrichment
   bridge, not a lineage-browsing feature (that could be a natural follow-on, not in scope here).
+- **True column-level lineage (which output column derives from which upstream column).**
+  ADDED pass 36, made explicit by Invariant 14 — confirmed dbt's `catalog.json` contains no
+  column-dependency data at all, only column-existence metadata (a warehouse schema
+  snapshot). This spec's downstream-impact traversal operates at the MODEL/TABLE level
+  only. Real column-level lineage would require dbt Cloud's separate, proprietary
+  Column-Level Lineage feature or a third-party SQL parser (e.g. sqlglot) statically
+  analyzing compiled SQL — a genuinely new, separate initiative if ever pursued, not a
+  natural extension of this spec's artifact-consumption approach.
 
 ## 6. Dependencies
 
@@ -963,7 +1210,7 @@ for success"**
 
 *For any* `_fetch_artifact()` call that fails for a reason OTHER than a genuine 404
 (artifact never generated), the resulting `LineageArtifacts.fetch_error` SHALL be non-None —
-`has_column_lineage` SHALL NOT be silently set to `False` as if the artifact were simply
+`has_column_metadata` SHALL NOT be silently set to `False` as if the artifact were simply
 absent.
 
 **Validates: §3 Invariant 7, §4 Scenario "a real fetch error is never mistaken for 'no
@@ -1057,7 +1304,7 @@ just that the Cypher string is syntactically well-formed.
 | Area | Repo | Impact |
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
-| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s own proven pattern — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0`) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
+| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
 | Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 

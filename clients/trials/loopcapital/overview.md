@@ -90,6 +90,19 @@ fixture) but essentially undemonstrated for SSRS (no fixture at all), and there 
 today from "diagnose an uploaded file" to "monitor a live legacy SQL Server's SSIS/SSRS
 catalog" — that would be new, unscoped work if Loop Capital asks for it.
 
+**GAP FOUND, completeness audit 2026-07-12**: the client's ORIGINAL verbatim ask
+(`artifacts/poc-scope-from-client.md:33`, "Provide a resource costing to show what the cost
+will be (cost management)") has **NO ticket, no spec section, and no mention anywhere in
+poc.yaml/TRACKER.md** — it was silently dropped somewhere between the original ask and Track
+A's Jira scoping. This is distinct from the `storage-optimization` skill's warehouse-storage
+cost analysis (which covers `SKILL.md:3,19`'s "reduce warehouse spend" — a real, shipped, but
+narrower capability): the client's line 33 ask reads as an overall PROJECT/ENGAGEMENT cost
+estimate ("what the cost will be" for this work), not a warehouse-storage line item. **Not
+yet resolved — flag to Kuri/Suzanne before 7/17**: either (a) confirm this was already
+delivered out-of-band (a sales-side cost proposal, not an engineering deliverable — plausible
+given the phrasing, but unconfirmed here), or (b) file it as a real gap if it was expected to
+be part of the agent's output.
+
 Full detail (superseded by the correction above where they conflict):
 `project_ssis_poc_vs_proactive_priority.md` (memory).
 
@@ -169,11 +182,17 @@ confirmed against real code, not assumed.
   BH-1060 (security follow-up).
 - **Verification memory**: `~/.claude/projects/-Users-bado-iccha-brighthive/memory/project_loop_capital_pass_index.md` — one-line index into 34+ detailed pass files.
 - **Full demo plan**: `poc.yaml` (scope/ownership/demo-relative phases: T-5 → T-0) → renders `TRACKER.md` (live ticket/PR status, regenerate with `make poc-tracker-no-slack CLIENT=loopcapital`). Plan is organized by Suzanne's 3 committed demo points, not calendar days — see `poc.yaml`'s phase titles.
-- **Draft PR (Track B)**: [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) — the proactive-monitoring handover spec + this client folder, on `drchinca/BH-1036/proactive-monitoring-spec`.
-- **Draft PR (Track C)**: [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) — the lineage-aware-data-quality spec, on `drchinca/BH-1061/lineage-aware-data-quality-spec`. Split into its own PR 2026-07-12 to keep both under the 900-line PR-size threshold — Track C is non-blocking for 7/17 and has zero file overlap with Track B.
-- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` (PR #95) — ASCII
+- **Handover spec, Track B**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`
+  — **merged to master** via PR [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) (2026-07-12).
+- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` — **merged to master**
+  via PR [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) (2026-07-12). ASCII
   architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
-  glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1068.
+  glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1070.
+- **This client folder**: merged to master via PR [#96](https://github.com/brighthive/agentic-project-mgmt/pull/96) (2026-07-12).
+- **Open follow-up PR**: [#97](https://github.com/brighthive/agentic-project-mgmt/pull/97) —
+  dual-write shape correction (BH-1054/BH-1046), on `drchinca/BH-1061/triple-click-zoom-pass-15`.
+  Opened fresh after #94/#95/#96 merged; ongoing verification passes land here until it's next
+  merged.
 
 ## Two things that must happen before 7/17, not yet done
 
@@ -192,6 +211,7 @@ confirmed against real code, not assumed.
 | 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | — |
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | — |
+| 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |
 
 ## Decision
 

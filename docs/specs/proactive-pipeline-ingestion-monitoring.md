@@ -61,6 +61,58 @@ contract) → {BH-1049 Airbyte, BH-1050 Step Functions, BH-1051 queue/DLQ} → B
 BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real but
 **non-blocking** — don't let them stall the critical path.
 
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│  ADDED pass 25 (triple-click-zoom) — the full dependency graph, PUSH vs PULL   │
+│  options called out where this loop found a cheaper push-based alternative     │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+  BH-1042 (contract: PipelineSource Protocol, PIPELINE_SOURCE_ADAPTERS registry,
+           PipelineHealthSignal DTO, get_pipeline_health MCP tool, §8 eval design)
+      │
+      ├──▶ BH-1043 (dbt watchdog — wraps EXISTING dbt_cloud_tools.py, adds backoff)
+      ├──▶ BH-1044 (Databricks watchdog — GREENFIELD connector + credentials, mirrors
+      │             dbt's per-CONNECTION direct-boto3 secretsmanager pattern exactly)
+      └──▶ BH-1054 (watchdog capability node — rides EXISTING scheduled_agent_dispatcher,
+                     owns the dual-write: per-member fanout + resolveSignal() derivation,
+                     NOT a same-payload-twice call; cooldown keyed on (workspace_id,
+                     source_type, job_id, failure_type) — 4-tuple, not 3)
+             │
+             ├──▶ BH-1045 (SQL Server disk/job query — existing WarehousePort/Synapse
+             │             connection chain PLUS a NEW VIEW SERVER STATE grant, a real
+             │             customer-side permission action, not "zero new anything")
+             ├──▶ BH-1046 (delivery verify — dbt_run_failure ONLY, narrow scope,
+             │             does NOT duplicate BH-1067's 5-stage renderer work)
+             └──▶ BH-1047 (remediation — builds GC-11's loop for the FIRST time, since
+                           self-healing-pipelines.md is itself unbuilt; REMEDIATION_TOOLS
+                           via direct import, github_merge_pull_request omitted by
+                           construction, mirrors retrieval_agent_react.py's real pattern)
+
+  BH-1048 (ingestion contract, separate from the job-status contract above)
+      │
+      ├──▶ BH-1049 (Airbyte — PUSH option confirmed cheaper: extend platform-core's
+      │             airbyte_notification_webhook's existing no-op failure branch,
+      │             reuses its real auth client + connection mapping, vs. building a
+      │             new brightbot poller from zero)
+      ├──▶ BH-1050 (Step Functions — PUSH option confirmed cheaper: extend the LIVE
+      │             data_ingestion_stack.py EventBridge rule already routing FAILED
+      │             executions to Slack via SNS, vs. a new execution-history poller)
+      └──▶ BH-1051 (queue/DLQ — THREE options, evaluate cheapest first: (a) extend
+                    cadenceToCron [touches shared scheduling infra], (b) new scoped
+                    EventBridge rule [also shared], (c) native CloudWatch Alarm on the
+                    queue's own metrics [ZERO new BrightHive scheduling code — try
+                    this first])
+             │
+             └──▶ BH-1052 (CORRECTED pass 25 — not pure verification: BH-1049/1050's
+                           push options live in DIFFERENT repos/mechanisms than BH-1054's
+                           direct dual-write — BH-1050's existing SNS→Slack path in
+                           particular may need a NEW addition to also reach NotificationInbox,
+                           since SNS→Slack alone doesn't touch the webapp today)
+
+  Cross-cutting, non-blocking: BH-1053 (dual-write unification), BH-1055 (dispatcher
+  hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision)
+```
+
 **One open human decision, not resolved by this spec**: BH-1044 (Databricks) recommends
 brightbot-only secret storage over a platform-core schema change, for the demo timeline —
 needs Kuri's explicit confirm/override (see Jira comment on BH-1044).
@@ -248,9 +300,36 @@ from scratch.
   tolerable for on-demand, human-triggered calls (a failure surfaces as an error the human
   retries); it is NOT tolerable for an unattended background watchdog polling every connected
   workspace on a fixed cadence, which must add its own backoff (Invariant 10). Credentials are
-  confirmed per-workspace (Secrets Manager entry `dbt/cloud-api/{service_id}`,
-  `credentials_tools.py:166-201`), so this is a per-workspace self-throttling concern, not a
-  cross-tenant one. Separately, `_analyze_run_errors` (`dbt_cloud_tools.py:485-494`) fans out
+  confirmed per-CONNECTION, not strictly per-workspace (Secrets Manager entry
+  `dbt/cloud-api/{service_id}`, `credentials_tools.py:166-201`) — **SHARPENED pass 24
+  (triple-click-zoom)**: `service_id` is `TransformationServiceNode.id`
+  (`typedefs.ts:873-874`), and a single workspace CAN have multiple `TransformationService`
+  nodes (`WorkspaceNode.transformationServices: [TransformationServiceNode!]!`,
+  `typedefs.ts:289/463` — a plural relationship). `_find_connected_dbt_service()`
+  (`credentials_tools.py:154-163`) explicitly picks the FIRST `provider == "DBT_CLOUD"`
+  service, which is fine for today's single-dbt-connection-per-workspace common case but is
+  NOT a structural guarantee — the watchdog's per-workspace throttling/cooldown reasoning
+  (same class of concern as Invariant 3's cooldown-key fix, pass 17) should key on
+  `(workspace_id, service_id)` if a workspace with 2+ dbt connections is ever a real case,
+  not assume `workspace_id` alone identifies one credential set. This is a self-throttling
+  concern, not a cross-tenant one, but the granularity assumption should be explicit, not
+  implicit.
+
+  **ALSO SHARPENED pass 24**: the credential-read path itself is NOT purely
+  platform-core-mediated as later prose (BH-1044) implies — brightbot's OWN
+  `_retrieve_dbt_cloud_api_token()` (`credentials_tools.py:166-200`) calls
+  `boto3.client("secretsmanager").get_secret_value(SecretId=f"dbt/cloud-api/{service_id}")`
+  DIRECTLY (lines 180-182), duplicating (not going through) platform-core's own write/read
+  path (`dbt-cloud-api-secret.ts:16-83`, which platform-core uses for its own GraphQL-resolved
+  credential flow). BH-1044's "mirror this pattern for Databricks" is therefore directionally
+  correct in citing direct-boto3 access as the real precedent — but should mirror
+  brightbot's OWN direct-read function specifically, not assume access is mediated entirely
+  through platform-core. Confirmed: NO in-memory/TTL cache wraps this credential read
+  (grep, zero hits) — every call hits Secrets Manager fresh, so there is no
+  credential-caching cross-workspace leakage risk to inherit either, unlike the earlier
+  cooldown-key finding.
+
+  Separately, `_analyze_run_errors` (`dbt_cloud_tools.py:485-494`) fans out
   concurrently via an uncapped `asyncio.gather` — the watchdog must bound this per Invariant 11,
   not inherit it unbounded across every workspace polling concurrently.
 - **Verified 2026-07-10 (pass 4)**: Databricks has ZERO existing application code in brightbot
@@ -266,9 +345,49 @@ from scratch.
   which needs sub-hourly — arguably sub-5-minute — polling to be proactive rather than
   theatrical. See §1 Gaps item 6 and Out of Scope for how this spec handles it.
 - **Verified 2026-07-10 (pass 5)**: BH-1050's original framing ("reuse BH-844 Step Functions
-  groundwork") was WRONG — zero hits for `describe_execution`/`list_executions`/boto3
-  `stepfunctions` client usage anywhere in application code; only CDK stacks that CREATE state
-  machines exist. BH-844 itself is unbuilt. BH-1050 is greenfield, like BH-1044.
+  groundwork") was WRONG — zero hits for `describe_execution`/`list_executions` (the
+  POLLING calls) anywhere in application code. BH-844 itself could not be confirmed to exist
+  in any repo's code/docs/commit history (searched all 4 relevant repos — zero hits on
+  "844"). BH-1050 is greenfield for a PULL/polling approach.
+  **CORRECTED pass 22 (triple-click-zoom) — this framing missed a real, already-shipped
+  PUSH-based precedent that changes BH-1050's real options, the same class of correction
+  found for BH-1049's Airbyte webhook (pass 13).** Confirmed:
+  `brighthive-data-organization-cdk/brighthive_data_cdk/data_ingestion_stack.py:844-853` —
+  a REAL, LIVE `events.Rule` matching `source: ["aws.states"], detail_type: ["Step
+  Functions Execution Status Change"], detail: {"status": ["FAILED"], "stateMachineArn":
+  [...]}`, targeting an SNS topic that already delivers to Slack (lines 838-841,887-889;
+  shipped in commit `3c5a269`, "Add: slack notification setup for the dataingestion
+  statemachine (#113)"). This is EXACTLY the native, zero-polling EventBridge pattern AWS
+  provides for Step Functions monitoring — it already exists for the data-ingestion state
+  machine specifically. **BH-1050's real options are therefore, like BH-1049's Airbyte
+  case: (a) extend this EXISTING rule's target/pattern to also reach BrightSignals'
+  dual-write (cheaper — reuses shipped infra, may need to widen the `stateMachineArn` filter
+  or add BrightSignals as a second SNS subscriber), or (b) build a genuinely new poller
+  (the original greenfield framing, now confirmed as option (b) only, not the only path).**
+  Confirmed real state machines this rule could plausibly extend to:
+  `data_ingestion_stack.py:821-825` (data-ingestion, Glue→warehouse-sync→OpenMetadata),
+  `sfn_dynamic_execution.py:230-234` (dynamic ingestion executor, cron trigger currently
+  disabled), `unstructured_data_ingestion_sfn.py:342-347` (S3-triggered KB sync),
+  `brighthive_core/dbt_validation_stack.py:165-170` (a DIFFERENT existing state machine,
+  "dbt-job-status-state-machine") — **CHECKED pass 22, CONFIRMED NOT AN OVERLAP with
+  BH-1043, but a real, separate gap worth flagging.** This state machine is a synchronous
+  provisioning-gate, not a monitoring watchdog: it's invoked once per GraphQL mutation
+  right after the platform triggers a dbt Cloud job itself (`project.ts:~2995-3038` →
+  `startStateMachineExecution`), polls via `dbt_job_status_lambda`
+  (`lambdas/dbt_validation/main.py`) in a 20s Wait/Choice loop until the run finishes, then
+  on SUCCESS writes the resolved schema ID onto `ProjectNode` in Neo4j. It has no periodic
+  cadence, no dashboard, no alerting consumer — it exists only to know when it's safe to
+  read the dbt run's own output. **CONFIRMED it fails COMPLETELY SILENTLY on dbt run
+  failure**: the Lambda returns `{"retry": False, "status": "Failed"}`, the state machine
+  reaches its `otherwise` branch and ends "successfully" from Step Functions' own
+  perspective, the only trace is a bare `print("[ERROR] Failed:", e)` (CloudWatch-only), and
+  the GraphQL caller (`project.ts`) doesn't even inspect the execution result
+  (`startStateMachineExecution` returns `true` unconditionally, fire-and-forget). This is a
+  REAL, PRE-EXISTING gap independent of this whole spec — a dbt provisioning failure during
+  project setup notifies no human today. NOT this spec's problem to fix (out of scope for
+  BH-1036/1037), but flagged here since a cold engineer investigating "why didn't
+  provisioning finish" would otherwise waste time not knowing this silent-failure path
+  exists — file separately if Loop Capital or another customer hits it.
 - **Verified 2026-07-10 (pass 5)**: BH-1049's original framing ("Airbyte/source-sync health
   signals") assumed a pollable Airbyte status API exists in brightbot — it doesn't. Sync
   execution routes through Platform Core GraphQL
@@ -298,6 +417,27 @@ from scratch.
   ticket must explicitly evaluate BOTH options (extend the reactive webhook vs. build a new
   poller) rather than defaulting to "greenfield poller" — see BH-1049's ticket for the
   updated scope.
+  **RESOLVED pass 25 (triple-click-zoom) — the ONE open question Option A left ("can this
+  Python Lambda even reach the TypeScript dual-write functions?") is now confirmed YES, via
+  an already-proven mechanism, not a new one.** `airbyte_notification_webhook` is pure
+  Python/Chalice (`app.py:1-6`, `requirements.txt` — boto3/requests, no Node runtime) —
+  `writeNotificationSignal`/`NotificationInbox.deliver` are TypeScript functions running in
+  a SEPARATE Node.js Apollo Lambda process (`src/server.ts`); direct cross-language calls
+  are impossible, only HTTP can bridge them. CONFIRMED this Lambda ALREADY proves the exact
+  mechanism needed: it makes authenticated GraphQL-over-HTTP calls into platform-core today
+  (`Neo4jOGMClient`, `chalicelib/neo4j_client.py:47-55`, POSTing `{query, operationName,
+  variables}` with Cognito-JWT auth via `OGMAuthClient`) — just against the OGM subgraph,
+  not the Core API schema. The dual-write targets are reachable over that SAME HTTP
+  mechanism, on the Core API schema instead, using `x-service-key` auth (not Cognito JWT):
+  `publishNotification` (`schema/typedefs.ts:5007`, resolver
+  `resolvers.ts:471`→`notifications.ts:554-564`, calls `writeNotificationSignal` directly
+  at line 563) and `notificationRecipients` (`schema/typedefs.ts:5004`, resolver
+  `resolvers.ts:470`→`notifications.ts:436-552`, calls `NotificationInbox.deliver` at line
+  530) are BOTH real, existing GraphQL mutations reachable this way. BH-1049's Option A is
+  therefore FULLY BUILDABLE with zero new IPC/protocol invention — swap the OGM endpoint for
+  the Core API endpoint, swap Cognito-JWT auth for `x-service-key`, call
+  `publishNotification`/`notificationRecipients` instead of the Neo4j OGM mutations this
+  Lambda already calls.
 - **Verified 2026-07-10 (pass 5)**: BH-815 ("Ingestion flows / platform sources disagree on
   staging") could NOT be confirmed fixed — zero git history hits referencing it in either
   repo. Must be treated as still open; do not assume resolved.
@@ -329,6 +469,26 @@ from scratch.
    fairness) and PS-18 (scaling observability / "alarm on unable to scale") — the dispatcher
    satisfies neither today. NOT blocking for a single-workspace 7/17 demo, but IS a real
    pre-existing risk this spec's tickets compound and should surface, not silently inherit.
+   **CORRECTED pass 26 (triple-click-zoom) — this load projection is now STALE relative to
+   BH-1049/1050/1051's confirmed designs; the actual dispatcher-load increase is smaller than
+   "4 new watchdogs" implies.** Only BH-1054 (and its dependents BH-1043/1044/1045) are
+   CONFIRMED new dispatcher consumers — BH-1054 rides the SAME existing scheduled dispatcher
+   path GC-12 already uses. BH-1049 (Airbyte) and BH-1050 (Step Functions) both confirmed a
+   cheaper PUSH-based Option A that adds ZERO new dispatcher load if chosen — extending an
+   existing webhook Lambda (BH-1049) or an existing EventBridge→SNS rule (BH-1050) neither
+   one touches `scheduled_agent_dispatcher` at all. BH-1051 (queue/DLQ) confirmed a CloudWatch
+   Alarm option that also adds ZERO dispatcher load. **Revised real load addition, if Option A
+   is chosen for BH-1049/1050 and the Alarm option for BH-1051: ONLY BH-1054 (+ its 3
+   sibling adapters BH-1043/1044/1045, which are all POLLED FROM WITHIN the same BH-1054
+   capability node, not separate dispatcher schedules) adds new dispatcher consumers — a
+   materially smaller compounding effect than the original "4 new watchdogs" framing
+   assumed.** This does NOT remove the need for BH-1055's hardening (BH-1054 alone is still a
+   new, currently-uncapped consumer riding an already-unthrottled, unmonitored dispatcher),
+   but it does mean BH-1055's own load-test sizing (currently "50-100 workspaces") should be
+   revisited against this smaller confirmed consumer count if BH-1049/1050/1051 land on their
+   push/alarm options — check BH-1049/1050/1051's actual chosen implementation before
+   finalizing BH-1055's load-test parameters, don't plan against the original 4-watchdog
+   worst case if it's no longer the real shape.
    **Sharpened pass 12 with a LIVE AWS pull (not code-only inference)**: staging's
    account-level unreserved concurrency pool is 1,000; 62 total Lambdas exist; ZERO have
    `ReservedConcurrentExecutions` set, including the dispatcher itself. The risk is
@@ -419,15 +579,48 @@ async def check_pipeline_health(
 #      beyond what Invariant 8 already required, but it should not be assumed "already solved
 #      by the dispatcher" either — confirmed there is no dispatcher-level mechanism to lean on.
 
-# TYPE NOTE (fixed pass 34, cold-read gap): `Capability` and `RequestContext` below are NOT
-# existing brightbot types — they come from pluggable-scalable.md's canonical Ports & Adapters
-# ILLUSTRATION, not a real importable module. Both are NEW, to be defined by whoever builds
-# BH-1042, in `pipeline_watchdog_node.py` or a sibling module:
+# TYPE NOTE (fixed pass 34, cold-read gap, SHARPENED pass 37): `Capability` and
+# `RequestContext` below are NOT existing brightbot types — they come from
+# pluggable-scalable.md's canonical Ports & Adapters ILLUSTRATION (`~/.claude/rules/
+# pluggable-scalable.md:11`), not a real importable module. Both are NEW, to be defined by
+# whoever builds BH-1042, in `pipeline_watchdog_node.py` or a sibling module.
+#
+# CORRECTED pass 37 — the earlier draft's RequestContext was a THINNED-DOWN version of the
+# canonical illustration, dropping 2 of 6 fields without flagging the omission. The REAL
+# canonical shape (rules file, verbatim): "the ambient bundle every port call carries —
+# workspace_id, correlation_id, principal, deadline, budget_remaining, tenant_tier.
+# Propagated via contextvar; stamped onto spans per ai-observability." The earlier draft
+# below only had workspace_id + optional deadline — missing correlation_id (needed to trace
+# a single watchdog poll cycle across its async calls to dbt_cloud_tools.py/
+# quality_tools.py/the dual-write, exactly the kind of cross-call tracing this spec's own §9
+# Observability Contract needs) and principal (needed for THIS SPEC'S OWN Invariant 14 —
+# "workspace scoping SHALL be resolved exclusively from the validated MCP principal," which
+# requires a principal object to resolve FROM; omitting it from RequestContext while
+# requiring it in Invariant 14 is an internal inconsistency, not a deliberate simplification).
 #   Capability = Literal["JOB_STATUS", "DISK_METRICS"]  # plain string enum, no need for more
 #   @dataclass(frozen=True)
 #   class RequestContext:
 #       workspace_id: str
+#       principal: "Principal"          # RESTORED pass 37 — required by this spec's own
+#                                        # Invariant 14; the MCP principal object, not a
+#                                        # caller-supplied workspace_id (per get_anomalies'/
+#                                        # get_pipeline_health's corrected convention)
+#       correlation_id: str | None = None  # RESTORED pass 37 — for tracing one poll cycle
+#                                        # across the watchdog's async calls; optional here
+#                                        # only because no existing brightbot correlation-id
+#                                        # generator was confirmed to exist for this pass —
+#                                        # do NOT treat "optional" as "skip it," wire a real
+#                                        # generator (e.g. uuid4()) at implementation time
 #       deadline: datetime | None = None  # optional; wire up only if a real timeout need appears
+#       budget_remaining: float | None = None  # OMITTED deliberately for THIS spec — no
+#                                        # per-workspace $ budget concept exists yet in
+#                                        # brightbot's pipeline-watchdog context; do not
+#                                        # invent one here, this is a genuine, scoped omission
+#                                        # (unlike correlation_id/principal, which were
+#                                        # accidental)
+#       tenant_tier: str | None = None  # OMITTED deliberately for THIS spec, same reasoning
+#                                        # as budget_remaining — no tenant-tier concept is
+#                                        # consumed anywhere in this spec's invariants
 # Do not go looking for these in an existing brightbot module — they don't exist yet.
 
 # PipelineSource: discriminated union over existing connection types, no new vendor SDK at call sites
@@ -447,8 +640,38 @@ PIPELINE_SOURCE_ADAPTERS: dict[str, type[PipelineSource]] = {
     ETL_GENERIC: EtlGenericPipelineSource,
 }
 
-def build_pipeline_source(*, source_type: str, config: dict) -> PipelineSource:
-    return PIPELINE_SOURCE_ADAPTERS[source_type](config=config)
+def build_pipeline_source(*, source_type: str, config: dict[str, Any]) -> PipelineSource:
+    # CORRECTED pass 16 (triple-click-zoom) — verified against the REAL
+    # WarehouseConnectionFactory.create_connection() (warehouse_connections.py:1238-1260),
+    # not paraphrased. Two real divergences found and fixed here:
+    #
+    # 1. `config: dict` was under-typed relative to the real precedent's own
+    #    `params: dict[str, Any]` (constructor signatures at warehouse_connections.py:53,
+    #    251, 436, 716 all use `dict[str, Any]`, never a bare `dict`) — fixed above.
+    #
+    # 2. Bracket-indexing (`PIPELINE_SOURCE_ADAPTERS[source_type]`) raises a raw, unhelpful
+    #    `KeyError` on an unknown/typo'd source_type. The REAL precedent does NOT do this —
+    #    it uses `.get(wh_type)` (warehouse_connections.py:1249) and only raises after
+    #    exhausting its lookup, with a hand-written, actionable `ValueError`
+    #    ("Cannot determine warehouse connection type...", lines 1258-1260). Mirror THAT
+    #    error-handling shape, not a bare KeyError:
+    adapter_cls = PIPELINE_SOURCE_ADAPTERS.get(source_type)
+    if adapter_cls is None:
+        raise ValueError(
+            f"Unknown pipeline source_type {source_type!r} — no adapter registered in "
+            f"PIPELINE_SOURCE_ADAPTERS. Known types: {sorted(PIPELINE_SOURCE_ADAPTERS)}"
+        )
+    return adapter_cls(config=config)
+    # NOTE: the real precedent is also a CLASS with an instance method
+    # (`WarehouseConnectionFactory.create_connection(self, ...)`, not `@classmethod`/
+    # `@staticmethod`), while this spec keeps `build_pipeline_source` as a bare module-level
+    # function — a deliberate divergence, not an oversight: `AGENT_REGISTRY`
+    # (workflow_agent/registry.py:31) is the OTHER real 2+-instance registry precedent in
+    # this codebase and IS a bare module-level dict/function, so both real shapes exist in
+    # this org's own code. A bare function is simpler and sufficient here since this
+    # factory carries no instance state (unlike WarehouseConnectionFactory, which doesn't
+    # actually need instance state either, but was written as a class first) — confirm this
+    # choice at implementation time rather than assume either shape is "more correct."
 
 # COST OF ADDING A NEW ADAPTER TYPE (verified pass 9 against the real warehouse-registry
 # precedent — corrects BH-1044/1045's earlier "registry entry, single switch site" framing,
@@ -480,7 +703,14 @@ class PipelineHealthSignal:
     failure_type: str                 # the category/stage value, e.g. "dbt_run_failure",
                                        # "source_disk_low" — see the taxonomy list below.
                                        # Cooldown key (Invariant 3, Property 1) is
-                                       # (source_type, job_id, failure_type).
+                                       # (workspace_id, source_type, job_id, failure_type) —
+                                       # a 4-tuple, CORRECTED pass 17: job_id alone is not
+                                       # globally unique across customers' dbt Cloud/
+                                       # Databricks accounts, and BrightRoutines' own
+                                       # workspace-safety comes from query-layer
+                                       # partitioning, not its key shape — this spec's
+                                       # cooldown key must include workspace_id explicitly
+                                       # rather than relying on partitioning alone.
     severity: Literal["info", "warning", "critical"]
     root_cause_class: "RootCauseClass"   # DATA_SHAPE | JOB_RUNTIME, see below
     detected_at: datetime
@@ -493,6 +723,38 @@ class PipelineHealthSignal:
 #   2. notificationRecipients-equivalent write to NotificationInbox (webapp reads this)
 # A signal that only performs (1) is Slack-visible but webapp-invisible, and vice versa —
 # this is the exact bug BH-1053 catches. Do NOT add a third parallel event table.
+#
+# EXACT REAL SIGNATURES, verified pass 15 (triple-click-zoom) — not paraphrased, and this
+# closes a gap: earlier passes treated "dual-write" as roughly "call two functions with the
+# same payload." CONFIRMED that is WRONG — the two paths take genuinely different shapes,
+# and BH-1053 remains unshipped (no unification exists; both paths are still independent,
+# confirmed by direct read — neither imports the other):
+#
+#   (1) writeNotificationSignal(input: WriteNotificationInput) — Promise<WriteNotificationResult>
+#       (platform-core/src/graphql/service/aws/notification-signal.ts:46)
+#       Fields: workspaceId, stage, status ("passed"|"failed"|"degraded" — enforced, :65-67),
+#       optional assetId/assetName/runContext/metadata(string)/ttlDays/visibility/
+#       idempotencyKey/targetUserId. ONE row per workspace EVENT (not per user) —
+#       PutItemCommand into NOTIFICATIONS_TABLE_NAME.
+#
+#   (2) NotificationInbox.deliver(params) — (notification-inbox.ts:80-124)
+#       Fields: userId (REQUIRED, per-recipient), workspaceId, eventId, stage, status,
+#       timestamp, category (DERIVED by resolveSignal(), NOT caller-supplied),
+#       displayJson/detailJson (PRE-RENDERED presentation payloads, ALSO built by
+#       resolveSignal() — not the raw PipelineHealthSignal fields), detailType, ttl.
+#       ONE call PER WORKSPACE MEMBER — the real caller, notificationRecipients
+#       (notifications.ts:436-552), loops over Workspace.findActiveMembersByWorkspaceId
+#       and calls .deliver() once per member.
+#
+# CONSEQUENCE FOR THIS TICKET'S IMPLEMENTER: a watchdog's PipelineHealthSignal payload does
+# NOT directly satisfy write (2)'s shape. Before calling NotificationInbox.deliver(), the
+# delivery function MUST: (a) resolve the workspace's active member list (a real, separate
+# lookup — NOT already done by anything in this spec's watchdog node), (b) run the signal
+# through resolveSignal() (or an equivalent classifier) to derive category/displayJson/
+# detailJson — the SAME renderer machinery Invariant 15 already flags as missing a
+# registered case for 5 of this spec's 6 new stage values. "Dual-write" is therefore real
+# integration work with two structurally different targets, not a trivial fan-out of
+# identical arguments — size estimates for BH-1054/BH-1046 should account for this.
 #
 # CRITICAL, verified pass 35 (cross-checking a rendering gap found in the sibling
 # lineage-aware-data-quality.md spec — GC-12's anomaly notifications were found to dead-end
@@ -565,11 +827,18 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
 1. `WHEN a PipelineHealthSignal is emitted, THE System SHALL reach BOTH live surfaces
    (Slack via the OLD NOTIFICATIONS_TABLE write path, webapp via NotificationInbox) — a
    signal visible on only one surface is an incomplete emission, not a partial success.
-   No FOURTH parallel event table SHALL be introduced.`
+   No FOURTH parallel event table SHALL be introduced. **SHARPENED pass 15**: these two
+   writes are NOT interchangeable-shape calls. writeNotificationSignal() takes ONE row per
+   workspace event; NotificationInbox.deliver() requires a PER-MEMBER fanout (one call per
+   active workspace member, via Workspace.findActiveMembersByWorkspaceId) plus
+   category/displayJson/detailJson DERIVED by resolveSignal() — not the raw
+   PipelineHealthSignal fields passed straight through. The delivery function MUST perform
+   both the member-list lookup and the resolveSignal() classification before calling
+   NotificationInbox.deliver(), not just re-serialize the same signal object twice.`
 2. `WHEN the watchdog is scheduled, THE System SHALL ride the EXISTING scheduled dispatcher +
    run_context (BH-670 precedent) — no new EventBridge rule, no new cron infra.`
-3. `WHEN the same underlying failure — keyed by (source_type, job_id, failure_type) — persists
-   across polling cycles within a cooldown window, THE System SHALL NOT re-emit a duplicate
+3. `WHEN the same underlying failure — keyed by (workspace_id, source_type, job_id,
+   failure_type) — persists across polling cycles within a cooldown window, THE System SHALL NOT re-emit a duplicate
    alert. Default cooldown = 1 hour, workspace-overridable (config seam per code-style.md's
    "no hardcoded values without an override" convention — no magic number without a named
    constant). **Verified pass 31 by direct code read (corrects an imprecise citation)**:
@@ -581,7 +850,23 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    its own `RecurringAutomationPattern` DynamoDB item (`routines/dtos.py:257`), keyed by
    `pattern_id`, tightly coupled to that data model. This spec's watchdog needs its OWN item
    shape keyed by `(source_type, job_id, failure_type)` — copy the TTL-comparison PATTERN,
-   do not attempt to reuse or extend BrightRoutines' actual table/store.`
+   do not attempt to reuse or extend BrightRoutines' actual table/store.
+   **CRITICAL, verified pass 17 (triple-click-zoom) — the real precedent's key alone is NOT
+   workspace-safe, and neither is this spec's proposed composite key as drafted.** Confirmed:
+   BrightRoutines' real workspace-safety comes from `pattern_store.list_patterns_by_status
+   (workspace_id=workspace_id, ...)` (`detector.py:466-468`) PARTITIONING the query by
+   workspace BEFORE the `pattern_id`/`cooldown_until` check ever runs — `pattern_id` alone
+   is NOT globally unique across workspaces in storage, it only behaves safely because every
+   lookup is pre-filtered to one workspace. The composite key `(source_type, job_id,
+   failure_type)` as written here has the SAME gap: `job_id` (e.g. a dbt Cloud job ID) is
+   NOT guaranteed unique across different customers' dbt Cloud accounts, and two workspaces
+   sharing a colliding `job_id`+`failure_type` could suppress each other's alerts if the
+   cooldown store is not ALSO partitioned by workspace at the query/lookup layer. FIX:
+   `workspace_id` MUST be part of either (a) the cooldown key itself
+   (`(workspace_id, source_type, job_id, failure_type)`, a 4-tuple, not 3), or (b) the
+   storage partition the lookup queries against — mirroring BrightRoutines' actual pattern,
+   not just its comparison idiom. BH-1054's implementer MUST pick one explicitly; do not
+   ship a 3-tuple key against unpartitioned storage.`
 4. `IF a signal's root_cause_class is DATA_SHAPE but has no matching mode in
    self-healing-pipelines.md's 4-mode taxonomy, THEN THE System SHALL fall back to
    alert-only — it SHALL NOT guess a fix.`
@@ -644,7 +929,39 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    scoped, no sibling tool needs the same treatment in this file. Separately and NOT this
    spec's problem to fix: `ActionClass.DESTRUCTIVE` (the tag already on this tool) is
    documented to be pure audit-logging that never blocks execution — a systemic false-safety
-   signal across the whole codebase, flagged to Kuri directly, out of scope for BH-1036/1037.`
+   signal across the whole codebase, flagged to Kuri directly, out of scope for BH-1036/1037.
+   **CONCRETE MECHANISM, pass 18 (triple-click-zoom) — the exact code shape, verified against
+   `dbt_agent_react.py`, not left abstract.** `dbt_agent_react.py`'s own `DBT_REACT_TOOLS`
+   (lines 150-205) is a flat `list[...]` literal built by importing each `@tool`-decorated
+   function INDIVIDUALLY from `brightbot.agents.dbt_agent.tools` — it is NOT built by
+   filtering a pre-bundled list, and `_DBT_PINNED_TOOLS` (a `frozenset[str]` of names, line
+   230) only controls prompt-caching pin behavior, NOT which tools are bound — it is
+   IRRELEVANT to this exclusion requirement, do not confuse the two. A real, existing
+   precedent for cross-agent SUBSET reuse already exists: `retrieval_agent_react.py:32`
+   imports exactly one function (`introspect_warehouse_schema`) directly from a submodule of
+   `dbt_agent/tools/`, bypassing the package's aggregate `__init__.py` re-export entirely.
+   BH-1047 MUST follow this SAME pattern — import individual GitHub tool functions directly
+   from `github_tools.py`, not filter `DBT_REACT_TOOLS` by exclusion (which would also drag
+   in unrelated dbt-specific tools like `explore_dbt_project`/`register_transformation` that
+   don't belong in a remediation agent):
+   ```python
+   from brightbot.agents.dbt_agent.tools.github_tools import (
+       github_read_file, github_list_files, github_list_branches,
+       github_create_branch, github_commit_file, github_commit_multiple_files,
+       github_create_pull_request,
+       # github_merge_pull_request intentionally OMITTED — see Invariant 7.
+   )
+   REMEDIATION_TOOLS: list = [
+       github_read_file, github_list_files, github_list_branches,
+       github_create_branch, github_commit_file, github_commit_multiple_files,
+       github_create_pull_request,
+   ]
+   ```
+   Pass this list to `create_agent(model=..., tools=REMEDIATION_TOOLS, ...)` (the same
+   construction call `dbt_agent_react.py:587-589` uses) — there is no raw `llm.bind_tools()`
+   call to write; `create_agent` does that internally. Property 2's unit test enumerates
+   THIS list (or whatever the real construction call resolves to) and asserts
+   `"github_merge_pull_request"` is absent by name.`
 8. `IF a workspace has no dbt/Databricks/SQL-Server connection configured, THEN THE System
    SHALL skip that source's polling — no error, no signal, no cost.`
 9. `IF a signal's root_cause_class is JOB_RUNTIME (no data-shape signature), THEN THE System
@@ -667,16 +984,32 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
 12. `IF a signal source's minimum useful polling interval is sub-hourly (e.g. queue-depth/DLQ
     monitoring, BH-1051), THEN THE System SHALL NOT silently ride the existing
     cadenceToCron()/nightshift scheduling path as-is — cadenceToCron only supports
-    DAILY..QUARTERLY (verified 2026-07-10). The implementer SHALL make an explicit choice:
-    extend cadenceToCron + _to_scheduler_cron with a validated sub-hourly case, OR use a
-    dedicated, narrowly-scoped EventBridge rule for this signal class only (an exception to
-    Invariant 2's "no new EventBridge," justified because Invariant 2 was written for
-    job-status/data-quality signals where nightshift cadence is adequate, not for
-    sub-hourly-only signal classes it never anticipated).`
+    DAILY..QUARTERLY (verified 2026-07-10; **SHARPENED pass 21, triple-click-zoom**: the real
+    enum, `routine-scheduler-client.ts:165-180`, has 5 cases, not the shorthand's implied 4 —
+    DAILY (`0 8 * * *`), WEEKLY (`0 8 * * MON`), BIWEEKLY (`0 8 1,15 * *`), MONTHLY
+    (`0 8 1 * *`), QUARTERLY (`0 8 1 1,4,7,10 *`) — finest real granularity is DAILY at
+    08:00, zero sub-hourly/sub-daily option exists). The implementer SHALL make an explicit
+    choice: extend cadenceToCron + _to_scheduler_cron with a validated sub-hourly case, OR
+    use a dedicated, narrowly-scoped EventBridge rule for this signal class only (an
+    exception to Invariant 2's "no new EventBridge," justified because Invariant 2 was
+    written for job-status/data-quality signals where nightshift cadence is adequate, not
+    for sub-hourly-only signal classes it never anticipated). **THIRD OPTION, confirmed
+    pass 21**: neither of the above may be the right call at all — a native **CloudWatch
+    Alarm on the SQS queue's own `ApproximateNumberOfMessagesVisible`/DLQ-depth metric**
+    achieves sub-minute evaluation granularity with ZERO new BrightHive scheduling code
+    (no cadenceToCron extension, no new EventBridge rule invoking a brightbot Lambda) —
+    confirmed both `cadenceToCron()`'s output and the dispatcher's EventBridge Scheduler
+    path are the SAME substrate other watchdogs ride
+    (`scheduled_agents_routes.py:271-294`→`_to_scheduler_cron`→
+    `scheduled_agent_dispatcher_stack.py:32-38,145-148`), so extending either changes shared
+    infra; a scoped CloudWatch Alarm changes nothing shared. BH-1051's implementer MUST
+    evaluate this third option BEFORE choosing to extend cadenceToCron or add a new
+    EventBridge rule — it may be strictly cheaper and lower-risk than either.`
 13. `WHEN a PipelineHealthSignal's diagnosis field is generated from raw job error logs (dbt
     Cloud run details, SQL Server error text), THE System SHALL pass it through the EXISTING
-    scrub_text() (brightbot/audit/redaction.py) before it reaches ANY of the 3 sinks (Slack,
-    NotificationInbox, GitHub PR body) — no sink SHALL receive unscrubbed diagnosis text.
+    scrub_text() (brightbot/audit/redaction.py) before it reaches ANY of the 4 sinks (Slack,
+    NotificationInbox, GitHub PR body, AND CloudWatch audit logs — see pass 28 below) — no
+    sink SHALL receive unscrubbed diagnosis text.
     **Known residual risk, verified pass 23**: scrub_text() only strips credential/secret
     SHAPES (tokens, connection strings, key=value secrets) — it explicitly is NOT a PII
     scrubber (per its own docstring) and does NOT catch customer data values that can appear
@@ -685,7 +1018,20 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     strings/tokens DO show up in misconfigured job logs) but does NOT close customer-PII/
     data-value leakage, which has no existing BrightHive pattern to reuse. If the threat model
     requires closing that gap too, it is NEW scope, not a checkbox this invariant satisfies —
-    do not let scrub_text()'s existence create false confidence.`
+    do not let scrub_text()'s existence create false confidence.
+    **CRITICAL, pass 28 (triple-click-zoom) — a FOURTH sink found, not previously counted.**
+    The `@audit_action` decorator (`brightbot/audit/decorator.py:44-55,95-117`) on
+    `github_create_pull_request` binds the FULL function arguments — including `body`, the
+    complete PR description containing the diagnosis text — into `emit_action_audit()`
+    (`audit_log.py:78-140`), which lands as a JSON log line in CloudWatch Logs. This path
+    DOES call `redact()` (`audit_log.py:57-73`) first, but `redact()` is ALSO only
+    credential-shape/key-name-based (`token`/`secret`/`password`-named fields plus the same
+    credential value patterns as scrub_text()) — it does NOT target PII either. This means
+    the SAME residual customer-data-value risk this invariant already flags for Slack/
+    NotificationInbox/PR-body ALSO applies to CloudWatch audit logs, arguably at HIGHER risk
+    (CloudWatch Logs Insights queries are broad-access within an AWS account, and log
+    retention typically outlives a Slack message's visible/searchable lifespan). BH-1060's
+    scope MUST be revised to cover all 4 sinks, not the original 3 — see BH-1060's ticket.`
 14. `THE get_pipeline_health MCP tool SHALL NOT accept workspace_id as a request parameter —
     workspace scoping SHALL be resolved exclusively from the validated MCP principal
     (principal.workspace_id), exactly matching get_anomalies_impl's convention
@@ -748,9 +1094,20 @@ Feature: Proactive pipeline & ingestion monitoring
       which does not distinguish a permissions failure from any other query failure
 
   Scenario: repeated failure does not spam
-    Given a "dbt_run_failure" signal was already alerted for job X in the last cooldown window
-    When the watchdog detects the same failure on job X again before the cooldown expires
+    Given a "dbt_run_failure" signal was already alerted for job X in workspace A in the
+      last cooldown window
+    When the watchdog detects the same failure on job X in workspace A again before the
+      cooldown expires
     Then no duplicate alert is sent
+
+  Scenario: two workspaces sharing a colliding job_id do not suppress each other's alerts
+    Given workspace A and workspace B both have a dbt job with the SAME job_id value
+      (plausible across different customers' dbt Cloud accounts)
+    And workspace A's job with that id already alerted "dbt_run_failure" within the cooldown
+    When workspace B's job with the SAME id also fails with "dbt_run_failure"
+    Then workspace B's alert is NOT suppressed by workspace A's cooldown
+    And this holds because the cooldown key includes workspace_id (per Invariant 3's pass-17
+      correction — a 3-tuple key without workspace_id would have failed this scenario)
 
   Scenario: DATA_SHAPE root cause routes to the existing surgical-PR loop
     Given a watchdog signal is classified root_cause_class=DATA_SHAPE
@@ -781,10 +1138,13 @@ Feature: Proactive pipeline & ingestion monitoring
   Scenario: a sub-hourly signal source does not silently ride the nightshift cadence
     Given a signal source's minimum useful interval is sub-hourly (e.g. queue-depth/DLQ, BH-1051)
     When its capability node is scheduled
-    Then it does NOT use cadenceToCron()'s DAILY..QUARTERLY cadence as-is
-    And an explicit choice was made and documented: either cadenceToCron/_to_scheduler_cron
-      were extended with a validated sub-hourly case, or a dedicated scoped EventBridge rule
-      was used for this signal class only
+    Then it does NOT use cadenceToCron()'s 5 real cases (DAILY/WEEKLY/BIWEEKLY/MONTHLY/
+      QUARTERLY, all fixed at 08:00) as-is
+    And an explicit choice was made and documented among THREE options: (a) cadenceToCron/
+      _to_scheduler_cron extended with a validated sub-hourly case, (b) a dedicated scoped
+      EventBridge rule for this signal class only, or (c) a native CloudWatch Alarm on the
+      SQS queue's own ApproximateNumberOfMessagesVisible/DLQ-depth metric — option (c)
+      requires ZERO new BrightHive scheduling code and should be evaluated FIRST
     And dbt/Databricks/ETL job-status watchdogs (adequate at hourly-class cadence) are
       unaffected by this choice — it is scoped to sub-hourly sources only
 
@@ -808,9 +1168,13 @@ Feature: Proactive pipeline & ingestion monitoring
   Scenario: diagnosis text is scrubbed before reaching any sink
     Given a raw dbt Cloud error log contains an accidentally-logged connection string with credentials
     When the diagnosis field is generated from that log
-    Then scrub_text() runs on the diagnosis BEFORE it is written to Slack, NotificationInbox, or a GitHub PR body
-    And the credential shape is redacted in all 3 sinks
-    But note: this scenario does NOT prove customer PII/data-value redaction — that is a known, separate, unclosed gap
+    Then scrub_text() runs on the diagnosis BEFORE it is written to Slack, NotificationInbox,
+      a GitHub PR body, OR the CloudWatch audit log (4 sinks, corrected pass 28 — the audit
+      log via @audit_action was previously uncounted)
+    And the credential shape is redacted in all 4 sinks
+    But note: this scenario does NOT prove customer PII/data-value redaction in ANY of the 4
+      sinks — that is a known, separate, unclosed gap (BH-1060), now scoped across all 4,
+      not just the original 3
 
   Scenario: remediation loop's tool surface excludes merge capability
     Given the remediation loop's LangGraph node is constructed with its bound tools
@@ -864,19 +1228,23 @@ Feature: Proactive pipeline & ingestion monitoring
 | Self-Healing Pipelines surgical-PR loop (GC-11, BH-526) | Blocking (remediation consumer) | Draft spec, not yet built |
 | Existing WarehousePort BYOW connection mechanism (Snowflake/etc.) | Non-blocking (mechanism reused, not built here) | Live |
 | **BH-1057: staging BYOW SQL Server connection ITSELF (a real instance, not the mechanism)** | **BLOCKING for the 7/17 demo specifically** — no SQL Server exists to connect through the mechanism above | **RESOLVED-ACTIONABLE pass 15 — RDS Web edition, ~3-5hrs same-day, zero code changes (reuses SynapseConnection/pymssql), concrete runbook in BH-1057. Was CRITICAL/unscoped in pass 14, now well-scoped.** |
-| BH-1058: dbt Cloud job with deliberate-failure capability | Blocking for BH-1043's §10 e2e case | **RESOLVED-ACTIONABLE pass 16 — one-time human UI setup (~1-2 hrs): create a job + one env-var-toggled model, zero new brightbot code (mirrors BH-1057). Less time-critical than BH-1057.** |
+| BH-1058: dbt Cloud job with deliberate-failure capability | Blocking for BH-1043's §10 e2e case | **RESOLVED-ACTIONABLE pass 16, CORRECTED pass 27 — one-time human UI setup (~1-2 hrs): create a job + one env-var-toggled model, zero new brightbot code (mirrors BH-1057). CRITICAL fix pass 27: the toggle must trigger a genuine RUNTIME SQL error (e.g. `select 1/0`), NOT `raise_compiler_error` — a compile-time error has no SQL-diagnosable signature and would fail to exercise DATA_SHAPE classification, defeating this fixture's purpose.** |
 | dbt_cloud_tools.py, quality_tools.py on-demand tools | Non-blocking (reused as poll targets) | Live |
-| AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, not inferred) | LangGraph `StateGraph`/`add_node` unchanged by the migration; safe to build on today |
+| AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, SHARPENED pass 29 — not inferred, and now explicitly time-bounded) | LangGraph `StateGraph`/`add_node` unchanged by AgentCore's CURRENT leaf-runtime-only scope (`agentcore-deployment-migration.md`'s "Recommended Approach": only sub-agents — retrieval/analyst/governance/dbt — become AgentCore Container runtimes; the LangGraph Deep Agent SUPERVISOR remains the orchestration runtime) — safe to build on TODAY. **NOT a permanent guarantee**: CEMAF (`brightagent-v3`) is the CONFIRMED long-term supervisor replacement (`langgraph-cloud-detach.md:17,24`), using a structurally different `DAGExecutor` model, not `StateGraph`/`add_node` — this spec's watchdog capability nodes survive today's AgentCore leaf-runtime work unchanged, but would need a REAL redesign (as Goal/Result DTOs, per CEMAF's own migration notes, not a mechanical `add_node` port) once the supervisor layer itself migrates to CEMAF. Treat "unchanged by the migration" as scoped to AgentCore's current phase, not a claim about CEMAF's eventual arrival. |
 | `scheduled_agent_dispatcher`'s LangGraph Cloud invocation path (`langgraph_action.py` → `/threads/{id}/runs`) | Non-blocking for THIS spec | Verified pass 19 (`langgraph-cloud-detach.md`, 2026-07-09): explicitly named as "a third, separate LangGraph Cloud dependency... not covered by either track." **BH-1059 filed** (tracking placeholder under BH-453) so this gap is visible when the migration track reaches it, rather than rediscovered later. |
 | **BH-1067: renderers for 5 new notification stages on brightbot-slack-server + brighthive-webapp** | **BLOCKING for demo-visibility of `dbt_run_stale`, `databricks_job_failure`, `databricks_cluster_unhealthy`, `etl_job_failure`, `source_disk_low`** — the dual-write (Invariant 1) succeeds today, but nothing renders (Invariant 15) | **Filed pass 35** — mirrors `dbt_run_failure`'s existing pattern (`formatter.ts:423`, `mappers.ts:33`/`constants.ts:159`); not started |
 | `airbyte_notification_webhook`'s existing auth client + connection-mapping (`app.py:47-59,97-101,141-159`) | Non-blocking (reused, not built, IF BH-1049 chooses Option A) | **CONFIRMED pass 13** — live, deployed, already-authenticated; its failure branch (`app.py:88-90`) is currently a no-op BH-1049 could extend cheaply instead of building a new poller |
+| **BH-1071: `NOTIFICATION_SYSTEM_PLAN.md` stale-docs cleanup** | Non-blocking for 7/17; blocked BY BH-1053's decision (deploy path 3 for real, or retire it) before it can be finalized | **Filed pass 32** — the plan doc (never updated since 2026-04-20) describes 4+ pieces of never-built/undeployed infra as current (a `notification-subscriptions` table that was never created, a speculative DynamoDB Stream, a `notification_dispatcher_stack.py` file that doesn't exist, and SES email delivery the slack-server team's own README labels "Future direction") |
 
 ## 7. Correctness Properties
 
 ### Property 1: no duplicate alerting for a persistent failure
 
-*For any* failure signal `(source, job_id, failure_type)` detected in consecutive polling
-cycles within the cooldown window, at most one alert is delivered.
+*For any* failure signal `(workspace_id, source_type, job_id, failure_type)` detected in
+consecutive polling cycles within the cooldown window, at most one alert is delivered.
+**CORRECTED pass 17**: workspace_id is a required part of this key — job_id alone is not
+guaranteed unique across different customers' dbt Cloud/Databricks accounts (see Invariant
+3's pass-17 note).
 
 **Validates: §3 Invariant 3, §4 Scenario "repeated failure does not spam"**
 
@@ -959,6 +1327,73 @@ failure" in prose without a deterministic check backing it, **this evaluator sho
 to self-healing-pipelines.md's own (currently nonexistent) §8 too**, not left as a
 disconnected duplicate — BH-1047 (which already wires this spec's signals into GC-11's loop)
 is the natural place to build it once, for both specs' benefit.
+
+**CRITICAL, pass 19 (triple-click-zoom) — this table's "GATE" and "LLM judge + deterministic"
+terminology, verified against the REAL eval framework (`brightbot/brightbot/evals/`), does
+NOT map cleanly onto it. Four real gaps found, none of which invalidate building these
+evaluators, but all of which need resolving before implementation, not left implicit:**
+
+1. **No single real `Evaluator` base class exists — two DIFFERENT real shapes, and it's
+   ambiguous which this table's evaluators should implement.** `evals/core/contracts.py`
+   defines `OutputGate` (`:191-205`: `name`, `mode: GateMode`, `check(...) -> GateVerdict`)
+   — this is the ONLY place `GateMode.GATE`/`GateMode.OBSERVE` (`:163-167`) literally exist,
+   matching this table's "Mode" column. But the three real concrete evaluators in this repo
+   (`SurfaceEvaluator` layers/surface.py:72, `OfflineRoutingEvaluator` layers/routing.py:53,
+   `BehaviorEvaluator` layers/behavior.py:28) use a DIFFERENT shape entirely:
+   `evaluate(case: EvalCase) -> EvalVerdict`, no `mode` field at all. Since
+   `FailureClassificationEvaluator`/`RootCauseClassEvaluator` live inside a watchdog
+   CAPABILITY NODE (not the online-gate middleware layer `OutputGate` serves), BH-1042's
+   implementer MUST decide explicitly which real Protocol these implement — do not assume
+   "GATE" in this table's Mode column means it automatically gets `OutputGate`'s real
+   enforcement machinery; it may not fit that layer at all.
+2. **"LLM judge + deterministic" in ONE evaluator has NO real extension point to plug
+   into — AND the cited precedent is NOT actually an LLM-judge/deterministic hybrid,
+   CORRECTED pass 30.** Every real evaluator in this codebase is purely one or the other:
+   `SurfaceEvaluator` is pure deterministic keyword scoring; `core/metrics.py:33,38` wrap
+   DeepEval's pure-LLM-judge `GEval`/`AnswerRelevancyMetric`. `record_capability_execution`
+   (`quality_check_agent.py:1442-1512`), previously cited as "the closest real precedent for
+   blending both," is actually neither — verified its EXACT formula, not paraphrased:
+   ```python
+   cfg_total = len(configured_rule_results)
+   cfg_passed = sum(1 for r in configured_rule_results if r["passed"])
+   ai_total = ai_stats.get("evaluated_expectations", 0)
+   ai_passed = ai_stats.get("success_count", 0)
+   total_checks = cfg_total + ai_total
+   total_passed = cfg_passed + ai_passed
+   combined_score = (total_passed / total_checks) if total_checks else 0
+   ```
+   Both terms are PASS/FAIL COUNTS, not an LLM judgment score blended with a deterministic
+   one — `ai_stats` comes from an LLM (`quality_model`) GENERATING candidate expectations
+   (via `generate_expectations`), which are THEN evaluated deterministically against real
+   data (GX/pandas/SQL), producing `success_count`/`failure_count` — the same shape as the
+   configured-rule counts. No LLM ever assigns a judgment score here; this is a pooled
+   pass-rate over two SOURCES of deterministic checks (human-configured rules + LLM-proposed
+   rules), not a hybrid scoring mechanism. It's also UNCONDITIONAL/additive (both terms
+   always summed, either can legitimately be 0, `combined_score` defaults to 0 if
+   `total_checks == 0`) and carries NO threshold anywhere in the function — it's stored as a
+   raw score (`result_data["score"]`, line 1485) with no pass/fail cutoff applied. BH-1042's
+   implementer should NOT model `FailureClassificationEvaluator`/`RootCauseClassEvaluator`
+   on this precedent for an "LLM judge + deterministic" pattern, because this precedent
+   doesn't contain an LLM judge at all — if a genuine LLM-judged score is needed (e.g. the
+   LLM itself rates confidence in a classification, not just proposes checks later verified
+   deterministically), that combination pattern has NO real precedent anywhere in this
+   codebase and must be designed fresh, with an explicit threshold decision this precedent
+   also never had to make.
+3. **GATE mode is a real, TESTED mechanism that enforces NOTHING in production today.**
+   `run_gate_with_heal` (`online/gates.py:56-134`) implements the real retry/heal loop and
+   checks `GateMode.GATE` (`gates.py:100`) — but confirmed by grep: no middleware, CI
+   workflow, or agent node anywhere calls `run_gate_with_heal`/`OutputGate` outside its own
+   unit test (`tests/unit/evals/test_eval_framework_contracts.py`). Labeling these
+   evaluators "GATE" in this table does NOT mean anything is currently blocked by them —
+   BH-1042/1054 must decide whether to (a) wire into the real `run_gate_with_heal` mechanism
+   (giving it its FIRST real production caller), or (b) implement gate-like blocking
+   directly inside the watchdog node without that shared machinery. Do not assume "GATE" is
+   self-enforcing just because the framework has a type named that.
+4. **The labeled fixture set `FailureClassificationEvaluator` needs does not exist —
+   confirmed by search, zero dbt/Databricks/ETL failure-log fixtures anywhere in the repo.**
+   This is new scope for BH-1042/1054's implementer to build from scratch (labeled failure
+   logs across the 6 stage taxonomy values), not an existing corpus to point the evaluator
+   at.
 
 **Model tier (verified pass 22, cost estimate)**: use **Haiku** (`claude-haiku-4-5` via Bedrock)
 for `FailureClassificationEvaluator` and `RootCauseClassEvaluator` — both are bounded-enum
@@ -1060,18 +1495,19 @@ unless noted):
 | BH-1045 | feat: generic ETL / SQL-Server disk-via-existing-connection adapter | Needs Refinement, revised — tier-1 answer to Frank's objection |
 | BH-1046 | feat: verify watchdog events reach existing delivery (not new delivery code) | Needs Refinement, revised down to verification-only |
 | BH-1047 | feat: wire watchdog failures into self-healing-pipelines.md's surgical-PR loop | Needs Refinement, revised to extend GC-11 rather than compete |
-| BH-1048 | spec: ingestion signal contract, reuses BrightSignals schema | Needs Refinement, revised (BH-1037) |
+| BH-1048 | spec: ingestion signal contract — **CORRECTED pass 31**: "reuses an existing delivery path" was FALSE (the EventBridge→notification_dispatcher chain is undeployed); must choose between deploying that missing infra or routing through the CONFIRMED-real BrightSignals dual-write directly | Needs Refinement, revised pass 31 — real open decision, not settled (BH-1037) |
 | BH-1049 | feat: Airbyte/source-sync watchdog — greenfield IN BRIGHTBOT (pass 5) but a cheaper push-based path exists in platform-core's existing airbyte_notification_webhook (pass 13) | Needs Refinement, revised pass 13 — must evaluate extending the existing reactive webhook's no-op failure branch before defaulting to a new poller |
-| BH-1050 | feat: batch (Step Functions) watchdog — CONFIRMED greenfield (pass 5): BH-844 groundwork does not exist, zero runtime execution-history code anywhere | Needs Refinement, revised — was miscast as "reuse BH-844" |
+| BH-1050 | feat: batch (Step Functions) watchdog — greenfield for a POLLING approach (pass 5), but a cheaper PUSH option exists (pass 22): extend the LIVE `data_ingestion_stack.py:844-853` EventBridge rule that already routes Step Functions FAILED executions to Slack, same class of fix as BH-1049's Airbyte webhook | Needs Refinement, revised pass 22 — must evaluate extending the existing rule before defaulting to a new poller |
 | BH-1051 | feat: event/streaming (queue lag, DLQ) watchdog — requires an explicit sub-hourly scheduling decision (Invariant 12); cadenceToCron caps at daily | Needs Refinement, revised — scheduling gap flagged pass 5 |
-| BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 | Needs Refinement (BH-1037) |
+| BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 — **CORRECTED pass 25**: not pure verification if BH-1049/1050 choose Option A, since each lives in a different repo/runtime/mechanism (brightbot direct call, a Chalice Lambda's new HTTP call, an existing SNS→Slack-only path that may not reach NotificationInbox at all) | Needs Refinement (BH-1037), revised pass 25 — real conditional design work, not pure verification |
 | BH-1038–1041 | BrightRoutines MCP/A2A surface (BH-115) | Needs Refinement, unaffected by this spec — separate concern |
 | BH-1055 | infra: concurrency cap + fan-out load test for scheduled_agent_dispatcher | Needs Refinement, filed pass 11, sharpened with live AWS data pass 12-13 (BH-1036 for now; conceptually fits BH-171) |
 | BH-1057 | infra/fixture: provision staging BYOW SQL Server connection — the literal 7/17 demo scenario has zero infra today | Needs Refinement, filed pass 14 (CRITICAL), resolved-actionable with concrete runbook pass 15 (BH-1036) |
-| BH-1058 | infra/fixture: dbt Cloud job with deliberate-failure capability, for BH-1043's e2e case | Needs Refinement, filed pass 14, resolved-actionable with concrete runbook pass 16 (BH-1036) |
+| BH-1058 | infra/fixture: dbt Cloud job with deliberate-failure capability, for BH-1043's e2e case | Needs Refinement, filed pass 14, resolved-actionable pass 16, CORRECTED pass 27 — runbook's fixture mechanism must produce a genuine runtime SQL error, not a compile-time error (BH-1036) |
 | BH-1059 | track: scheduled_agent_dispatcher's LangGraph Cloud dependency unaddressed by AgentCore/CEMAF migration | Needs Refinement, filed pass 19, tracking placeholder (BH-453, correct epic home) |
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |
 | BH-1067 | feat: renderers for 5 new watchdog notification stages (Slack + webapp) — dbt_run_stale, databricks_job_failure, databricks_cluster_unhealthy, etl_job_failure, source_disk_low | Filed pass 35 — CRITICAL for demo-visibility, blocks BH-1043/1044/1045's alerts from being human-visible (BH-1036) |
+| BH-1071 | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current | Filed pass 32 — non-blocking for 7/17, blocked by BH-1053's real-vs-retire decision (BH-1036) |
 
 ## Related
 
