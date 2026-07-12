@@ -927,6 +927,59 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    limit anywhere in either function. This exact query is confirmed buildable and
    guard-compliant TODAY — the remaining gaps are the dialect class (above) and the
    permission grant (above), not the query text itself.
+   **CONFIRMED pass 39 (triple-click-zoom) — the SECOND SQL Server signal this invariant
+   requires (`msdb.dbo.sysjobs`/`sysjobhistory` job-status, mentioned throughout but never
+   itself shown), verified against real SQL Server semantics AND the same safety guard:**
+   ```sql
+   WITH LatestRun AS (
+       SELECT
+           j.job_id,
+           j.name AS job_name,
+           h.run_status,
+           h.run_date,
+           h.run_time,
+           ROW_NUMBER() OVER (
+               PARTITION BY j.job_id
+               ORDER BY h.run_date DESC, h.run_time DESC
+           ) AS rn
+       FROM msdb.dbo.sysjobs AS j
+       JOIN msdb.dbo.sysjobhistory AS h
+           ON h.job_id = j.job_id
+       WHERE h.step_id = 0
+   )
+   SELECT
+       job_name,
+       CASE run_status
+           WHEN 0 THEN 'Failed'
+           WHEN 1 THEN 'Succeeded'
+           WHEN 2 THEN 'Retry'
+           WHEN 3 THEN 'Canceled'
+           WHEN 4 THEN 'In Progress'
+           ELSE 'Unknown'
+       END AS run_status_text,
+       CAST(
+           STUFF(STUFF(CAST(run_date AS CHAR(8)), 5, 0, '-'), 8, 0, '-')
+           + ' ' +
+           STUFF(STUFF(RIGHT('000000' + CAST(run_time AS VARCHAR(6)), 6), 3, 0, ':'), 6, 0, ':')
+           AS DATETIME
+       ) AS last_run_datetime
+   FROM LatestRun
+   WHERE rn = 1
+   ORDER BY last_run_datetime DESC
+   ```
+   **Correctness notes, general SQL Server platform knowledge**: `step_id = 0` is the
+   job-outcome roll-up row, not a step — `sysjobhistory` has one row PER STEP, so a naive
+   query without this filter would return every step's result, not the job's overall
+   outcome. `run_status` is an INTEGER code (0-4), never a readable string — the `CASE`
+   maps it. `run_date`/`run_time` are stored as bizarre zero-padded INTEGERs (e.g. 1:02:03
+   AM as `10203`, not `010203`), NOT a real `DATETIME` — the `STUFF`/`RIGHT`/`CAST` chain
+   reformats them correctly, a genuinely easy mistake to get wrong without this exact
+   pattern (a naive `CAST(run_time AS VARCHAR)` on a value like `10203` would misparse the
+   time). `ROW_NUMBER() OVER (PARTITION BY job_id ...)` picks the LATEST run per job — the
+   equivalent alternative is a correlated `MAX(instance_id)` subquery, either is fine.
+   **Guard-compliance**: same conclusion as the disk-check query — starts with `WITH`
+   (allowed), no semicolons, no keyword/schema-prefix blocklist, no multi-line check. This
+   query sails through `execute_query()`'s guard cleanly, same as the disk-check query.
 6. `WHILE BrightSignals' 3-way split-brain (BH-1053, see §6) is unresolved as a UNIFIED write
    path, THE System's watchdog SHALL perform the explicit dual-write in Invariant 1 itself —
    it SHALL NOT wait for BH-1053 to add a fourth ad-hoc path.`
