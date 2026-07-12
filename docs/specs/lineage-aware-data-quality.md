@@ -220,10 +220,16 @@ already computed, not a new BrightHive-built lineage engine.
 
 ### Hard Limitations
 
-- Column-level lineage only exists in dbt's `catalog.json` for newer dbt versions/configs —
-  older projects may only have model-level `depends_on`, not column-level edges. The
-  implementation must degrade gracefully to model-level tracing when column data isn't
-  available, not silently produce wrong/incomplete results.
+- **CORRECTED pass 36 — this bullet's original framing was wrong: catalog.json never
+  contains column-level LINEAGE (edges) at all, in ANY dbt version.** It only contains
+  column-level METADATA (existence, type, per model) — a warehouse schema snapshot. What
+  varies by dbt version/config is whether catalog.json exists or is populated for a given
+  model at all (`has_column_metadata`), not whether it contains a column-DEPENDENCY graph —
+  no dbt version's catalog.json has ever contained that. This spec's implementation
+  degrades gracefully to MODEL-level tracing always (see Invariant 14) — column existence
+  data (`LineageModelNode.columns`) is retained for future use (e.g. surfacing "column X in
+  this affected table" in a future enrichment) but is NEVER the basis for the downstream
+  traversal itself, which is model/table-level end to end.
 - **CORRECTED pass 7 — Databricks is NOT "gated on BH-1044 resolving," it is a genuinely
   greenfield build regardless of that decision.** Verified by direct code check: zero
   Databricks code exists in brightbot or platform-core outside vendored third-party deps.
@@ -304,7 +310,14 @@ class LineageSource(Protocol):
 @dataclass(frozen=True)
 class LineageGraph:
     nodes: dict[str, LineageNode]   # keyed by a source-agnostic unique_id
-    has_column_lineage: bool
+    has_column_metadata: bool         # RENAMED pass 36, CRITICAL — see the correction before
+                                       # LineageModelNode.columns below. This field means
+                                       # "we know which columns EXIST per model," NOT
+                                       # "we have column-to-column DEPENDENCY lineage" — dbt's
+                                       # catalog.json contains no column-dependency data at
+                                       # all. The old name has_column_lineage was a real,
+                                       # unverified false claim about what this artifact
+                                       # provides.
     fetch_error: str | None
     source_engine: str               # "dbt" | "databricks" | future engines — for observability only,
                                       # never branched on by downstream consumers (BH-1063/1064)
@@ -314,7 +327,11 @@ class LineageNode:
     unique_id: str
     name: str
     depends_on: list[str]
-    columns: list[str] | None
+    columns: dict[str, "ColumnMetadata"] | None  # CORRECTED pass 36 — see LineageModelNode's
+                                       # own correction below for the full finding; this was
+                                       # `list[str] | None`, which doesn't match dbt's real
+                                       # catalog.json shape (a dict keyed by column name, not
+                                       # a flat name list).
     relation_name: str | None         # ADDED pass 10, see LineageModelNode's field for the
                                        # full CRITICAL bug this closes — this is the field
                                        # BH-1064's traversal actually matches against, NOT
@@ -412,7 +429,7 @@ def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
 # BH-1062 needs a THIN wrapper around _fetch_artifact() (not a modification to the shared
 # function, which other callers depend on) that re-derives the status code itself (a second,
 # minimal precheck HTTP call, or logging a WARNING distinguishing 404 from other failures) so
-# a real error doesn't get silently absorbed into "has_column_lineage=False."
+# a real error doesn't get silently absorbed into "has_column_metadata=False."
 #
 # GAP FOUND 3, pass 23 (triple-click-zoom) — a real scale mismatch, verified against
 # _fetch_artifact()'s ACTUAL implementation, not assumed. `_fetch_artifact()`
@@ -454,10 +471,23 @@ async def fetch_lineage_artifacts(
 @dataclass(frozen=True)
 class LineageArtifacts:
     models: dict[str, LineageModelNode]       # keyed by unique_id
-    has_column_lineage: bool              # False if catalog.json lacked column metadata
+    has_column_metadata: bool             # RENAMED pass 36 — see CRITICAL note below.
+                                           # False if catalog.json lacked column metadata
+                                           # for this model.
     fetch_error: str | None               # NEW: non-None if a real error occurred (not a
                                            # genuine 404-absent-artifact case) — surfaced so
                                            # callers don't silently treat "errored" as "absent"
+
+@dataclass(frozen=True)
+class ColumnMetadata:                     # ADDED pass 36 — general dbt catalog.json
+                                           # knowledge, confirmed: catalog.json's
+                                           # nodes.<unique_id>.columns is a DICT keyed by
+                                           # column name, each value a metadata object —
+                                           # NOT a flat list of name strings.
+    name: str
+    type: str                             # the warehouse column type, e.g. "NUMBER", "VARCHAR"
+    index: int
+    comment: str | None
 
 @dataclass(frozen=True)
 class LineageModelNode:
@@ -469,7 +499,31 @@ class LineageModelNode:
                                            # before treating this shape as final.)
     name: str
     depends_on: list[str]                 # upstream unique_ids (manifest's depends_on.nodes)
-    columns: list[str] | None             # None if catalog.json didn't have this model
+    columns: dict[str, ColumnMetadata] | None  # CRITICAL, CORRECTED pass 36 (triple-click-
+                                           # zoom) — this was `list[str] | None`, WRONG on
+                                           # two counts, verified against general dbt
+                                           # platform knowledge (this repo has zero
+                                           # catalog.json parsing precedent to check
+                                           # against — confirmed by search, this shape was
+                                           # never checked before this pass either):
+                                           # (1) catalog.json's real shape is a DICT keyed
+                                           # by column name, not a flat list — fixed above.
+                                           # (2) MORE IMPORTANT: catalog.json contains ZERO
+                                           # column-to-column DEPENDENCY information at all
+                                           # — it only proves "this model currently HAS
+                                           # these columns" (a warehouse schema snapshot via
+                                           # information_schema), never "output column X is
+                                           # DERIVED FROM upstream column Y." True
+                                           # column-level lineage (the dependency graph) is
+                                           # NOT available from catalog.json alone — it
+                                           # would require dbt Cloud's separate, proprietary
+                                           # "Column-Level Lineage" feature (SQL-compilation-
+                                           # based, not a public JSON artifact) or a
+                                           # third-party SQL parser (e.g. sqlglot) statically
+                                           # analyzing compiled SQL. NEITHER is in scope for
+                                           # this spec. See has_column_metadata's rename
+                                           # above and Invariant 14 below for the full
+                                           # consequence.
     relation_name: str | None              # ADDED pass 10 — CRITICAL FIX, a real blocking bug
                                            # found by verification, not a nice-to-have. dbt's
                                            # manifest.json carries `relation_name` per compiled
@@ -563,7 +617,7 @@ async def upsert_lineage_graph(
 #                                      # (@constraint or a manual :LineageNode(relationName)
 #                                      # index) since it's the traversal's match key, not
 #                                      # a cosmetic field.
-#     hasColumnLineage: Boolean! @default(value: false)
+#     hasColumnMetadata: Boolean! @default(value: false)
 #     createdAt: DateTime! @timestamp(operations: [CREATE])
 #     modifiedAt: DateTime! @timestamp(operations: [CREATE, UPDATE])
 #     dependsOn: [LineageNode!]! @relationship(type: "DEPENDS_ON", direction: OUT)
@@ -857,7 +911,7 @@ async def find_downstream_impact(
 1. `WHEN manifest.json/catalog.json is fetched, THE System SHALL reuse the existing
    _fetch_artifact() plumbing — no new HTTP client, no new auth path.`
 2. `IF catalog.json lacks column-level metadata for a model, THEN THE System SHALL degrade to
-   model-level tracing and SHALL set has_column_lineage=False — it SHALL NOT silently produce
+   model-level tracing and SHALL set has_column_metadata=False — it SHALL NOT silently produce
    a column-level claim it cannot back.`
 3. `WHEN an AnomalyEventNode fires on a monitored column, THE System SHALL attempt a
    downstream-impact lookup via the lineage graph before publish_completion_notification's
@@ -882,7 +936,7 @@ async def find_downstream_impact(
    and must not be extended for this spec's LineageNode writes.`
 7. `WHEN fetching manifest.json/catalog.json returns None from _fetch_artifact(), THE System
    SHALL distinguish a genuine 404 (artifact never generated — e.g. run failed pre-compile)
-   from any other HTTP failure (auth error, 500, timeout) before recording has_column_lineage
+   from any other HTTP failure (auth error, 500, timeout) before recording has_column_metadata
    or fetch_error. Verified pass 2: _fetch_artifact()'s existing exception handling collapses
    ALL failure modes to None — this spec's wrapper (BH-1062) MUST NOT inherit that conflation;
    a real error surfaces as fetch_error, never silently as "column lineage unavailable."`
@@ -968,6 +1022,21 @@ async def find_downstream_impact(
     DISTINCT, a downstream node reachable via multiple paths (a normal shape in any DAG with
     diamond dependencies) would be returned multiple times, producing duplicate
     downstream-table entries in the anomaly's enrichment metadata.`
+14. `THE System SHALL NOT claim, imply, or name any field as "column lineage" for data
+    sourced from dbt's catalog.json — catalog.json contains ZERO column-to-column
+    DEPENDENCY information (general dbt platform knowledge, confirmed pass 36: it is a
+    warehouse schema snapshot — "this model has these columns, with these types" — sourced
+    from information_schema, not from parsing SQL derivation logic). `has_column_metadata`
+    (RENAMED pass 36 from the misleading `has_column_lineage`) means ONLY "we know which
+    columns exist for this model" — column EXISTENCE metadata, never column-level lineage
+    (which output column derives from which upstream column). This spec's downstream-impact
+    traversal (BH-1064) operates at the MODEL level only — it names which Gold/Diamond
+    TABLES are affected, never which specific COLUMN within them is affected — and this
+    invariant makes that limitation an explicit, permanent contract, not a temporary gap
+    "flagged for a future pass." True column-level lineage would require dbt Cloud's
+    separate, proprietary Column-Level Lineage feature or a third-party SQL parser (e.g.
+    sqlglot) statically analyzing compiled SQL — genuinely new scope, out of this spec
+    entirely (see §5 Out of Scope).`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -1001,11 +1070,14 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And the traversal uses a bounded hop count (e.g. *1..50), not an unbounded *1.., so a
       future data bug introducing a DEPENDS_ON cycle cannot cause exponential path blowup
 
-  Scenario: graceful degradation when column-level lineage isn't available
+  Scenario: graceful degradation when column-level metadata isn't available
     Given a dbt project whose catalog.json lacks column-level metadata
     When an anomaly fires on a column in that project
     Then the system traces impact at the MODEL level only
-    And has_column_lineage=False is recorded, not silently claimed otherwise
+    And has_column_metadata=False is recorded, not silently claimed otherwise
+    And this is unaffected by Invariant 14 — the traversal is ALWAYS model-level regardless
+      of has_column_metadata's value, since catalog.json never contains column-DEPENDENCY
+      data in any dbt version
 
   Scenario: stale lineage edges are replaced, not accumulated
     Given a model's manifest.json previously depended on table A
@@ -1018,7 +1090,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     Given dbt Cloud returns a 500 (not a 404) when fetching manifest.json for a run
     When BH-1062's fetch wrapper receives this failure
     Then fetch_error is set to a non-None value describing the real failure
-    And has_column_lineage is NOT silently set to False as if the artifact were simply absent
+    And has_column_metadata is NOT silently set to False as if the artifact were simply absent
 
   Scenario: the correct run step is selected before fetching artifacts
     Given a dbt Cloud run with 3 steps, real step["name"] values confirmed against a live
@@ -1072,6 +1144,14 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 - **Databricks lineage consumption** until BH-1044's connection-model decision resolves.
 - **Any UI/visualization of the lineage graph** — this spec is about the alert-enrichment
   bridge, not a lineage-browsing feature (that could be a natural follow-on, not in scope here).
+- **True column-level lineage (which output column derives from which upstream column).**
+  ADDED pass 36, made explicit by Invariant 14 — confirmed dbt's `catalog.json` contains no
+  column-dependency data at all, only column-existence metadata (a warehouse schema
+  snapshot). This spec's downstream-impact traversal operates at the MODEL/TABLE level
+  only. Real column-level lineage would require dbt Cloud's separate, proprietary
+  Column-Level Lineage feature or a third-party SQL parser (e.g. sqlglot) statically
+  analyzing compiled SQL — a genuinely new, separate initiative if ever pursued, not a
+  natural extension of this spec's artifact-consumption approach.
 
 ## 6. Dependencies
 
@@ -1130,7 +1210,7 @@ for success"**
 
 *For any* `_fetch_artifact()` call that fails for a reason OTHER than a genuine 404
 (artifact never generated), the resulting `LineageArtifacts.fetch_error` SHALL be non-None —
-`has_column_lineage` SHALL NOT be silently set to `False` as if the artifact were simply
+`has_column_metadata` SHALL NOT be silently set to `False` as if the artifact were simply
 absent.
 
 **Validates: §3 Invariant 7, §4 Scenario "a real fetch error is never mistaken for 'no
