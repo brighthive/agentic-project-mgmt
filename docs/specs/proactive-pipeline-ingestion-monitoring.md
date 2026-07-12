@@ -494,6 +494,38 @@ class PipelineHealthSignal:
 # A signal that only performs (1) is Slack-visible but webapp-invisible, and vice versa —
 # this is the exact bug BH-1053 catches. Do NOT add a third parallel event table.
 #
+# EXACT REAL SIGNATURES, verified pass 15 (triple-click-zoom) — not paraphrased, and this
+# closes a gap: earlier passes treated "dual-write" as roughly "call two functions with the
+# same payload." CONFIRMED that is WRONG — the two paths take genuinely different shapes,
+# and BH-1053 remains unshipped (no unification exists; both paths are still independent,
+# confirmed by direct read — neither imports the other):
+#
+#   (1) writeNotificationSignal(input: WriteNotificationInput) — Promise<WriteNotificationResult>
+#       (platform-core/src/graphql/service/aws/notification-signal.ts:46)
+#       Fields: workspaceId, stage, status ("passed"|"failed"|"degraded" — enforced, :65-67),
+#       optional assetId/assetName/runContext/metadata(string)/ttlDays/visibility/
+#       idempotencyKey/targetUserId. ONE row per workspace EVENT (not per user) —
+#       PutItemCommand into NOTIFICATIONS_TABLE_NAME.
+#
+#   (2) NotificationInbox.deliver(params) — (notification-inbox.ts:80-124)
+#       Fields: userId (REQUIRED, per-recipient), workspaceId, eventId, stage, status,
+#       timestamp, category (DERIVED by resolveSignal(), NOT caller-supplied),
+#       displayJson/detailJson (PRE-RENDERED presentation payloads, ALSO built by
+#       resolveSignal() — not the raw PipelineHealthSignal fields), detailType, ttl.
+#       ONE call PER WORKSPACE MEMBER — the real caller, notificationRecipients
+#       (notifications.ts:436-552), loops over Workspace.findActiveMembersByWorkspaceId
+#       and calls .deliver() once per member.
+#
+# CONSEQUENCE FOR THIS TICKET'S IMPLEMENTER: a watchdog's PipelineHealthSignal payload does
+# NOT directly satisfy write (2)'s shape. Before calling NotificationInbox.deliver(), the
+# delivery function MUST: (a) resolve the workspace's active member list (a real, separate
+# lookup — NOT already done by anything in this spec's watchdog node), (b) run the signal
+# through resolveSignal() (or an equivalent classifier) to derive category/displayJson/
+# detailJson — the SAME renderer machinery Invariant 15 already flags as missing a
+# registered case for 5 of this spec's 6 new stage values. "Dual-write" is therefore real
+# integration work with two structurally different targets, not a trivial fan-out of
+# identical arguments — size estimates for BH-1054/BH-1046 should account for this.
+#
 # CRITICAL, verified pass 35 (cross-checking a rendering gap found in the sibling
 # lineage-aware-data-quality.md spec — GC-12's anomaly notifications were found to dead-end
 # with zero visible content because neither brightbot-slack-server nor brighthive-webapp has
@@ -565,7 +597,14 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
 1. `WHEN a PipelineHealthSignal is emitted, THE System SHALL reach BOTH live surfaces
    (Slack via the OLD NOTIFICATIONS_TABLE write path, webapp via NotificationInbox) — a
    signal visible on only one surface is an incomplete emission, not a partial success.
-   No FOURTH parallel event table SHALL be introduced.`
+   No FOURTH parallel event table SHALL be introduced. **SHARPENED pass 15**: these two
+   writes are NOT interchangeable-shape calls. writeNotificationSignal() takes ONE row per
+   workspace event; NotificationInbox.deliver() requires a PER-MEMBER fanout (one call per
+   active workspace member, via Workspace.findActiveMembersByWorkspaceId) plus
+   category/displayJson/detailJson DERIVED by resolveSignal() — not the raw
+   PipelineHealthSignal fields passed straight through. The delivery function MUST perform
+   both the member-list lookup and the resolveSignal() classification before calling
+   NotificationInbox.deliver(), not just re-serialize the same signal object twice.`
 2. `WHEN the watchdog is scheduled, THE System SHALL ride the EXISTING scheduled dispatcher +
    run_context (BH-670 precedent) — no new EventBridge rule, no new cron infra.`
 3. `WHEN the same underlying failure — keyed by (source_type, job_id, failure_type) — persists
