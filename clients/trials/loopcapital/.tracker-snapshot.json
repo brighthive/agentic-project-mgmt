@@ -1,7 +1,8 @@
 {
   "pr_states": {
     "agentic-project-mgmt#94": "DRAFT",
-    "agentic-project-mgmt#95": "DRAFT"
+    "agentic-project-mgmt#95": "DRAFT",
+    "agentic-project-mgmt#96": "DRAFT"
   },
   "ticket_statuses": {
     "BH-1036": "Needs Refinement",
@@ -37,5 +38,5 @@
     "BH-1067": "Needs Refinement",
     "BH-1068": "Needs Refinement"
   },
-  "timestamp": "2026-07-12T19:34:15+00:00"
+  "timestamp": "2026-07-12T19:41:05+00:00"
 }
