@@ -12,7 +12,6 @@ For client architecture profiles and capability maps, see `../platform-saas-ai-c
 | Prospect | Champion | Trial Window | Jira Epic | Status |
 |---|---|---|---|---|
 | [Longaeva Partners](trials/longaeva/overview.md) | Grant Langseth | May 26 – Jun 9, 2026 | [BH-526](https://brighthiveio.atlassian.net/browse/BH-526) | Active |
-| [Loop Capital](trials/loopcapital/overview.md) | Frank | Demo 7/9, decision gate 7/17, 2026 | [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Active |
 
 ---
 
