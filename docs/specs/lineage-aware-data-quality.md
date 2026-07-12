@@ -150,7 +150,7 @@ repos' notification pipelines.
 ```
   brightbot                      brightbot ──HTTP──▶ platform-core        brightbot
   ┌──────────┐                   ┌──────────┐        ┌──────────────┐    ┌──────────┐
-  │ BH-1062  │                   │ BH-1063a │        │ BH-1063b     │    │ BH-1064  │
+  │ BH-1062  │                   │ BH-1069  │        │ BH-1063b     │    │ BH-1064  │
   │ Fetch +  │──────────────────▶│ call OGM │───────▶│ NEW           │───▶│ Wire      │
   │ parse    │                   │ mutation │        │ LineageNode│    │ anomaly → │
   │ manifest │                   │ (existing│        │ + DEPENDS_ON  │    │ graph walk│
@@ -462,7 +462,7 @@ class LineageModelNode:
 #    delete-then-MERGE shape), and brightbot calls that mutation over its existing
 #    Cognito-authed OGM HTTP path — the same way it reaches every other Neo4j write today.
 async def upsert_lineage_graph(
-    *, workspace_id: str, artifacts: LineageArtifacts,
+    *, workspace_id: str, artifacts: LineageArtifacts, session: OGMAPISession | None = None,
 ) -> None: ...
 # brightbot-side: calls a NEW platform-core GraphQL mutation over the existing OGM HTTP
 # path (ogm_api.py) — it does not touch Neo4j directly.
@@ -470,6 +470,41 @@ async def upsert_lineage_graph(
 # delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new LineageNode
 # type + DEPENDS_ON relationship.
 #
+# BH-1069's (formerly informally called "BH-1063a" — now filed as its own ticket, pass 11)
+# REAL call-site shape, verified pass 11 (triple-click-zoom) — not paraphrased:
+#
+# 1. `session: OGMAPISession | None = None` param above is REQUIRED, not optional style —
+#    confirmed this is the repo's actual compliant idiom (`session or OGMAPISession()`,
+#    9 existing call sites, e.g. `longitudinal_node.py:147,309`, `metric_history_store.py:96`)
+#    — NOT a bare `OGMAPISession()` singleton (the weaker variant at `quality_tools.py:820`,
+#    `profiler_task.py:150`, which this ticket should NOT copy).
+#
+# 2. `ogm_api.py:146-160`'s real `OGMAPISession.mutation(graphql_mutation, variables,
+#    timeout)` delegates to `_execute_request` (`:162-193`), which calls
+#    `response.raise_for_status()` (raises on transport-level HTTP failure) and returns
+#    `response.json()` VERBATIM — it does NOT check the returned dict's `"errors"` key.
+#    **CRITICAL, found pass 11**: `_record_capability` (the precedent this ticket is told to
+#    mirror) does NOT check for GraphQL-level errors either — a validation failure,
+#    `@authorized` denial, or bad Cypher inside the mutation resolver would return
+#    `{"data": null, "errors": [...]}` with HTTP 200, and the caller's `try/except Exception`
+#    would never fire (no exception was raised — the request "succeeded"). Copying this
+#    precedent AS-IS means `upsert_lineage_graph` could silently no-op on every call and
+#    nothing would surface it. THIS TICKET MUST check `response.get("errors")` explicitly
+#    and raise/log a real failure — do not inherit `_record_capability`'s silent-failure gap
+#    just because it's the cited precedent. This is a NEW correctness requirement this spec
+#    is adding on top of the precedent, not something already solved by copying it.
+#
+# 3. `ogm_queries.py:123-150`'s real query-building shape: a STATIC triple-quoted GraphQL
+#    string (no f-string interpolation into the query body, no `gql()` call) plus a separate
+#    `variables` dict — e.g. `mutation = """mutation UpsertLineageGraph($input: ...) {
+#    ... }"""`, `variables = {"input": [...]}`, `return mutation, variables`. Replicate this
+#    EXACT shape for the new `upsertLineageGraph`-equivalent mutation — values go in
+#    `variables`, never string-interpolated into `mutation`.
+#
+# 4. Auth is a FIXED Cognito service-account credential (`OGM_USER`/`OGM_PASSWORD` env vars,
+#    `ogm_api.py:44-116`), authenticated once at `OGMAPISession()` construction and cached on
+#    the instance — NOT a per-request/per-user token. No new auth code needed; this is
+#    already handled by the injected/default-constructed session.
 # SHARPENED pass 3 (triple-click-zoom) — verified against the REAL WorkflowStepNode OGM type
 # and upsertWorkflowStep mutation, not a paraphrase:
 #
@@ -770,6 +805,19 @@ async def find_downstream_impact(
     string-format equality between relation_name and anomaly.dataset (quoting, casing,
     2-part vs 3-part) is UNVERIFIED against a real workspace and MUST be confirmed — a
     normalization step may be required before the exact-match Cypher lookup is trustworthy.`
+11. `WHEN brightbot's upsert_lineage_graph() calls platform-core's OGM mutation via
+    OGMAPISession.mutation(), THE System SHALL check the returned response for a non-empty
+    "errors" key and treat that as a failure (log + do not silently proceed) — it SHALL NOT
+    rely on OGMAPISession.mutation() raising an exception for GraphQL-level failures.
+    CRITICAL, found pass 11: ogm_api.py:146-193's real implementation only raises on
+    transport-level HTTP failure (response.raise_for_status()) — it returns response.json()
+    verbatim with no inspection of a GraphQL "errors" array. The cited precedent
+    (_record_capability, longitudinal_node.py:299-323) does NOT check for this either — a
+    validation failure or @authorized denial inside the mutation resolver returns HTTP 200
+    with {"data": null, "errors": [...]}, and the precedent's try/except Exception never
+    fires because no exception was raised. Copying this precedent as-is means the lineage
+    upsert could silently no-op on every call, indistinguishable from success. THIS SPEC
+    SHALL NOT inherit that silent-failure gap.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -833,6 +881,17 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And this differs deliberately from workflow-spec.ts's upsertWorkflowStep (two-call,
       non-atomic), and instead follows workflow-spec.ts's OWN deleteWorkflowStep precedent
       (one-string, one-call) — both patterns exist in the same file, only one is safe to copy
+
+  Scenario: a GraphQL-level mutation failure is never mistaken for success
+    Given platform-core's upsertLineageGraph-equivalent mutation returns HTTP 200 with
+      {"data": null, "errors": [{"message": "..."}]} (e.g. an @authorized denial or a Cypher
+      validation error inside the resolver)
+    When brightbot's upsert_lineage_graph() calls OGMAPISession.mutation() for this request
+    Then the response's "errors" key is checked explicitly and treated as a failure
+    And this differs deliberately from _record_capability's own precedent (longitudinal_
+      node.py:299-323), which does NOT check "errors" and would silently treat this as success
+      because OGMAPISession.mutation() only raises on transport-level HTTP failure, never on
+      a GraphQL-level error inside a 200 response
 ```
 
 ## 5. Out of Scope
@@ -869,7 +928,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
 | Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s own proven pattern — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0`) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
-| Lineage graph call site (BH-1063a) | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code |
+| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
 ## Ticket Breakdown
@@ -883,6 +942,78 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
 | BH-1066 | feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed) | Needs Refinement, filed pass 5 — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
 | BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8 — user-raised, confirmed cheaper than the Databricks adapter (reuses existing SnowflakeConnection, no new connection type) |
+| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11 — formerly informal "BH-1063a," now its own trackable ticket |
+
+## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
+
+**Added pass 11, user-raised**: "we need to surface this work to a PROACTIVE view on projects
+... projects should have its own dedicated [timeline view] for pipelines." This is a real,
+confirmed plug-in point in an existing product surface — NOT a new top-level page.
+
+### What's real today (verified pass 11)
+
+- **Project is a first-class surface** with a per-project tab bar
+  (`brighthive-webapp/src/common/ProjectSidenav/ProjectNavBar.tsx:70-141`): Overview,
+  Schemas, **Flow**, Input Data Assets, Files, Data Products. "Flow" already renders a
+  **static structural DAG** via React Flow (`src/ProjectWorkflow/ProjectWorkflow.tsx:1-80`,
+  columns: ORGANIZATION → INPUT_DATA → TRANSFORMATIONS → FINAL_DATA_PRODUCTS →
+  DESTINATIONS) — it shows what feeds what, NOT run history over time. No
+  timeline/run-history view exists anywhere in the webapp today (confirmed: zero "timeline"
+  hits in `src/`).
+- **`TransformationNode`** (`platform-core/src/graphql/ogm/typedefs.ts:825-860`) already
+  carries `lastRunStatus`/`lastRunAt`/`jobId`, links to `ProjectNode`, to a dbt model
+  (`dbtModelName`/`dbtModelSql`), and to upstream/downstream `transformations` (the DAG edge)
+  — this is the closest existing backend hook for a time-based view, but nothing renders it
+  as a timeline today.
+
+### The proposal
+
+A 7th per-project tab — plugging into the EXISTING `ProjectNavBar.tsx` tab convention, not a
+new page — surfacing exactly the signals this epic (Track C) and the sibling
+proactive-pipeline-ingestion-monitoring.md spec (Track B) already produce: watchdog
+detections (BH-1054), longitudinal anomalies (GC-12), and this epic's downstream-impact
+enrichment (BH-1064), scoped to the transformations/data assets that belong to THIS project.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  PROPOSED: a 7th ProjectNavBar tab, reusing the existing tab convention  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  ProjectNavBar.tsx (existing, real)              NEW 7th tab (proposed)
+  ┌────────┬─────────┬──────┬───────────┬───────┬──────────────┐  ┌──────────────┐
+  │Overview│ Schemas │ Flow │Input Data │ Files │Data Products │  │  [name TBD]  │
+  │        │         │(DAG) │  Assets   │       │              │  │ (time-based) │
+  └────────┴─────────┴──────┴───────────┴───────┴──────────────┘  └──────────────┘
+                                                                          │
+                     reads FROM (no new backend types needed to START):  │
+                     - TransformationNode.lastRunStatus/lastRunAt        │
+                     - AnomalyEventNode (this project's DataAssetNodes)  │
+                     - PipelineHealthSignal (BH-1042, sibling spec)      │
+                     - this epic's downstream_tables enrichment (BH-1064)│
+```
+
+### Naming note
+
+"Brightlines" was the user's working name for this. Per this org's naming rule
+(`~/.claude/rules/naming.md`: names must be brand/product/human-first, meaning what they
+are) — "Brightlines" passes the four tests reasonably well (brand-inclined, evokes
+"pipeline"/"timeline" without engineering jargon, human-readable) but has NOT been checked
+against `brighthive-ux-voice`/`brighthive-product-voice` review, which this org's rules
+require before a user-facing name ships. Treat "Brightlines" as a WORKING NAME for this spec
+section, not a final product decision.
+
+### Explicitly NOT yet scoped (genuinely new, this pass only proposes the shape)
+
+- No ticket filed yet — this needs a `/write-spec` pass of its own (UI/UX design questions:
+  what time range, what granularity, how does it relate to "Flow"'s existing DAG view) before
+  Jira tickets are cut. Filing tickets against an unreviewed UI proposal would lock in
+  decisions a designer/PM hasn't made yet.
+- Frontend component design, React Flow vs. a different viz library for time-series (React
+  Flow is DAG-oriented; a run-history timeline may want a different chart primitive —
+  unverified which fits better).
+- Whether this becomes a NEW tab or an enhancement to the EXISTING "Flow" tab (overlay
+  run-status onto the DAG nodes already there, vs. a wholly separate view) — a real design
+  decision, not decided here.
 
 ## Related
 
