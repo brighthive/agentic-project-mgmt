@@ -947,49 +947,107 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
 
 **Added pass 11, user-raised**: "we need to surface this work to a PROACTIVE view on projects
-... projects should have its own dedicated [timeline view] for pipelines." This is a real,
-confirmed plug-in point in an existing product surface — NOT a new top-level page.
+... projects should have its own dedicated [timeline view] for pipelines." **CORRECTED pass
+13**: pass 11's premise was WRONG in a materially important way — this is NOT a greenfield
+tab to add. A much richer "Flow" implementation already exists than pass 11 found, and it
+already HAS run-history/timeline components; the real work here is fixing 7 confirmed defects
+in that existing implementation, not building a new one.
 
-### What's real today (verified pass 11)
+### CORRECTION, pass 13 — pass 11's "no timeline/run-history view exists" claim was FALSE
 
-- **Project is a first-class surface** with a per-project tab bar
-  (`brighthive-webapp/src/common/ProjectSidenav/ProjectNavBar.tsx:70-141`): Overview,
-  Schemas, **Flow**, Input Data Assets, Files, Data Products. "Flow" already renders a
-  **static structural DAG** via React Flow (`src/ProjectWorkflow/ProjectWorkflow.tsx:1-80`,
-  columns: ORGANIZATION → INPUT_DATA → TRANSFORMATIONS → FINAL_DATA_PRODUCTS →
-  DESTINATIONS) — it shows what feeds what, NOT run history over time. No
-  timeline/run-history view exists anywhere in the webapp today (confirmed: zero "timeline"
-  hits in `src/`).
-- **`TransformationNode`** (`platform-core/src/graphql/ogm/typedefs.ts:825-860`) already
-  carries `lastRunStatus`/`lastRunAt`/`jobId`, links to `ProjectNode`, to a dbt model
-  (`dbtModelName`/`dbtModelSql`), and to upstream/downstream `transformations` (the DAG edge)
-  — this is the closest existing backend hook for a time-based view, but nothing renders it
-  as a timeline today.
+Pass 11 investigated `src/ProjectWorkflow/ProjectWorkflow.tsx` and concluded "Flow" is a
+static DAG with no run-history/timeline capability anywhere in the webapp. Re-verified pass
+13: **`ProjectWorkflow.tsx` is legacy, effectively dead code today.**
+`ProjectWorkflowPage.tsx:522-523`'s own comment ("For now: always prefer the spec page to
+allow gradual migration") confirms the "Flow" tab (`project-workflow` route,
+`ProjectNavBar.tsx:97-98`) now renders `WorkflowSpecPage.tsx` in every real case —
+`workflowSpec` is either a real spec object or `null` after load, never staying `undefined`
+long enough for the legacy `<ProjectWorkflow>` branch (line 567) to fire. `WorkflowSpecPage`
+mounts BOTH `RunHistoryPanel.tsx` (a real, paginated run-history-over-time list with
+per-run/per-step expansion, `LIST_WORKFLOW_RUNS` query) AND `RunTimeline.tsx` (a live,
+floating run-status panel) directly (`WorkflowSpecPage.tsx:1024-1037`). **Timeline and
+run-history capability already exists and already ships today** — it is not a gap Track D
+needs to fill from scratch.
 
-### The proposal
+### What's REAL and CONFIRMED today (verified pass 13, superseding pass 11's investigation)
 
-A 7th per-project tab — plugging into the EXISTING `ProjectNavBar.tsx` tab convention, not a
-new page — surfacing exactly the signals this epic (Track C) and the sibling
-proactive-pipeline-ingestion-monitoring.md spec (Track B) already produce: watchdog
-detections (BH-1054), longitudinal anomalies (GC-12), and this epic's downstream-impact
-enrichment (BH-1064), scoped to the transformations/data assets that belong to THIS project.
+`WorkflowSpecPage.tsx` is a rich, already-shipped authoring/monitoring surface: a canvas
+(`WorkflowSpecCanvas.tsx`) of step nodes (`WorkflowSpecStepNode.tsx`), a 3-tab step drawer
+(Config / Bindings / Issues, `StepDetailDrawer.tsx`), a compile-readiness panel
+(`CompilePanel.tsx`), the run-history panel and live run timeline above, and an artifact
+viewer. This is dramatically more capable than pass 11's "static DAG" characterization.
+
+**But a direct 7-point UI audit against this exact implementation (pass 13, all 7 CONFIRMED
+against real code) found it has real, shipped defects that should be FIXED before any new
+capability (lineage-aware alerts, watchdog signals) is layered on top:**
+
+1. **Legacy fallback is dead code, not a real fallback.** `ProjectWorkflowPage.tsx:522-523`'s
+   comment implies a fallback exists; the gating condition makes the legacy branch (line 567)
+   unreachable in practice. Either remove the dead code or fix the condition — leaving it
+   creates false confidence that a safety net exists.
+2. **Not mobile-compatible.** Fixed pixel widths with zero responsive handling:
+   `StepDetailDrawer.tsx:1587` (480px), `CompilePanel.tsx:140` (520px),
+   `RunHistoryPanel.tsx:519` (680px), `RunTimeline.tsx:461` (560px, `position: fixed`). All
+   overflow a 320px viewport — zero `@media`/`useMediaQuery`/breakpoint logic exists in any
+   of these 4 files (grep, zero hits). Violates this org's own mobile-first rule
+   (`code-style.md`/global CLAUDE.md: "Forms, drawers, modals must work on 320px+ screens").
+3. **Header is overloaded.** `WorkflowSpecPage.tsx`'s header region injects 6 action controls
+   (run-history icon, Add step, Compile, Run/Running, Schedule, overflow "More" menu) plus an
+   Active/Paused toggle into a shared `HeaderContainer` grid that sets `overflow: "hidden"`
+   (`ProjectAgentHeader/style.ts:11`) alongside the project tab bar and workflow title — a
+   real crowding risk, confirmed structurally, not assumed.
+4. **Feature visibility is inconsistent — a real access-control gap, not cosmetic.**
+   `routeConstants.ts:177` hides "Flow" by default (`WHITELIST_ONLY_ROUTES`) and
+   `ProjectAgentHeader/index.tsx:109` sets `strictAdminOnly: true` for its tab — but the
+   ACTUAL route guard (`routes/index.tsx:588-591`) admits both `Admin` AND `Collaborator`
+   roles. A Collaborator who knows/bookmarks the URL can reach a page the tab bar hides from
+   them — the tab-level gate and the route-level gate disagree. This is a genuine
+   inconsistency worth fixing regardless of Track D.
+5. **No direct-manipulation authoring, despite looking like an editor.**
+   `WorkflowSpecCanvas.tsx:234` sets `nodesDraggable={false}`; no `onConnect` handler exists
+   anywhere in the file — nodes can't be moved, edges can't be drawn. The canvas visually
+   invites interaction it doesn't support.
+6. **Weak accessibility.** `WorkflowSpecStepNode.tsx:69` uses a plain `<Box onClick={...}>`
+   with no `onKeyDown`/`role`/`tabIndex` — unreachable via keyboard. Zero `aria-*` attributes
+   exist across all 7 audited files (grep, zero hits).
+7. **No focused UI tests.** Zero `*.test.tsx` files exist for any of the 7 components. The
+   only e2e coverage (`tests/e2e/project-workflow.spec.ts:219-251`) is a generic smoke test
+   whose one substantive assertion self-skips with zero check when the expected button isn't
+   found (lines 233-236) — a test that can silently pass while asserting nothing.
+
+### The real proposal, corrected
+
+Track D is now TWO separable pieces, not one:
+
+- **D1 — fix the 7 confirmed defects above in the EXISTING `WorkflowSpecPage`** (mobile
+  responsiveness, the dead legacy branch, the header crowding, the tab/route access-gate
+  mismatch, direct-manipulation gaps, accessibility, test coverage). This is real,
+  scoped, already-buildable work against a surface that exists today — closer to a bug/tech-
+  debt backlog than a new-feature proposal.
+- **D2 — surface THIS epic's signals (watchdog detections, longitudinal anomalies,
+  downstream-impact enrichment) inside `WorkflowSpecPage`'s EXISTING run-history/timeline
+  components**, rather than building a new 7th tab from scratch. `RunHistoryPanel`/
+  `RunTimeline` already show `WorkflowRunOutput` step-level status over time — the natural
+  extension is enriching THOSE existing panels with anomaly/watchdog data
+  (`TransformationNode.lastRunStatus`/`lastRunAt`, `AnomalyEventNode`,
+  `PipelineHealthSignal` from the sibling spec, this epic's `downstream_tables` enrichment),
+  not adding a competing new tab. This reframes the proposal from "build a new view" to
+  "enrich an existing, already-shipped view" — cheaper and avoids duplicating
+  `RunHistoryPanel`'s own run-tracking logic.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  PROPOSED: a 7th ProjectNavBar tab, reusing the existing tab convention  │
-└─────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│  CORRECTED pass 13: enrich WorkflowSpecPage's EXISTING panels, don't      │
+│  build a competing new tab                                                │
+└───────────────────────────────────────────────────────────────────────────┘
 
-  ProjectNavBar.tsx (existing, real)              NEW 7th tab (proposed)
-  ┌────────┬─────────┬──────┬───────────┬───────┬──────────────┐  ┌──────────────┐
-  │Overview│ Schemas │ Flow │Input Data │ Files │Data Products │  │  [name TBD]  │
-  │        │         │(DAG) │  Assets   │       │              │  │ (time-based) │
-  └────────┴─────────┴──────┴───────────┴───────┴──────────────┘  └──────────────┘
-                                                                          │
-                     reads FROM (no new backend types needed to START):  │
-                     - TransformationNode.lastRunStatus/lastRunAt        │
-                     - AnomalyEventNode (this project's DataAssetNodes)  │
-                     - PipelineHealthSignal (BH-1042, sibling spec)      │
-                     - this epic's downstream_tables enrichment (BH-1064)│
+  "Flow" tab (ProjectNavBar.tsx) → WorkflowSpecPage.tsx (REAL, already shipped)
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Canvas (WorkflowSpecCanvas) │  RunHistoryPanel  │  RunTimeline     │
+  │  step nodes, drawers          │  (D2: enrich with │  (D2: enrich    │
+  │  (D1: fix 7 defects first)   │  anomaly/watchdog │  with live       │
+  │                                │  data per run)    │  watchdog status)│
+  └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Naming note
@@ -999,21 +1057,20 @@ enrichment (BH-1064), scoped to the transformations/data assets that belong to T
 are) — "Brightlines" passes the four tests reasonably well (brand-inclined, evokes
 "pipeline"/"timeline" without engineering jargon, human-readable) but has NOT been checked
 against `brighthive-ux-voice`/`brighthive-product-voice` review, which this org's rules
-require before a user-facing name ships. Treat "Brightlines" as a WORKING NAME for this spec
-section, not a final product decision.
+require before a user-facing name ships. Given the corrected scope (D2 enriches existing
+panels rather than adding a new named surface), "Brightlines" may not even need to be a
+user-facing name at all — flag this explicitly rather than assume a new brand name is needed.
 
 ### Explicitly NOT yet scoped (genuinely new, this pass only proposes the shape)
 
-- No ticket filed yet — this needs a `/write-spec` pass of its own (UI/UX design questions:
-  what time range, what granularity, how does it relate to "Flow"'s existing DAG view) before
-  Jira tickets are cut. Filing tickets against an unreviewed UI proposal would lock in
-  decisions a designer/PM hasn't made yet.
-- Frontend component design, React Flow vs. a different viz library for time-series (React
-  Flow is DAG-oriented; a run-history timeline may want a different chart primitive —
-  unverified which fits better).
-- Whether this becomes a NEW tab or an enhancement to the EXISTING "Flow" tab (overlay
-  run-status onto the DAG nodes already there, vs. a wholly separate view) — a real design
-  decision, not decided here.
+- No tickets filed yet for either D1 or D2 — D1 (defect fixes) could reasonably be ticketed
+  now since it's bug-fix-shaped against existing code; D2 (signal enrichment) still needs a
+  `/write-spec` pass (what data shows in the run-history row, what the live timeline shows
+  during an in-progress run affected by an anomaly) before Jira tickets are cut.
+- Whether D1's fixes are prioritized ahead of or independent of D2 — a real
+  sequencing/resourcing decision, not decided here.
+- The mobile-responsiveness fix (D1, item 2) is itself non-trivial: 4 components each need
+  responsive breakpoints designed, not just copy-pasted fixed-width removal.
 
 ## Related
 
