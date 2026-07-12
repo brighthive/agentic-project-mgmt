@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-12 23:47 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-12 23:55 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -52,16 +52,16 @@ _Suzanne's demo commitment #1: "the engineering agent and how it proactively mon
 | ⬜ | T-3 | CRITICAL, filed pass 35: BH-1067 renderers for 5 of 6 new stage values — dual-write alone is not enough; dbt_run_stale/databricks_job_failure/databricks_cluster_unhealthy/etl_job_failure/source_disk_low have zero visible text on either surface without this, identical to GC-12's confirmed dead-end (BH-1065/1066) | [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) |
 | ⬜ | T-2 | End-to-end dry run: real dbt Cloud failure (BH-1058 fixture) → detected unprompted → alerted on both surfaces | [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) |
 
-### Track B, Point 2 — SQL Server with no MCP (disk-space monitoring) (0/4 🟢)
+### Track B, Point 2 — SQL Server with no MCP (disk-space monitoring) (0/4 🟢, 2 🟡)
 
 _Suzanne's demo commitment #2, Frank's literal named example: "how MCP will connect to the SQL server when the server does not have an MCP... monitoring the disk space and alerting when it's at 20% capacity left." Direct rebuttal to Frank's stated disbelief that this is technically possible — must be demoed against REAL infrastructure per test-behavior-real.md, not a mock, since a mocked page is exactly what triggered his "this is not live" reaction on 2026-07-09._
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
 | ⬜ | T-5 | BH-1057 SQL Server provisioned in staging (RDS Web edition — NOT Express, no SQL Server Agent otherwise) | [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) |
-| ⬜ | T-4 | BH-1045 disk/job query wired through existing WarehousePort/SynapseConnection chain — zero new connectivity | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) |
+| 🟡 | T-4 | BH-1045 disk/job query wired through existing WarehousePort/SynapseConnection chain — zero new connectivity | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) |
 | ⬜ | T-3 | Demo data seeded: real filler data landing near 20% free space, real SQL Server Agent jobs (mix of pass/fail) | [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) |
-| ⬜ | T-2 | Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever. Requires BH-1067's source_disk_low renderer to actually show text (detection without it is silent). | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045), [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054), [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) |
+| 🟡 | T-2 | Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever. Requires BH-1067's source_disk_low renderer to actually show text (detection without it is silent). | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045), [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054), [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) |
 
 ### Track B, Point 3 — Fix-recurrence surfacing (0/4 🟢)
 
@@ -130,16 +130,16 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 1 | 33 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 2 | 32 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
 - **1/35** tickets done · 0 in progress · 34 to do
-- PRs: 4 merged · 0 ready for review · 1 draft
+- PRs: 5 merged · 0 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (33)
+### 🟡 To Do (32)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -152,7 +152,6 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) | spec(monitoring): pipeline monitoring agent — project → pipeline… | Kuri Chinca | — |
 | [BH-1043](https://brighthiveio.atlassian.net/browse/BH-1043) | feat(monitoring): dbt job/run health poller — detect failed/stale… | Kuri Chinca | — |
 | [BH-1044](https://brighthiveio.atlassian.net/browse/BH-1044) | feat(monitoring): Databricks job/cluster health adapter (DatabricksPo… | Kuri Chinca | — |
-| [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) | feat(monitoring): generic ETL pipeline adapter port + registry entry | Kuri Chinca | — |
 | [BH-1046](https://brighthiveio.atlassian.net/browse/BH-1046) | feat(monitoring): proactive alert path — detected issue → Slack/inbox… | Kuri Chinca | — |
 | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) | feat(monitoring): auto-remediation loop for known fix patterns… | Kuri Chinca | — |
 | [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) | spec(ingestion-obs): source sync / batch / event-processing… | Kuri Chinca | — |
@@ -177,11 +176,12 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) | test: add missing unit/integration test coverage for metric-snapshot.… | Kuri Chinca | — |
 | [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe… | Kuri Chinca | — |
 
-### 🔵 In Review (1)
+### 🔵 In Review (2)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
-| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#97](https://github.com/brighthive/agentic-project-mgmt/pull/97)<br>[🟢 Merged agentic-project-mgmt#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) |
+| [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) | feat(monitoring): generic ETL pipeline adapter port + registry entry | Kuri Chinca | [🟡 Draft agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
+| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98)<br>[🟢 Merged agentic-project-mgmt#97](https://github.com/brighthive/agentic-project-mgmt/pull/97)<br>[🟢 Merged agentic-project-mgmt#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) |
 
 ### ✅ Done (1)
 
@@ -192,6 +192,8 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-12** · [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039) — Needs Refinement · Kuri Chinca
@@ -200,7 +202,6 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-12** · [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) — To Do · Kuri Chinca
@@ -211,7 +212,6 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-12** · [BH-1050](https://brighthiveio.atlassian.net/browse/BH-1050) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
 
 _(+15 older updates not shown.)_
 
