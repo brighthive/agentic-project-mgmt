@@ -1,0 +1,181 @@
+# Loop Capital PoC tracker config — single source of truth for scope/ownership/plan.
+# Mirrors clients/trials/longaeva/poc.yaml's schema. See scripts/poc_tracker/loader.py.
+#
+# Unlike Longaeva's 14-day trial window, Loop Capital is demo-gated, not day-gated:
+# progress is measured against Suzanne's 3 committed demo points for 2026-07-17, not a
+# fixed day-N schedule. `phases` below use demo-relative labels (T-5, T-3, T-1, T-0)
+# instead of Day N.
+
+slug: loopcapital
+trial_dates: "Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17"
+
+scope:
+  epic: BH-1036
+  adjacent_epics:
+    - BH-1037
+  ticket_keys:
+    - BH-1053
+    - BH-1055
+    - BH-1057
+    - BH-1058
+    - BH-1059
+    - BH-1060
+    - BH-1038
+    - BH-1039
+    - BH-1040
+    - BH-1041
+  keyword_jql: |
+    project = BH AND statusCategory != Done AND (
+      summary ~ "Loop Capital" OR description ~ "Loop Capital"
+    )
+
+repos:
+  - brighthive/brightbot
+  - brighthive/brighthive-platform-core
+  - brighthive/agentic-project-mgmt
+
+slack:
+  channel_id: ""  # TBD — confirm with Suzanne/Matt which channel tracks this deal
+
+ownership:
+  - owner: Kuri Chinca
+    lane: All engineering tickets currently assigned (BH-1038–1060) — see phases below for suggested split if delegated
+    slack_id: ""
+  - owner: Suzanne
+    lane: Client relationship, demo script, sales-gate commitments
+    slack_id: ""
+  - owner: Matt
+    lane: Kickoff logistics, BrightHive Studio setup, client-side asset coordination
+    slack_id: ""
+
+phases:
+  - title: "Track A — Legacy Analyst Analyzer Agent (SSIS/SSRS/Storage) — COMPLETE"
+    description: >
+      Delivered for the 2026-07-09 demo. Fully shipped per BH-860 epic (14 tickets, all Done).
+      No further engineering work needed on this track. Frank's reaction: platform is real,
+      but proactivity wasn't demonstrated and "your screen says this is not live" on a
+      separate page — this drove the Track B commitment below.
+    expectations:
+      - day: "Done"
+        outcome: "SSIS diagnostics skill (bottleneck detection + dbt migration suggestions)"
+        linked: [BH-863]
+      - day: "Done"
+        outcome: "SSRS diagnostics skill"
+        linked: [BH-863]
+      - day: "Done"
+        outcome: "Storage optimization skill"
+        linked: [BH-863]
+      - day: "Done"
+        outcome: "Synthetic SSIS fixture + staging validation"
+        linked: [BH-869, BH-866]
+
+  - title: "Track B, Point 1 — Proactive monitor/detect/alert loop"
+    description: >
+      Suzanne's demo commitment #1: "the engineering agent and how it proactively monitors,
+      detects and resolves issues with the ability to alert the user on what it finds."
+      This is the watchdog capability node — the actual missing-proactivity primitive this
+      whole spec was built to close.
+    expectations:
+      - day: "T-5 (by 2026-07-12)"
+        outcome: "BH-1042 contract finalized — types/registry/MCP tool, no ambiguity for implementers"
+        linked: [BH-1042]
+      - day: "T-4"
+        outcome: "BH-1054 watchdog node registered + wired to existing scheduled dispatcher"
+        linked: [BH-1054]
+      - day: "T-4"
+        outcome: "BH-1043 dbt job/run health poller — detects a real failed run"
+        linked: [BH-1043]
+      - day: "T-3"
+        outcome: "BH-1046 alert path — Slack + webapp both show the detected failure (dual-write verified)"
+        linked: [BH-1046]
+      - day: "T-2"
+        outcome: "End-to-end dry run: real dbt Cloud failure (BH-1058 fixture) → detected unprompted → alerted on both surfaces"
+        linked: [BH-1058]
+
+  - title: "Track B, Point 2 — SQL Server with no MCP (disk-space monitoring)"
+    description: >
+      Suzanne's demo commitment #2, Frank's literal named example: "how MCP will connect to
+      the SQL server when the server does not have an MCP... monitoring the disk space and
+      alerting when it's at 20% capacity left." Direct rebuttal to Frank's stated disbelief
+      that this is technically possible — must be demoed against REAL infrastructure per
+      test-behavior-real.md, not a mock, since a mocked page is exactly what triggered his
+      "this is not live" reaction on 2026-07-09.
+    expectations:
+      - day: "T-5"
+        outcome: "BH-1057 SQL Server provisioned in staging (RDS Web edition — NOT Express, no SQL Server Agent otherwise)"
+        linked: [BH-1057]
+      - day: "T-4"
+        outcome: "BH-1045 disk/job query wired through existing WarehousePort/SynapseConnection chain — zero new connectivity"
+        linked: [BH-1045]
+      - day: "T-3"
+        outcome: "Demo data seeded: real filler data landing near 20% free space, real SQL Server Agent jobs (mix of pass/fail)"
+        linked: [BH-1057]
+      - day: "T-2"
+        outcome: "Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever"
+        linked: [BH-1045, BH-1054]
+
+  - title: "Track B, Point 3 — Fix-recurrence surfacing"
+    description: >
+      Suzanne's demo commitment #3: "the ability to build skills that help surface the fixes
+      the agent applied when they are not abided by so we can avoid the recurrence of the same
+      kind of issue." Mechanism: self-healing-pipelines.md's surgical-PR loop (GC-11), wired to
+      this spec's watchdog signals — with a CRITICAL safety fix required first (see below).
+    expectations:
+      - day: "T-5"
+        outcome: "CRITICAL: BH-1047's code-level exclusion of github_merge_pull_request from the remediation loop's tool list — 'never auto-merge' was previously prompt-only, zero code enforcement"
+        linked: [BH-1047]
+      - day: "T-4"
+        outcome: "root_cause_class classifier wired (DATA_SHAPE vs JOB_RUNTIME) — routes correctly, never fabricates a fix"
+        linked: [BH-1047]
+      - day: "T-3"
+        outcome: "DATA_SHAPE signal routes into GC-11's existing surgical-PR loop, human-approval-gated"
+        linked: [BH-1047]
+      - day: "T-2"
+        outcome: "Demo dry run: a detected failure surfaces a surgical PR with a plain-language diagnosis, requires human approval, never auto-merges"
+        linked: [BH-1047]
+
+  - title: "T-1 — Full dress rehearsal"
+    description: >
+      Run the entire demo script end-to-end against real staging infrastructure, exactly as
+      it will be shown to Frank. No mocks — this is the whole point after 2026-07-09's
+      "this is not live" reaction.
+    expectations:
+      - day: "T-1 (2026-07-16)"
+        outcome: "All 3 points demoed live: watchdog detects a real dbt failure; SQL Server disk-low alert fires from a real RDS instance; a surgical PR opens and is shown NOT auto-merging"
+      - day: "T-1"
+        outcome: "Demo script + talking points finalized (Suzanne/Matt)"
+
+  - title: "T-0 — Demo day"
+    description: Decision gate.
+    expectations:
+      - day: "2026-07-17"
+        outcome: "Demo delivered to Frank"
+      - day: "Post"
+        outcome: "Decision recorded (Won / Lost / Extended) with rationale"
+
+  - title: "Non-blocking, tracked separately"
+    description: >
+      Real work, correctly scoped OUT of the 7/17 critical path — don't let these stall
+      Track B above.
+    expectations:
+      - day: "Post-demo"
+        outcome: "BH-1044 Databricks storage-model decision (brightbot-only secret recommended, needs Kuri confirm)"
+        linked: [BH-1044]
+      - day: "Post-demo"
+        outcome: "BH-1053 BrightSignals 3-way split-brain unification"
+        linked: [BH-1053]
+      - day: "Post-demo"
+        outcome: "BH-1055 dispatcher concurrency hardening"
+        linked: [BH-1055]
+      - day: "Post-demo"
+        outcome: "BH-1059 AgentCore/CEMAF migration tracking for the dispatcher's LangGraph Cloud dependency"
+        linked: [BH-1059]
+      - day: "Post-demo"
+        outcome: "BH-1060 customer-PII redaction evaluation for diagnosis text"
+        linked: [BH-1060]
+      - day: "Post-demo"
+        outcome: "BH-1037/1048-1052 ingestion observability (Airbyte/Step-Functions/queue watchdogs) — not named in Frank's 3 points, build after Track B lands"
+        linked: [BH-1048, BH-1049, BH-1050, BH-1051, BH-1052]
+      - day: "Post-demo"
+        outcome: "BH-115/1038-1041 BrightRoutines MCP/A2A surface — separate concern, unaffected by Track B"
+        linked: [BH-1038, BH-1039, BH-1040, BH-1041]
