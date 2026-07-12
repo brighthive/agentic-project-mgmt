@@ -294,6 +294,52 @@ async def upsert_dbt_lineage_graph(
 # platform-core-side (NEW scope, not previously called out): a mutation implementing the
 # delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new DbtLineageNode
 # type + DEPENDS_ON relationship.
+#
+# SHARPENED pass 3 (triple-click-zoom) — verified against the REAL WorkflowStepNode OGM type
+# and upsertWorkflowStep mutation, not a paraphrase:
+#
+# EXACT OGM type to model DbtLineageNode after (WorkflowStepNode,
+# platform-core/src/graphql/ogm/workflow-spec-typedefs.ts:79-97):
+#   type DbtLineageNode {
+#     id: ID! @id
+#     uniqueId: String!              # dbt's fully-qualified unique_id, e.g. "model.proj.stg_orders"
+#     name: String!
+#     hasColumnLineage: Boolean! @default(value: false)
+#     createdAt: DateTime! @timestamp(operations: [CREATE])
+#     modifiedAt: DateTime! @timestamp(operations: [CREATE, UPDATE])
+#     dependsOn: [DbtLineageNode!]! @relationship(type: "DEPENDS_ON", direction: OUT)
+#   }
+# CONFIRMED: WorkflowStepNode has NO native workspaceId field either — scoping is transitive
+# via a parent relationship (step.spec.project.workspaceId). DbtLineageNode has the same
+# problem (no natural parent to scope through) — the mutation's INPUT must carry workspaceId
+# explicitly and the @authorized directive must reference it there (see mutation shape below),
+# mirroring upsertWorkflowStep's own pattern exactly.
+#
+# EXACT Cypher precedent (workflow-spec.ts:300-314, upsertWorkflowStep) — quoted verbatim,
+# not paraphrased:
+#   MATCH (step:WorkflowStepNode {id: $stepId})-[r:DEPENDS_ON]->() DELETE r
+#   -- then, if there are new deps:
+#   MATCH (step:WorkflowStepNode {id: $stepId})
+#   UNWIND $depIds AS depId
+#   MATCH (dep:WorkflowStepNode {id: depId})
+#   MERGE (step)-[:DEPENDS_ON]->(dep)
+#   RETURN count(dep) AS linked
+#
+# MUST be a NEW, independently-callable mutation, not a side effect — confirmed
+# upsertWorkflowStep is its OWN public Core API mutation
+# (schema/typedefs.ts:4819-4822, `@authorized(prohibits: [...], workspaceIdLoc: [...])`),
+# not triggered internally by another mutation. BH-1063 needs its own equivalent
+# `upsertDbtLineageGraph(input: UpsertDbtLineageGraphInput!)` mutation registered the same way.
+#
+# CRITICAL CORRECTNESS GAP FOUND IN THE PRECEDENT ITSELF — do not silently inherit this:
+# the real workflow-spec.ts pattern is NOT atomic. The DELETE and the MERGE run as two
+# SEPARATE auto-commit `session.run()` calls on the same session (`workflow-spec.ts:302-314`),
+# not wrapped in `session.writeTransaction(...)` and not one multi-statement query. If the
+# process crashes between the DELETE and the MERGE, a step is left with ZERO DEPENDS_ON edges
+# — deleted but never re-created. For BH-1063, this same gap would mean a crash mid-upsert
+# could silently leave a dbt model with NO lineage edges, which downstream (BH-1064) would
+# read as "nothing depends on this" — a false negative that suppresses a real alert. THIS
+# SPEC SHALL NOT silently copy the non-atomic version — see Invariant 9 below.
 
 # BH-1064: the bridge (closes BH-673)
 async def find_downstream_impact(
@@ -340,6 +386,15 @@ async def find_downstream_impact(
    NOT omit the step parameter and rely on unverified "most recent artifact" default API
    behavior. Verified pass 2: no existing brightbot code performs this step-discovery; it is
    new logic this ticket must build, not something to copy from an existing call site.`
+9. `WHEN upserting a DbtLineageNode's DEPENDS_ON edges, THE System SHALL perform the
+   delete-and-recreate as a SINGLE atomic transaction (session.writeTransaction wrapping both
+   the DELETE and the MERGE, or one multi-statement Cypher query) — it SHALL NOT copy
+   workflow-spec.ts:300-314's own pattern verbatim, which runs the DELETE and MERGE as two
+   separate auto-commit calls with a crash window between them. Verified pass 3: that
+   precedent has a real correctness gap (a process crash mid-upsert leaves zero DEPENDS_ON
+   edges, which BH-1064 would read as "nothing depends on this" — a false negative that
+   suppresses a real alert). Model the SHAPE of the precedent (same Cypher, same node/edge
+   pattern), not its transaction-boundary bug.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -378,6 +433,13 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     Then it first calls run_steps to identify "dbt build" as the last compile-producing step
     And it passes that step's index explicitly to _fetch_artifact()
     And it does NOT omit the step parameter and rely on unverified default API behavior
+
+  Scenario: a crash mid-upsert never leaves a model with zero lineage edges
+    Given a DbtLineageNode currently has 3 DEPENDS_ON edges from a prior manifest
+    And the upsert transaction for a new manifest is interrupted after the DELETE but before the MERGE completes
+    When the system recovers (retry or next scheduled upsert)
+    Then the node never observably had zero edges in between — the whole delete-and-recreate is atomic
+    And this differs deliberately from workflow-spec.ts's own non-atomic precedent, which has this exact gap
 ```
 
 ## 5. Out of Scope
