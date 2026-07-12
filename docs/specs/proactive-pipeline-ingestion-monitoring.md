@@ -447,8 +447,38 @@ PIPELINE_SOURCE_ADAPTERS: dict[str, type[PipelineSource]] = {
     ETL_GENERIC: EtlGenericPipelineSource,
 }
 
-def build_pipeline_source(*, source_type: str, config: dict) -> PipelineSource:
-    return PIPELINE_SOURCE_ADAPTERS[source_type](config=config)
+def build_pipeline_source(*, source_type: str, config: dict[str, Any]) -> PipelineSource:
+    # CORRECTED pass 16 (triple-click-zoom) — verified against the REAL
+    # WarehouseConnectionFactory.create_connection() (warehouse_connections.py:1238-1260),
+    # not paraphrased. Two real divergences found and fixed here:
+    #
+    # 1. `config: dict` was under-typed relative to the real precedent's own
+    #    `params: dict[str, Any]` (constructor signatures at warehouse_connections.py:53,
+    #    251, 436, 716 all use `dict[str, Any]`, never a bare `dict`) — fixed above.
+    #
+    # 2. Bracket-indexing (`PIPELINE_SOURCE_ADAPTERS[source_type]`) raises a raw, unhelpful
+    #    `KeyError` on an unknown/typo'd source_type. The REAL precedent does NOT do this —
+    #    it uses `.get(wh_type)` (warehouse_connections.py:1249) and only raises after
+    #    exhausting its lookup, with a hand-written, actionable `ValueError`
+    #    ("Cannot determine warehouse connection type...", lines 1258-1260). Mirror THAT
+    #    error-handling shape, not a bare KeyError:
+    adapter_cls = PIPELINE_SOURCE_ADAPTERS.get(source_type)
+    if adapter_cls is None:
+        raise ValueError(
+            f"Unknown pipeline source_type {source_type!r} — no adapter registered in "
+            f"PIPELINE_SOURCE_ADAPTERS. Known types: {sorted(PIPELINE_SOURCE_ADAPTERS)}"
+        )
+    return adapter_cls(config=config)
+    # NOTE: the real precedent is also a CLASS with an instance method
+    # (`WarehouseConnectionFactory.create_connection(self, ...)`, not `@classmethod`/
+    # `@staticmethod`), while this spec keeps `build_pipeline_source` as a bare module-level
+    # function — a deliberate divergence, not an oversight: `AGENT_REGISTRY`
+    # (workflow_agent/registry.py:31) is the OTHER real 2+-instance registry precedent in
+    # this codebase and IS a bare module-level dict/function, so both real shapes exist in
+    # this org's own code. A bare function is simpler and sufficient here since this
+    # factory carries no instance state (unlike WarehouseConnectionFactory, which doesn't
+    # actually need instance state either, but was written as a class first) — confirm this
+    # choice at implementation time rather than assume either shape is "more correct."
 
 # COST OF ADDING A NEW ADAPTER TYPE (verified pass 9 against the real warehouse-registry
 # precedent — corrects BH-1044/1045's earlier "registry entry, single switch site" framing,
