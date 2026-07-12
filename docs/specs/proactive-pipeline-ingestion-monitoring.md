@@ -736,7 +736,39 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    scoped, no sibling tool needs the same treatment in this file. Separately and NOT this
    spec's problem to fix: `ActionClass.DESTRUCTIVE` (the tag already on this tool) is
    documented to be pure audit-logging that never blocks execution — a systemic false-safety
-   signal across the whole codebase, flagged to Kuri directly, out of scope for BH-1036/1037.`
+   signal across the whole codebase, flagged to Kuri directly, out of scope for BH-1036/1037.
+   **CONCRETE MECHANISM, pass 18 (triple-click-zoom) — the exact code shape, verified against
+   `dbt_agent_react.py`, not left abstract.** `dbt_agent_react.py`'s own `DBT_REACT_TOOLS`
+   (lines 150-205) is a flat `list[...]` literal built by importing each `@tool`-decorated
+   function INDIVIDUALLY from `brightbot.agents.dbt_agent.tools` — it is NOT built by
+   filtering a pre-bundled list, and `_DBT_PINNED_TOOLS` (a `frozenset[str]` of names, line
+   230) only controls prompt-caching pin behavior, NOT which tools are bound — it is
+   IRRELEVANT to this exclusion requirement, do not confuse the two. A real, existing
+   precedent for cross-agent SUBSET reuse already exists: `retrieval_agent_react.py:32`
+   imports exactly one function (`introspect_warehouse_schema`) directly from a submodule of
+   `dbt_agent/tools/`, bypassing the package's aggregate `__init__.py` re-export entirely.
+   BH-1047 MUST follow this SAME pattern — import individual GitHub tool functions directly
+   from `github_tools.py`, not filter `DBT_REACT_TOOLS` by exclusion (which would also drag
+   in unrelated dbt-specific tools like `explore_dbt_project`/`register_transformation` that
+   don't belong in a remediation agent):
+   ```python
+   from brightbot.agents.dbt_agent.tools.github_tools import (
+       github_read_file, github_list_files, github_list_branches,
+       github_create_branch, github_commit_file, github_commit_multiple_files,
+       github_create_pull_request,
+       # github_merge_pull_request intentionally OMITTED — see Invariant 7.
+   )
+   REMEDIATION_TOOLS: list = [
+       github_read_file, github_list_files, github_list_branches,
+       github_create_branch, github_commit_file, github_commit_multiple_files,
+       github_create_pull_request,
+   ]
+   ```
+   Pass this list to `create_agent(model=..., tools=REMEDIATION_TOOLS, ...)` (the same
+   construction call `dbt_agent_react.py:587-589` uses) — there is no raw `llm.bind_tools()`
+   call to write; `create_agent` does that internally. Property 2's unit test enumerates
+   THIS list (or whatever the real construction call resolves to) and asserts
+   `"github_merge_pull_request"` is absent by name.`
 8. `IF a workspace has no dbt/Databricks/SQL-Server connection configured, THEN THE System
    SHALL skip that source's polling — no error, no signal, no cost.`
 9. `IF a signal's root_cause_class is JOB_RUNTIME (no data-shape signature), THEN THE System
