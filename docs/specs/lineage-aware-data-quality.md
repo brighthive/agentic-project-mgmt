@@ -526,6 +526,12 @@ async def upsert_lineage_graph(
 #     modifiedAt: DateTime! @timestamp(operations: [CREATE, UPDATE])
 #     dependsOn: [LineageNode!]! @relationship(type: "DEPENDS_ON", direction: OUT)
 #   }
+# CORRECTED pass 20 (triple-click-zoom) — this quoted type ALWAYS included the
+# @relationship-decorated `dependsOn` shown above, and that is the RECOMMENDED final shape
+# (see the decorated-vs-undecorated decision, resolved below) — earlier passes' prose
+# elsewhere in this section said "leave dependsOn undecorated," which CONTRADICTED this
+# quoted type. That contradiction is now resolved: keep `dependsOn` DECORATED as shown here.
+#
 # CONFIRMED: WorkflowStepNode has NO native workspaceId field either — scoping is transitive
 # via a parent relationship (step.spec.project.workspaceId). LineageNode has the same
 # problem (no natural parent to scope through) — the mutation's INPUT must carry workspaceId
@@ -589,19 +595,58 @@ async def upsert_lineage_graph(
 #
 #   Concrete file list for a cold engineer implementing BH-1063b:
 #     1. `src/graphql/ogm/typedefs.ts` — add `LineageNode` type (~15-20 lines, mirrors
-#        AnomalyEventNode's shape at typedefs.ts:713-727). Decide here whether the
-#        DEPENDS_ON edge is declared as an OGM `@relationship` directive (gets a
-#        free auto-generated `connect`/`disconnect` mutation shape, but the auto-generated
-#        upsert does NOT enforce the delete-then-MERGE replace semantics Invariant 4/9
-#        require — @neo4j/graphql's `connectOrCreate` is additive, not idempotent-replace)
-#        or left undecorated with a HAND-WRITTEN Cypher service (full control over the
-#        atomic delete-then-MERGE transaction, costs one extra file). RECOMMENDATION:
-#        undecorated + hand-written, because Invariant 9's atomicity fix is not
-#        expressible through the auto-generated mutation — confirm this trade-off at
-#        implementation time rather than defaulting to the decorator for convenience.
-#     2. `src/graphql/service/neo4j/lineage-graph.ts` — NEW file if hand-written Cypher is
-#        chosen (per step 1): the delete-then-MERGE upsert per Invariant 9, modeled on
-#        `metric-snapshot.ts`'s shape (194 lines).
+#        AnomalyEventNode's shape at typedefs.ts:713-728).
+#
+#        CORRECTED pass 20 (triple-click-zoom) — the "undecorated vs. decorated" framing
+#        below was internally self-contradictory (the quoted type above always showed
+#        `dependsOn` WITH `@relationship`) and one precedent claim was imprecise. Resolved,
+#        verified against real code:
+#        - `AnomalyEventNode` (typedefs.ts:713-728) and `MetricSnapshotNode` (typedefs.ts:
+#          698-711) are NOT relationship-free — both DO carry exactly ONE
+#          `@relationship`-decorated field each (`dataAsset`, `HAS_ANOMALY_EVENT`/whatever
+#          MetricSnapshotNode's equivalent is). Earlier passes' "OGM-only, no relationship"
+#          description of this precedent was imprecise — the real precedent is "one
+#          decorated relationship field alongside several plain scalar fields," which is
+#          EXACTLY LineageNode's own shape (one `dependsOn` relationship + several scalars).
+#        - Confirmed via `AnomalyEventNodeCreateInput` (ogm-types.ts:23085-23095): having a
+#          `@relationship` field does NOT corrupt or complicate the generated mutation for
+#          the type's OTHER fields — it's purely additive (the relationship gets its own
+#          optional `connect`/`create` sub-input; the 9 scalar fields are untouched). The
+#          earlier fear that decorating `dependsOn` would somehow break the whole type's
+#          generated CRUD was UNFOUNDED.
+#        - Confirmed: NO existing OGM type in this repo leaves a graph-shaped reference
+#          undecorated as a plain scalar array (e.g. `dependsOnIds: [String!]!`) while
+#          relying on hand-written Cypher to create the real relationship separately — this
+#          would be a genuinely novel, unprecedented shape, not a pattern to copy from
+#          anywhere. `TransformationNode.dbtDependencies` (typedefs.ts:843) LOOKS similar but
+#          is confirmed to be a real plain-string-array PROPERTY (not edges) at
+#          `transformation.ts:37` — a different, unrelated case, not evidence FOR the
+#          undecorated approach.
+#        - **DECISION, resolved pass 20: KEEP `dependsOn` DECORATED with `@relationship`**,
+#          matching the quoted type above and the real AnomalyEventNode/MetricSnapshotNode
+#          precedent exactly. Do NOT leave it undecorated — that path has no precedent and
+#          was based on an incorrect premise (that decorating it would complicate the rest
+#          of the type's generated mutation, which is false).
+#        - Invariant 9's atomicity requirement STILL applies and is STILL not satisfiable
+#          through the auto-generated `connectOrCreate` mutation alone (that part of the
+#          original reasoning was correct) — but the fix is NOT "leave the field
+#          undecorated." The fix is: the HAND-WRITTEN Cypher service (step 2 below) performs
+#          the atomic delete-then-MERGE directly against the `:DEPENDS_ON` relationship type
+#          the decorated field declares, using raw Cypher — NOT via the auto-generated
+#          mutation's `connect`/`create` inputs. The OGM decorator and the write PATH are
+#          separate concerns: decorate for schema/read-query correctness (so
+#          `dependsOn` is queryable via the generated read API), but write through
+#          hand-written Cypher for the atomicity guarantee, exactly like
+#          `upsertWorkflowStep`/`deleteWorkflowStep` already do for `WorkflowStepNode`'s own
+#          real, decorated `dependsOn` relationship — those functions bypass the
+#          auto-generated mutation for writes too, while the type itself stays decorated for
+#          reads. This is NOT a new pattern; it is the exact WorkflowStepNode precedent,
+#          confirmed correctly cited from the start.
+#     2. `src/graphql/service/neo4j/lineage-graph.ts` — NEW file: the delete-then-MERGE
+#        upsert per Invariant 9, modeled on `metric-snapshot.ts`'s shape (194 lines), writing
+#        directly against the `:DEPENDS_ON` relationship the decorated `dependsOn` field
+#        declares — bypassing the auto-generated mutation for this specific write, per the
+#        decision above.
 #
 #     RESOLVED pass 9 (triple-click-zoom) — the atomic-transaction API was under-specified;
 #     now confirmed against real code, not generic Neo4j docs. `session.writeTransaction(...)`
