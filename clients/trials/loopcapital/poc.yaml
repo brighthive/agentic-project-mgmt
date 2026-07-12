@@ -13,6 +13,7 @@ scope:
   epic: BH-1036
   adjacent_epics:
     - BH-1037
+    - BH-1061
   ticket_keys:
     - BH-1053
     - BH-1055
@@ -152,6 +153,26 @@ phases:
         outcome: "Demo delivered to Frank"
       - day: "Post"
         outcome: "Decision recorded (Won / Lost / Extended) with rationale"
+
+  - title: "Track C — Lineage-aware data quality (post-demo, honest framing for 7/17)"
+    description: >
+      New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with ZERO
+      errors while a source column silently degrades (NULLs where real values used to be),
+      poisoning Gold/Diamond numbers with no alert anywhere. NOT achievable by 7/17 — this is
+      genuinely new, multi-week work. Full spec: docs/specs/lineage-aware-data-quality.md.
+      For the demo: show the anomaly-detection half (real, shipped, GC-12) and frame the
+      lineage-tracing half honestly as "we glue dbt/Databricks' own lineage to what they can't
+      see themselves" — a real differentiator, not a gap to hide.
+    expectations:
+      - day: "Post-demo"
+        outcome: "BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing)"
+        linked: [BH-1062]
+      - day: "Post-demo"
+        outcome: "BH-1063 — load parsed DAG into Neo4j as a queryable lineage graph"
+        linked: [BH-1063]
+      - day: "Post-demo"
+        outcome: "BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge"
+        linked: [BH-1064]
 
   - title: "Non-blocking, tracked separately"
     description: >

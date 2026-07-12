@@ -87,6 +87,23 @@ assumption. Full detail below in [Capability Coverage](#capability-coverage-summ
 | Multi-channel surfacing (Slack + webapp) | REAL, verified against live code | Email/SES channel confirmed dead/unbuilt — Slack+webapp is the actual complete channel set today |
 | Fix-recurrence surfacing (Frank's ask #3) | PARTIAL | Self-healing surgical-PR loop (GC-11) is the mechanism; wiring is BH-1047, with a P0 safety fix required (see below) |
 | BrightRoutines exposed via MCP/A2A | SCOPED, not built | BH-1038–1041; separate concern from monitoring, unaffected by the above |
+| Lineage-aware data quality (Track C — silent-corruption detection) | SCOPED, genuinely new, NOT for 7/17 | BH-1061–1064; the "zero pipeline errors, wrong Gold numbers" gap — BrightHive glues dbt/Databricks' own lineage to before/after monitoring, doesn't rebuild lineage. Honest post-demo framing, see Track C below |
+
+## Track C: Lineage-Aware Data Quality — SCOPED, post-demo
+
+Kuri's example (2026-07-12): "one column has error from source and NULLs come in, there's
+ZERO errors on the pipeline; but that value change is producing wrong numbers on
+gold/diamond data products." Verified this is a real, unaddressed gap — longitudinal
+monitoring (GC-12) can catch the null spike itself if configured, but nothing today traces
+which downstream Gold/Diamond tables it poisons. Full spec:
+`../../docs/specs/lineage-aware-data-quality.md`.
+
+**Key framing, not a gap to hide from Frank**: BrightHive doesn't rebuild lineage — dbt and
+Databricks already compute their own. BrightHive's differentiator is being the glue that
+connects source-column health (before ELT) → the lineage those tools already know → Gold/
+Diamond impact (after ELT), which neither tool sees on its own. For 7/17: show the
+anomaly-detection half (real, shipped) and be upfront that the impact-tracing half is the
+next phase.
 
 ## Engineering Artifacts
 
@@ -99,6 +116,9 @@ assumption. Full detail below in [Capability Coverage](#capability-coverage-summ
 - **Verification memory**: `~/.claude/projects/-Users-bado-iccha-brighthive/memory/project_loop_capital_pass_index.md` — one-line index into 34+ detailed pass files.
 - **Full demo plan**: `poc.yaml` (scope/ownership/demo-relative phases: T-5 → T-0) → renders `TRACKER.md` (live ticket/PR status, regenerate with `make poc-tracker-no-slack CLIENT=loopcapital`). Plan is organized by Suzanne's 3 committed demo points, not calendar days — see `poc.yaml`'s phase titles.
 - **Draft PR**: [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) — the handover spec itself, on `drchinca/BH-1036/proactive-monitoring-spec`.
+- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` — ASCII architecture
+  diagrams of the current-state gap (3 disconnected islands) and the proposed glue-layer
+  design, plus interface contracts/invariants/Gherkin AC for BH-1062–1064.
 
 ## Two things that must happen before 7/17, not yet done
 
