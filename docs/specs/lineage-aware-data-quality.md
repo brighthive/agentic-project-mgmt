@@ -922,6 +922,136 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — already permits arbitrary `SELECT`, including against `ACCOUNT_USAGE` views |
 | BH-1068 (Snowflake-native lineage adapter: Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Non-blocking for 7/17; cheaper than the Databricks half (gap 4) but equally unbuilt | **Filed pass 8** — user-raised, confirmed real gap, confirmed cheap relative to Databricks |
 
+## 7. Correctness Properties
+
+**Added pass 14 (triple-click-zoom) — required per `spec-driven.md`'s §7 trigger: this spec
+involves a state machine (LineageNode's DEPENDS_ON edges, delete-and-recreate per manifest
+run) and a correctness-critical traversal (BH-1064's downstream-impact walk, whose match-key
+bug was the CRITICAL finding of pass 10). Both conditions trigger the §7 requirement.**
+
+### Property 1: a LineageNode's DEPENDS_ON edges never observably reach zero mid-upsert
+
+*For any* LineageNode with N ≥ 1 existing DEPENDS_ON edges, a crash or failure during a
+manifest-driven upsert SHALL NOT leave that node observably at 0 edges before the new edge
+set is fully applied — the delete-and-recreate is atomic (one Cypher string, one
+`session.run()` call).
+
+**Validates: §3 Invariant 9, §4 Scenario "a crash mid-upsert never leaves a model with zero
+lineage edges"**
+
+### Property 2: the downstream-impact traversal never matches the wrong identifier namespace
+
+*For any* AnomalyEventNode with a `dataset` value, the traversal that finds its starting
+LineageNode SHALL match against `LineageNode.relation_name`, which SHALL be populated from
+the same warehouse-qualified namespace as `AnomalyEventNode.dataset` — never against
+`LineageNode.unique_id` or `LineageNode.name`, which live in dbt's own model-identifier
+namespace and would silently match zero nodes for a real anomaly.
+
+**Validates: §3 Invariant 10, §4 Scenario "the traversal never matches against the wrong
+identifier namespace"**
+
+### Property 3: a GraphQL-level mutation failure is never silently treated as success
+
+*For any* call to platform-core's `upsertLineageGraph`-equivalent mutation via
+`OGMAPISession.mutation()`, a response containing a non-empty `"errors"` key SHALL be treated
+as a failure by the caller — regardless of the HTTP status code being 200.
+
+**Validates: §3 Invariant 11, §4 Scenario "a GraphQL-level mutation failure is never mistaken
+for success"**
+
+### Property 4: a genuine fetch error is never conflated with "no lineage available"
+
+*For any* `_fetch_artifact()` call that fails for a reason OTHER than a genuine 404
+(artifact never generated), the resulting `LineageArtifacts.fetch_error` SHALL be non-None —
+`has_column_lineage` SHALL NOT be silently set to `False` as if the artifact were simply
+absent.
+
+**Validates: §3 Invariant 7, §4 Scenario "a real fetch error is never mistaken for 'no
+lineage available'"**
+
+## 8. Eval Criteria
+
+This spec's behavior is deterministic Cypher/HTTP logic, not LLM-judged output — per
+`spec-driven.md`, §8 is required "for every agent/tool spec that touches LLM output," which
+this spec's BH-1062/1063/1064 do NOT (they are parsers, graph mutations, and a Cypher
+traversal — no LLM call in the critical path). **§8 is explicitly omitted per the spec
+template's own stated exemption**, not skipped by oversight — this is a deliberate,
+documented decision, not a gap. If a future pass adds an LLM-summarized "what changed
+downstream" explanation (e.g. for BH-1066's rendered notification text), that addition would
+require its own §8 entry at that time.
+
+## 9. Observability Contract
+
+**Added pass 14, per `spec-driven.md`'s conditional trigger ("when spec produces a
+production surface") — this spec produces the Neo4j lineage graph and the enriched anomaly
+metadata, both production surfaces.**
+
+- **Span**: none proposed in this pass — GC-12/longitudinal monitoring's own precedent
+  (`quality_check_agent.py`) has ZERO OTel spans today (confirmed in the sibling
+  proactive-pipeline-ingestion-monitoring.md spec's pass 30: "GC-12 has ZERO actual OTel
+  observability to mirror... only plain `logger.info()` calls, no spans, no dotted log
+  events"). This spec's BH-1062/1063/1064 SHOULD be the first real instrumentation of this
+  capability-node class (mirroring that sibling spec's own §9 house-style precedent), not
+  copy GC-12's absence of one.
+- **Log events** (new, this spec): `lineage.fetch.started`, `lineage.fetch.success`,
+  `lineage.fetch.error` (Invariant 7's fetch_error case), `lineage.upsert.started`,
+  `lineage.upsert.success`, `lineage.upsert.graphql_error` (Invariant 11's `"errors"`-key
+  case — this event is the DIRECT observability hook for Property 3 above; without it, a
+  silent GraphQL failure has no operator-visible trace at all), `lineage.traversal.no_match`
+  (when BH-1064's traversal finds zero downstream nodes — this event is what would have
+  caught pass 10's original match-key bug in production, had it shipped; every occurrence
+  should be reviewed as a potential relation_name format mismatch, per Invariant 10's
+  remaining gap).
+- **Metrics**: none proposed in this pass — could be added later (e.g.
+  `lineage_traversal_no_match_rate`) once real production volume exists to judge a threshold
+  against; premature to define one now.
+
+## 10. Test Coverage Update
+
+**Verified pass 14 against real test-suite paths in both repos — not invented paths.**
+
+### a. In-repo layered evals / unit tests
+
+- **brightbot**: `brightbot/tests/unit/agents/test_longitudinal_node.py` is the REAL existing
+  test file for `longitudinal_node.py` (BH-1064's own cited precedent). BH-1064's traversal
+  logic (`find_downstream_impact`) should get its test cases added to a new sibling file
+  (e.g. `test_pipeline_watchdog_node.py`-adjacent, or directly alongside if BH-1064's node
+  lives in the same module) — NOT a new greenfield test file competing with this one.
+  `brightbot/brightbot/evals/` exists (`evals/test_suites/{deterministic_tests.py,
+  test_cases.py}`) but has ZERO existing GC-12/longitudinal-named eval cases (confirmed by
+  grep) — there is no eval file to extend for this capability class yet; if BH-1062/1063/1064
+  need eval-level coverage beyond unit tests, it starts a new pattern, not extends one.
+- **brighthive-platform-core**: `tests/unit/workflow-spec-status-enum.test.ts` is
+  `upsertWorkflowStep`'s only direct unit coverage (enum-focused, not the mutation logic
+  itself) — `tests/integration/execute-workflow-as-owner.test.ts` exercises the mutation
+  end-to-end. **CONFIRMED GAP**: `src/graphql/service/neo4j/metric-snapshot.ts`
+  (AnomalyEventNode/MetricSnapshotNode, this spec's own cited OGM-only precedent for
+  BH-1063b) has NO dedicated test file anywhere in `tests/unit/` or `tests/integration/` —
+  BH-1063b's new `lineage-graph.ts` service would be extending an UNTESTED precedent. This
+  spec's own §10 obligation is therefore to add BOTH `lineage-graph.ts`'s tests AND,
+  separately, **BH-1070 filed pass 14** to close `metric-snapshot.ts`'s own test gap (not
+  required by THIS spec's scope, but tracked so the precedent doesn't stay permanently
+  untested).
+
+### b. Cross-repo / end-to-end tests
+
+- **brighthive-e2e** (confirmed real, checked out at `../brighthive-e2e`):
+  `e2e/features/data/test_longitudinal.py` + `specs/data/SPEC-E2E-LONGITUDINAL.md` are the
+  real longitudinal-monitoring e2e precedent to extend for the anomaly-detection half.
+  `e2e/surfaces/test_neo4j_integrity.py` is the real surface test to extend for
+  LineageNode/DEPENDS_ON graph-integrity assertions (Property 1/2 above should get surface
+  cases here, not a new file). **No workflow-spec-lineage-specific e2e test exists yet** —
+  this spec's §10 obligation includes adding the FIRST such case, not extending one that
+  doesn't exist.
+
+### Anti-pattern check (per spec-driven.md's own list)
+
+This section's obligation is NOT satisfied by unit tests alone — per `test-behavior-real.md`,
+at least one L2 case must be a real-behavior test. For BH-1063b specifically, that means a
+test against a REAL Neo4j instance (not a mocked driver) confirming the one-string
+delete-then-MERGE actually behaves atomically under a real crash/interrupt simulation, not
+just that the Cypher string is syntactically well-formed.
+
 ## Areas Involved
 
 | Area | Repo | Impact |
@@ -943,6 +1073,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | BH-1066 | feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed) | Needs Refinement, filed pass 5 — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
 | BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8 — user-raised, confirmed cheaper than the Databricks adapter (reuses existing SnowflakeConnection, no new connection type) |
 | BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11 — formerly informal "BH-1063a," now its own trackable ticket |
+| BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
 
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
 
