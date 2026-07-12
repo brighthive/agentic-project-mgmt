@@ -18,6 +18,9 @@
 | Start a new trial / POC | `_templates/TRIAL.md` |
 | Active paying customer profile | `_templates/CLIENT.md` |
 | Longaeva POC overview | `trials/longaeva/overview.md` |
+| Loop Capital POC overview | `trials/loopcapital/overview.md` |
+| Loop Capital verbatim client asks (SSIS POC + 7/17 proactivity demo) | `trials/loopcapital/artifacts/poc-scope-from-client.md` |
+| Loop Capital proactive-monitoring handover spec | `../docs/specs/proactive-pipeline-ingestion-monitoring.md` (see its "Start Here" section) |
 | Longaeva milestone scorecard | `trials/longaeva/scorecard.md` |
 | Longaeva UAT success guide (whole-company testing) | `trials/longaeva/UAT_GUIDE.md` |
 | Longaeva — Non-technical UAT (production bars for non-tech users) | `trials/longaeva/NON_TECH_UAT.md` |
