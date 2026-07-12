@@ -974,8 +974,9 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     EventBridge rule — it may be strictly cheaper and lower-risk than either.`
 13. `WHEN a PipelineHealthSignal's diagnosis field is generated from raw job error logs (dbt
     Cloud run details, SQL Server error text), THE System SHALL pass it through the EXISTING
-    scrub_text() (brightbot/audit/redaction.py) before it reaches ANY of the 3 sinks (Slack,
-    NotificationInbox, GitHub PR body) — no sink SHALL receive unscrubbed diagnosis text.
+    scrub_text() (brightbot/audit/redaction.py) before it reaches ANY of the 4 sinks (Slack,
+    NotificationInbox, GitHub PR body, AND CloudWatch audit logs — see pass 28 below) — no
+    sink SHALL receive unscrubbed diagnosis text.
     **Known residual risk, verified pass 23**: scrub_text() only strips credential/secret
     SHAPES (tokens, connection strings, key=value secrets) — it explicitly is NOT a PII
     scrubber (per its own docstring) and does NOT catch customer data values that can appear
@@ -984,7 +985,20 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     strings/tokens DO show up in misconfigured job logs) but does NOT close customer-PII/
     data-value leakage, which has no existing BrightHive pattern to reuse. If the threat model
     requires closing that gap too, it is NEW scope, not a checkbox this invariant satisfies —
-    do not let scrub_text()'s existence create false confidence.`
+    do not let scrub_text()'s existence create false confidence.
+    **CRITICAL, pass 28 (triple-click-zoom) — a FOURTH sink found, not previously counted.**
+    The `@audit_action` decorator (`brightbot/audit/decorator.py:44-55,95-117`) on
+    `github_create_pull_request` binds the FULL function arguments — including `body`, the
+    complete PR description containing the diagnosis text — into `emit_action_audit()`
+    (`audit_log.py:78-140`), which lands as a JSON log line in CloudWatch Logs. This path
+    DOES call `redact()` (`audit_log.py:57-73`) first, but `redact()` is ALSO only
+    credential-shape/key-name-based (`token`/`secret`/`password`-named fields plus the same
+    credential value patterns as scrub_text()) — it does NOT target PII either. This means
+    the SAME residual customer-data-value risk this invariant already flags for Slack/
+    NotificationInbox/PR-body ALSO applies to CloudWatch audit logs, arguably at HIGHER risk
+    (CloudWatch Logs Insights queries are broad-access within an AWS account, and log
+    retention typically outlives a Slack message's visible/searchable lifespan). BH-1060's
+    scope MUST be revised to cover all 4 sinks, not the original 3 — see BH-1060's ticket.`
 14. `THE get_pipeline_health MCP tool SHALL NOT accept workspace_id as a request parameter —
     workspace scoping SHALL be resolved exclusively from the validated MCP principal
     (principal.workspace_id), exactly matching get_anomalies_impl's convention
@@ -1121,9 +1135,13 @@ Feature: Proactive pipeline & ingestion monitoring
   Scenario: diagnosis text is scrubbed before reaching any sink
     Given a raw dbt Cloud error log contains an accidentally-logged connection string with credentials
     When the diagnosis field is generated from that log
-    Then scrub_text() runs on the diagnosis BEFORE it is written to Slack, NotificationInbox, or a GitHub PR body
-    And the credential shape is redacted in all 3 sinks
-    But note: this scenario does NOT prove customer PII/data-value redaction — that is a known, separate, unclosed gap
+    Then scrub_text() runs on the diagnosis BEFORE it is written to Slack, NotificationInbox,
+      a GitHub PR body, OR the CloudWatch audit log (4 sinks, corrected pass 28 — the audit
+      log via @audit_action was previously uncounted)
+    And the credential shape is redacted in all 4 sinks
+    But note: this scenario does NOT prove customer PII/data-value redaction in ANY of the 4
+      sinks — that is a known, separate, unclosed gap (BH-1060), now scoped across all 4,
+      not just the original 3
 
   Scenario: remediation loop's tool surface excludes merge capability
     Given the remediation loop's LangGraph node is constructed with its bound tools
