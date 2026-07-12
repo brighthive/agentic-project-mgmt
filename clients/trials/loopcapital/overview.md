@@ -169,11 +169,17 @@ confirmed against real code, not assumed.
   BH-1060 (security follow-up).
 - **Verification memory**: `~/.claude/projects/-Users-bado-iccha-brighthive/memory/project_loop_capital_pass_index.md` — one-line index into 34+ detailed pass files.
 - **Full demo plan**: `poc.yaml` (scope/ownership/demo-relative phases: T-5 → T-0) → renders `TRACKER.md` (live ticket/PR status, regenerate with `make poc-tracker-no-slack CLIENT=loopcapital`). Plan is organized by Suzanne's 3 committed demo points, not calendar days — see `poc.yaml`'s phase titles.
-- **Draft PR (Track B)**: [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) — the proactive-monitoring handover spec + this client folder, on `drchinca/BH-1036/proactive-monitoring-spec`.
-- **Draft PR (Track C)**: [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) — the lineage-aware-data-quality spec, on `drchinca/BH-1061/lineage-aware-data-quality-spec`. Split into its own PR 2026-07-12 to keep both under the 900-line PR-size threshold — Track C is non-blocking for 7/17 and has zero file overlap with Track B.
-- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` (PR #95) — ASCII
+- **Handover spec, Track B**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`
+  — **merged to master** via PR [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) (2026-07-12).
+- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` — **merged to master**
+  via PR [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) (2026-07-12). ASCII
   architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
-  glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1068.
+  glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1070.
+- **This client folder**: merged to master via PR [#96](https://github.com/brighthive/agentic-project-mgmt/pull/96) (2026-07-12).
+- **Open follow-up PR**: [#97](https://github.com/brighthive/agentic-project-mgmt/pull/97) —
+  dual-write shape correction (BH-1054/BH-1046), on `drchinca/BH-1061/triple-click-zoom-pass-15`.
+  Opened fresh after #94/#95/#96 merged; ongoing verification passes land here until it's next
+  merged.
 
 ## Two things that must happen before 7/17, not yet done
 
