@@ -135,17 +135,29 @@ Diamond impact (after ELT), which neither tool sees on its own. For 7/17: show t
 anomaly-detection half (real, shipped) and be upfront that the impact-tracing half is the
 next phase.
 
-## Track D: Per-Project Pipeline Health View — PROPOSED, not yet spec'd or ticketed
+## Track D: Per-Project Pipeline Health View — PROPOSED, CORRECTED 2026-07-12 (2 passes)
 
 Kuri's follow-up (2026-07-12): this work should surface to a **proactive view on Projects**
 — Projects already have transformations/flow, and should have their own dedicated view for
 pipeline health (working name "Brightlines," not yet validated with UX/product review).
-Confirmed against real code: Projects already have a per-project tab bar
-(`ProjectNavBar.tsx`, 6 tabs including a "Flow" tab showing a static structural DAG) — a 7th
-tab surfacing pipeline health OVER TIME (watchdog detections, longitudinal anomalies,
-Track C's downstream-impact enrichment) is a real, confirmed plug-in point, not a new page.
-**Genuinely new UI/UX work, not yet scoped into tickets** — needs its own `/write-spec` +
-design pass before Jira tickets are cut. Full detail: `../../docs/specs/lineage-aware-data-quality.md`'s "Track D" section (proposal-only, explicitly marked not-yet-committed-scope).
+
+**CORRECTION (same day, second pass)**: the first pass's premise was wrong — this is NOT
+greenfield. Projects' "Flow" tab (`ProjectNavBar.tsx`) actually renders `WorkflowSpecPage.tsx`
+today (the legacy static-DAG canvas is dead code, confirmed unreachable), which **already
+ships a real run-history panel and live run-timeline** — the exact capability class the
+first pass thought was missing. A direct 7-point UI audit against this real, already-shipped
+surface also found genuine defects (zero mobile responsiveness across 4 components, a dead
+legacy-fallback branch, a tab/route access-gate mismatch letting Collaborators reach an
+Admin-hidden page, no accessibility attributes, zero component tests, and more) — all
+confirmed against real code, not assumed.
+
+**Re-scoped as two pieces** (full detail in `../../docs/specs/lineage-aware-data-quality.md`'s
+"Track D" section):
+- **D1**: fix the 7 confirmed defects in the EXISTING `WorkflowSpecPage` — closer to a
+  bug/tech-debt backlog than new-feature work, could be ticketed now.
+- **D2**: enrich `WorkflowSpecPage`'s EXISTING run-history/timeline panels with this epic's
+  watchdog/anomaly/downstream-impact signals, rather than building a competing new tab — still
+  needs a `/write-spec` + design pass before ticketing.
 
 ## Engineering Artifacts
 
