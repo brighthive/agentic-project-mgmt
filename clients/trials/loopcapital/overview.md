@@ -135,6 +135,18 @@ Diamond impact (after ELT), which neither tool sees on its own. For 7/17: show t
 anomaly-detection half (real, shipped) and be upfront that the impact-tracing half is the
 next phase.
 
+## Track D: Per-Project Pipeline Health View — PROPOSED, not yet spec'd or ticketed
+
+Kuri's follow-up (2026-07-12): this work should surface to a **proactive view on Projects**
+— Projects already have transformations/flow, and should have their own dedicated view for
+pipeline health (working name "Brightlines," not yet validated with UX/product review).
+Confirmed against real code: Projects already have a per-project tab bar
+(`ProjectNavBar.tsx`, 6 tabs including a "Flow" tab showing a static structural DAG) — a 7th
+tab surfacing pipeline health OVER TIME (watchdog detections, longitudinal anomalies,
+Track C's downstream-impact enrichment) is a real, confirmed plug-in point, not a new page.
+**Genuinely new UI/UX work, not yet scoped into tickets** — needs its own `/write-spec` +
+design pass before Jira tickets are cut. Full detail: `../../docs/specs/lineage-aware-data-quality.md`'s "Track D" section (proposal-only, explicitly marked not-yet-committed-scope).
+
 ## Engineering Artifacts
 
 - **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
