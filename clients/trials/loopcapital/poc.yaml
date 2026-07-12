@@ -180,6 +180,15 @@ phases:
       - day: "Post-demo"
         outcome: "BH-1066 — CONFIRMED pass 5: GC-12 anomaly notifications have zero rendering in Slack/webapp today, independent of this epic's own changes. BH-1064's enrichment has nothing to enrich that a human sees until this ships."
         linked: [BH-1066]
+      - day: "Post-demo"
+        outcome: "BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half, reuses the existing SnowflakeConnection"
+        linked: [BH-1068]
+      - day: "Post-demo"
+        outcome: "BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check"
+        linked: [BH-1069]
+      - day: "Post-demo"
+        outcome: "BH-1070 — test coverage gap: metric-snapshot.ts (BH-1063b's own cited precedent) has zero existing tests; non-blocking tech debt, tracked for visibility"
+        linked: [BH-1070]
 
   - title: "Non-blocking, tracked separately"
     description: >

@@ -90,6 +90,19 @@ fixture) but essentially undemonstrated for SSRS (no fixture at all), and there 
 today from "diagnose an uploaded file" to "monitor a live legacy SQL Server's SSIS/SSRS
 catalog" — that would be new, unscoped work if Loop Capital asks for it.
 
+**GAP FOUND, completeness audit 2026-07-12**: the client's ORIGINAL verbatim ask
+(`artifacts/poc-scope-from-client.md:33`, "Provide a resource costing to show what the cost
+will be (cost management)") has **NO ticket, no spec section, and no mention anywhere in
+poc.yaml/TRACKER.md** — it was silently dropped somewhere between the original ask and Track
+A's Jira scoping. This is distinct from the `storage-optimization` skill's warehouse-storage
+cost analysis (which covers `SKILL.md:3,19`'s "reduce warehouse spend" — a real, shipped, but
+narrower capability): the client's line 33 ask reads as an overall PROJECT/ENGAGEMENT cost
+estimate ("what the cost will be" for this work), not a warehouse-storage line item. **Not
+yet resolved — flag to Kuri/Suzanne before 7/17**: either (a) confirm this was already
+delivered out-of-band (a sales-side cost proposal, not an engineering deliverable — plausible
+given the phrasing, but unconfirmed here), or (b) file it as a real gap if it was expected to
+be part of the agent's output.
+
 Full detail (superseded by the correction above where they conflict):
 `project_ssis_poc_vs_proactive_priority.md` (memory).
 
@@ -198,6 +211,7 @@ confirmed against real code, not assumed.
 | 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | — |
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | — |
+| 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |
 
 ## Decision
 
