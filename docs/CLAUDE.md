@@ -60,6 +60,23 @@ Coverage Update (mandatory — extends real suites: `brightbot/tests/` + `bright
 6. Plan sprint with `/scrum-master`
 7. After shipping, run `/write-feature-doc`
 
+**Engine-agnostic by default — no spec hardcodes one vendor/technology when more than one
+exists or plausibly will.** Any spec integrating a pipeline engine (dbt, Databricks, Airflow),
+a warehouse (Snowflake, Redshift, Synapse), a lineage/metadata source, or any other
+swappable external system MUST define a PORT (a `Protocol`) first, with the first real vendor
+as the FIRST ADAPTER behind a REGISTRY — never as hardcoded types/function names baked into
+the domain logic. Concretely: `LineageSource` (the port), `DbtLineageSource` (adapter #1),
+`LINEAGE_SOURCE_ADAPTERS` (the registry) — not `DbtLineageNode`/`fetch_dbt_lineage_artifacts`
+sprinkled through the engine-agnostic code paths that walk/enrich/alert on the data, forcing a
+second vendor's support to mean touching code that has nothing to do with that vendor. This
+mirrors the existing `~/.claude/rules/pluggable-scalable.md` rule (Ports & Adapters, new
+engines are config not code) — that rule already applies globally; this note exists because a
+spec drifted into vendor-hardcoded naming before a second engine was even due, and the fix
+required a mid-spec rename across every affected type/function/ticket. Catch this at DRAFT
+time, not after 3 tickets already reference the wrong names: when writing §2 Interface
+Contract, the FIRST thing on the page is the port + registry, and only THEN the first
+adapter's concrete implementation, clearly labeled "the first adapter, not the design."
+
 ---
 
 ## features/
