@@ -904,6 +904,29 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    message, not a generic query error. This is a genuine, if small, customer-side
    administrative action — "no new connectivity/protocol/on-host software" undersells it as
    zero customer action, which it is not.`
+   **CONFIRMED pass 38 (triple-click-zoom) — the exact query text, never shown before this
+   pass (only referenced by DMV name in every earlier pass), verified to pass the REAL
+   `SynapseConnection.execute_query()` safety guard as written:**
+   ```sql
+   SELECT
+       DB_NAME(vs.database_id) AS database_name,
+       mf.name AS logical_file_name,
+       vs.total_bytes,
+       vs.available_bytes,
+       CAST(vs.available_bytes * 100.0 / vs.total_bytes AS DECIMAL(5,2)) AS percent_free
+   FROM sys.master_files AS mf
+   CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.file_id) AS vs
+   ```
+   Confirmed against the real guard (`warehouse_connections.py:360-383`,
+   `warehouse_base.py:131-164`): the multi-statement check (`";" in query.rstrip(";")`)
+   strips trailing semicolons FIRST, then checks for any remaining — a single trailing `;`
+   (habit-appended) passes cleanly; there is no keyword blocklist for `CROSS APPLY`, no
+   schema-prefix check for `sys.`-qualified identifiers (the guard does zero semantic SQL
+   parsing, no AST, no `sqlparse`), no multi-line-string check (`.lstrip().upper()
+   .startswith("SELECT")` only inspects the leading token), and no query-length/JOIN-count
+   limit anywhere in either function. This exact query is confirmed buildable and
+   guard-compliant TODAY — the remaining gaps are the dialect class (above) and the
+   permission grant (above), not the query text itself.
 6. `WHILE BrightSignals' 3-way split-brain (BH-1053, see §6) is unresolved as a UNIFIED write
    path, THE System's watchdog SHALL perform the explicit dual-write in Invariant 1 itself —
    it SHALL NOT wait for BH-1053 to add a fourth ad-hoc path.`
