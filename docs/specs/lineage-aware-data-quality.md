@@ -542,9 +542,31 @@ async def upsert_lineage_graph(
 #        expressible through the auto-generated mutation — confirm this trade-off at
 #        implementation time rather than defaulting to the decorator for convenience.
 #     2. `src/graphql/service/neo4j/lineage-graph.ts` — NEW file if hand-written Cypher is
-#        chosen (per step 1): the delete-then-MERGE upsert wrapped in
-#        `session.writeTransaction(...)` per Invariant 9, modeled on `metric-snapshot.ts`'s
-#        shape (194 lines), NOT workflow-spec.ts's two-auto-commit-calls shape.
+#        chosen (per step 1): the delete-then-MERGE upsert per Invariant 9, modeled on
+#        `metric-snapshot.ts`'s shape (194 lines).
+#
+#     RESOLVED pass 9 (triple-click-zoom) — the atomic-transaction API was under-specified;
+#     now confirmed against real code, not generic Neo4j docs. `session.writeTransaction(...)`
+#     (what earlier passes of this spec recommended) is DEPRECATED for this repo's actual
+#     driver (`package.json:47`, `neo4j-driver: ^5.0.0` — v5 prefers `session.executeWrite`).
+#     BUT a simpler, ALREADY-PROVEN option exists in this exact repo and should be preferred:
+#     `workflow-spec.ts:557-581` (`deleteWorkflowStep`) already chains
+#     `OPTIONAL MATCH ... DELETE dep WITH step, b, iss DETACH DELETE step, b, iss` as ONE
+#     Cypher string in a SINGLE `session.run()` call — Neo4j auto-commits one submitted
+#     query string as one implicit transaction, closing the crash window without introducing
+#     any new driver API. RECOMMENDATION, supersedes earlier `writeTransaction` guidance: write
+#     the delete-then-MERGE as ONE multi-statement Cypher string
+#     (`MATCH (n:LineageNode {uniqueId: $id})-[r:DEPENDS_ON]->() DELETE r WITH n UNWIND $depIds
+#     AS depId MATCH (dep:LineageNode {uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one
+#     `session.run()` call — matches this repo's OWN existing style exactly
+#     (`workflow-spec.ts:573-580`), needs zero new driver API, and is strictly simpler than
+#     `executeWrite`. Fall back to `session.executeWrite(tx => ...)` only if the upsert
+#     genuinely needs to read an intermediate result back into JS before the MERGE (not
+#     expected here — confirm at implementation time, don't default to it for convenience).
+#     CONFIRMED pass 9: zero `executeWrite`/`writeTransaction`/`CALL {...} IN TRANSACTIONS`
+#     usage exists anywhere in this repo today — there is no other transactional precedent to
+#     copy, which makes the single-string approach doubly preferable: it requires learning
+#     nothing new, whereas `executeWrite` would be a first-of-its-kind pattern in this repo.
 #     3. `src/common/types.ts` — shared type refs if `LineageNode`/`LineageGraph` types
 #        need to cross module boundaries within platform-core.
 #   Total: 2-3 files, zero public-schema files, zero resolver boilerplate if the
@@ -552,14 +574,18 @@ async def upsert_lineage_graph(
 #   the hand-written service).
 #
 # CRITICAL CORRECTNESS GAP FOUND IN THE PRECEDENT ITSELF — do not silently inherit this:
-# the real workflow-spec.ts pattern is NOT atomic. The DELETE and the MERGE run as two
-# SEPARATE auto-commit `session.run()` calls on the same session (`workflow-spec.ts:302-314`),
-# not wrapped in `session.writeTransaction(...)` and not one multi-statement query. If the
-# process crashes between the DELETE and the MERGE, a step is left with ZERO DEPENDS_ON edges
-# — deleted but never re-created. For BH-1063, this same gap would mean a crash mid-upsert
-# could silently leave a dbt model with NO lineage edges, which downstream (BH-1064) would
-# read as "nothing depends on this" — a false negative that suppresses a real alert. THIS
-# SPEC SHALL NOT silently copy the non-atomic version — see Invariant 9 below.
+# the real workflow-spec.ts:299-317 pattern (upsertWorkflowStep) is NOT atomic — the DELETE
+# and the MERGE run as two SEPARATE auto-commit `session.run()` calls on the same session
+# (`workflow-spec.ts:302-314`). If the process crashes between the DELETE and the MERGE, a
+# step is left with ZERO DEPENDS_ON edges — deleted but never re-created. For BH-1063, this
+# same gap would mean a crash mid-upsert could silently leave a dbt model with NO lineage
+# edges, which downstream (BH-1064) would read as "nothing depends on this" — a false
+# negative that suppresses a real alert. THIS SPEC SHALL NOT silently copy the non-atomic
+# version. FIX (confirmed pass 9): the SAME repo already proves the fix elsewhere —
+# `workflow-spec.ts:557-581` (`deleteWorkflowStep`) chains DELETE + further Cypher clauses as
+# ONE multi-statement string in ONE `session.run()` call, which Neo4j auto-commits as one
+# implicit transaction. BH-1063's upsert should follow THIS precedent (one string, one call),
+# not `upsertWorkflowStep`'s own two-call pattern — see Invariant 9 below.
 
 # BH-1064: the bridge (closes BH-673)
 #
@@ -664,14 +690,20 @@ async def find_downstream_impact(
    this repo is a hand-written test fixture, never a captured real payload. BH-1062's
    implementer MUST confirm this against one real API call before hardcoding a match string.`
 9. `WHEN upserting a LineageNode's DEPENDS_ON edges, THE System SHALL perform the
-   delete-and-recreate as a SINGLE atomic transaction (session.writeTransaction wrapping both
-   the DELETE and the MERGE, or one multi-statement Cypher query) — it SHALL NOT copy
-   workflow-spec.ts:300-314's own pattern verbatim, which runs the DELETE and MERGE as two
-   separate auto-commit calls with a crash window between them. Verified pass 3: that
-   precedent has a real correctness gap (a process crash mid-upsert leaves zero DEPENDS_ON
-   edges, which BH-1064 would read as "nothing depends on this" — a false negative that
-   suppresses a real alert). Model the SHAPE of the precedent (same Cypher, same node/edge
-   pattern), not its transaction-boundary bug.`
+   delete-and-recreate as ONE multi-statement Cypher string in a SINGLE session.run() call
+   (Neo4j auto-commits one submitted query as one implicit transaction) — it SHALL NOT copy
+   workflow-spec.ts:300-314's own upsertWorkflowStep pattern verbatim, which runs the DELETE
+   and MERGE as two separate auto-commit calls with a crash window between them. Verified
+   pass 3: that precedent has a real correctness gap (a process crash mid-upsert leaves zero
+   DEPENDS_ON edges, which BH-1064 would read as "nothing depends on this" — a false negative
+   that suppresses a real alert). RESOLVED pass 9: the fix is confirmed already proven
+   elsewhere in the SAME repo — workflow-spec.ts:557-581 (deleteWorkflowStep) chains its
+   DELETE + further clauses as one string, one call. Follow THAT precedent's shape (one
+   string, one call), not upsertWorkflowStep's two-call shape. session.executeWrite(...) (the
+   non-deprecated driver-v5 API, per package.json:47's neo4j-driver ^5.0.0 — NOT
+   session.writeTransaction, which is deprecated at this version) is the fallback ONLY if the
+   upsert needs to read an intermediate result back into JS before the MERGE, which is not
+   expected here.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -715,10 +747,14 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 
   Scenario: a crash mid-upsert never leaves a model with zero lineage edges
     Given a LineageNode currently has 3 DEPENDS_ON edges from a prior manifest
-    And the upsert transaction for a new manifest is interrupted after the DELETE but before the MERGE completes
-    When the system recovers (retry or next scheduled upsert)
-    Then the node never observably had zero edges in between — the whole delete-and-recreate is atomic
-    And this differs deliberately from workflow-spec.ts's own non-atomic precedent, which has this exact gap
+    And the DELETE and MERGE for a new manifest are submitted as ONE multi-statement Cypher
+      string in a single session.run() call (per Invariant 9 — not two separate calls)
+    When the process crashes at any point during that single call
+    Then the node never observably had zero edges in between — Neo4j either commits the
+      whole string as one implicit transaction or none of it applies
+    And this differs deliberately from workflow-spec.ts's upsertWorkflowStep (two-call,
+      non-atomic), and instead follows workflow-spec.ts's OWN deleteWorkflowStep precedent
+      (one-string, one-call) — both patterns exist in the same file, only one is safe to copy
 ```
 
 ## 5. Out of Scope
@@ -754,7 +790,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | Area | Repo | Impact |
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
-| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 6**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE Cypher, atomic per Invariant 9) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
+| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s own proven pattern — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0`) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
 | Lineage graph call site (BH-1063a) | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
