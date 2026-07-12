@@ -113,10 +113,13 @@ number in front of a customer or exec) has already happened.
                                   │   NEW (BH-1062, BH-1063)  │
                                   └─────────────────────────┘
 
-  Net result: "null_spike on raw.orders.customer_id" becomes
-  "null_spike on raw.orders.customer_id — affects mart.customer_ltv,
-  mart.revenue_by_segment (2 Gold tables)" — in one alert, before a human
-  looks at the wrong number.
+  Net result (CORRECTED pass 4 — no rendered Slack message exists to quote today):
+  the anomaly's JSON metadata blob gains a new key —
+  metadata["longitudinal"]["downstream_tables"] = ["mart.customer_ltv",
+  "mart.revenue_by_segment"] — attached to the SAME notification event as the
+  null_spike, before a human looks at the wrong number. Whatever renders that
+  JSON into visible Slack/webapp text (if anything does today) is OUTSIDE
+  brightbot/platform-core backend code — unverified, flagged for a future pass.
 ```
 
 ### Implementation sequence (the 3 new tickets, in order)
@@ -342,13 +345,60 @@ async def upsert_dbt_lineage_graph(
 # SPEC SHALL NOT silently copy the non-atomic version — see Invariant 9 below.
 
 # BH-1064: the bridge (closes BH-673)
+#
+# MAJOR CORRECTION, pass 4 (triple-click-zoom) — verified against real code, not the earlier
+# draft's assumption. "Reuses BH-1046's existing dual-write alert path — no new delivery
+# mechanism" was WRONG in a way that changes this ticket's actual scope:
+#
+# AnomalyEventNode's REAL shape (platform-core/src/graphql/ogm/typedefs.ts:713-727):
+#   type AnomalyEventNode {
+#     id: ID! @id
+#     detectedAt: DateTime!
+#     dataset: String!        # e.g. "GOLD.mart_daily_portfolio_exposure" — the lookup key
+#     metricName: String!     # e.g. "null_rate:customer_id" — column sometimes encoded, not structured
+#     family: String!         # row_count_drift | cardinality_breakdown | distributional_skew | null_spike
+#     severity: String!       # warning | error
+#     currentValue: Float!
+#     baselineValue: Float!
+#     deviationPct: Float!
+#     description: String!
+#     runId: String!
+#     dataAsset: DataAssetNode! @relationship(type: "HAS_ANOMALY_EVENT", direction: IN)
+#   }
+# `dataset` is the field BH-1064 reads to start the downstream lookup. Confirmed real, not
+# aspirational.
+#
+# BUT: "BH-1046's alert path" does NOT format anomalies into a Slack message anywhere in
+# brightbot or platform-core — confirmed by direct search, not assumed. What actually exists
+# (GC-12/BH-669) is `LongitudinalResult.summary()` (longitudinal_node.py:79-88), a plain dict
+# whose docstring SAYS "for Slack notification" but nothing downstream renders it as message
+# text. It flows into `publish_completion_notification` (quality_check_agent.py:1526-1685),
+# which fires a `publishNotification` mutation carrying a `json.dumps(...)` metadata blob —
+# NOT a Slack text/blocks payload, and the anomaly detail folded in is just
+# `{"longitudinal": {"anomaly_count": N, "families": [...]}}` (lines 1641-1647) — no dataset
+# name, no per-anomaly detail, no rendered message anywhere. This whole path is ALSO
+# feature-flag gated OFF by default (FeatureFlag.NOTIFICATIONS, lines 1532-1541) and
+# short-circuits to a no-op if BH_API_URL/NOTIFICATIONS_API_KEY are unset.
+#
+# CONSEQUENCE FOR THIS TICKET'S SCOPE: BH-1064 cannot simply "add a clause to an existing
+# alert" — there is no existing rendered alert to add a clause to on the backend. The
+# insertion point is a NEW key inside the JSON metadata dict
+# (e.g. metadata["longitudinal"]["downstream_tables"] = [...]), not a string splice into a
+# message template, because no message template exists in brightbot/platform-core. Whatever
+# renders this JSON into visible Slack/webapp text (if anything does today) lives outside
+# these two repos' backend code — NOT verified in this pass, flag for a future pass to check
+# brighthive-webapp and brightbot-slack-server specifically before assuming ANY of this is
+# user-visible today, even without lineage enrichment.
 async def find_downstream_impact(
     *, workspace_id: str, anomaly: AnomalyEventNode,
 ) -> list[DbtLineageNode]: ...
-# Cypher traversal: MATCH (start:DbtLineageNode {name: $affected_table})
+# Cypher traversal, keyed off anomaly.dataset (confirmed real field):
+#   MATCH (start:DbtLineageNode {name: $anomaly_dataset})
 #                   <-[:DEPENDS_ON*1..]-(downstream:DbtLineageNode)
 #                   RETURN downstream
-# Reuses BH-1046's existing dual-write alert path — no new delivery mechanism.
+# Writes into the metadata dict BEFORE publish_completion_notification's existing
+# json.dumps(...) call (quality_check_agent.py:1663) — this ticket adds one new key, it does
+# NOT touch or duplicate the existing publishNotification mutation call itself.
 ```
 
 ## 3. Invariants (DbC)
@@ -359,9 +409,14 @@ async def find_downstream_impact(
    model-level tracing and SHALL set has_column_lineage=False — it SHALL NOT silently produce
    a column-level claim it cannot back.`
 3. `WHEN an AnomalyEventNode fires on a monitored column, THE System SHALL attempt a
-   downstream-impact lookup via the lineage graph before finalizing the alert — the impact
-   list (possibly empty, if lineage data is unavailable) SHALL be included in the SAME alert,
-   not a separate notification.`
+   downstream-impact lookup via the lineage graph before publish_completion_notification's
+   existing json.dumps(...) call — the impact list (possibly empty, if lineage data is
+   unavailable) SHALL be written into the SAME metadata dict as a new key, not a separate
+   notification call. CORRECTED pass 4: there is no rendered Slack/webapp message to append
+   a "clause" to in brightbot/platform-core backend code — only a JSON metadata dict exists.
+   Whatever renders that JSON into visible text (webapp/slack-server) is UNVERIFIED by this
+   spec and must be checked in a future pass before assuming lineage data reaches a human at
+   all today, even without this ticket's changes.`
 4. `WHEN the Neo4j lineage graph is upserted, THE System SHALL treat each dbt run's manifest as
    the source of truth for that run — stale DEPENDS_ON edges from a prior run's now-removed
    dependency SHALL be removed, not merely added-to (idempotent replace per model, not
