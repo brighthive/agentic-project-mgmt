@@ -61,6 +61,54 @@ contract) → {BH-1049 Airbyte, BH-1050 Step Functions, BH-1051 queue/DLQ} → B
 BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real but
 **non-blocking** — don't let them stall the critical path.
 
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│  ADDED pass 25 (triple-click-zoom) — the full dependency graph, PUSH vs PULL   │
+│  options called out where this loop found a cheaper push-based alternative     │
+└────────────────────────────────────────────────────────────────────────────────┘
+
+  BH-1042 (contract: PipelineSource Protocol, PIPELINE_SOURCE_ADAPTERS registry,
+           PipelineHealthSignal DTO, get_pipeline_health MCP tool, §8 eval design)
+      │
+      ├──▶ BH-1043 (dbt watchdog — wraps EXISTING dbt_cloud_tools.py, adds backoff)
+      ├──▶ BH-1044 (Databricks watchdog — GREENFIELD connector + credentials, mirrors
+      │             dbt's per-CONNECTION direct-boto3 secretsmanager pattern exactly)
+      └──▶ BH-1054 (watchdog capability node — rides EXISTING scheduled_agent_dispatcher,
+                     owns the dual-write: per-member fanout + resolveSignal() derivation,
+                     NOT a same-payload-twice call; cooldown keyed on (workspace_id,
+                     source_type, job_id, failure_type) — 4-tuple, not 3)
+             │
+             ├──▶ BH-1045 (SQL Server disk/job query — existing WarehousePort/Synapse
+             │             connection chain PLUS a NEW VIEW SERVER STATE grant, a real
+             │             customer-side permission action, not "zero new anything")
+             ├──▶ BH-1046 (delivery verify — dbt_run_failure ONLY, narrow scope,
+             │             does NOT duplicate BH-1067's 5-stage renderer work)
+             └──▶ BH-1047 (remediation — builds GC-11's loop for the FIRST time, since
+                           self-healing-pipelines.md is itself unbuilt; REMEDIATION_TOOLS
+                           via direct import, github_merge_pull_request omitted by
+                           construction, mirrors retrieval_agent_react.py's real pattern)
+
+  BH-1048 (ingestion contract, separate from the job-status contract above)
+      │
+      ├──▶ BH-1049 (Airbyte — PUSH option confirmed cheaper: extend platform-core's
+      │             airbyte_notification_webhook's existing no-op failure branch,
+      │             reuses its real auth client + connection mapping, vs. building a
+      │             new brightbot poller from zero)
+      ├──▶ BH-1050 (Step Functions — PUSH option confirmed cheaper: extend the LIVE
+      │             data_ingestion_stack.py EventBridge rule already routing FAILED
+      │             executions to Slack via SNS, vs. a new execution-history poller)
+      └──▶ BH-1051 (queue/DLQ — THREE options, evaluate cheapest first: (a) extend
+                    cadenceToCron [touches shared scheduling infra], (b) new scoped
+                    EventBridge rule [also shared], (c) native CloudWatch Alarm on the
+                    queue's own metrics [ZERO new BrightHive scheduling code — try
+                    this first])
+             │
+             └──▶ BH-1052 (unify all 3 ingestion watchdogs' dual-write/dedup)
+
+  Cross-cutting, non-blocking: BH-1053 (dual-write unification), BH-1055 (dispatcher
+  hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision)
+```
+
 **One open human decision, not resolved by this spec**: BH-1044 (Databricks) recommends
 brightbot-only secret storage over a platform-core schema change, for the demo timeline —
 needs Kuri's explicit confirm/override (see Jira comment on BH-1044).

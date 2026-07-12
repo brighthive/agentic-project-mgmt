@@ -94,32 +94,43 @@ number in front of a customer or exec) has already happened.
                                    consume it, don't rebuild it)      walk logic)
 
   ┌──────────────┐              ┌─────────────────────────┐        ┌──────────────────┐
-  │ Longitudinal  │              │  dbt manifest.json /     │        │ Gold / Diamond    │
-  │ monitoring    │   detects    │  catalog.json            │  walk  │ tables named as   │
-  │ (null_spike,  │─────────────▶│  (model + column DAG,    │───────▶│ "affected" in the │
-  │ row_count_    │   anomaly    │  dbt already wrote this) │ forward│ SAME alert that   │
-  │ drift, etc.)  │   on column  │                          │        │ fired the anomaly  │
-  │  SHIPPED      │   X          │  Databricks Unity        │        │  NEW (BH-1064)     │
-  └──────────────┘              │  Catalog system tables   │        └──────────────────┘
-                                  │  (table_lineage /        │
-                                  │  column_lineage) — same   │
-                                  │  idea, once a Databricks  │
-                                  │  connection exists        │
+  │ Longitudinal  │              │  LineageSource PORT       │        │ Gold / Diamond    │
+  │ monitoring    │   detects    │  (Ports & Adapters,       │  walk  │ tables named as   │
+  │ (null_spike,  │─────────────▶│  engine-agnostic):        │───────▶│ "affected" in the │
+  │ row_count_    │   anomaly    │                          │ forward│ SAME alert that   │
+  │ drift, etc.)  │   on column  │  1. dbt manifest.json/    │        │ fired the anomaly  │
+  │  SHIPPED      │   X          │     catalog.json          │        │  NEW (BH-1064)     │
+  └──────────────┘              │     — BH-1062, CONFIRMED  │        └──────────────────┘
+                                  │     buildable this pass   │
+                                  │  2. Databricks Unity      │
+                                  │     Catalog system tables │
+                                  │     — DatabricksLineage-  │
+                                  │     Source, greenfield    │
+                                  │     connector, independent│
+                                  │     of BH-1044 decision   │
+                                  │  3. Snowflake ACCOUNT_    │
+                                  │     USAGE (Snowpipe/Tasks/│
+                                  │     Streams/Dynamic       │
+                                  │     Tables) — BH-1068,     │
+                                  │     CHEAPEST (reuses live  │
+                                  │     SnowflakeConnection,  │
+                                  │     no new connector)      │
                                   │                          │
-                                  │  BrightHive: fetch +      │
-                                  │  parse this artifact,     │
-                                  │  load into Neo4j as a     │
-                                  │  queryable graph          │
-                                  │   NEW (BH-1062, BH-1063)  │
+                                  │  All 3 feed the SAME       │
+                                  │  LineageGraph shape →      │
+                                  │  BrightHive: load into    │
+                                  │  Neo4j as a queryable      │
+                                  │  graph — NEW (BH-1063)     │
                                   └─────────────────────────┘
 
-  Net result (CORRECTED pass 4 — no rendered Slack message exists to quote today):
-  the anomaly's JSON metadata blob gains a new key —
+  Net result (CORRECTED pass 4, CONFIRMED pass 5 — no longer "unverified"): the
+  anomaly's JSON metadata blob gains a new key —
   metadata["longitudinal"]["downstream_tables"] = ["mart.customer_ltv",
   "mart.revenue_by_segment"] — attached to the SAME notification event as the
-  null_spike, before a human looks at the wrong number. Whatever renders that
-  JSON into visible Slack/webapp text (if anything does today) is OUTSIDE
-  brightbot/platform-core backend code — unverified, flagged for a future pass.
+  null_spike, before a human looks at the wrong number. CONFIRMED (BH-1065): NEITHER
+  brightbot-slack-server NOR brighthive-webapp renders ANY anomaly/longitudinal
+  notification into visible text today — this is a real, pre-existing gap, not
+  merely unverified. BH-1066 (filed) builds the missing renderer.
 ```
 
 **CONFIRMED pass 5 (BH-1065), not merely "unverified" anymore — this is worse than flagged**:
