@@ -21,6 +21,7 @@ scope:
     - BH-1058
     - BH-1059
     - BH-1060
+    - BH-1067
     - BH-1038
     - BH-1039
     - BH-1040
@@ -89,6 +90,9 @@ phases:
       - day: "T-3"
         outcome: "BH-1046 alert path — Slack + webapp both show the detected failure (dual-write verified)"
         linked: [BH-1046]
+      - day: "T-3"
+        outcome: "CRITICAL, filed pass 35: BH-1067 renderers for 5 of 6 new stage values — dual-write alone is not enough; dbt_run_stale/databricks_job_failure/databricks_cluster_unhealthy/etl_job_failure/source_disk_low have zero visible text on either surface without this, identical to GC-12's confirmed dead-end (BH-1065/1066)"
+        linked: [BH-1067]
       - day: "T-2"
         outcome: "End-to-end dry run: real dbt Cloud failure (BH-1058 fixture) → detected unprompted → alerted on both surfaces"
         linked: [BH-1058]
@@ -112,8 +116,8 @@ phases:
         outcome: "Demo data seeded: real filler data landing near 20% free space, real SQL Server Agent jobs (mix of pass/fail)"
         linked: [BH-1057]
       - day: "T-2"
-        outcome: "Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever"
-        linked: [BH-1045, BH-1054]
+        outcome: "Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever. Requires BH-1067's source_disk_low renderer to actually show text (detection without it is silent)."
+        linked: [BH-1045, BH-1054, BH-1067]
 
   - title: "Track B, Point 3 — Fix-recurrence surfacing"
     description: >

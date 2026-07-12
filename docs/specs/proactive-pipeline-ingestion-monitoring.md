@@ -453,14 +453,34 @@ class PipelineHealthSignal:
 #   2. notificationRecipients-equivalent write to NotificationInbox (webapp reads this)
 # A signal that only performs (1) is Slack-visible but webapp-invisible, and vice versa —
 # this is the exact bug BH-1053 catches. Do NOT add a third parallel event table.
-# New `category`/stage values this spec adds to the existing (free-string, curated-fallback)
-# taxonomy in notifications.ts's `sources` lookup:
-#   "dbt_run_failure" (already registered, unused, category="dbt") — reused, not redefined
-#   "dbt_run_stale"        — new: job expected to run, didn't, within tolerance window
-#   "databricks_job_failure"     — new
-#   "databricks_cluster_unhealthy" — new
-#   "etl_job_failure"             — new (generic/SQL-Server-Agent)
-#   "source_disk_low"             — new (Frank's literal example)
+#
+# CRITICAL, verified pass 35 (cross-checking a rendering gap found in the sibling
+# lineage-aware-data-quality.md spec — GC-12's anomaly notifications were found to dead-end
+# with zero visible content because neither brightbot-slack-server nor brighthive-webapp has
+# a rendering CASE for the "longitudinal" stage; the dual-write succeeds but nothing displays):
+# THE SAME GAP EXISTS HERE, CONFIRMED BY DIRECT CODE CHECK, for 5 of the 6 new stage values.
+#   - "dbt_run_failure" — SAFE. Real renderer exists on BOTH sides: brightbot-slack-server's
+#     formatter.ts:152→423 (renderDbtFailureDetails, reads job_id/model_name/error into real
+#     text) AND brighthive-webapp's mappers.ts:33 ("dbt run failed" label) +
+#     constants.ts:159 (grouped under pipeline). This one is genuinely reused, not just
+#     registered-and-ignored.
+#   - "dbt_run_stale", "databricks_job_failure", "databricks_cluster_unhealthy",
+#     "etl_job_failure", "source_disk_low" — ALL 5 DO NOT EXIST in either repo's stage
+#     type union (brightbot-slack-server's NotificationStage, types.ts:2-36;
+#     brighthive-webapp's BackendStage, types.ts:22-50). At runtime, Slack falls through to
+#     formatter.ts:172's `default: return []` (no detail text); webapp has no label in
+#     mappers.ts/constants.ts. The dual-write to NOTIFICATIONS_TABLE/NotificationInbox would
+#     SUCCEED, but produce a notification with NO VISIBLE CONTENT for 5 of these 6 stages —
+#     identical to the bug found in the sibling spec, just not yet shipped/discovered here.
+#
+# CONSEQUENCE: this spec's own Invariant 1 ("SHALL reach BOTH live surfaces... a signal
+# visible on only one surface is an incomplete emission") does not go far enough — a signal
+# can be technically present in BOTH tables and STILL be invisible to a human on both, because
+# "present in the table" and "rendered as visible text" are different layers. See new
+# Invariant 15 below. New tickets required (see §6 Dependencies, §Ticket Breakdown) to add
+# real renderers for these 5 stages in BOTH repos, mirroring dbt_run_failure's own pattern —
+# this is NOT optional polish, it's the difference between "the demo works" and "the demo
+# silently shows an empty notification."
 
 # PipelineHealthSignal also carries a root_cause_class, set by the watchdog's classifier,
 # that determines which remediation path applies (see Invariant 9):
@@ -616,6 +636,20 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     repo-wide by test_no_principal_fields_in_tool_args
     (tests/unit/mcp_server/test_tool_invariants.py) — the new tool MUST pass that existing
     test, not a bespoke one.`
+15. `A dual-write reaching BOTH NOTIFICATIONS_TABLE and NotificationInbox (Invariant 1) SHALL
+    NOT be treated as "delivered" unless the signal's stage value also has a registered
+    RENDERER on both surfaces. **CRITICAL, verified pass 35**: "present in the table" and
+    "rendered as visible text" are different layers — direct code check confirmed
+    brightbot-slack-server's formatter.ts:172 default case returns `[]` (empty, no detail
+    text) for any NotificationStage not explicitly matched, and brighthive-webapp's
+    mappers.ts/constants.ts have no label/grouping fallback either. Of this spec's 6 proposed
+    stage values, only "dbt_run_failure" has real renderers today
+    (formatter.ts:423 renderDbtFailureDetails; mappers.ts:33 + constants.ts:159). The other 5
+    ("dbt_run_stale", "databricks_job_failure", "databricks_cluster_unhealthy",
+    "etl_job_failure", "source_disk_low") SHALL NOT be considered demo-ready until a renderer
+    exists on both surfaces — see BH-1067. This mirrors the identical dead-end confirmed for
+    GC-12's `longitudinal_anomaly` stage in the sibling lineage-aware-data-quality.md spec
+    (BH-1065/1066).`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -633,10 +667,11 @@ Feature: Proactive pipeline & ingestion monitoring
   Scenario: SQL Server disk monitoring with no MCP on the SQL Server
     Given a SQL Server connected to BrightHive as a BYOW source (existing warehouse-connection machinery, per Invariant 5 — not a literal "WarehousePort" class)
     And the SQL Server exposes no MCP server or agent of its own
+    And BH-1067 has shipped a "source_disk_low" renderer on both Slack and webapp (per Invariant 15 — without it, this scenario dual-writes successfully but renders no visible text on either surface)
     When the watchdog queries sys.dm_os_volume_stats through the EXISTING warehouse connection
     And a database file's free space drops below the configured threshold (e.g. 20%)
     Then a "source_disk_low" signal is emitted
-    And the user is alerted before the disk is exhausted
+    And the user is alerted before the disk is exhausted, with real detail text on both surfaces
     And no new connectivity, protocol, or on-host software was installed on the SQL Server
 
   Scenario: repeated failure does not spam
@@ -760,6 +795,7 @@ Feature: Proactive pipeline & ingestion monitoring
 | dbt_cloud_tools.py, quality_tools.py on-demand tools | Non-blocking (reused as poll targets) | Live |
 | AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, not inferred) | LangGraph `StateGraph`/`add_node` unchanged by the migration; safe to build on today |
 | `scheduled_agent_dispatcher`'s LangGraph Cloud invocation path (`langgraph_action.py` → `/threads/{id}/runs`) | Non-blocking for THIS spec | Verified pass 19 (`langgraph-cloud-detach.md`, 2026-07-09): explicitly named as "a third, separate LangGraph Cloud dependency... not covered by either track." **BH-1059 filed** (tracking placeholder under BH-453) so this gap is visible when the migration track reaches it, rather than rediscovered later. |
+| **BH-1067: renderers for 5 new notification stages on brightbot-slack-server + brighthive-webapp** | **BLOCKING for demo-visibility of `dbt_run_stale`, `databricks_job_failure`, `databricks_cluster_unhealthy`, `etl_job_failure`, `source_disk_low`** — the dual-write (Invariant 1) succeeds today, but nothing renders (Invariant 15) | **Filed pass 35** — mirrors `dbt_run_failure`'s existing pattern (`formatter.ts:423`, `mappers.ts:33`/`constants.ts:159`); not started |
 
 ## 7. Correctness Properties
 
@@ -960,6 +996,7 @@ unless noted):
 | BH-1058 | infra/fixture: dbt Cloud job with deliberate-failure capability, for BH-1043's e2e case | Needs Refinement, filed pass 14, resolved-actionable with concrete runbook pass 16 (BH-1036) |
 | BH-1059 | track: scheduled_agent_dispatcher's LangGraph Cloud dependency unaddressed by AgentCore/CEMAF migration | Needs Refinement, filed pass 19, tracking placeholder (BH-453, correct epic home) |
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |
+| BH-1067 | feat: renderers for 5 new watchdog notification stages (Slack + webapp) — dbt_run_stale, databricks_job_failure, databricks_cluster_unhealthy, etl_job_failure, source_disk_low | Filed pass 35 — CRITICAL for demo-visibility, blocks BH-1043/1044/1045's alerts from being human-visible (BH-1036) |
 
 ## Related
 
