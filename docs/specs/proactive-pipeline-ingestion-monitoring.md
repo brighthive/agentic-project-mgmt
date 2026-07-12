@@ -1313,15 +1313,38 @@ evaluators, but all of which need resolving before implementation, not left impl
    "GATE" in this table's Mode column means it automatically gets `OutputGate`'s real
    enforcement machinery; it may not fit that layer at all.
 2. **"LLM judge + deterministic" in ONE evaluator has NO real extension point to plug
-   into.** Every real evaluator in this codebase is purely one or the other:
+   into — AND the cited precedent is NOT actually an LLM-judge/deterministic hybrid,
+   CORRECTED pass 30.** Every real evaluator in this codebase is purely one or the other:
    `SurfaceEvaluator` is pure deterministic keyword scoring; `core/metrics.py:33,38` wrap
-   DeepEval's pure-LLM-judge `GEval`/`AnswerRelevancyMetric`. The closest real precedent for
-   blending both is ad hoc, node-level, NOT a reusable framework type:
-   `record_capability_execution` (`quality_check_agent.py:1442-1512`) manually combines
-   `run_configured_rules` (deterministic) with `quality_model` AI checks into a
-   `combined_score` (line 1476) inside one function body. BH-1042's implementer should
-   follow THIS pattern (manual combination inside the watchdog node), not assume a
-   reusable "hybrid evaluator" class exists to subclass — it doesn't.
+   DeepEval's pure-LLM-judge `GEval`/`AnswerRelevancyMetric`. `record_capability_execution`
+   (`quality_check_agent.py:1442-1512`), previously cited as "the closest real precedent for
+   blending both," is actually neither — verified its EXACT formula, not paraphrased:
+   ```python
+   cfg_total = len(configured_rule_results)
+   cfg_passed = sum(1 for r in configured_rule_results if r["passed"])
+   ai_total = ai_stats.get("evaluated_expectations", 0)
+   ai_passed = ai_stats.get("success_count", 0)
+   total_checks = cfg_total + ai_total
+   total_passed = cfg_passed + ai_passed
+   combined_score = (total_passed / total_checks) if total_checks else 0
+   ```
+   Both terms are PASS/FAIL COUNTS, not an LLM judgment score blended with a deterministic
+   one — `ai_stats` comes from an LLM (`quality_model`) GENERATING candidate expectations
+   (via `generate_expectations`), which are THEN evaluated deterministically against real
+   data (GX/pandas/SQL), producing `success_count`/`failure_count` — the same shape as the
+   configured-rule counts. No LLM ever assigns a judgment score here; this is a pooled
+   pass-rate over two SOURCES of deterministic checks (human-configured rules + LLM-proposed
+   rules), not a hybrid scoring mechanism. It's also UNCONDITIONAL/additive (both terms
+   always summed, either can legitimately be 0, `combined_score` defaults to 0 if
+   `total_checks == 0`) and carries NO threshold anywhere in the function — it's stored as a
+   raw score (`result_data["score"]`, line 1485) with no pass/fail cutoff applied. BH-1042's
+   implementer should NOT model `FailureClassificationEvaluator`/`RootCauseClassEvaluator`
+   on this precedent for an "LLM judge + deterministic" pattern, because this precedent
+   doesn't contain an LLM judge at all — if a genuine LLM-judged score is needed (e.g. the
+   LLM itself rates confidence in a classification, not just proposes checks later verified
+   deterministically), that combination pattern has NO real precedent anywhere in this
+   codebase and must be designed fresh, with an explicit threshold decision this precedent
+   also never had to make.
 3. **GATE mode is a real, TESTED mechanism that enforces NOTHING in production today.**
    `run_gate_with_heal` (`online/gates.py:56-134`) implements the real retry/heal loop and
    checks `GateMode.GATE` (`gates.py:100`) — but confirmed by grep: no middleware, CI
