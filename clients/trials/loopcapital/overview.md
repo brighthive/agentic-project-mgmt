@@ -55,13 +55,43 @@ Original POC ask (7/9 demo): one agent, three skills (SSIS diagnostics, SSRS dia
 storage optimization), synthetic SSIS data modeled on Loop's Asset Management domain,
 bottleneck analysis + dbt-migration suggestions.
 
-**Status: fully shipped**, verified 2026-07-10 against Jira + code:
-- Epic **BH-860** (Skills Extension Framework) + all 14 child tickets (BH-861–875) — **Done**.
-- All 3 skills exist on disk: `brightbot/brightbot/skills/system/{ssis-diagnostics,ssrs-diagnostics,storage-optimization}/SKILL.md`.
-- Synthetic `.dtsx` fixture built (BH-869), staging validation + demo prep done (BH-866).
-- Bedrock requirement satisfied — brightbot already runs on `ChatBedrockConverse`, no Anthropic API key.
+**Status: Jira-complete, but "fully shipped" OVERSTATES the real capability — CORRECTED
+2026-07-12 (pass 7), re-verified directly against code, not re-trusting the prior
+2026-07-10 pass**:
+- Epic **BH-860** (Skills Extension Framework) + all 14 child tickets (BH-861–875) —
+  **Done** in Jira. This part of the original claim holds.
+- All 3 skills exist on disk (`brightbot/brightbot/skills/system/{ssis-diagnostics,ssrs-diagnostics,storage-optimization}/SKILL.md`), but **all 3 are prompt-only** — there is
+  NO deterministic `.dtsx`/`.rdl` XML parser anywhere in the repo (confirmed by grep: zero
+  `.py` files under `skills/system/`, zero `ElementTree`/`lxml` usage for either format).
+  Both SSIS and SSRS diagnosis rely entirely on the LLM reading raw XML text and reasoning
+  about it — real, but categorically different from "shipped code that parses SSIS
+  packages," which is how "fully shipped" reads.
+- **SSIS**: 2 real, committed toy fixtures exist
+  (`brightbot/tests/fixtures/skills/{create_assetmanagement_mysql,load_assets_with_bottlenecks}.dtsx`,
+  ~100-130 lines each, 1-3 components) — deliberately simple, per the fixture README's own
+  admission ("contains no row-by-row OLE DB Command, blocking transform, or Data Flow
+  bottleneck"). Not representative of a real Loop-Capital-scale SSIS package.
+- **SSRS: zero fixtures exist of any kind** (`find . -iname "*.rdl"` returns nothing,
+  repo-wide). The SSRS skill has never been exercised against a real or synthetic `.rdl`
+  file — its "shipped" status rests entirely on the skill file existing and the epic being
+  marked Done, not on any demonstrated diagnosis.
+- **No live legacy SQL Server connection exists for SSIS/SSRS specifically.** The only
+  SQL-Server-family code in brightbot (`warehouse_connections.py:234-301`) is an Azure
+  Synapse warehouse connector — unrelated to `msdb`/`ReportServer` catalog metadata. Every
+  SSIS/SSRS diagnosis today is local-file-upload-based (`.dtsx`/`.rdl` read from disk), not
+  a connection to a real customer SQL Server instance. This matters directly for any future
+  "monitor Loop's actual legacy SQL Server for SSIS/SSRS health" ask — that capability does
+  not exist today in any form, prompt-based or otherwise.
+- Bedrock requirement satisfied — brightbot already runs on `ChatBedrockConverse`, no
+  Anthropic API key. This part of the original claim holds.
 
-Full detail: `project_ssis_poc_vs_proactive_priority.md` (memory).
+**Bottom line**: the 7/9 demo capability is real for SSIS (prompt-based diagnosis + weak
+fixture) but essentially undemonstrated for SSRS (no fixture at all), and there is no path
+today from "diagnose an uploaded file" to "monitor a live legacy SQL Server's SSIS/SSRS
+catalog" — that would be new, unscoped work if Loop Capital asks for it.
+
+Full detail (superseded by the correction above where they conflict):
+`project_ssis_poc_vs_proactive_priority.md` (memory).
 
 ## Track B: Proactive Monitoring — IN PROGRESS (the 7/17 demo)
 
@@ -80,7 +110,7 @@ assumption. Full detail below in [Capability Coverage](#capability-coverage-summ
 
 | Workstream | Coverage | Key Caveat |
 |---|---|---|
-| Legacy pipeline diagnostics (SSIS/SSRS/storage) | FULL MATCH — shipped | None; already demoed 7/9 |
+| Legacy pipeline diagnostics (SSIS/SSRS/storage) | PARTIAL — already demoed 7/9, but **corrected 2026-07-12 (pass 7)**: prompt-only, no deterministic parser for either format; SSIS has 2 toy fixtures, SSRS has zero; no live SQL Server (`msdb`/`ReportServer`) connection exists | If Loop Capital asks to monitor a REAL legacy SQL Server's SSIS/SSRS catalog (not just diagnose an uploaded file), that is new, unscoped work — no such connection path exists today |
 | Proactive pipeline monitoring (dbt/Databricks/ETL job-status) | IN PROGRESS | Architecture + tickets complete; BH-1043 (dbt) closest to buildable, BH-1044 (Databricks) has an open storage-model decision |
 | SQL-Server-with-no-MCP disk/job monitoring | IN PROGRESS, demo-blocking gap identified | Real technical answer exists (query via existing warehouse-connection machinery, no new protocol) — but **no staging SQL Server fixture is provisioned yet** (BH-1057, runbook ready, ~3-5hrs, not yet executed) |
 | Ingestion/source-sync proactive health | IN PROGRESS | BH-1048–1052 scoped; Airbyte/Step-Functions pollers are greenfield (no existing tool to wrap) |
@@ -135,7 +165,7 @@ next phase.
 | # | Blocker | Owner | Raised | Resolved |
 |---|---|---|---|---|
 | 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | — |
-| 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed | Kuri | 2026-07-10 | — |
+| 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | — |
 
 ## Decision

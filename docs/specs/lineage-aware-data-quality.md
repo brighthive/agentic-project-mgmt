@@ -213,9 +213,47 @@ already computed, not a new BrightHive-built lineage engine.
   older projects may only have model-level `depends_on`, not column-level edges. The
   implementation must degrade gracefully to model-level tracing when column data isn't
   available, not silently produce wrong/incomplete results.
-- Databricks Unity Catalog lineage is gated on a Databricks connection existing at all
-  (BH-1044, itself an open decision — see `proactive-pipeline-ingestion-monitoring.md`).
-  This spec's Databricks half cannot start before that's resolved.
+- **CORRECTED pass 7 — Databricks is NOT "gated on BH-1044 resolving," it is a genuinely
+  greenfield build regardless of that decision.** Verified by direct code check: zero
+  Databricks code exists in brightbot or platform-core outside vendored third-party deps.
+  Both `WarehouseType` (`brightbot/utils/warehouse_types.py:20`, Literal of `redshift`,
+  `snowflake`, `azure_synapse`, `postgres`) and platform-core's
+  `WarehouseServiceProvider` enum (`src/graphql/schema/gql-types.ts:5516-5520`, same 3
+  values minus postgres) are CLOSED — Databricks is not a config flip, it requires NEW
+  enum members on BOTH sides, a new driver constant, a new concrete
+  `WarehouseConnection` subclass in `WarehouseConnectionFactory`
+  (`warehouse_connections.py:1238`), and platform-core's OMD service-type mapping
+  (`warehouse-service.ts:154-159`) extended too. BH-1044 (brightbot-only secret vs.
+  platform-core schema change) decides WHERE credentials live — it does NOT decide
+  whether the connection-type plumbing itself needs building, which it does, either way.
+  Additionally (general Databricks platform knowledge, not verified in-repo since no
+  Databricks code exists to check): `system.access.table_lineage`/`column_lineage` are
+  Unity Catalog SYSTEM tables, disabled by default — an account/workspace admin must
+  separately enable the `system.access` schema and grant `SELECT` on it, on top of the
+  ordinary SQL-warehouse credentials/grants brightbot already uses for Snowflake/Redshift/
+  Synapse. This is real, additional setup work per customer, not automatic once a
+  Databricks connection exists at all.
+- **ADDED pass 8 (user-raised)**: not every customer orchestrates via dbt — some run
+  Snowflake-native pipelines directly (Snowpipe continuous ingestion, Tasks, Streams,
+  Dynamic Tables). CONFIRMED: `SnowflakeConnection` already exists and can run arbitrary
+  `SELECT` against `SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES`/`ACCESS_HISTORY`/
+  `TASK_HISTORY` (`warehouse_connections.py:701,714,1233`) — this is a THIRD `LineageSource`
+  adapter, cheaper than Databricks (same tier as BH-1062's dbt adapter: reuse an existing
+  connection, write a new query + parser, no new connection type). CONFIRMED zero existing
+  code queries these views today (grep: zero hits repo-wide for
+  `OBJECT_DEPENDENCIES`/`ACCESS_HISTORY`/`TASK_HISTORY`/`Snowpipe`/`DYNAMIC_TABLE`) — this is
+  new work, just cheap new work, not free. platform-core's `DataAssetNode`/`Transformation`
+  schema has dbt-specific fields (`dbtModelName`, `dbtDependencies`,
+  `data-asset.ts:554-596`, `transformation.ts:18-46`) but nothing naming Dynamic
+  Table/Snowpipe/Task — new schema fields needed here too, mirroring how `LineageNode`
+  itself stays engine-agnostic (§2's `source_engine` field already anticipates this: add
+  `"snowflake_native"` as a third value, no port/registry-shape change).
+- Also flagged pass 8, NOT scoped: Microsoft Fabric (OneLake/Data Factory/Spark/Power BI)
+  was raised as a future candidate engine. Unverified in this codebase (zero Fabric-related
+  code exists to check) — flagged as likely Databricks-tier cost (new connection type, no
+  existing path) given Fabric's own multi-language internal split (T-SQL/PySpark/DAX/KQL/
+  Power Query M), not Snowflake-native-tier cost. Do not build until a Fabric-committed
+  customer actually requires it — this is a placeholder note, not a ticket.
 - This spec does NOT solve "which columns should be monitored in the first place" — that's
   the auto-discovery problem, explicitly out of scope here (see §5).
 
@@ -224,8 +262,12 @@ already computed, not a new BrightHive-built lineage engine.
 1. No manifest/catalog fetch or parse exists (BH-1062 closes this).
 2. No dbt DAG in Neo4j (BH-1063 closes this).
 3. No anomaly→lineage bridge (BH-1064 closes this, and closes the pre-existing BH-673 gap).
-4. No Databricks lineage consumption at all (deferred until BH-1044 resolves).
-5. No auto-discovery of which source columns are worth monitoring by default (explicitly
+4. No Databricks lineage consumption at all (deferred until BH-1044 resolves AND the
+   connection-plumbing gap above is separately built).
+5. No Snowflake-native lineage consumption at all (Snowpipe/Tasks/Streams/Dynamic Tables via
+   ACCOUNT_USAGE views) — NEW gap, added pass 8, not previously scoped. Cheaper than gap 4
+   (reuses existing SnowflakeConnection) but equally unbuilt today.
+6. No auto-discovery of which source columns are worth monitoring by default (explicitly
    out of scope — see §5 Out of Scope).
 
 ## 2. Interface Contract (MDE)
@@ -270,7 +312,33 @@ class LineageNode:
 # reuse the SAME registry shape here, don't invent a third variant):
 LINEAGE_SOURCE_ADAPTERS: dict[str, type[LineageSource]] = {
     DBT: DbtLineageSource,           # BH-1062 implements this adapter — FIRST, not ONLY
-    DATABRICKS: DatabricksLineageSource,  # future, once BH-1044's connection decision lands
+    DATABRICKS: DatabricksLineageSource,  # future — CORRECTED pass 7: greenfield regardless
+                                           # of BH-1044 (credential-location decision only);
+                                           # needs NEW WarehouseType enum members on BOTH
+                                           # brightbot + platform-core (currently closed to
+                                           # redshift/snowflake/azure_synapse/postgres) PLUS
+                                           # a new connection path (no Databricks SQL
+                                           # connector exists today) PLUS admin-side Unity
+                                           # Catalog system-schema enablement per customer
+    SNOWFLAKE_NATIVE: SnowflakeNativeLineageSource,  # ADDED pass 8 — a THIRD, CHEAPER lineage
+                                           # source: Snowflake's own ACCOUNT_USAGE.
+                                           # OBJECT_DEPENDENCIES/ACCESS_HISTORY views, for
+                                           # customers whose pipeline is Snowflake-native
+                                           # (Snowpipe/Tasks/Streams/Dynamic Tables) rather
+                                           # than dbt-orchestrated. CONFIRMED CHEAP pass 8:
+                                           # SnowflakeConnection ALREADY EXISTS and can run
+                                           # arbitrary SELECT against ACCOUNT_USAGE
+                                           # (warehouse_connections.py:701,714,1233) — unlike
+                                           # Databricks, this needs ZERO new connection type,
+                                           # only a new query + parser, same tier of cost as
+                                           # BH-1062's dbt adapter, not Databricks' tier.
+    # FUTURE CANDIDATE, not yet an adapter, flagged pass 8 (user-raised): Microsoft Fabric —
+    # unifies OneLake/Data Factory/Spark/Power BI under one brand but FIVE distinct query
+    # languages (T-SQL, PySpark, DAX, KQL, Power Query M) and no unified lineage API across
+    # them that this investigation has verified — likely Databricks-tier cost (new connection
+    # type(s), no existing BrightHive code path), possibly worse given the multi-engine
+    # internal split. Do not scope until a Fabric-committed customer actually asks; this note
+    # exists so a future adapter estimate isn't drafted from a blank slate.
 }
 
 def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
@@ -297,9 +365,24 @@ def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
 # step_index they already have from a KNOWN failed step — there is no existing "find the step
 # that ran dbt build" discovery logic anywhere to copy. RESOLUTION: BH-1062 must call
 # `_fetch_run_details_with_logs()` first to get `run_steps`, then select the LAST step whose
-# `name`/`run_id` (need to inspect the actual response — TODO: confirm exact field name against
-# a real run's run_steps payload, do not assume) matches a compile-producing command
-# (`dbt run`|`dbt build`|`dbt compile`), and pass THAT step's index explicitly. Omitting `step`
+# `name` matches a compile-producing command (`dbt run`|`dbt build`|`dbt compile`), and pass
+# THAT step's `index` explicitly.
+#
+# PARTIALLY RESOLVED pass 7 (triple-click-zoom): existing brightbot code DOES use
+# step["name"] and step["index"] as the field names (dbt_cloud_tools.py:358-359,
+# _process_failed_step) - step_index = step.get("index") is fed straight into
+# _fetch_artifact(..., step=step_index) at dbt_cloud_tools.py:365,400. This is a real,
+# load-bearing internal precedent, not a guess. HOWEVER: every occurrence of these field
+# names in this repo traces back to a HAND-WRITTEN unit-test fixture
+# (tests/unit/agents/dbt_agent/test_dbt_cloud_internals.py:333,343-372,
+# test_dbt_cloud_http_client.py:104-107) - never a captured live dbt Cloud API response.
+# No fixture/cassette directory in this repo contains a real run_steps payload. REMAINING
+# GAP: name's exact string values for compile-producing steps ("dbt build" verbatim? or a
+# different field not present anywhere in this codebase?) is UNVERIFIED against a live API
+# call - BH-1062's implementer MUST make one real
+# GET /runs/{id}/?include_related=['run_steps'] call against a real job before hardcoding
+# a match string, per test-behavior-real.md (a fixture invented from this repo's existing
+# invented fixtures is still an invented fixture, not a captured real shape). Omitting `step`
 # entirely and hoping for "most recent artifact" default behavior is UNVERIFIED dbt Cloud API
 # behavior — do not rely on it without testing against a real job.
 #
@@ -573,8 +656,13 @@ async def find_downstream_impact(
    System SHALL explicitly identify the last dbt run/build/compile step via run_steps (from
    _fetch_run_details_with_logs()) and pass that step's index to _fetch_artifact() — it SHALL
    NOT omit the step parameter and rely on unverified "most recent artifact" default API
-   behavior. Verified pass 2: no existing brightbot code performs this step-discovery; it is
-   new logic this ticket must build, not something to copy from an existing call site.`
+   behavior. PARTIALLY VERIFIED pass 7: step["name"]/step["index"] ARE the real field names
+   an existing call site relies on (dbt_cloud_tools.py:358-359,365,400) — this is new
+   ASSEMBLY of an existing pattern, not code invented from nothing. REMAINING GAP: the exact
+   string value(s) step["name"] takes for a compile-producing step ("dbt build" verbatim, or
+   something else) is UNVERIFIED against a live dbt Cloud API response — every occurrence in
+   this repo is a hand-written test fixture, never a captured real payload. BH-1062's
+   implementer MUST confirm this against one real API call before hardcoding a match string.`
 9. `WHEN upserting a LineageNode's DEPENDS_ON edges, THE System SHALL perform the
    delete-and-recreate as a SINGLE atomic transaction (session.writeTransaction wrapping both
    the DELETE and the MERGE, or one multi-statement Cypher query) — it SHALL NOT copy
@@ -617,10 +705,12 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And has_column_lineage is NOT silently set to False as if the artifact were simply absent
 
   Scenario: the correct run step is selected before fetching artifacts
-    Given a dbt Cloud run with 3 steps: "dbt deps", "dbt seed", "dbt build"
+    Given a dbt Cloud run with 3 steps, real step["name"] values confirmed against a live
+      run before this test is written (per Invariant 8 — not hardcoded from assumption)
     When BH-1062 fetches manifest.json for this run
-    Then it first calls run_steps to identify "dbt build" as the last compile-producing step
-    And it passes that step's index explicitly to _fetch_artifact()
+    Then it first calls run_steps and identifies the last compile-producing step by its
+      real, confirmed step["name"] value
+    And it passes that step's step["index"] explicitly to _fetch_artifact()
     And it does NOT omit the step parameter and rely on unverified default API behavior
 
   Scenario: a crash mid-upsert never leaves a model with zero lineage edges
@@ -653,8 +743,11 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | `WorkflowStepNode`'s `DEPENDS_ON` delete-then-MERGE precedent (`workflow-spec.ts:299-317`) | Non-blocking (pattern mirrored, not reinvented) — corrected pass 1, was wrongly cited as DataAssetNode | Live |
 | brightbot's OGM HTTP path (`ogm_api.py:34-70`) | Blocking — BH-1063's brightbot half MUST go through this, no new Neo4j driver | Live |
 | **platform-core engineering capacity** (verified pass 1: BH-1063 is 2-repo work) | Blocking — this spec cannot ship with brightbot-only resourcing | New dependency, not previously called out |
-| BH-1044 (Databricks connection decision) | Blocking for the Databricks half only | Open decision, not yet confirmed |
+| BH-1044 (Databricks credential-location decision) | Blocking for the Databricks half, but NOT sufficient by itself — see below | Open decision, not yet confirmed |
+| Databricks connection-type plumbing (new WarehouseType enum + connector + Unity Catalog system-schema enablement) | Blocking for the Databricks half, independent of BH-1044 | **CORRECTED pass 7**: confirmed zero Databricks code exists in brightbot or platform-core outside vendored deps — this is greenfield regardless of how BH-1044 resolves, not merely gated behind it |
 | BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, Needs Refinement — same class of gap as BH-1067 in the sibling proactive-pipeline-ingestion-monitoring.md spec |
+| Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — already permits arbitrary `SELECT`, including against `ACCOUNT_USAGE` views |
+| BH-1068 (Snowflake-native lineage adapter: Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Non-blocking for 7/17; cheaper than the Databricks half (gap 4) but equally unbuilt | **Filed pass 8** — user-raised, confirmed real gap, confirmed cheap relative to Databricks |
 
 ## Areas Involved
 
@@ -675,6 +768,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | BH-1064 | feat: wire anomalies to walk the graph forward (closes BH-673) | Needs Refinement |
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
 | BH-1066 | feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed) | Needs Refinement, filed pass 5 — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
+| BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8 — user-raised, confirmed cheaper than the Databricks adapter (reuses existing SnowflakeConnection, no new connection type) |
 
 ## Related
 

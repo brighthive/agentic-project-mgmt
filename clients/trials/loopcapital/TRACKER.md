@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-12 19:15 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-12 19:32 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -127,16 +127,16 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 2 | 28 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 2 | 29 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
-- **1/31** tickets done · 0 in progress · 30 to do
+- **1/32** tickets done · 0 in progress · 31 to do
 - PRs: 0 merged · 0 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (28)
+### 🟡 To Do (29)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -168,6 +168,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(lineage): wire longitudinal-monitoring anomalies to walk the… | Kuri Chinca | — |
 | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) | feat: render longitudinal anomaly notifications in Slack + webapp… | Kuri Chinca | — |
 | [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | — |
+| [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) | feat(lineage): Snowflake-native lineage adapter (Snowpipe/Tasks/Strea… | Kuri Chinca | — |
 
 ### 🔵 In Review (2)
 
@@ -185,11 +186,12 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-12** · [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1043](https://brighthiveio.atlassian.net/browse/BH-1043) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) — Done · Kuri Chinca
 - **2026-07-12** · [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) — Needs Refinement · Kuri Chinca
@@ -204,9 +206,8 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-10** · [BH-1037](https://brighthiveio.atlassian.net/browse/BH-1037) — Needs Refinement · Kuri Chinca
 - **2026-07-10** · [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) — Needs Refinement · Kuri Chinca
 - **2026-07-10** · [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) — Needs Refinement · Kuri Chinca
-- **2026-07-10** · [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) — Needs Refinement · Kuri Chinca
 
-_(+11 older updates not shown.)_
+_(+12 older updates not shown.)_
 
 ## 📝 Daily Notes
 
