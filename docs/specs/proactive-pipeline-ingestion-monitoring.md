@@ -103,7 +103,11 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
                     queue's own metrics [ZERO new BrightHive scheduling code — try
                     this first])
              │
-             └──▶ BH-1052 (unify all 3 ingestion watchdogs' dual-write/dedup)
+             └──▶ BH-1052 (CORRECTED pass 25 — not pure verification: BH-1049/1050's
+                           push options live in DIFFERENT repos/mechanisms than BH-1054's
+                           direct dual-write — BH-1050's existing SNS→Slack path in
+                           particular may need a NEW addition to also reach NotificationInbox,
+                           since SNS→Slack alone doesn't touch the webapp today)
 
   Cross-cutting, non-blocking: BH-1053 (dual-write unification), BH-1055 (dispatcher
   hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision)
@@ -413,6 +417,27 @@ from scratch.
   ticket must explicitly evaluate BOTH options (extend the reactive webhook vs. build a new
   poller) rather than defaulting to "greenfield poller" — see BH-1049's ticket for the
   updated scope.
+  **RESOLVED pass 25 (triple-click-zoom) — the ONE open question Option A left ("can this
+  Python Lambda even reach the TypeScript dual-write functions?") is now confirmed YES, via
+  an already-proven mechanism, not a new one.** `airbyte_notification_webhook` is pure
+  Python/Chalice (`app.py:1-6`, `requirements.txt` — boto3/requests, no Node runtime) —
+  `writeNotificationSignal`/`NotificationInbox.deliver` are TypeScript functions running in
+  a SEPARATE Node.js Apollo Lambda process (`src/server.ts`); direct cross-language calls
+  are impossible, only HTTP can bridge them. CONFIRMED this Lambda ALREADY proves the exact
+  mechanism needed: it makes authenticated GraphQL-over-HTTP calls into platform-core today
+  (`Neo4jOGMClient`, `chalicelib/neo4j_client.py:47-55`, POSTing `{query, operationName,
+  variables}` with Cognito-JWT auth via `OGMAuthClient`) — just against the OGM subgraph,
+  not the Core API schema. The dual-write targets are reachable over that SAME HTTP
+  mechanism, on the Core API schema instead, using `x-service-key` auth (not Cognito JWT):
+  `publishNotification` (`schema/typedefs.ts:5007`, resolver
+  `resolvers.ts:471`→`notifications.ts:554-564`, calls `writeNotificationSignal` directly
+  at line 563) and `notificationRecipients` (`schema/typedefs.ts:5004`, resolver
+  `resolvers.ts:470`→`notifications.ts:436-552`, calls `NotificationInbox.deliver` at line
+  530) are BOTH real, existing GraphQL mutations reachable this way. BH-1049's Option A is
+  therefore FULLY BUILDABLE with zero new IPC/protocol invention — swap the OGM endpoint for
+  the Core API endpoint, swap Cognito-JWT auth for `x-service-key`, call
+  `publishNotification`/`notificationRecipients` instead of the Neo4j OGM mutations this
+  Lambda already calls.
 - **Verified 2026-07-10 (pass 5)**: BH-815 ("Ingestion flows / platform sources disagree on
   staging") could NOT be confirmed fixed — zero git history hits referencing it in either
   repo. Must be treated as still open; do not assume resolved.
@@ -1379,7 +1404,7 @@ unless noted):
 | BH-1049 | feat: Airbyte/source-sync watchdog — greenfield IN BRIGHTBOT (pass 5) but a cheaper push-based path exists in platform-core's existing airbyte_notification_webhook (pass 13) | Needs Refinement, revised pass 13 — must evaluate extending the existing reactive webhook's no-op failure branch before defaulting to a new poller |
 | BH-1050 | feat: batch (Step Functions) watchdog — greenfield for a POLLING approach (pass 5), but a cheaper PUSH option exists (pass 22): extend the LIVE `data_ingestion_stack.py:844-853` EventBridge rule that already routes Step Functions FAILED executions to Slack, same class of fix as BH-1049's Airbyte webhook | Needs Refinement, revised pass 22 — must evaluate extending the existing rule before defaulting to a new poller |
 | BH-1051 | feat: event/streaming (queue lag, DLQ) watchdog — requires an explicit sub-hourly scheduling decision (Invariant 12); cadenceToCron caps at daily | Needs Refinement, revised — scheduling gap flagged pass 5 |
-| BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 | Needs Refinement (BH-1037) |
+| BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 — **CORRECTED pass 25**: not pure verification if BH-1049/1050 choose Option A, since each lives in a different repo/runtime/mechanism (brightbot direct call, a Chalice Lambda's new HTTP call, an existing SNS→Slack-only path that may not reach NotificationInbox at all) | Needs Refinement (BH-1037), revised pass 25 — real conditional design work, not pure verification |
 | BH-1038–1041 | BrightRoutines MCP/A2A surface (BH-115) | Needs Refinement, unaffected by this spec — separate concern |
 | BH-1055 | infra: concurrency cap + fan-out load test for scheduled_agent_dispatcher | Needs Refinement, filed pass 11, sharpened with live AWS data pass 12-13 (BH-1036 for now; conceptually fits BH-171) |
 | BH-1057 | infra/fixture: provision staging BYOW SQL Server connection — the literal 7/17 demo scenario has zero infra today | Needs Refinement, filed pass 14 (CRITICAL), resolved-actionable with concrete runbook pass 15 (BH-1036) |
