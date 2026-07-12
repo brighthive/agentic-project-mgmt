@@ -277,6 +277,27 @@ from scratch.
   connector types), unrelated to sync status, unauthenticated, no rate-limit handling. BH-1049
   is greenfield: it needs either a new GraphQL query surfacing sync status (if platform-core
   tracks it server-side) or a new direct client, not a "polling wrapper around an existing tool."
+  **CORRECTED pass 13 (triple-click-zoom) — "CONFIRMED greenfield" was accurate for
+  brightbot specifically, but misleading at the ORG level, and a materially cheaper path
+  exists one repo over.** `brighthive-platform-core/airbyte_notification_webhook/runtime/
+  app.py` already has: (a) a working, authenticated Airbyte REST client
+  (`generate_airbyte_token`, `:47-59`, hits `{airbyte_url}/api/v1/applications/token`; an
+  authenticated `POST {api_url}/api/v1/connections/get`, `:141-159`); (b) the exact
+  workspace→connection mapping BH-1049 would otherwise need to invent — Neo4j Source nodes
+  already store `airbyteSourceId`/`airbyteConnectionIds[]` (`ogm-types.ts:11659-11660`),
+  resolved via `ogm_client.get_source_by_source_id_and_workspace_id(...)`
+  (`app.py:97-101`), alongside the ingestion-service node's own `api_url`/
+  `airbyte_client_id`/`airbyte_client_secret`; (c) a REACTIVE webhook that already fires on
+  every sync completion/failure — but its failure branch (`app.py:88-90`) is CURRENTLY A
+  NO-OP: `app.log.error(...); return {}`, no DB write, no notification, nothing proactive.
+  **This changes BH-1049's real options**: instead of building a brand-new PULL-based
+  poller from zero (auth, connection discovery, rate limits, all new), BH-1049 could extend
+  this EXISTING PUSH-based webhook's failure branch to perform the dual-write this spec's
+  watchdog pattern requires — cheaper than a new poller, and arguably MORE proactive (a
+  webhook fires immediately on failure; a poller only catches it on its next cycle). The
+  ticket must explicitly evaluate BOTH options (extend the reactive webhook vs. build a new
+  poller) rather than defaulting to "greenfield poller" — see BH-1049's ticket for the
+  updated scope.
 - **Verified 2026-07-10 (pass 5)**: BH-815 ("Ingestion flows / platform sources disagree on
   staging") could NOT be confirmed fixed — zero git history hits referencing it in either
   repo. Must be treated as still open; do not assume resolved.
@@ -848,6 +869,7 @@ Feature: Proactive pipeline & ingestion monitoring
 | AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, not inferred) | LangGraph `StateGraph`/`add_node` unchanged by the migration; safe to build on today |
 | `scheduled_agent_dispatcher`'s LangGraph Cloud invocation path (`langgraph_action.py` → `/threads/{id}/runs`) | Non-blocking for THIS spec | Verified pass 19 (`langgraph-cloud-detach.md`, 2026-07-09): explicitly named as "a third, separate LangGraph Cloud dependency... not covered by either track." **BH-1059 filed** (tracking placeholder under BH-453) so this gap is visible when the migration track reaches it, rather than rediscovered later. |
 | **BH-1067: renderers for 5 new notification stages on brightbot-slack-server + brighthive-webapp** | **BLOCKING for demo-visibility of `dbt_run_stale`, `databricks_job_failure`, `databricks_cluster_unhealthy`, `etl_job_failure`, `source_disk_low`** — the dual-write (Invariant 1) succeeds today, but nothing renders (Invariant 15) | **Filed pass 35** — mirrors `dbt_run_failure`'s existing pattern (`formatter.ts:423`, `mappers.ts:33`/`constants.ts:159`); not started |
+| `airbyte_notification_webhook`'s existing auth client + connection-mapping (`app.py:47-59,97-101,141-159`) | Non-blocking (reused, not built, IF BH-1049 chooses Option A) | **CONFIRMED pass 13** — live, deployed, already-authenticated; its failure branch (`app.py:88-90`) is currently a no-op BH-1049 could extend cheaply instead of building a new poller |
 
 ## 7. Correctness Properties
 
@@ -1021,6 +1043,7 @@ placeholder.
 | Surgical-PR remediation wiring | `brightbot` | Extend self-healing-pipelines.md's loop to accept watchdog-sourced triggers |
 | MCP read path (`get_pipeline_health`) | `brightbot` (MCP server) | New tool, mirrors `get_anomalies` |
 | SQL Server disk/job query | `brightbot` (via existing WarehousePort adapter) | New T-SQL health-check queries through existing connection — no new adapter type |
+| Airbyte source-sync watchdog (BH-1049) | `brightbot` (if Option B, poller) OR **`brighthive-platform-core`** (if Option A, extending `airbyte_notification_webhook`'s no-op failure branch) | **CORRECTED pass 13**: NOT brightbot-only as originally scoped — Option A (cheaper, reuses existing auth/connection-mapping code) lives in platform-core's existing webhook Lambda, not a new brightbot poller |
 
 ## Ticket Breakdown
 
@@ -1038,7 +1061,7 @@ unless noted):
 | BH-1046 | feat: verify watchdog events reach existing delivery (not new delivery code) | Needs Refinement, revised down to verification-only |
 | BH-1047 | feat: wire watchdog failures into self-healing-pipelines.md's surgical-PR loop | Needs Refinement, revised to extend GC-11 rather than compete |
 | BH-1048 | spec: ingestion signal contract, reuses BrightSignals schema | Needs Refinement, revised (BH-1037) |
-| BH-1049 | feat: Airbyte/source-sync watchdog — CONFIRMED greenfield (pass 5): no pollable Airbyte status client exists in brightbot | Needs Refinement, revised — was miscast as "extend existing tool" |
+| BH-1049 | feat: Airbyte/source-sync watchdog — greenfield IN BRIGHTBOT (pass 5) but a cheaper push-based path exists in platform-core's existing airbyte_notification_webhook (pass 13) | Needs Refinement, revised pass 13 — must evaluate extending the existing reactive webhook's no-op failure branch before defaulting to a new poller |
 | BH-1050 | feat: batch (Step Functions) watchdog — CONFIRMED greenfield (pass 5): BH-844 groundwork does not exist, zero runtime execution-history code anywhere | Needs Refinement, revised — was miscast as "reuse BH-844" |
 | BH-1051 | feat: event/streaming (queue lag, DLQ) watchdog — requires an explicit sub-hourly scheduling decision (Invariant 12); cadenceToCron caps at daily | Needs Refinement, revised — scheduling gap flagged pass 5 |
 | BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 | Needs Refinement (BH-1037) |
