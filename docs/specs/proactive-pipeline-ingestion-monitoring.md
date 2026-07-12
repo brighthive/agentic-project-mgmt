@@ -1201,6 +1201,7 @@ Feature: Proactive pipeline & ingestion monitoring
 | `scheduled_agent_dispatcher`'s LangGraph Cloud invocation path (`langgraph_action.py` → `/threads/{id}/runs`) | Non-blocking for THIS spec | Verified pass 19 (`langgraph-cloud-detach.md`, 2026-07-09): explicitly named as "a third, separate LangGraph Cloud dependency... not covered by either track." **BH-1059 filed** (tracking placeholder under BH-453) so this gap is visible when the migration track reaches it, rather than rediscovered later. |
 | **BH-1067: renderers for 5 new notification stages on brightbot-slack-server + brighthive-webapp** | **BLOCKING for demo-visibility of `dbt_run_stale`, `databricks_job_failure`, `databricks_cluster_unhealthy`, `etl_job_failure`, `source_disk_low`** — the dual-write (Invariant 1) succeeds today, but nothing renders (Invariant 15) | **Filed pass 35** — mirrors `dbt_run_failure`'s existing pattern (`formatter.ts:423`, `mappers.ts:33`/`constants.ts:159`); not started |
 | `airbyte_notification_webhook`'s existing auth client + connection-mapping (`app.py:47-59,97-101,141-159`) | Non-blocking (reused, not built, IF BH-1049 chooses Option A) | **CONFIRMED pass 13** — live, deployed, already-authenticated; its failure branch (`app.py:88-90`) is currently a no-op BH-1049 could extend cheaply instead of building a new poller |
+| **BH-1071: `NOTIFICATION_SYSTEM_PLAN.md` stale-docs cleanup** | Non-blocking for 7/17; blocked BY BH-1053's decision (deploy path 3 for real, or retire it) before it can be finalized | **Filed pass 32** — the plan doc (never updated since 2026-04-20) describes 4+ pieces of never-built/undeployed infra as current (a `notification-subscriptions` table that was never created, a speculative DynamoDB Stream, a `notification_dispatcher_stack.py` file that doesn't exist, and SES email delivery the slack-server team's own README labels "Future direction") |
 
 ## 7. Correctness Properties
 
@@ -1473,6 +1474,7 @@ unless noted):
 | BH-1059 | track: scheduled_agent_dispatcher's LangGraph Cloud dependency unaddressed by AgentCore/CEMAF migration | Needs Refinement, filed pass 19, tracking placeholder (BH-453, correct epic home) |
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |
 | BH-1067 | feat: renderers for 5 new watchdog notification stages (Slack + webapp) — dbt_run_stale, databricks_job_failure, databricks_cluster_unhealthy, etl_job_failure, source_disk_low | Filed pass 35 — CRITICAL for demo-visibility, blocks BH-1043/1044/1045's alerts from being human-visible (BH-1036) |
+| BH-1071 | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current | Filed pass 32 — non-blocking for 7/17, blocked by BH-1053's real-vs-retire decision (BH-1036) |
 
 ## Related
 
