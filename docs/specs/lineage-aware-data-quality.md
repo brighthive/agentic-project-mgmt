@@ -402,6 +402,37 @@ def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
 # function, which other callers depend on) that re-derives the status code itself (a second,
 # minimal precheck HTTP call, or logging a WARNING distinguishing 404 from other failures) so
 # a real error doesn't get silently absorbed into "has_column_lineage=False."
+#
+# GAP FOUND 3, pass 23 (triple-click-zoom) — a real scale mismatch, verified against
+# _fetch_artifact()'s ACTUAL implementation, not assumed. `_fetch_artifact()`
+# (dbt_cloud_tools.py:256-280) is a plain blocking `requests.get(..., timeout=30)` — NO
+# `stream=True`, returns `response.text` (the entire decoded body as one string, line 278).
+# Callers then do a SECOND full-memory pass: `json.loads(...)` on that string
+# (dbt_cloud_tools.py:372's pattern for run_results.json). Zero size cap, zero chunking. This
+# has NEVER been exercised at scale — `_fetch_artifact()`'s only 2 existing callers fetch
+# run_results.json/sources.json, both typically KB-scale. manifest.json (and catalog.json,
+# for large dbt projects with hundreds of models) can be TENS OF MEGABYTES — an order of
+# magnitude+ larger than anything this function has ever actually handled in production.
+# TWO CONCRETE RISKS BH-1062 MUST ACCOUNT FOR, not silently inherit:
+#   (a) The hardcoded `timeout=30` (line 274) applies UNIFORMLY regardless of artifact size —
+#       a slow/throttled multi-MB manifest.json download plausibly needs longer than 30s,
+#       and this function gives BH-1062's implementer no seam to override it per-call.
+#   (b) Double full-memory buffering (once in `requests`, once in `json.loads`) of a
+#       tens-of-MB payload is a real memory-pressure risk. brightbot deploys to LangGraph
+#       Cloud SaaS (`langgraph.json`, long-running container/service model, NOT a
+#       Lambda-style hard memory ceiling per this repo's own docs) — this softens but does
+#       NOT eliminate the risk, since this repo's docs don't state a per-instance memory
+#       limit for LangGraph Cloud deployments either; the actual ceiling is UNVERIFIED, not
+#       confirmed safe.
+# RESOLUTION, same shape as GAP 2's thin-wrapper approach: do NOT modify `_fetch_artifact()`
+# itself (other callers depend on its current behavior/timeout). BH-1062's own wrapper
+# (`fetch_lineage_artifacts` below) should either (i) call a size-aware variant with a
+# longer, artifact-specific timeout and streaming JSON parse (e.g. `ijson` or manual
+# chunked `requests.get(..., stream=True)` + incremental decode) for manifest.json/
+# catalog.json specifically, or (ii) if profiling against a REAL large project's manifest
+# shows the existing blocking pattern is fine in practice, explicitly DOCUMENT that
+# decision with the real measured size/latency, rather than silently reusing a
+# small-artifact-tuned function at 100x the data volume without checking.
 async def fetch_lineage_artifacts(
     *, workspace_id: str, job_id: str, run_id: str,
 ) -> LineageArtifacts: ...
@@ -863,6 +894,18 @@ async def find_downstream_impact(
     fires because no exception was raised. Copying this precedent as-is means the lineage
     upsert could silently no-op on every call, indistinguishable from success. THIS SPEC
     SHALL NOT inherit that silent-failure gap.`
+12. `WHEN fetching manifest.json/catalog.json for a real dbt project, THE System SHALL NOT
+    assume _fetch_artifact()'s existing 30-second timeout and non-streaming
+    requests.get()+json.loads() double-buffering pattern is safe at manifest.json scale
+    (potentially tens of MB for large projects) merely because it works for run_results.json/
+    sources.json (KB-scale, its only existing callers). CRITICAL, found pass 23: this
+    function has NEVER been exercised at manifest.json's real scale in production. BH-1062
+    SHALL EITHER (a) measure real latency/memory against an actual large project's
+    manifest.json and explicitly document that the existing pattern is acceptable, with the
+    measured numbers, OR (b) build a size-aware fetch path (longer artifact-specific
+    timeout, streaming JSON parse) for manifest.json/catalog.json specifically — it SHALL
+    NOT silently reuse the small-artifact-tuned function at 100x+ the data volume without
+    doing one of these two things first.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -937,6 +980,15 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       node.py:299-323), which does NOT check "errors" and would silently treat this as success
       because OGMAPISession.mutation() only raises on transport-level HTTP failure, never on
       a GraphQL-level error inside a 200 response
+
+  Scenario: fetching a real, large manifest.json does not silently reuse an unproven pattern
+    Given a dbt project with hundreds of models, whose manifest.json is tens of megabytes
+    When BH-1062 fetches this manifest via a wrapper around _fetch_artifact()
+    Then EITHER real latency/memory was measured against an actual large project's
+      manifest.json and documented as acceptable, OR a size-aware fetch path (longer
+      timeout, streaming parse) was built for this artifact class specifically
+    And the existing 30-second timeout tuned for KB-scale run_results.json/sources.json is
+      NOT silently assumed safe at 100x+ that data volume without one of the above
 ```
 
 ## 5. Out of Scope
