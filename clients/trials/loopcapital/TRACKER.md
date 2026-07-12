@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-12 19:32 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-12 19:34 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -127,16 +127,16 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 2 | 29 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 3 | 28 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
 - **1/32** tickets done · 0 in progress · 31 to do
-- PRs: 0 merged · 0 ready for review · 2 draft
+- PRs: 0 merged · 0 ready for review · 3 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (29)
+### 🟡 To Do (28)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -162,7 +162,6 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) | provision a dbt Cloud job that can be deliberately triggered to… | Kuri Chinca | — |
 | [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) | track: scheduled_agent_dispatcher's LangGraph Cloud dependency is… | Kuri Chinca | — |
 | [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) | security: evaluate customer PII/data-value redaction for diagnosis… | Kuri Chinca | — |
-| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | — |
 | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | — |
 | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | — |
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(lineage): wire longitudinal-monitoring anomalies to walk the… | Kuri Chinca | — |
@@ -170,12 +169,13 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | — |
 | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) | feat(lineage): Snowflake-native lineage adapter (Snowpipe/Tasks/Strea… | Kuri Chinca | — |
 
-### 🔵 In Review (2)
+### 🔵 In Review (3)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
 | [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Monitoring Agents — proactive pipeline discovery &amp; health (dbt,… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
 | [BH-1037](https://brighthiveio.atlassian.net/browse/BH-1037) | Ingestion Observability — source syncs, batch, and event-processing… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
+| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) |
 
 ### ✅ Done (1)
 

@@ -145,10 +145,11 @@ next phase.
   BH-1060 (security follow-up).
 - **Verification memory**: `~/.claude/projects/-Users-bado-iccha-brighthive/memory/project_loop_capital_pass_index.md` — one-line index into 34+ detailed pass files.
 - **Full demo plan**: `poc.yaml` (scope/ownership/demo-relative phases: T-5 → T-0) → renders `TRACKER.md` (live ticket/PR status, regenerate with `make poc-tracker-no-slack CLIENT=loopcapital`). Plan is organized by Suzanne's 3 committed demo points, not calendar days — see `poc.yaml`'s phase titles.
-- **Draft PR**: [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) — the handover spec itself, on `drchinca/BH-1036/proactive-monitoring-spec`.
-- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` — ASCII architecture
-  diagrams of the current-state gap (3 disconnected islands) and the proposed glue-layer
-  design, plus interface contracts/invariants/Gherkin AC for BH-1062–1064.
+- **Draft PR (Track B)**: [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) — the proactive-monitoring handover spec + this client folder, on `drchinca/BH-1036/proactive-monitoring-spec`.
+- **Draft PR (Track C)**: [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) — the lineage-aware-data-quality spec, on `drchinca/BH-1061/lineage-aware-data-quality-spec`. Split into its own PR 2026-07-12 to keep both under the 900-line PR-size threshold — Track C is non-blocking for 7/17 and has zero file overlap with Track B.
+- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` (PR #95) — ASCII
+  architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
+  glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1068.
 
 ## Two things that must happen before 7/17, not yet done
 
