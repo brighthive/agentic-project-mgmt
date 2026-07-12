@@ -266,9 +266,49 @@ from scratch.
   which needs sub-hourly — arguably sub-5-minute — polling to be proactive rather than
   theatrical. See §1 Gaps item 6 and Out of Scope for how this spec handles it.
 - **Verified 2026-07-10 (pass 5)**: BH-1050's original framing ("reuse BH-844 Step Functions
-  groundwork") was WRONG — zero hits for `describe_execution`/`list_executions`/boto3
-  `stepfunctions` client usage anywhere in application code; only CDK stacks that CREATE state
-  machines exist. BH-844 itself is unbuilt. BH-1050 is greenfield, like BH-1044.
+  groundwork") was WRONG — zero hits for `describe_execution`/`list_executions` (the
+  POLLING calls) anywhere in application code. BH-844 itself could not be confirmed to exist
+  in any repo's code/docs/commit history (searched all 4 relevant repos — zero hits on
+  "844"). BH-1050 is greenfield for a PULL/polling approach.
+  **CORRECTED pass 22 (triple-click-zoom) — this framing missed a real, already-shipped
+  PUSH-based precedent that changes BH-1050's real options, the same class of correction
+  found for BH-1049's Airbyte webhook (pass 13).** Confirmed:
+  `brighthive-data-organization-cdk/brighthive_data_cdk/data_ingestion_stack.py:844-853` —
+  a REAL, LIVE `events.Rule` matching `source: ["aws.states"], detail_type: ["Step
+  Functions Execution Status Change"], detail: {"status": ["FAILED"], "stateMachineArn":
+  [...]}`, targeting an SNS topic that already delivers to Slack (lines 838-841,887-889;
+  shipped in commit `3c5a269`, "Add: slack notification setup for the dataingestion
+  statemachine (#113)"). This is EXACTLY the native, zero-polling EventBridge pattern AWS
+  provides for Step Functions monitoring — it already exists for the data-ingestion state
+  machine specifically. **BH-1050's real options are therefore, like BH-1049's Airbyte
+  case: (a) extend this EXISTING rule's target/pattern to also reach BrightSignals'
+  dual-write (cheaper — reuses shipped infra, may need to widen the `stateMachineArn` filter
+  or add BrightSignals as a second SNS subscriber), or (b) build a genuinely new poller
+  (the original greenfield framing, now confirmed as option (b) only, not the only path).**
+  Confirmed real state machines this rule could plausibly extend to:
+  `data_ingestion_stack.py:821-825` (data-ingestion, Glue→warehouse-sync→OpenMetadata),
+  `sfn_dynamic_execution.py:230-234` (dynamic ingestion executor, cron trigger currently
+  disabled), `unstructured_data_ingestion_sfn.py:342-347` (S3-triggered KB sync),
+  `brighthive_core/dbt_validation_stack.py:165-170` (a DIFFERENT existing state machine,
+  "dbt-job-status-state-machine") — **CHECKED pass 22, CONFIRMED NOT AN OVERLAP with
+  BH-1043, but a real, separate gap worth flagging.** This state machine is a synchronous
+  provisioning-gate, not a monitoring watchdog: it's invoked once per GraphQL mutation
+  right after the platform triggers a dbt Cloud job itself (`project.ts:~2995-3038` →
+  `startStateMachineExecution`), polls via `dbt_job_status_lambda`
+  (`lambdas/dbt_validation/main.py`) in a 20s Wait/Choice loop until the run finishes, then
+  on SUCCESS writes the resolved schema ID onto `ProjectNode` in Neo4j. It has no periodic
+  cadence, no dashboard, no alerting consumer — it exists only to know when it's safe to
+  read the dbt run's own output. **CONFIRMED it fails COMPLETELY SILENTLY on dbt run
+  failure**: the Lambda returns `{"retry": False, "status": "Failed"}`, the state machine
+  reaches its `otherwise` branch and ends "successfully" from Step Functions' own
+  perspective, the only trace is a bare `print("[ERROR] Failed:", e)` (CloudWatch-only), and
+  the GraphQL caller (`project.ts`) doesn't even inspect the execution result
+  (`startStateMachineExecution` returns `true` unconditionally, fire-and-forget). This is a
+  REAL, PRE-EXISTING gap independent of this whole spec — a dbt provisioning failure during
+  project setup notifies no human today. NOT this spec's problem to fix (out of scope for
+  BH-1036/1037), but flagged here since a cold engineer investigating "why didn't
+  provisioning finish" would otherwise waste time not knowing this silent-failure path
+  exists — file separately if Loop Capital or another customer hits it.
 - **Verified 2026-07-10 (pass 5)**: BH-1049's original framing ("Airbyte/source-sync health
   signals") assumed a pollable Airbyte status API exists in brightbot — it doesn't. Sync
   execution routes through Platform Core GraphQL
@@ -1262,7 +1302,7 @@ unless noted):
 | BH-1047 | feat: wire watchdog failures into self-healing-pipelines.md's surgical-PR loop | Needs Refinement, revised to extend GC-11 rather than compete |
 | BH-1048 | spec: ingestion signal contract, reuses BrightSignals schema | Needs Refinement, revised (BH-1037) |
 | BH-1049 | feat: Airbyte/source-sync watchdog — greenfield IN BRIGHTBOT (pass 5) but a cheaper push-based path exists in platform-core's existing airbyte_notification_webhook (pass 13) | Needs Refinement, revised pass 13 — must evaluate extending the existing reactive webhook's no-op failure branch before defaulting to a new poller |
-| BH-1050 | feat: batch (Step Functions) watchdog — CONFIRMED greenfield (pass 5): BH-844 groundwork does not exist, zero runtime execution-history code anywhere | Needs Refinement, revised — was miscast as "reuse BH-844" |
+| BH-1050 | feat: batch (Step Functions) watchdog — greenfield for a POLLING approach (pass 5), but a cheaper PUSH option exists (pass 22): extend the LIVE `data_ingestion_stack.py:844-853` EventBridge rule that already routes Step Functions FAILED executions to Slack, same class of fix as BH-1049's Airbyte webhook | Needs Refinement, revised pass 22 — must evaluate extending the existing rule before defaulting to a new poller |
 | BH-1051 | feat: event/streaming (queue lag, DLQ) watchdog — requires an explicit sub-hourly scheduling decision (Invariant 12); cadenceToCron caps at daily | Needs Refinement, revised — scheduling gap flagged pass 5 |
 | BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 | Needs Refinement (BH-1037) |
 | BH-1038–1041 | BrightRoutines MCP/A2A surface (BH-115) | Needs Refinement, unaffected by this spec — separate concern |
