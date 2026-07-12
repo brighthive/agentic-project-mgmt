@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-12 17:24 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-12 18:53 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -125,16 +125,16 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 0 | 2 | 26 | — |
+| **Kuri Chinca** | 0 | 2 | 27 | — |
 
 ## 📊 Summary
 
-- **0/28** tickets done · 0 in progress · 28 to do
+- **0/29** tickets done · 0 in progress · 29 to do
 - PRs: 0 merged · 0 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (26)
+### 🟡 To Do (27)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -164,6 +164,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | — |
 | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(dbt-lineage): load parsed dbt DAG into Neo4j as queryable… | Kuri Chinca | — |
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(dbt-lineage): wire longitudinal-monitoring anomalies to walk… | Kuri Chinca | — |
+| [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) | verify: does anything render anomaly JSON metadata into a visible… | Kuri Chinca | — |
 
 ### 🔵 In Review (2)
 
@@ -175,9 +176,10 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
-- **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) — Needs Refinement · Kuri Chinca
+- **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) — Needs Refinement · Kuri Chinca
@@ -194,9 +196,8 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-10** · [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) — Needs Refinement · Kuri Chinca
 - **2026-07-10** · [BH-1044](https://brighthiveio.atlassian.net/browse/BH-1044) — Needs Refinement · Kuri Chinca
 - **2026-07-10** · [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051) — Needs Refinement · Kuri Chinca
-- **2026-07-10** · [BH-1050](https://brighthiveio.atlassian.net/browse/BH-1050) — Needs Refinement · Kuri Chinca
 
-_(+8 older updates not shown.)_
+_(+9 older updates not shown.)_
 
 ## 📝 Daily Notes
 

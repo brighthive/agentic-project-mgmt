@@ -538,6 +538,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | BH-1062 | feat: fetch + parse manifest.json/catalog.json | Needs Refinement |
 | BH-1063 | feat: load parsed DAG into Neo4j as queryable lineage graph | Needs Refinement |
 | BH-1064 | feat: wire anomalies to walk the graph forward (closes BH-673) | Needs Refinement |
+| BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | Needs Refinement, filed pass 4 — answer determines whether this whole epic is demo-visible |
 
 ## Related
 
