@@ -694,24 +694,34 @@ async def upsert_lineage_graph(
 #     now confirmed against real code, not generic Neo4j docs. `session.writeTransaction(...)`
 #     (what earlier passes of this spec recommended) is DEPRECATED for this repo's actual
 #     driver (`package.json:47`, `neo4j-driver: ^5.0.0` — v5 prefers `session.executeWrite`).
-#     BUT a simpler, ALREADY-PROVEN option exists in this exact repo and should be preferred:
-#     `workflow-spec.ts:557-581` (`deleteWorkflowStep`) already chains
-#     `OPTIONAL MATCH ... DELETE dep WITH step, b, iss DETACH DELETE step, b, iss` as ONE
-#     Cypher string in a SINGLE `session.run()` call — Neo4j auto-commits one submitted
-#     query string as one implicit transaction, closing the crash window without introducing
-#     any new driver API. RECOMMENDATION, supersedes earlier `writeTransaction` guidance: write
-#     the delete-then-MERGE as ONE multi-statement Cypher string
+#     `workflow-spec.ts:557-581` (`deleteWorkflowStep`) proves ONE HALF of the needed
+#     approach — a pure DELETE-only Cypher string, one `session.run()` call, auto-committed as
+#     one implicit transaction, no new driver API. RECOMMENDATION, supersedes earlier
+#     `writeTransaction` guidance: write the delete-then-MERGE as ONE multi-statement Cypher
+#     string
 #     (`MATCH (n:LineageNode {uniqueId: $id})-[r:DEPENDS_ON]->() DELETE r WITH n UNWIND $depIds
 #     AS depId MATCH (dep:LineageNode {uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one
-#     `session.run()` call — matches this repo's OWN existing style exactly
-#     (`workflow-spec.ts:573-580`), needs zero new driver API, and is strictly simpler than
-#     `executeWrite`. Fall back to `session.executeWrite(tx => ...)` only if the upsert
-#     genuinely needs to read an intermediate result back into JS before the MERGE (not
-#     expected here — confirm at implementation time, don't default to it for convenience).
+#     `session.run()` call.
+#     **CORRECTED pass 34 (triple-click-zoom) — this EXACT combined shape (DELETE + WITH +
+#     UNWIND + MERGE, all in ONE string) has NO literal precedent anywhere in this repo,
+#     verified by direct search — do not cite `deleteWorkflowStep` as proof it does.**
+#     `deleteWorkflowStep` is DELETE-only (no MERGE, no UNWIND — confirmed by reading it in
+#     full). The TWO real delete-then-recreate-from-a-list precedents that exist
+#     (`upsertWorkflowStep`'s own DEPENDS_ON sync, `workflow-spec.ts:299-327`; and
+#     `routine-ownership.ts:117-139`'s RECEIVES-edge sync, same shape) BOTH split delete and
+#     recreate into TWO separate `session.run()` calls — the exact non-atomic pattern this
+#     spec's Invariant 9 says NOT to copy. So: the GENERAL PRINCIPLE ("Neo4j auto-commits one
+#     submitted multi-statement string as one implicit transaction, closing the crash window,
+#     no new driver API needed") is real and correctly cited from `deleteWorkflowStep`. But
+#     the SPECIFIC combined DELETE+UNWIND+MERGE query text above has no template anywhere in
+#     this codebase to copy verbatim — BH-1063's implementer is writing this exact shape for
+#     the first time in this repo, following the general pattern, not adapting an existing
+#     example. Confirm the query syntax works as intended against a real Neo4j instance before
+#     assuming it's "proven" merely because the general one-string principle is proven
+#     elsewhere. Fall back to `session.executeWrite(tx => ...)` only if the upsert genuinely
+#     needs to read an intermediate result back into JS before the MERGE (not expected here).
 #     CONFIRMED pass 9: zero `executeWrite`/`writeTransaction`/`CALL {...} IN TRANSACTIONS`
-#     usage exists anywhere in this repo today — there is no other transactional precedent to
-#     copy, which makes the single-string approach doubly preferable: it requires learning
-#     nothing new, whereas `executeWrite` would be a first-of-its-kind pattern in this repo.
+#     usage exists anywhere in this repo today.
 #     3. `src/common/types.ts` — shared type refs if `LineageNode`/`LineageGraph` types
 #        need to cross module boundaries within platform-core.
 #   Total: 2-3 files, zero public-schema files, zero resolver boilerplate if the
@@ -726,11 +736,15 @@ async def upsert_lineage_graph(
 # same gap would mean a crash mid-upsert could silently leave a dbt model with NO lineage
 # edges, which downstream (BH-1064) would read as "nothing depends on this" — a false
 # negative that suppresses a real alert. THIS SPEC SHALL NOT silently copy the non-atomic
-# version. FIX (confirmed pass 9): the SAME repo already proves the fix elsewhere —
-# `workflow-spec.ts:557-581` (`deleteWorkflowStep`) chains DELETE + further Cypher clauses as
-# ONE multi-statement string in ONE `session.run()` call, which Neo4j auto-commits as one
-# implicit transaction. BH-1063's upsert should follow THIS precedent (one string, one call),
-# not `upsertWorkflowStep`'s own two-call pattern — see Invariant 9 below.
+# version. FIX (confirmed pass 9, CORRECTED pass 34): the SAME repo proves the GENERAL
+# PRINCIPLE elsewhere — `workflow-spec.ts:557-581` (`deleteWorkflowStep`) chains DELETE +
+# further Cypher clauses as ONE multi-statement string in ONE `session.run()` call, which
+# Neo4j auto-commits as one implicit transaction. BH-1063's upsert should follow THIS
+# PRINCIPLE (one string, one call, not `upsertWorkflowStep`'s own two-call pattern — see
+# Invariant 9 below) — but `deleteWorkflowStep` itself is DELETE-only, no MERGE/UNWIND, so it
+# does NOT literally demonstrate BH-1063's actual delete-then-recreate-a-list shape. That
+# combined shape has no template anywhere in this repo (confirmed pass 34) — write it fresh
+# from the principle, don't expect a copy-paste source.
 
 # BH-1064: the bridge (closes BH-673)
 #
@@ -890,10 +904,19 @@ async def find_downstream_impact(
    and MERGE as two separate auto-commit calls with a crash window between them. Verified
    pass 3: that precedent has a real correctness gap (a process crash mid-upsert leaves zero
    DEPENDS_ON edges, which BH-1064 would read as "nothing depends on this" — a false negative
-   that suppresses a real alert). RESOLVED pass 9: the fix is confirmed already proven
-   elsewhere in the SAME repo — workflow-spec.ts:557-581 (deleteWorkflowStep) chains its
-   DELETE + further clauses as one string, one call. Follow THAT precedent's shape (one
-   string, one call), not upsertWorkflowStep's two-call shape. session.executeWrite(...) (the
+   that suppresses a real alert). RESOLVED pass 9, CORRECTED pass 34: the GENERAL PRINCIPLE
+   (one Cypher string, one session.run() call, auto-committed as one implicit transaction) is
+   confirmed proven elsewhere in the SAME repo — workflow-spec.ts:557-581 (deleteWorkflowStep)
+   chains DELETE + further clauses as one string, one call. Follow THAT PRINCIPLE (one
+   string, one call), not upsertWorkflowStep's two-call shape. BUT: deleteWorkflowStep is
+   DELETE-only (no MERGE/UNWIND) — the SPECIFIC combined DELETE+UNWIND+MERGE shape this
+   invariant requires (delete existing edges, then recreate a NEW SET from a list) has NO
+   literal template anywhere in this repo, confirmed pass 34 — the two real
+   delete-then-recreate-from-a-list precedents that DO exist (upsertWorkflowStep's own
+   DEPENDS_ON sync; routine-ownership.ts's RECEIVES-edge sync) both split delete and
+   recreate into TWO separate calls, the exact non-atomic pattern this invariant forbids.
+   Write the combined single-string shape fresh from the principle; verify it against a
+   real Neo4j instance before assuming correctness. session.executeWrite(...) (the
    non-deprecated driver-v5 API, per package.json:47's neo4j-driver ^5.0.0 — NOT
    session.writeTransaction, which is deprecated at this version) is the fallback ONLY if the
    upsert needs to read an intermediate result back into JS before the MERGE, which is not
@@ -1201,7 +1224,7 @@ just that the Cypher string is syntactically well-formed.
 | Area | Repo | Impact |
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
-| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s own proven pattern — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0`) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
+| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
 | Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
