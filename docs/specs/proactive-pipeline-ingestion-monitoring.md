@@ -510,7 +510,14 @@ class PipelineHealthSignal:
     failure_type: str                 # the category/stage value, e.g. "dbt_run_failure",
                                        # "source_disk_low" — see the taxonomy list below.
                                        # Cooldown key (Invariant 3, Property 1) is
-                                       # (source_type, job_id, failure_type).
+                                       # (workspace_id, source_type, job_id, failure_type) —
+                                       # a 4-tuple, CORRECTED pass 17: job_id alone is not
+                                       # globally unique across customers' dbt Cloud/
+                                       # Databricks accounts, and BrightRoutines' own
+                                       # workspace-safety comes from query-layer
+                                       # partitioning, not its key shape — this spec's
+                                       # cooldown key must include workspace_id explicitly
+                                       # rather than relying on partitioning alone.
     severity: Literal["info", "warning", "critical"]
     root_cause_class: "RootCauseClass"   # DATA_SHAPE | JOB_RUNTIME, see below
     detected_at: datetime
@@ -637,8 +644,8 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    NotificationInbox.deliver(), not just re-serialize the same signal object twice.`
 2. `WHEN the watchdog is scheduled, THE System SHALL ride the EXISTING scheduled dispatcher +
    run_context (BH-670 precedent) — no new EventBridge rule, no new cron infra.`
-3. `WHEN the same underlying failure — keyed by (source_type, job_id, failure_type) — persists
-   across polling cycles within a cooldown window, THE System SHALL NOT re-emit a duplicate
+3. `WHEN the same underlying failure — keyed by (workspace_id, source_type, job_id,
+   failure_type) — persists across polling cycles within a cooldown window, THE System SHALL NOT re-emit a duplicate
    alert. Default cooldown = 1 hour, workspace-overridable (config seam per code-style.md's
    "no hardcoded values without an override" convention — no magic number without a named
    constant). **Verified pass 31 by direct code read (corrects an imprecise citation)**:
@@ -650,7 +657,23 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    its own `RecurringAutomationPattern` DynamoDB item (`routines/dtos.py:257`), keyed by
    `pattern_id`, tightly coupled to that data model. This spec's watchdog needs its OWN item
    shape keyed by `(source_type, job_id, failure_type)` — copy the TTL-comparison PATTERN,
-   do not attempt to reuse or extend BrightRoutines' actual table/store.`
+   do not attempt to reuse or extend BrightRoutines' actual table/store.
+   **CRITICAL, verified pass 17 (triple-click-zoom) — the real precedent's key alone is NOT
+   workspace-safe, and neither is this spec's proposed composite key as drafted.** Confirmed:
+   BrightRoutines' real workspace-safety comes from `pattern_store.list_patterns_by_status
+   (workspace_id=workspace_id, ...)` (`detector.py:466-468`) PARTITIONING the query by
+   workspace BEFORE the `pattern_id`/`cooldown_until` check ever runs — `pattern_id` alone
+   is NOT globally unique across workspaces in storage, it only behaves safely because every
+   lookup is pre-filtered to one workspace. The composite key `(source_type, job_id,
+   failure_type)` as written here has the SAME gap: `job_id` (e.g. a dbt Cloud job ID) is
+   NOT guaranteed unique across different customers' dbt Cloud accounts, and two workspaces
+   sharing a colliding `job_id`+`failure_type` could suppress each other's alerts if the
+   cooldown store is not ALSO partitioned by workspace at the query/lookup layer. FIX:
+   `workspace_id` MUST be part of either (a) the cooldown key itself
+   (`(workspace_id, source_type, job_id, failure_type)`, a 4-tuple, not 3), or (b) the
+   storage partition the lookup queries against — mirroring BrightRoutines' actual pattern,
+   not just its comparison idiom. BH-1054's implementer MUST pick one explicitly; do not
+   ship a 3-tuple key against unpartitioned storage.`
 4. `IF a signal's root_cause_class is DATA_SHAPE but has no matching mode in
    self-healing-pipelines.md's 4-mode taxonomy, THEN THE System SHALL fall back to
    alert-only — it SHALL NOT guess a fix.`
@@ -817,9 +840,20 @@ Feature: Proactive pipeline & ingestion monitoring
       which does not distinguish a permissions failure from any other query failure
 
   Scenario: repeated failure does not spam
-    Given a "dbt_run_failure" signal was already alerted for job X in the last cooldown window
-    When the watchdog detects the same failure on job X again before the cooldown expires
+    Given a "dbt_run_failure" signal was already alerted for job X in workspace A in the
+      last cooldown window
+    When the watchdog detects the same failure on job X in workspace A again before the
+      cooldown expires
     Then no duplicate alert is sent
+
+  Scenario: two workspaces sharing a colliding job_id do not suppress each other's alerts
+    Given workspace A and workspace B both have a dbt job with the SAME job_id value
+      (plausible across different customers' dbt Cloud accounts)
+    And workspace A's job with that id already alerted "dbt_run_failure" within the cooldown
+    When workspace B's job with the SAME id also fails with "dbt_run_failure"
+    Then workspace B's alert is NOT suppressed by workspace A's cooldown
+    And this holds because the cooldown key includes workspace_id (per Invariant 3's pass-17
+      correction — a 3-tuple key without workspace_id would have failed this scenario)
 
   Scenario: DATA_SHAPE root cause routes to the existing surgical-PR loop
     Given a watchdog signal is classified root_cause_class=DATA_SHAPE
@@ -944,8 +978,11 @@ Feature: Proactive pipeline & ingestion monitoring
 
 ### Property 1: no duplicate alerting for a persistent failure
 
-*For any* failure signal `(source, job_id, failure_type)` detected in consecutive polling
-cycles within the cooldown window, at most one alert is delivered.
+*For any* failure signal `(workspace_id, source_type, job_id, failure_type)` detected in
+consecutive polling cycles within the cooldown window, at most one alert is delivered.
+**CORRECTED pass 17**: workspace_id is a required part of this key — job_id alone is not
+guaranteed unique across different customers' dbt Cloud/Databricks accounts (see Invariant
+3's pass-17 note).
 
 **Validates: §3 Invariant 3, §4 Scenario "repeated failure does not spam"**
 
