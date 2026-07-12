@@ -469,6 +469,26 @@ from scratch.
    fairness) and PS-18 (scaling observability / "alarm on unable to scale") — the dispatcher
    satisfies neither today. NOT blocking for a single-workspace 7/17 demo, but IS a real
    pre-existing risk this spec's tickets compound and should surface, not silently inherit.
+   **CORRECTED pass 26 (triple-click-zoom) — this load projection is now STALE relative to
+   BH-1049/1050/1051's confirmed designs; the actual dispatcher-load increase is smaller than
+   "4 new watchdogs" implies.** Only BH-1054 (and its dependents BH-1043/1044/1045) are
+   CONFIRMED new dispatcher consumers — BH-1054 rides the SAME existing scheduled dispatcher
+   path GC-12 already uses. BH-1049 (Airbyte) and BH-1050 (Step Functions) both confirmed a
+   cheaper PUSH-based Option A that adds ZERO new dispatcher load if chosen — extending an
+   existing webhook Lambda (BH-1049) or an existing EventBridge→SNS rule (BH-1050) neither
+   one touches `scheduled_agent_dispatcher` at all. BH-1051 (queue/DLQ) confirmed a CloudWatch
+   Alarm option that also adds ZERO dispatcher load. **Revised real load addition, if Option A
+   is chosen for BH-1049/1050 and the Alarm option for BH-1051: ONLY BH-1054 (+ its 3
+   sibling adapters BH-1043/1044/1045, which are all POLLED FROM WITHIN the same BH-1054
+   capability node, not separate dispatcher schedules) adds new dispatcher consumers — a
+   materially smaller compounding effect than the original "4 new watchdogs" framing
+   assumed.** This does NOT remove the need for BH-1055's hardening (BH-1054 alone is still a
+   new, currently-uncapped consumer riding an already-unthrottled, unmonitored dispatcher),
+   but it does mean BH-1055's own load-test sizing (currently "50-100 workspaces") should be
+   revisited against this smaller confirmed consumer count if BH-1049/1050/1051 land on their
+   push/alarm options — check BH-1049/1050/1051's actual chosen implementation before
+   finalizing BH-1055's load-test parameters, don't plan against the original 4-watchdog
+   worst case if it's no longer the real shape.
    **Sharpened pass 12 with a LIVE AWS pull (not code-only inference)**: staging's
    account-level unreserved concurrency pool is 1,000; 62 total Lambdas exist; ZERO have
    `ReservedConcurrentExecutions` set, including the dispatcher itself. The risk is
