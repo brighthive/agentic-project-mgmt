@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-12 23:27 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-12 23:32 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -192,6 +192,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
@@ -211,7 +212,6 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1046](https://brighthiveio.atlassian.net/browse/BH-1046) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) — To Do · Kuri Chinca
 
 _(+15 older updates not shown.)_
 
