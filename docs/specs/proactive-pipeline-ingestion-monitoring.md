@@ -791,12 +791,27 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
 12. `IF a signal source's minimum useful polling interval is sub-hourly (e.g. queue-depth/DLQ
     monitoring, BH-1051), THEN THE System SHALL NOT silently ride the existing
     cadenceToCron()/nightshift scheduling path as-is — cadenceToCron only supports
-    DAILY..QUARTERLY (verified 2026-07-10). The implementer SHALL make an explicit choice:
-    extend cadenceToCron + _to_scheduler_cron with a validated sub-hourly case, OR use a
-    dedicated, narrowly-scoped EventBridge rule for this signal class only (an exception to
-    Invariant 2's "no new EventBridge," justified because Invariant 2 was written for
-    job-status/data-quality signals where nightshift cadence is adequate, not for
-    sub-hourly-only signal classes it never anticipated).`
+    DAILY..QUARTERLY (verified 2026-07-10; **SHARPENED pass 21, triple-click-zoom**: the real
+    enum, `routine-scheduler-client.ts:165-180`, has 5 cases, not the shorthand's implied 4 —
+    DAILY (`0 8 * * *`), WEEKLY (`0 8 * * MON`), BIWEEKLY (`0 8 1,15 * *`), MONTHLY
+    (`0 8 1 * *`), QUARTERLY (`0 8 1 1,4,7,10 *`) — finest real granularity is DAILY at
+    08:00, zero sub-hourly/sub-daily option exists). The implementer SHALL make an explicit
+    choice: extend cadenceToCron + _to_scheduler_cron with a validated sub-hourly case, OR
+    use a dedicated, narrowly-scoped EventBridge rule for this signal class only (an
+    exception to Invariant 2's "no new EventBridge," justified because Invariant 2 was
+    written for job-status/data-quality signals where nightshift cadence is adequate, not
+    for sub-hourly-only signal classes it never anticipated). **THIRD OPTION, confirmed
+    pass 21**: neither of the above may be the right call at all — a native **CloudWatch
+    Alarm on the SQS queue's own `ApproximateNumberOfMessagesVisible`/DLQ-depth metric**
+    achieves sub-minute evaluation granularity with ZERO new BrightHive scheduling code
+    (no cadenceToCron extension, no new EventBridge rule invoking a brightbot Lambda) —
+    confirmed both `cadenceToCron()`'s output and the dispatcher's EventBridge Scheduler
+    path are the SAME substrate other watchdogs ride
+    (`scheduled_agents_routes.py:271-294`→`_to_scheduler_cron`→
+    `scheduled_agent_dispatcher_stack.py:32-38,145-148`), so extending either changes shared
+    infra; a scoped CloudWatch Alarm changes nothing shared. BH-1051's implementer MUST
+    evaluate this third option BEFORE choosing to extend cadenceToCron or add a new
+    EventBridge rule — it may be strictly cheaper and lower-risk than either.`
 13. `WHEN a PipelineHealthSignal's diagnosis field is generated from raw job error logs (dbt
     Cloud run details, SQL Server error text), THE System SHALL pass it through the EXISTING
     scrub_text() (brightbot/audit/redaction.py) before it reaches ANY of the 3 sinks (Slack,
@@ -916,10 +931,13 @@ Feature: Proactive pipeline & ingestion monitoring
   Scenario: a sub-hourly signal source does not silently ride the nightshift cadence
     Given a signal source's minimum useful interval is sub-hourly (e.g. queue-depth/DLQ, BH-1051)
     When its capability node is scheduled
-    Then it does NOT use cadenceToCron()'s DAILY..QUARTERLY cadence as-is
-    And an explicit choice was made and documented: either cadenceToCron/_to_scheduler_cron
-      were extended with a validated sub-hourly case, or a dedicated scoped EventBridge rule
-      was used for this signal class only
+    Then it does NOT use cadenceToCron()'s 5 real cases (DAILY/WEEKLY/BIWEEKLY/MONTHLY/
+      QUARTERLY, all fixed at 08:00) as-is
+    And an explicit choice was made and documented among THREE options: (a) cadenceToCron/
+      _to_scheduler_cron extended with a validated sub-hourly case, (b) a dedicated scoped
+      EventBridge rule for this signal class only, or (c) a native CloudWatch Alarm on the
+      SQS queue's own ApproximateNumberOfMessagesVisible/DLQ-depth metric — option (c)
+      requires ZERO new BrightHive scheduling code and should be evaluated FIRST
     And dbt/Databricks/ETL job-status watchdogs (adequate at hourly-class cadence) are
       unaffected by this choice — it is scoped to sub-hourly sources only
 
