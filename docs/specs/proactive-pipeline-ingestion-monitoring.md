@@ -248,9 +248,36 @@ from scratch.
   tolerable for on-demand, human-triggered calls (a failure surfaces as an error the human
   retries); it is NOT tolerable for an unattended background watchdog polling every connected
   workspace on a fixed cadence, which must add its own backoff (Invariant 10). Credentials are
-  confirmed per-workspace (Secrets Manager entry `dbt/cloud-api/{service_id}`,
-  `credentials_tools.py:166-201`), so this is a per-workspace self-throttling concern, not a
-  cross-tenant one. Separately, `_analyze_run_errors` (`dbt_cloud_tools.py:485-494`) fans out
+  confirmed per-CONNECTION, not strictly per-workspace (Secrets Manager entry
+  `dbt/cloud-api/{service_id}`, `credentials_tools.py:166-201`) — **SHARPENED pass 24
+  (triple-click-zoom)**: `service_id` is `TransformationServiceNode.id`
+  (`typedefs.ts:873-874`), and a single workspace CAN have multiple `TransformationService`
+  nodes (`WorkspaceNode.transformationServices: [TransformationServiceNode!]!`,
+  `typedefs.ts:289/463` — a plural relationship). `_find_connected_dbt_service()`
+  (`credentials_tools.py:154-163`) explicitly picks the FIRST `provider == "DBT_CLOUD"`
+  service, which is fine for today's single-dbt-connection-per-workspace common case but is
+  NOT a structural guarantee — the watchdog's per-workspace throttling/cooldown reasoning
+  (same class of concern as Invariant 3's cooldown-key fix, pass 17) should key on
+  `(workspace_id, service_id)` if a workspace with 2+ dbt connections is ever a real case,
+  not assume `workspace_id` alone identifies one credential set. This is a self-throttling
+  concern, not a cross-tenant one, but the granularity assumption should be explicit, not
+  implicit.
+
+  **ALSO SHARPENED pass 24**: the credential-read path itself is NOT purely
+  platform-core-mediated as later prose (BH-1044) implies — brightbot's OWN
+  `_retrieve_dbt_cloud_api_token()` (`credentials_tools.py:166-200`) calls
+  `boto3.client("secretsmanager").get_secret_value(SecretId=f"dbt/cloud-api/{service_id}")`
+  DIRECTLY (lines 180-182), duplicating (not going through) platform-core's own write/read
+  path (`dbt-cloud-api-secret.ts:16-83`, which platform-core uses for its own GraphQL-resolved
+  credential flow). BH-1044's "mirror this pattern for Databricks" is therefore directionally
+  correct in citing direct-boto3 access as the real precedent — but should mirror
+  brightbot's OWN direct-read function specifically, not assume access is mediated entirely
+  through platform-core. Confirmed: NO in-memory/TTL cache wraps this credential read
+  (grep, zero hits) — every call hits Secrets Manager fresh, so there is no
+  credential-caching cross-workspace leakage risk to inherit either, unlike the earlier
+  cooldown-key finding.
+
+  Separately, `_analyze_run_errors` (`dbt_cloud_tools.py:485-494`) fans out
   concurrently via an uncapped `asyncio.gather` — the watchdog must bound this per Invariant 11,
   not inherit it unbounded across every workspace polling concurrently.
 - **Verified 2026-07-10 (pass 4)**: Databricks has ZERO existing application code in brightbot
