@@ -371,13 +371,32 @@ async def check_pipeline_health(
 #      graph.add_node("run_pipeline_watchdog", make_pipeline_watchdog_node()), alongside the
 #      existing graph.add_node("run_longitudinal_monitoring", make_longitudinal_node()) at
 #      line 1752 — same graph, sibling node, same run_context branching convention.
-#   3. Wire the new node into the graph's edges so it fires on run_context=SCHEDULED (same
-#      branch GC-12 uses, quality_check_task.py:42,113 → quality_check_agent.py's state flow)
-#      — do NOT add a new dispatcher entrypoint; this reuses the exact same scheduled path
-#      GC-12 already proved end-to-end (BH-670/BH-768).
+#   3. CORRECTED pass 9 (triple-click-zoom) — verified against real code, the earlier wording
+#      overstated where the run_context branching lives. `add_edge("record_capability_
+#      execution", "run_longitudinal_monitoring")` (quality_check_agent.py:1800-1801) is a
+#      PLAIN, UNCONDITIONAL edge — there is no conditional-edge routing keyed on run_context
+#      anywhere in this graph. The SCHEDULED-vs-INGESTION branch happens INSIDE
+#      longitudinal_node.py's own function body (lines 216, 349-358), not at the graph-edge
+#      level. Step 3 is therefore: `graph.add_edge("record_capability_execution",
+#      "run_pipeline_watchdog")` — one more plain edge, same shape — and
+#      `make_pipeline_watchdog_node()`'s OWN function body must contain the run_context
+#      early-return/branch (mirroring longitudinal_node.py:349-352's "no config → skip"
+#      pattern), not a graph-level conditional. Do NOT add a new dispatcher entrypoint; this
+#      reuses the exact same scheduled path GC-12 already proved end-to-end (BH-670/BH-768).
 #   4. Per-source polling clients (PipelineSource implementations for dbt/Databricks/ETL) are
 #      called FROM this node, not registered as separate graph nodes — the node is the single
 #      scheduled entrypoint; adapter dispatch happens inside it via the PipelineSource registry.
+#   5. **CONFIRMED GAP, pass 9**: there is no per-workspace opt-in lever at the dispatcher or
+#      graph level for which capability nodes run — EVERY registered node runs for EVERY
+#      workspace on EVERY scheduled `quality_check_task` invocation (confirmed:
+#      `SCHEDULABLE_ACTIONS`/`ACTION_REQUIRED_INPUTS`, `scheduled_agents_routes.py:71-90`,
+#      select which GRAPH runs, not which NODES inside it run). This matches Invariant 8's
+#      design (no connection configured → the node's own internal skip fires, never an error)
+#      but means BH-1054 CANNOT reuse any existing per-workspace toggle — it must build its
+#      own internal "no pipeline source configured → skip silently" check, exactly like
+#      longitudinal_node.py already does for its own config absence. This is not extra scope
+#      beyond what Invariant 8 already required, but it should not be assumed "already solved
+#      by the dispatcher" either — confirmed there is no dispatcher-level mechanism to lean on.
 
 # TYPE NOTE (fixed pass 34, cold-read gap): `Capability` and `RequestContext` below are NOT
 # existing brightbot types — they come from pluggable-scalable.md's canonical Ports & Adapters
