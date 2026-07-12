@@ -577,7 +577,27 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    usage, don't reinvent. **Known gap**: no dedicated SQL-Server dialect class exists today
    (SynapseConnection is the nearest match, Azure Synapse dialect, not true SQL Server) — this
    spec's BH-1045 must add one (or confirm Synapse's dialect is close enough for
-   sys.dm_os_volume_stats specifically) before this invariant is satisfiable end-to-end.`
+   sys.dm_os_volume_stats specifically) before this invariant is satisfiable end-to-end.
+   **SECOND KNOWN GAP, found pass 12 (triple-click-zoom), CRITICAL — the "no new
+   connectivity, protocol, or on-host software" claim is TRUE but INCOMPLETE, missing a
+   permission grant.** Confirmed against platform-core: EVERY BYOW connection type's real
+   provisioning code (`azure_synapse.ts:114-131`, `snowflake.ts:156`, `redshift.ts:124,140`)
+   grants ONLY database/schema/table-level `GRANT SELECT` — no code, doc, or onboarding copy
+   anywhere in platform-core mentions `VIEW SERVER STATE`, `sysadmin`, or any server-level
+   grant (grep, zero hits). `sys.dm_os_volume_stats` requires server-level `VIEW SERVER
+   STATE` (or sysadmin), NOT the database-level SELECT a standard BYOW setup grants. This
+   means a customer's EXISTING BYOW connection (even a true SQL Server one, once BH-1045's
+   dialect gap above is closed) would get a permissions error (SQL error 229/18456-class,
+   NOT a connectivity failure) the first time this query runs — confirmed
+   `WarehouseServiceConfigOutput` (`typedefs.ts:2908-2917`) has no field recording granted
+   permission level, and `azure_synapse.ts:133-138`/`byow-preview.ts:402-403` catch ALL query
+   failures generically with no permission-error differentiation. BH-1045 or a new companion
+   ticket MUST add: (a) a NEW grant step (`GRANT VIEW SERVER STATE TO [user]`) to the
+   provisioning flow, (b) setup documentation telling the customer this specific new grant is
+   needed, (c) permission-error-specific handling so a missing grant fails with an actionable
+   message, not a generic query error. This is a genuine, if small, customer-side
+   administrative action — "no new connectivity/protocol/on-host software" undersells it as
+   zero customer action, which it is not.`
 6. `WHILE BrightSignals' 3-way split-brain (BH-1053, see §6) is unresolved as a UNIFIED write
    path, THE System's watchdog SHALL perform the explicit dual-write in Invariant 1 itself —
    it SHALL NOT wait for BH-1053 to add a fourth ad-hoc path.`
@@ -686,12 +706,25 @@ Feature: Proactive pipeline & ingestion monitoring
   Scenario: SQL Server disk monitoring with no MCP on the SQL Server
     Given a SQL Server connected to BrightHive as a BYOW source (existing warehouse-connection machinery, per Invariant 5 — not a literal "WarehousePort" class)
     And the SQL Server exposes no MCP server or agent of its own
+    And the customer has granted VIEW SERVER STATE to BrightHive's service account (per
+      Invariant 5's second known gap — a NEW grant beyond BYOW's standard database-level
+      SELECT, without which this query fails with a permissions error, not silently)
     And BH-1067 has shipped a "source_disk_low" renderer on both Slack and webapp (per Invariant 15 — without it, this scenario dual-writes successfully but renders no visible text on either surface)
     When the watchdog queries sys.dm_os_volume_stats through the EXISTING warehouse connection
     And a database file's free space drops below the configured threshold (e.g. 20%)
     Then a "source_disk_low" signal is emitted
     And the user is alerted before the disk is exhausted, with real detail text on both surfaces
     And no new connectivity, protocol, or on-host software was installed on the SQL Server
+      (the ONE new thing required is the VIEW SERVER STATE grant above — a permission
+      change, not a connectivity/protocol/software change)
+
+  Scenario: a missing VIEW SERVER STATE grant fails with an actionable error, not a silent gap
+    Given a SQL Server BYOW connection with only the standard database-level SELECT grant
+    When the watchdog attempts to query sys.dm_os_volume_stats
+    Then the query fails with a permissions error (SQL error 229/18456-class)
+    And this is surfaced as a permission-specific, actionable message — NOT the generic
+      catch-all error handling azure_synapse.ts:133-138/byow-preview.ts:402-403 use today,
+      which does not distinguish a permissions failure from any other query failure
 
   Scenario: repeated failure does not spam
     Given a "dbt_run_failure" signal was already alerted for job X in the last cooldown window
