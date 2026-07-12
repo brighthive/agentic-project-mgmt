@@ -208,23 +208,61 @@ already computed, not a new BrightHive-built lineage engine.
 ## 2. Interface Contract (MDE)
 
 ```
-# BH-1062: manifest/catalog fetch + parse
+# BH-1062: manifest/catalog fetch + parse — SHARPENED pass 2 (triple-click-zoom), verified
+# against the REAL _fetch_artifact() signature (dbt_cloud_tools.py:256-280), not assumed:
+#
+# GAP FOUND 1 — step selection is unaddressed and must be resolved before this is buildable.
+# _fetch_artifact()'s real signature is:
+#   def _fetch_artifact(api_endpoint, api_token, account_id, run_id, artifact_path,
+#                        step: int | None = None) -> str | None
+# `step` is OPTIONAL. dbt Cloud's artifact API scopes manifest.json to the STEP that produced
+# it (usually the last `dbt run`/`dbt build`/`dbt compile` step) — earlier steps (`dbt deps`,
+# `dbt seed`) never have one. brightbot's only 2 existing call sites always pass an explicit
+# step_index they already have from a KNOWN failed step — there is no existing "find the step
+# that ran dbt build" discovery logic anywhere to copy. RESOLUTION: BH-1062 must call
+# `_fetch_run_details_with_logs()` first to get `run_steps`, then select the LAST step whose
+# `name`/`run_id` (need to inspect the actual response — TODO: confirm exact field name against
+# a real run's run_steps payload, do not assume) matches a compile-producing command
+# (`dbt run`|`dbt build`|`dbt compile`), and pass THAT step's index explicitly. Omitting `step`
+# entirely and hoping for "most recent artifact" default behavior is UNVERIFIED dbt Cloud API
+# behavior — do not rely on it without testing against a real job.
+#
+# GAP FOUND 2 — 404-vs-real-error conflation. _fetch_artifact() returns None on BOTH a 404
+# (artifact genuinely never generated, e.g. run failed before compiling) AND on any other
+# requests.HTTPError (auth failure, 500, timeout) — the exception handler is a blanket catch
+# that discards the status code. Per Invariant 2, this spec requires distinguishing "column
+# lineage unavailable" from a real error — reusing _fetch_artifact() AS-IS would silently
+# misreport a transient 500 as "no lineage data," which Invariant 2 explicitly forbids doing
+# for column data and should not be allowed for the whole-artifact case either. RESOLUTION:
+# BH-1062 needs a THIN wrapper around _fetch_artifact() (not a modification to the shared
+# function, which other callers depend on) that re-derives the status code itself (a second,
+# minimal precheck HTTP call, or logging a WARNING distinguishing 404 from other failures) so
+# a real error doesn't get silently absorbed into "has_column_lineage=False."
 async def fetch_dbt_lineage_artifacts(
     *, workspace_id: str, job_id: str, run_id: str,
 ) -> DbtLineageArtifacts: ...
 # Reuses _fetch_artifact() (dbt_cloud_tools.py:256-280) with artifact_path="manifest.json"
-# and artifact_path="catalog.json" — no new HTTP/auth code, just new artifact-name arguments.
+# and artifact_path="catalog.json" — no new HTTP/auth code, just new artifact-name arguments
+# PLUS the step-discovery + error-disambiguation logic above, which IS new code.
 
 @dataclass(frozen=True)
 class DbtLineageArtifacts:
     models: dict[str, DbtModelNode]       # keyed by unique_id
     has_column_lineage: bool              # False if catalog.json lacked column metadata
+    fetch_error: str | None               # NEW: non-None if a real error occurred (not a
+                                           # genuine 404-absent-artifact case) — surfaced so
+                                           # callers don't silently treat "errored" as "absent"
 
 @dataclass(frozen=True)
 class DbtModelNode:
-    unique_id: str
+    unique_id: str                        # fully-qualified, e.g. "model.my_project.stg_orders"
+                                           # (general dbt manifest schema knowledge — matches
+                                           # dbt's public spec; NOT yet verified against a real
+                                           # fetched manifest.json in this codebase, since no
+                                           # parser exists yet. Confirm against a real artifact
+                                           # before treating this shape as final.)
     name: str
-    depends_on: list[str]                 # upstream unique_ids
+    depends_on: list[str]                 # upstream unique_ids (manifest's depends_on.nodes)
     columns: list[str] | None             # None if catalog.json didn't have this model
 
 # BH-1063: Neo4j load — CORRECTED pass 1 of the triple-click-zoom loop, verified against
@@ -290,6 +328,18 @@ async def find_downstream_impact(
    has exactly one existing direct-driver exception (workflow_agent/tools.py), scoped to plain
    :Column description writes only — this is NOT a precedent for creating typed nodes/relationships
    and must not be extended for this spec's DbtLineageNode writes.`
+7. `WHEN fetching manifest.json/catalog.json returns None from _fetch_artifact(), THE System
+   SHALL distinguish a genuine 404 (artifact never generated — e.g. run failed pre-compile)
+   from any other HTTP failure (auth error, 500, timeout) before recording has_column_lineage
+   or fetch_error. Verified pass 2: _fetch_artifact()'s existing exception handling collapses
+   ALL failure modes to None — this spec's wrapper (BH-1062) MUST NOT inherit that conflation;
+   a real error surfaces as fetch_error, never silently as "column lineage unavailable."`
+8. `WHEN selecting which dbt Cloud run STEP to fetch manifest.json/catalog.json from, THE
+   System SHALL explicitly identify the last dbt run/build/compile step via run_steps (from
+   _fetch_run_details_with_logs()) and pass that step's index to _fetch_artifact() — it SHALL
+   NOT omit the step parameter and rely on unverified "most recent artifact" default API
+   behavior. Verified pass 2: no existing brightbot code performs this step-discovery; it is
+   new logic this ticket must build, not something to copy from an existing call site.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -315,6 +365,19 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     When the lineage graph is upserted from the new manifest
     Then the DEPENDS_ON edge to table A is removed
     And no stale edge causes a false-positive downstream-impact claim later
+
+  Scenario: a real fetch error is never mistaken for "no lineage available"
+    Given dbt Cloud returns a 500 (not a 404) when fetching manifest.json for a run
+    When BH-1062's fetch wrapper receives this failure
+    Then fetch_error is set to a non-None value describing the real failure
+    And has_column_lineage is NOT silently set to False as if the artifact were simply absent
+
+  Scenario: the correct run step is selected before fetching artifacts
+    Given a dbt Cloud run with 3 steps: "dbt deps", "dbt seed", "dbt build"
+    When BH-1062 fetches manifest.json for this run
+    Then it first calls run_steps to identify "dbt build" as the last compile-producing step
+    And it passes that step's index explicitly to _fetch_artifact()
+    And it does NOT omit the step parameter and rely on unverified default API behavior
 ```
 
 ## 5. Out of Scope
