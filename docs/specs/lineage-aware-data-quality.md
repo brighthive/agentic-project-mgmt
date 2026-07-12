@@ -803,8 +803,26 @@ async def find_downstream_impact(
 # lives in). BH-1062 must populate `relation_name` from the manifest node's own field; BH-1064
 # must match against it, not `name`/`uniqueId`:
 #   MATCH (start:LineageNode {relationName: $anomaly_dataset})
-#                   <-[:DEPENDS_ON*1..]-(downstream:LineageNode)
-#                   RETURN downstream
+#                   <-[:DEPENDS_ON*1..50]-(downstream:LineageNode)
+#                   RETURN DISTINCT downstream
+#
+# CORRECTED pass 33 (triple-click-zoom) — the original `*1..` (unbounded) query, verified
+# against this repo's real Cypher conventions and general Neo4j semantics, needed two fixes:
+#   1. **Bounded to `*1..50`**: confirmed NO precedent for variable-length hops exists
+#      anywhere in this repo — every real DEPENDS_ON traversal (workflow-spec.ts:88,303,311,
+#      336,576,597) is a fixed SINGLE-hop pattern, never `*`. At a real dbt project's actual
+#      scale (a few hundred models, 10-20 hop depth), an unbounded `*1..` is NOT a
+#      performance risk at Neo4j's execution-engine level (bounded by real graph size, not
+#      the missing upper bound) — but it IS a real correctness risk: if the DAG is ever not
+#      guaranteed acyclic (bad data, a bug, a self-referencing model), `MATCH` with an
+#      unbounded variable-length pattern enumerates PATHS, not just reachable nodes, and can
+#      blow up exponentially on a cycle. `*1..50` is defensive insurance — cheap, and a real
+#      dbt DAG should never approach 50 hops of transitive depth in practice, so this bound
+#      is not expected to ever clip a genuine result.
+#   2. **`DISTINCT` added**: without it, a downstream node reachable via MULTIPLE paths
+#      (a common, normal shape in any real DAG with diamond dependencies) would be RETURNED
+#      MULTIPLE TIMES — the original query would have silently produced duplicate
+#      downstream-table entries in the anomaly's enrichment metadata.
 # REMAINING GAP, flagged not silently assumed solved: dbt's `relation_name` format
 # (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) may not exactly string-match
 # `asset_details.get("snowflakeTableName")`'s format (unverified in this pass — no code path
@@ -917,6 +935,16 @@ async def find_downstream_impact(
     timeout, streaming JSON parse) for manifest.json/catalog.json specifically — it SHALL
     NOT silently reuse the small-artifact-tuned function at 100x+ the data volume without
     doing one of these two things first.`
+13. `WHEN BH-1064's downstream-impact traversal walks LineageNode's DEPENDS_ON edges, THE
+    System SHALL use a BOUNDED variable-length pattern (e.g. *1..50, not an unbounded *1..)
+    AND SHALL return DISTINCT results. CRITICAL, found pass 33: confirmed no precedent for
+    variable-length Cypher hops exists anywhere in platform-core - every real DEPENDS_ON
+    traversal is a fixed single-hop pattern. An unbounded variable-length MATCH enumerates
+    PATHS, not just reachable nodes - if the DAG is ever not guaranteed acyclic (bad data, a
+    bug, a self-referencing model), this can blow up exponentially on a cycle. Without
+    DISTINCT, a downstream node reachable via multiple paths (a normal shape in any DAG with
+    diamond dependencies) would be returned multiple times, producing duplicate
+    downstream-table entries in the anomaly's enrichment metadata.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -941,6 +969,14 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And it would NOT have found this node had it matched on unique_id or name instead
       (CRITICAL, found pass 10 — this is the exact bug that silently returns zero downstream
       tables for every real anomaly if regressed)
+
+  Scenario: the traversal is bounded and deduplicated
+    Given a LineageNode with two separate DEPENDS_ON paths converging on the SAME downstream
+      node (a diamond-shaped dependency, a normal real-world DAG shape)
+    When BH-1064's traversal walks DEPENDS_ON edges forward from the anomaly's starting node
+    Then the downstream node appears EXACTLY ONCE in the result, not once per path
+    And the traversal uses a bounded hop count (e.g. *1..50), not an unbounded *1.., so a
+      future data bug introducing a DEPENDS_ON cycle cannot cause exponential path blowup
 
   Scenario: graceful degradation when column-level lineage isn't available
     Given a dbt project whose catalog.json lacks column-level metadata
