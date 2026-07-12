@@ -1098,6 +1098,50 @@ to self-healing-pipelines.md's own (currently nonexistent) §8 too**, not left a
 disconnected duplicate — BH-1047 (which already wires this spec's signals into GC-11's loop)
 is the natural place to build it once, for both specs' benefit.
 
+**CRITICAL, pass 19 (triple-click-zoom) — this table's "GATE" and "LLM judge + deterministic"
+terminology, verified against the REAL eval framework (`brightbot/brightbot/evals/`), does
+NOT map cleanly onto it. Four real gaps found, none of which invalidate building these
+evaluators, but all of which need resolving before implementation, not left implicit:**
+
+1. **No single real `Evaluator` base class exists — two DIFFERENT real shapes, and it's
+   ambiguous which this table's evaluators should implement.** `evals/core/contracts.py`
+   defines `OutputGate` (`:191-205`: `name`, `mode: GateMode`, `check(...) -> GateVerdict`)
+   — this is the ONLY place `GateMode.GATE`/`GateMode.OBSERVE` (`:163-167`) literally exist,
+   matching this table's "Mode" column. But the three real concrete evaluators in this repo
+   (`SurfaceEvaluator` layers/surface.py:72, `OfflineRoutingEvaluator` layers/routing.py:53,
+   `BehaviorEvaluator` layers/behavior.py:28) use a DIFFERENT shape entirely:
+   `evaluate(case: EvalCase) -> EvalVerdict`, no `mode` field at all. Since
+   `FailureClassificationEvaluator`/`RootCauseClassEvaluator` live inside a watchdog
+   CAPABILITY NODE (not the online-gate middleware layer `OutputGate` serves), BH-1042's
+   implementer MUST decide explicitly which real Protocol these implement — do not assume
+   "GATE" in this table's Mode column means it automatically gets `OutputGate`'s real
+   enforcement machinery; it may not fit that layer at all.
+2. **"LLM judge + deterministic" in ONE evaluator has NO real extension point to plug
+   into.** Every real evaluator in this codebase is purely one or the other:
+   `SurfaceEvaluator` is pure deterministic keyword scoring; `core/metrics.py:33,38` wrap
+   DeepEval's pure-LLM-judge `GEval`/`AnswerRelevancyMetric`. The closest real precedent for
+   blending both is ad hoc, node-level, NOT a reusable framework type:
+   `record_capability_execution` (`quality_check_agent.py:1442-1512`) manually combines
+   `run_configured_rules` (deterministic) with `quality_model` AI checks into a
+   `combined_score` (line 1476) inside one function body. BH-1042's implementer should
+   follow THIS pattern (manual combination inside the watchdog node), not assume a
+   reusable "hybrid evaluator" class exists to subclass — it doesn't.
+3. **GATE mode is a real, TESTED mechanism that enforces NOTHING in production today.**
+   `run_gate_with_heal` (`online/gates.py:56-134`) implements the real retry/heal loop and
+   checks `GateMode.GATE` (`gates.py:100`) — but confirmed by grep: no middleware, CI
+   workflow, or agent node anywhere calls `run_gate_with_heal`/`OutputGate` outside its own
+   unit test (`tests/unit/evals/test_eval_framework_contracts.py`). Labeling these
+   evaluators "GATE" in this table does NOT mean anything is currently blocked by them —
+   BH-1042/1054 must decide whether to (a) wire into the real `run_gate_with_heal` mechanism
+   (giving it its FIRST real production caller), or (b) implement gate-like blocking
+   directly inside the watchdog node without that shared machinery. Do not assume "GATE" is
+   self-enforcing just because the framework has a type named that.
+4. **The labeled fixture set `FailureClassificationEvaluator` needs does not exist —
+   confirmed by search, zero dbt/Databricks/ETL failure-log fixtures anywhere in the repo.**
+   This is new scope for BH-1042/1054's implementer to build from scratch (labeled failure
+   logs across the 6 stage taxonomy values), not an existing corpus to point the evaluator
+   at.
+
 **Model tier (verified pass 22, cost estimate)**: use **Haiku** (`claude-haiku-4-5` via Bedrock)
 for `FailureClassificationEvaluator` and `RootCauseClassEvaluator` — both are bounded-enum
 outputs, not open-ended generation, and this matches GC-12's own precedent
