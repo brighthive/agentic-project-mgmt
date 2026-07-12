@@ -304,6 +304,11 @@ class LineageNode:
     name: str
     depends_on: list[str]
     columns: list[str] | None
+    relation_name: str | None         # ADDED pass 10, see LineageModelNode's field for the
+                                       # full CRITICAL bug this closes — this is the field
+                                       # BH-1064's traversal actually matches against, NOT
+                                       # unique_id or name (neither matches
+                                       # AnomalyEventNode.dataset's real format)
 
 # Registry (mirrors the EXACT convention this org already established for pipeline-health
 # adapters in the sibling spec proactive-pipeline-ingestion-monitoring.md's
@@ -423,6 +428,17 @@ class LineageModelNode:
     name: str
     depends_on: list[str]                 # upstream unique_ids (manifest's depends_on.nodes)
     columns: list[str] | None             # None if catalog.json didn't have this model
+    relation_name: str | None              # ADDED pass 10 — CRITICAL FIX, a real blocking bug
+                                           # found by verification, not a nice-to-have. dbt's
+                                           # manifest.json carries `relation_name` per compiled
+                                           # node (general dbt knowledge, e.g.
+                                           # `"MY_DB"."GOLD"."mart_daily_portfolio_exposure"`).
+                                           # WITHOUT this field, BH-1064's traversal (below)
+                                           # cannot find the LineageNode a real anomaly refers
+                                           # to at all — see the CRITICAL note before
+                                           # find_downstream_impact for the full bug. None if
+                                           # the manifest node genuinely lacks it (e.g. a
+                                           # non-materialized ephemeral model).
 
 # BH-1063: Neo4j load — CORRECTED pass 1 of the triple-click-zoom loop, verified against
 # real code, not assumed:
@@ -463,6 +479,13 @@ async def upsert_lineage_graph(
 #     id: ID! @id
 #     uniqueId: String!              # dbt's fully-qualified unique_id, e.g. "model.proj.stg_orders"
 #     name: String!
+#     relationName: String            # ADDED pass 10, CRITICAL — see the bug note before
+#                                      # find_downstream_impact below. Nullable: null for
+#                                      # models genuinely lacking a materialized relation
+#                                      # (e.g. ephemeral models). MUST be indexed
+#                                      # (@constraint or a manual :LineageNode(relationName)
+#                                      # index) since it's the traversal's match key, not
+#                                      # a cosmetic field.
 #     hasColumnLineage: Boolean! @default(value: false)
 #     createdAt: DateTime! @timestamp(operations: [CREATE])
 #     modifiedAt: DateTime! @timestamp(operations: [CREATE, UPDATE])
@@ -635,10 +658,41 @@ async def upsert_lineage_graph(
 async def find_downstream_impact(
     *, workspace_id: str, anomaly: AnomalyEventNode,
 ) -> list[LineageNode]: ...
-# Cypher traversal, keyed off anomaly.dataset (confirmed real field):
-#   MATCH (start:LineageNode {name: $anomaly_dataset})
+#
+# CRITICAL BUG FOUND AND FIXED, pass 10 (triple-click-zoom) — the match key below was WRONG
+# in every prior pass of this spec, and would have shipped a traversal that silently matches
+# ZERO nodes for virtually every real anomaly. Verified against real code, not assumed:
+# `anomaly.dataset` is NOT a dbt identifier — traced its real origin to
+# `longitudinal_node.py:348` (`dataset_fqn = state.get("dataset_table_name")`), itself set in
+# `quality_check_agent.py:362-366` (`fetch_asset_details`) from
+# `asset_details.get("redshiftTableName") or asset_details.get("snowflakeTableName") or
+# asset_details.get("tableFQN") or asset_details.get("tableName")` — a WAREHOUSE-side
+# `<schema>.<table>` identifier pulled from `DataAssetNode`'s own fields, e.g.
+# "GOLD.mart_daily_portfolio_exposure". This NEVER matches `LineageNode.uniqueId`
+# ("model.my_project.stg_orders") or `LineageNode.name` ("stg_orders") — neither field is in
+# the same namespace as a warehouse-qualified table name. The ORIGINAL query below
+# (`MATCH (start:LineageNode {name: $anomaly_dataset})`) is confirmed BROKEN — it would find
+# zero matches for real anomalies, defeating this entire epic's purpose silently (no error,
+# just an empty downstream list every time).
+#
+# FIX: this is exactly why `LineageNode.relation_name` was added above (mirrors dbt
+# manifest.json's own `relation_name` field, general dbt knowledge — e.g.
+# `"MY_DB"."GOLD"."mart_daily_portfolio_exposure"`, the SAME namespace `anomaly.dataset`
+# lives in). BH-1062 must populate `relation_name` from the manifest node's own field; BH-1064
+# must match against it, not `name`/`uniqueId`:
+#   MATCH (start:LineageNode {relationName: $anomaly_dataset})
 #                   <-[:DEPENDS_ON*1..]-(downstream:LineageNode)
 #                   RETURN downstream
+# REMAINING GAP, flagged not silently assumed solved: dbt's `relation_name` format
+# (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) may not exactly string-match
+# `asset_details.get("snowflakeTableName")`'s format (unverified in this pass — no code path
+# in this repo currently produces or compares these two strings side by side, since this
+# bridge has never existed before). BH-1062/1064's implementer MUST confirm the two strings'
+# exact casing/quoting/part-count match on a REAL workspace with both a dbt connection and a
+# DataAssetNode for the same physical table before trusting an exact-match Cypher lookup — a
+# normalization step (strip quotes, uppercase/lowercase consistently, drop the DB part if
+# `dataset` is 2-part) may be required. Do not assume string equality without this check.
+#
 # Writes into the metadata dict BEFORE publish_completion_notification's existing
 # json.dumps(...) call (quality_check_agent.py:1663) — this ticket adds one new key, it does
 # NOT touch or duplicate the existing publishNotification mutation call itself.
@@ -704,6 +758,18 @@ async def find_downstream_impact(
    session.writeTransaction, which is deprecated at this version) is the fallback ONLY if the
    upsert needs to read an intermediate result back into JS before the MERGE, which is not
    expected here.`
+10. `THE downstream-impact traversal (BH-1064) SHALL match a LineageNode against
+    AnomalyEventNode.dataset using LineageNode.relation_name — it SHALL NOT match against
+    LineageNode.unique_id or LineageNode.name. CRITICAL, found pass 10: unique_id/name live
+    in dbt's model-identifier namespace ("model.my_project.stg_orders" / "stg_orders");
+    anomaly.dataset lives in the warehouse-table namespace ("GOLD.mart_daily_portfolio_
+    exposure", sourced from DataAssetNode's redshiftTableName/snowflakeTableName/tableFQN via
+    quality_check_agent.py:362-366). Matching against the wrong field would silently return
+    zero downstream tables for every real anomaly — no error, just a defeated epic. BH-1062
+    MUST populate relation_name from dbt manifest.json's own relation_name field per node;
+    string-format equality between relation_name and anomaly.dataset (quoting, casing,
+    2-part vs 3-part) is UNVERIFIED against a real workspace and MUST be confirmed — a
+    normalization step may be required before the exact-match Cypher lookup is trustworthy.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -713,9 +779,21 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
   Scenario: null spike on a source column names the affected Gold tables
     Given a workspace with dbt Cloud connected and longitudinal monitoring on column X
     And dbt's manifest.json shows 2 Gold-layer models depend (transitively) on column X's table
+    And each LineageNode's relation_name was populated from the manifest's own relation_name
+      field, matching the SAME warehouse-qualified format AnomalyEventNode.dataset uses
     When a null_spike anomaly fires on column X
     Then the SAME alert names both downstream Gold models as affected
     And the alert reaches the user before they would have noticed the wrong number manually
+
+  Scenario: the traversal never matches against the wrong identifier namespace
+    Given a LineageNode with unique_id "model.my_project.stg_orders", name "stg_orders", and
+      relation_name "GOLD.mart_daily_portfolio_exposure"
+    And an AnomalyEventNode with dataset "GOLD.mart_daily_portfolio_exposure"
+    When BH-1064's traversal looks up the starting node for this anomaly
+    Then it matches on relation_name and finds this node
+    And it would NOT have found this node had it matched on unique_id or name instead
+      (CRITICAL, found pass 10 — this is the exact bug that silently returns zero downstream
+      tables for every real anomaly if regressed)
 
   Scenario: graceful degradation when column-level lineage isn't available
     Given a dbt project whose catalog.json lacks column-level metadata
