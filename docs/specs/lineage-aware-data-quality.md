@@ -156,12 +156,13 @@ repos' notification pipelines.
   │ manifest │                   │ (existing│        │ + DEPENDS_ON  │    │ graph walk│
   │ .json /  │                   │  ogm_api │        │ + delete-then-│    │ (closes   │
   │ catalog  │                   │  .py     │        │ MERGE mutation│    │  BH-673)  │
-  │ .json    │                   │  plumbing│        │ (mirrors      │    │           │
-  └──────────┘                   │  — no new│        │ WorkflowStep  │    └──────────┘
-                                  │  driver) │        │ Node's own    │
-                                  └──────────┘        │ DEPENDS_ON,   │
-                                                        │ workflow-spec │
-                                                        │ .ts:299-317)  │
+  │ .json    │                   │  plumbing│        │ (2-3 files,   │    │           │
+  └──────────┘                   │  — no new│        │ NO public     │    └──────────┘
+                                  │  driver) │        │ schema touch, │
+                                  └──────────┘        │ mirrors       │
+                                                        │ AnomalyEvent- │
+                                                        │ Node OGM-only │
+                                                        │ pattern)      │
                                                         └──────────────┘
 
 "brightbot already      "brightbot calls a NEW       "platform-core owns the    "we already have
@@ -406,6 +407,67 @@ async def upsert_lineage_graph(
 # not triggered internally by another mutation. BH-1063 needs its own equivalent
 # `upsertLineageGraph(input: UpsertLineageGraphInput!)` mutation registered the same way.
 #
+# TWO REAL PRECEDENTS EXIST, PICK DELIBERATELY (verified pass 6, triple-click-zoom) — the
+# spec previously implied WorkflowStepNode's public-mutation shape was the only option; a
+# CHEAPER, MORE RECENT precedent also exists and is the better fit here:
+#
+#   Option A — WorkflowStepNode style (workflow-spec.ts:299-317, schema/typedefs.ts:4819-4822):
+#     public GraphQL mutation + resolver + OGM @relationship decorator + codegen'd
+#     ogm-types.ts. More files, more ceremony, appropriate when the mutation needs to be
+#     directly callable by end-user-facing GraphQL clients (e.g. webapp).
+#
+#   Option B — AnomalyEventNode/MetricSnapshotNode style (commits 9c25cd1f/206f56f7,
+#     "feat(quality): ... BH-668"): OGM type in typedefs.ts ONLY, a plain service module
+#     with raw Cypher (src/graphql/service/neo4j/metric-snapshot.ts, 194 lines — no
+#     @relationship decorator, no public schema/typedefs.ts mutation, no ogm-types.ts
+#     codegen). Exactly 4 files touched: typedefs.ts (new type), a new
+#     service/neo4j/lineage-graph.ts (upsert logic), models/quality-rule.ts-equivalent
+#     validation module if needed, common/types.ts (shared type refs).
+#
+#   DECISION for BH-1063b: Option B. LineageNode is written ONLY by brightbot's backend
+#   call (never directly by a webapp GraphQL client), exactly like AnomalyEventNode/
+#   MetricSnapshotNode's own access pattern — no end-user needs to call
+#   `upsertLineageGraph` from the browser. Option A's public-mutation ceremony
+#   (schema/typedefs.ts registration, resolver, codegen) is unjustified overhead for an
+#   internal service-to-service write. Concrete file list for a cold engineer:
+#   RESOLVED, pass 6 (was an open question in the prior pass — now confirmed against real
+#   code, not assumed): platform-core runs TWO physically separate GraphQL servers on
+#   separate API Gateway endpoints — a public one (`src/server.ts` → `src/graphql/schema/
+#   typedefs.ts`, webapp-facing) and the OGM/internal one (`src/graphql/ogm/ogm-server.ts`
+#   → `src/graphql/ogm/typedefs.ts`, brightbot-facing via `OgmApiGatewayUrl`, gated by a
+#   `custom:isSystemAdmin` Cognito claim check in `ogm-server.ts:78-108` that the public
+#   server does not apply). `createAgentCapabilityExecutionNodes` — the mutation
+#   `ogm_queries.py:123-150` actually calls — exists ONLY in this OGM schema; it is not
+#   registered anywhere under `src/graphql/schema/` and has no public counterpart. This
+#   means BH-1063b needs NO public-schema touch at all, and is even cheaper than Option
+#   B's raw-Cypher description above: `@neo4j/graphql` auto-generates the full CRUD
+#   mutation set (including a `createLineageNodes`-shaped mutation) directly from ONE
+#   `typedefs.ts` entry — confirmed by `createAgentCapabilityExecutionNodes`'s own
+#   generated presence in `src/common/ogm-types.ts:1323`, with no hand-written resolver
+#   for it anywhere in the codebase.
+#
+#   Concrete file list for a cold engineer implementing BH-1063b:
+#     1. `src/graphql/ogm/typedefs.ts` — add `LineageNode` type (~15-20 lines, mirrors
+#        AnomalyEventNode's shape at typedefs.ts:713-727). Decide here whether the
+#        DEPENDS_ON edge is declared as an OGM `@relationship` directive (gets a
+#        free auto-generated `connect`/`disconnect` mutation shape, but the auto-generated
+#        upsert does NOT enforce the delete-then-MERGE replace semantics Invariant 4/9
+#        require — @neo4j/graphql's `connectOrCreate` is additive, not idempotent-replace)
+#        or left undecorated with a HAND-WRITTEN Cypher service (full control over the
+#        atomic delete-then-MERGE transaction, costs one extra file). RECOMMENDATION:
+#        undecorated + hand-written, because Invariant 9's atomicity fix is not
+#        expressible through the auto-generated mutation — confirm this trade-off at
+#        implementation time rather than defaulting to the decorator for convenience.
+#     2. `src/graphql/service/neo4j/lineage-graph.ts` — NEW file if hand-written Cypher is
+#        chosen (per step 1): the delete-then-MERGE upsert wrapped in
+#        `session.writeTransaction(...)` per Invariant 9, modeled on `metric-snapshot.ts`'s
+#        shape (194 lines), NOT workflow-spec.ts's two-auto-commit-calls shape.
+#     3. `src/common/types.ts` — shared type refs if `LineageNode`/`LineageGraph` types
+#        need to cross module boundaries within platform-core.
+#   Total: 2-3 files, zero public-schema files, zero resolver boilerplate if the
+#   auto-generated mutation path is used for read-back queries (only the write path needs
+#   the hand-written service).
+#
 # CRITICAL CORRECTNESS GAP FOUND IN THE PRECEDENT ITSELF — do not silently inherit this:
 # the real workflow-spec.ts pattern is NOT atomic. The DELETE and the MERGE run as two
 # SEPARATE auto-commit `session.run()` calls on the same session (`workflow-spec.ts:302-314`),
@@ -592,13 +654,14 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | brightbot's OGM HTTP path (`ogm_api.py:34-70`) | Blocking — BH-1063's brightbot half MUST go through this, no new Neo4j driver | Live |
 | **platform-core engineering capacity** (verified pass 1: BH-1063 is 2-repo work) | Blocking — this spec cannot ship with brightbot-only resourcing | New dependency, not previously called out |
 | BH-1044 (Databricks connection decision) | Blocking for the Databricks half only | Open decision, not yet confirmed |
+| BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, Needs Refinement — same class of gap as BH-1067 in the sibling proactive-pipeline-ingestion-monitoring.md spec |
 
 ## Areas Involved
 
 | Area | Repo | Impact |
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
-| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | New `LineageNode` OGM type + `DEPENDS_ON` relationship + delete-then-MERGE mutation, mirrors `WorkflowStepNode`'s real precedent (`workflow-spec.ts:299-317`), NOT a nonexistent DataAssetNode pattern |
+| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 6**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE Cypher, atomic per Invariant 9) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
 | Lineage graph call site (BH-1063a) | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
@@ -610,7 +673,8 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | BH-1062 | feat: fetch + parse manifest.json/catalog.json | Needs Refinement |
 | BH-1063 | feat: load parsed DAG into Neo4j as queryable lineage graph | Needs Refinement |
 | BH-1064 | feat: wire anomalies to walk the graph forward (closes BH-673) | Needs Refinement |
-| BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | Needs Refinement, filed pass 4 — answer determines whether this whole epic is demo-visible |
+| BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
+| BH-1066 | feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed) | Needs Refinement, filed pass 5 — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
 
 ## Related
 
@@ -618,6 +682,9 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 - `longitudinal-monitoring-capability.md` — the capability-node interface pattern this spec's
   Neo4j upsert mirrors
 - `proactive-pipeline-ingestion-monitoring.md` — sibling spec, shares the BrightSignals alert
-  path (BH-1046) this spec's enriched alerts reuse
+  path (BH-1046) this spec's enriched alerts reuse. Also shares this spec's exact class of
+  gap: pass 35 of that spec confirmed 5 of its 6 new notification stages have the identical
+  rendering dead-end found here for `longitudinal_anomaly` (BH-1065/1066) — that spec's fix
+  is tracked as BH-1067
 - `clients/trials/loopcapital/overview.md` — this capability is scoped into Loop Capital's
   plan as an honest post-demo workstream, not a 7/17 deliverable
