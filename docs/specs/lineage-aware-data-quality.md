@@ -122,6 +122,25 @@ number in front of a customer or exec) has already happened.
   brightbot/platform-core backend code — unverified, flagged for a future pass.
 ```
 
+**CONFIRMED pass 5 (BH-1065), not merely "unverified" anymore — this is worse than flagged**:
+checked `brightbot-slack-server` and `brighthive-webapp` directly. Neither has ANY code path
+for a longitudinal/anomaly notification. Both repos' notification pipelines are closed switch
+statements over a fixed stage enum (`quality_checks`, `pipeline_failure`, `dbt_run_*`,
+`schema_drift`, etc.) — there is no `longitudinal_anomaly` case anywhere, and no code reads
+`metadata.longitudinal` in either repo (zero grep hits). The one "longitudinal" code that
+exists in the webapp (`Governance/components/longitudinalContract.ts`) is RULE-CONFIGURATION
+UI (defining which columns to monitor) — completely disconnected from the notification
+rendering pipeline, not wired to it at all.
+
+**This means: if a real GC-12 anomaly fires TODAY, no human sees any anomaly detail —
+independent of anything this Track C epic adds.** The mutation succeeds, a database row gets
+written, and then it dead-ends: Slack renders (at best) a blank/generic fallback, the webapp
+inbox shows a generic stage-title card with no anomaly_count/dataset/family content. This is
+a pre-existing gap in GC-12 itself, not something introduced by this spec — but it means
+**BH-1064's lineage enrichment currently has nothing to enrich that a human will ever see**,
+until a NEW ticket (not yet filed, see below) adds a real `longitudinal_anomaly` case to both
+repos' notification pipelines.
+
 ### Implementation sequence (the 3 new tickets, in order)
 
 **CORRECTED, triple-click-zoom pass 1**: BH-1063 is genuinely 2-repo work, not brightbot-only
@@ -133,7 +152,7 @@ number in front of a customer or exec) has already happened.
   ┌──────────┐                   ┌──────────┐        ┌──────────────┐    ┌──────────┐
   │ BH-1062  │                   │ BH-1063a │        │ BH-1063b     │    │ BH-1064  │
   │ Fetch +  │──────────────────▶│ call OGM │───────▶│ NEW           │───▶│ Wire      │
-  │ parse    │                   │ mutation │        │ DbtLineageNode│    │ anomaly → │
+  │ parse    │                   │ mutation │        │ LineageNode│    │ anomaly → │
   │ manifest │                   │ (existing│        │ + DEPENDS_ON  │    │ graph walk│
   │ .json /  │                   │  ogm_api │        │ + delete-then-│    │ (closes   │
   │ catalog  │                   │  .py     │        │ MERGE mutation│    │  BH-673)  │
@@ -210,6 +229,59 @@ already computed, not a new BrightHive-built lineage engine.
 
 ## 2. Interface Contract (MDE)
 
+**ARCHITECTURAL CORRECTION, pass 5 (Kuri's direct feedback) — this spec was drifting toward
+dbt-hardcoded types/function names (originally `DbtLineageNode`, `fetch_dbt_lineage_artifacts`,
+now renamed engine-agnostic below) with Databricks treated as an afterthought in prose ("same
+idea, once a connection exists"), not a real pluggable seam. Per this org's own `pluggable-scalable.md` rule (Ports & Adapters
+everywhere; new engines are config, not code), this spec must define a LINEAGE SOURCE PORT
+first, with dbt as the FIRST ADAPTER — not the only path. Databricks (via Unity Catalog) and
+any future engine (Apache Airflow lineage, Fivetran, etc.) are additional adapters behind the
+SAME port, added by registry entry, not by touching the engine's own code.
+
+```
+# THE PORT — engine-agnostic. Every lineage source (dbt, Databricks, future engines) implements
+# this Protocol. The engine that walks the graph and enriches alerts (BH-1064) NEVER references
+# "dbt" or "Databricks" by name — it only calls this interface.
+class LineageSource(Protocol):
+    async def fetch_lineage(
+        self, *, workspace_id: str, run_context: dict,
+    ) -> LineageGraph: ...
+
+@dataclass(frozen=True)
+class LineageGraph:
+    nodes: dict[str, LineageNode]   # keyed by a source-agnostic unique_id
+    has_column_lineage: bool
+    fetch_error: str | None
+    source_engine: str               # "dbt" | "databricks" | future engines — for observability only,
+                                      # never branched on by downstream consumers (BH-1063/1064)
+
+@dataclass(frozen=True)
+class LineageNode:
+    unique_id: str
+    name: str
+    depends_on: list[str]
+    columns: list[str] | None
+
+# Registry (mirrors the EXACT convention this org already established for pipeline-health
+# adapters in the sibling spec proactive-pipeline-ingestion-monitoring.md's
+# PIPELINE_SOURCE_ADAPTERS, itself modeled on the real CONNECTION_CLASSES/
+# WarehouseConnectionFactory pattern, brightbot/tools/warehouse_connections.py:1230-1259 —
+# reuse the SAME registry shape here, don't invent a third variant):
+LINEAGE_SOURCE_ADAPTERS: dict[str, type[LineageSource]] = {
+    DBT: DbtLineageSource,           # BH-1062 implements this adapter — FIRST, not ONLY
+    DATABRICKS: DatabricksLineageSource,  # future, once BH-1044's connection decision lands
+}
+
+def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
+    return LINEAGE_SOURCE_ADAPTERS[engine](config=config)
+
+# Adding a NEW engine (Apache Airflow's own lineage API, Fivetran, etc.) later = one new
+# adapter class + one registry line — the port, BH-1063's graph-write code, and BH-1064's
+# walk-and-enrich code NEVER change. This is the concrete meaning of "low-effort to switch."
+```
+
+### BH-1062 as the dbt adapter (the FIRST implementation of LineageSource, not the design)
+
 ```
 # BH-1062: manifest/catalog fetch + parse — SHARPENED pass 2 (triple-click-zoom), verified
 # against the REAL _fetch_artifact() signature (dbt_cloud_tools.py:256-280), not assumed:
@@ -241,23 +313,23 @@ already computed, not a new BrightHive-built lineage engine.
 # function, which other callers depend on) that re-derives the status code itself (a second,
 # minimal precheck HTTP call, or logging a WARNING distinguishing 404 from other failures) so
 # a real error doesn't get silently absorbed into "has_column_lineage=False."
-async def fetch_dbt_lineage_artifacts(
+async def fetch_lineage_artifacts(
     *, workspace_id: str, job_id: str, run_id: str,
-) -> DbtLineageArtifacts: ...
+) -> LineageArtifacts: ...
 # Reuses _fetch_artifact() (dbt_cloud_tools.py:256-280) with artifact_path="manifest.json"
 # and artifact_path="catalog.json" — no new HTTP/auth code, just new artifact-name arguments
 # PLUS the step-discovery + error-disambiguation logic above, which IS new code.
 
 @dataclass(frozen=True)
-class DbtLineageArtifacts:
-    models: dict[str, DbtModelNode]       # keyed by unique_id
+class LineageArtifacts:
+    models: dict[str, LineageModelNode]       # keyed by unique_id
     has_column_lineage: bool              # False if catalog.json lacked column metadata
     fetch_error: str | None               # NEW: non-None if a real error occurred (not a
                                            # genuine 404-absent-artifact case) — surfaced so
                                            # callers don't silently treat "errored" as "absent"
 
 @dataclass(frozen=True)
-class DbtModelNode:
+class LineageModelNode:
     unique_id: str                        # fully-qualified, e.g. "model.my_project.stg_orders"
                                            # (general dbt manifest schema knowledge — matches
                                            # dbt's public spec; NOT yet verified against a real
@@ -284,36 +356,36 @@ class DbtModelNode:
 #    (brightbot/tools/ogm_api.py:34-70, Cognito-authed HTTP, not a direct driver). The one
 #    exception (workflow_agent/tools.py:23,92-95, a direct bolt driver) is scoped to simple
 #    :Column description writes, not OGM-typed node/relationship creation — NOT a precedent
-#    to reuse for DbtLineageNode. THEREFORE: this ticket is NOT purely a brightbot ticket as
+#    to reuse for LineageNode. THEREFORE: this ticket is NOT purely a brightbot ticket as
 #    originally scoped. The Neo4j-side schema + upsert mutation must be added to
 #    PLATFORM-CORE (a new OGM type + a GraphQL mutation, following workflow-spec.ts's
 #    delete-then-MERGE shape), and brightbot calls that mutation over its existing
 #    Cognito-authed OGM HTTP path — the same way it reaches every other Neo4j write today.
-async def upsert_dbt_lineage_graph(
-    *, workspace_id: str, artifacts: DbtLineageArtifacts,
+async def upsert_lineage_graph(
+    *, workspace_id: str, artifacts: LineageArtifacts,
 ) -> None: ...
 # brightbot-side: calls a NEW platform-core GraphQL mutation over the existing OGM HTTP
 # path (ogm_api.py) — it does not touch Neo4j directly.
 # platform-core-side (NEW scope, not previously called out): a mutation implementing the
-# delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new DbtLineageNode
+# delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new LineageNode
 # type + DEPENDS_ON relationship.
 #
 # SHARPENED pass 3 (triple-click-zoom) — verified against the REAL WorkflowStepNode OGM type
 # and upsertWorkflowStep mutation, not a paraphrase:
 #
-# EXACT OGM type to model DbtLineageNode after (WorkflowStepNode,
+# EXACT OGM type to model LineageNode after (WorkflowStepNode,
 # platform-core/src/graphql/ogm/workflow-spec-typedefs.ts:79-97):
-#   type DbtLineageNode {
+#   type LineageNode {
 #     id: ID! @id
 #     uniqueId: String!              # dbt's fully-qualified unique_id, e.g. "model.proj.stg_orders"
 #     name: String!
 #     hasColumnLineage: Boolean! @default(value: false)
 #     createdAt: DateTime! @timestamp(operations: [CREATE])
 #     modifiedAt: DateTime! @timestamp(operations: [CREATE, UPDATE])
-#     dependsOn: [DbtLineageNode!]! @relationship(type: "DEPENDS_ON", direction: OUT)
+#     dependsOn: [LineageNode!]! @relationship(type: "DEPENDS_ON", direction: OUT)
 #   }
 # CONFIRMED: WorkflowStepNode has NO native workspaceId field either — scoping is transitive
-# via a parent relationship (step.spec.project.workspaceId). DbtLineageNode has the same
+# via a parent relationship (step.spec.project.workspaceId). LineageNode has the same
 # problem (no natural parent to scope through) — the mutation's INPUT must carry workspaceId
 # explicitly and the @authorized directive must reference it there (see mutation shape below),
 # mirroring upsertWorkflowStep's own pattern exactly.
@@ -332,7 +404,7 @@ async def upsert_dbt_lineage_graph(
 # upsertWorkflowStep is its OWN public Core API mutation
 # (schema/typedefs.ts:4819-4822, `@authorized(prohibits: [...], workspaceIdLoc: [...])`),
 # not triggered internally by another mutation. BH-1063 needs its own equivalent
-# `upsertDbtLineageGraph(input: UpsertDbtLineageGraphInput!)` mutation registered the same way.
+# `upsertLineageGraph(input: UpsertLineageGraphInput!)` mutation registered the same way.
 #
 # CRITICAL CORRECTNESS GAP FOUND IN THE PRECEDENT ITSELF — do not silently inherit this:
 # the real workflow-spec.ts pattern is NOT atomic. The DELETE and the MERGE run as two
@@ -391,10 +463,10 @@ async def upsert_dbt_lineage_graph(
 # user-visible today, even without lineage enrichment.
 async def find_downstream_impact(
     *, workspace_id: str, anomaly: AnomalyEventNode,
-) -> list[DbtLineageNode]: ...
+) -> list[LineageNode]: ...
 # Cypher traversal, keyed off anomaly.dataset (confirmed real field):
-#   MATCH (start:DbtLineageNode {name: $anomaly_dataset})
-#                   <-[:DEPENDS_ON*1..]-(downstream:DbtLineageNode)
+#   MATCH (start:LineageNode {name: $anomaly_dataset})
+#                   <-[:DEPENDS_ON*1..]-(downstream:LineageNode)
 #                   RETURN downstream
 # Writes into the metadata dict BEFORE publish_completion_notification's existing
 # json.dumps(...) call (quality_check_agent.py:1663) — this ticket adds one new key, it does
@@ -428,7 +500,7 @@ async def find_downstream_impact(
    open a new direct Neo4j driver connection. Verified pass 1 (triple-click-zoom loop): brightbot
    has exactly one existing direct-driver exception (workflow_agent/tools.py), scoped to plain
    :Column description writes only — this is NOT a precedent for creating typed nodes/relationships
-   and must not be extended for this spec's DbtLineageNode writes.`
+   and must not be extended for this spec's LineageNode writes.`
 7. `WHEN fetching manifest.json/catalog.json returns None from _fetch_artifact(), THE System
    SHALL distinguish a genuine 404 (artifact never generated — e.g. run failed pre-compile)
    from any other HTTP failure (auth error, 500, timeout) before recording has_column_lineage
@@ -441,7 +513,7 @@ async def find_downstream_impact(
    NOT omit the step parameter and rely on unverified "most recent artifact" default API
    behavior. Verified pass 2: no existing brightbot code performs this step-discovery; it is
    new logic this ticket must build, not something to copy from an existing call site.`
-9. `WHEN upserting a DbtLineageNode's DEPENDS_ON edges, THE System SHALL perform the
+9. `WHEN upserting a LineageNode's DEPENDS_ON edges, THE System SHALL perform the
    delete-and-recreate as a SINGLE atomic transaction (session.writeTransaction wrapping both
    the DELETE and the MERGE, or one multi-statement Cypher query) — it SHALL NOT copy
    workflow-spec.ts:300-314's own pattern verbatim, which runs the DELETE and MERGE as two
@@ -490,7 +562,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And it does NOT omit the step parameter and rely on unverified default API behavior
 
   Scenario: a crash mid-upsert never leaves a model with zero lineage edges
-    Given a DbtLineageNode currently has 3 DEPENDS_ON edges from a prior manifest
+    Given a LineageNode currently has 3 DEPENDS_ON edges from a prior manifest
     And the upsert transaction for a new manifest is interrupted after the DELETE but before the MERGE completes
     When the system recovers (retry or next scheduled upsert)
     Then the node never observably had zero edges in between — the whole delete-and-recreate is atomic
@@ -526,7 +598,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | Area | Repo | Impact |
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
-| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | New `DbtLineageNode` OGM type + `DEPENDS_ON` relationship + delete-then-MERGE mutation, mirrors `WorkflowStepNode`'s real precedent (`workflow-spec.ts:299-317`), NOT a nonexistent DataAssetNode pattern |
+| Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | New `LineageNode` OGM type + `DEPENDS_ON` relationship + delete-then-MERGE mutation, mirrors `WorkflowStepNode`'s real precedent (`workflow-spec.ts:299-317`), NOT a nonexistent DataAssetNode pattern |
 | Lineage graph call site (BH-1063a) | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
