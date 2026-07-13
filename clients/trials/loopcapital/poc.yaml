@@ -208,7 +208,7 @@ phases:
         outcome: "BH-1059 AgentCore/CEMAF migration tracking for the dispatcher's LangGraph Cloud dependency"
         linked: [BH-1059]
       - day: "Post-demo"
-        outcome: "BH-1060 customer-PII redaction evaluation for diagnosis text"
+        outcome: "BH-1060 customer-PII redaction decision for diagnosis text across ALL 4 real sinks (Slack, webapp inbox, GitHub PR body, AND CloudWatch audit logs via @audit_action — the 4th sink confirmed pass 28, not in the original 3-sink framing); scrub_text() only catches secret shapes (JWT/API-key/etc.), not PII values — non-blocking for 7/17, real gap before production customer data"
         linked: [BH-1060]
       - day: "Post-demo"
         outcome: "BH-1037/1048-1052 ingestion observability (Airbyte/Step-Functions/queue watchdogs) — not named in Frank's 3 points, build after Track B lands"
