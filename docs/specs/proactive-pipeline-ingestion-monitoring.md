@@ -209,7 +209,9 @@ existing systems already cover most of the intended scope:
   channel set today — this spec's dual-write is not an incomplete 2-of-3, it covers everything
   real. Email delivery, if ever built, is BH-412's scope (BrightSignals MVP, still unbuilt),
   not a gap in this spec.
-- **Longitudinal Monitoring** (GC-12, BH-601, **SHIPPED + staging-verified 2026-06-18**) —
+- **Longitudinal Monitoring** (GC-12, BH-669, **SHIPPED + staging-verified 2026-06-18** —
+  **CORRECTED pass 63**: was wrongly cited as BH-601, the unrelated umbrella "14 Golden Cases"
+  tracker; BH-669 is the real GC-12 capability ticket, confirmed Done) —
   stateful *data-quality* anomaly detection (row_count_drift, cardinality_breakdown,
   distributional_skew, null_spike), running as a **capability node inside
   `quality_check_agent`**, triggered by the **existing scheduled dispatcher + `run_context`**
