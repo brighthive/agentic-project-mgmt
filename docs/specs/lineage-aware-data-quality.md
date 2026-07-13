@@ -754,6 +754,37 @@ class LineageModelNode:
                                            # before treating this shape as final.)
     name: str
     depends_on: list[str]                 # upstream unique_ids (manifest's depends_on.nodes)
+                                           #
+                                           # GAP FOUND, pass 77 (triple-click-zoom) — a THIRD
+                                           # instance of the has_column_metadata/relation_name
+                                           # gap class (Invariants 20/21), and load-bearing in
+                                           # a DIFFERENT way than either: unique_id/depends_on
+                                           # are NOT the traversal's starting-node lookup key
+                                           # (that's relation_name, Invariant 21) — they are
+                                           # the EDGE-CONSTRUCTION mechanism. BH-1063's
+                                           # delete-then-MERGE upsert MATCHes on uniqueId to
+                                           # build DEPENDS_ON relationships (`MATCH
+                                           # (dep:LineageNode {workspaceId: $workspace_id,
+                                           # uniqueId: depId})`) — confirmed by reading the
+                                           # actual Cypher this spec specifies (Invariant 9).
+                                           # If BH-1068/BH-1074 populate unique_id/depends_on
+                                           # with an inconsistent or absent convention, the
+                                           # upsert's dependency edges either fail to MATCH
+                                           # (silently creating an edgeless node) or, worse,
+                                           # COLLIDE with an unrelated dbt model that happens
+                                           # to share a unique_id string in the same
+                                           # workspace. EVERY LineageSource adapter SHALL
+                                           # generate its OWN unique_id namespace that cannot
+                                           # collide with another engine's or another table's
+                                           # — e.g. prefixing with the source_engine value
+                                           # already carried on LineageGraph (pass-8's own
+                                           # field), such as "snowflake_native.<db>.<schema>.
+                                           # <object>" or "databricks.<catalog>.<schema>.
+                                           # <table>" — mirroring dbt's own namespacing
+                                           # convention ("model.<project>.<name>") rather than
+                                           # reusing bare object names, which WOULD collide
+                                           # across engines/workspaces. See Invariant 22 (new,
+                                           # pass 77).
     columns: dict[str, ColumnMetadata] | None  # CRITICAL, CORRECTED pass 36 (triple-click-
                                            # zoom) — this was `list[str] | None`, WRONG on
                                            # two counts, verified against general dbt
@@ -1587,6 +1618,22 @@ async def find_downstream_impact(
     engine populated this field — the normalization logic does not care which adapter
     produced the string, only that the string is real and populated.`
 
+22. `EVERY LineageSource adapter SHALL generate LineageModelNode.unique_id (and its
+    depends_on edge-list) in an engine-namespaced form that cannot collide with another
+    engine's unique_id in the SAME workspace. CRITICAL, found pass 77: a THIRD instance of
+    the Invariant 20/21 gap class, load-bearing in a DIFFERENT way — unique_id/depends_on
+    are not the traversal's starting-node lookup (that's relation_name, Invariant 21); they
+    are the EDGE-CONSTRUCTION mechanism BH-1063's upsert MATCHes on (`MATCH (dep:LineageNode
+    {workspaceId: $workspace_id, uniqueId: depId})`, per Invariant 9's real Cypher). A
+    workspace running BOTH dbt AND Snowflake-native pipelines could have a dbt model and an
+    unrelated Snowflake table collide on a bare object-name unique_id (workspaceId scoping,
+    Invariant 18, prevents CROSS-workspace collision, but does nothing for a same-workspace,
+    cross-ENGINE collision within the SAME LineageNode label). THE System SHALL prefix
+    unique_id with the adapter's own source_engine value (already carried on LineageGraph)
+    — e.g. "snowflake_native.<db>.<schema>.<object>", "databricks.<catalog>.<schema>.<table>"
+    — mirroring dbt's own real namespacing convention ("model.<project>.<name>") rather than
+    reusing bare object names.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1749,6 +1796,18 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       traversal would have silently returned zero downstream tables — the SAME class of
       defeated-epic bug pass 10 originally found and fixed for dbt, reintroduced for a
       different engine
+
+  Scenario: a dbt model and a Snowflake-native table never collide on unique_id in the same workspace
+    Given a workspace running BOTH dbt (a model materializing to "GOLD.mart_revenue") AND
+      Snowflake-native pipelines (a Task named "mart_revenue" in the same GOLD schema)
+    When both LineageSource adapters populate LineageModelNode.unique_id for their
+      respective nodes
+    Then the dbt model's unique_id is namespaced "model.<project>.mart_revenue" and the
+      Snowflake Task's unique_id is namespaced "snowflake_native.<db>.GOLD.mart_revenue" —
+      they do NOT collide on a bare object name
+    And BH-1063's delete-then-MERGE upsert's DEPENDS_ON edge construction (which MATCHes on
+      uniqueId) never accidentally links or overwrites one engine's node using the other
+      engine's edge list
 
   Scenario: upserting a full manifest's worth of models never re-authenticates per model
     Given a real dbt manifest.json with hundreds of models
