@@ -198,13 +198,25 @@ confirmed against real code, not assumed.
 
 ## Two things that must happen before 7/17, not yet done
 
+**RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
+Jira status + real code, not carried forward from an earlier pass's note:**
+
 1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
    demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs). **Not yet
-   executed** — needs a deliberate go-ahead from Kuri (this is a real, billable AWS resource).
+   executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead from Kuri
+   (this is a real, billable AWS resource).
 2. **BH-1047's safety fix** — the remediation loop's tool-binding must exclude
-   `github_merge_pull_request` at the code level (found: "never auto-merge" was previously a
-   prompt-only instruction with no code enforcement). Must ship before any remediation-PR flow
-   is demoed, regardless of timeline.
+   `github_merge_pull_request` at the code level. Re-confirmed pass 51: `github_merge_pull_request`
+   (`github_tools.py:503-560`) is still fully bound into `dbt_agent_react.py`'s live
+   `DBT_REACT_TOOLS` list with zero exclusion logic anywhere in the repo — "never auto-merge"
+   is STILL only a system-prompt instruction (`dbt_react_system_prompt.py:119-125`), not a
+   code-level gate. Confirmed Jira status is still `Needs Refinement` — the concrete fix
+   (a `REMEDIATION_TOOLS` list built via direct import, omitting the merge tool by name) is
+   already fully specified in BH-1047's ticket, just not yet implemented. Must ship before any
+   remediation-PR flow is demoed, regardless of timeline. Note: the underlying GC-11
+   self-healing loop itself has zero code today either (`test_gc_11_self_healing.py` is a
+   literal `pytest.skip("GC-11: GAP-7")` stub) — this ticket builds new orchestration, it is
+   not merely closing a gap in existing code.
 
 ## Open Blockers
 
