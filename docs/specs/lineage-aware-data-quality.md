@@ -1580,8 +1580,20 @@ metadata, both production surfaces.**
   silent GraphQL failure has no operator-visible trace at all), `lineage.traversal.no_match`
   (when BH-1064's traversal finds zero downstream nodes — this event is what would have
   caught pass 10's original match-key bug in production, had it shipped; every occurrence
-  should be reviewed as a potential relation_name format mismatch, per Invariant 10's
-  remaining gap).
+  should be reviewed as a potential normalization miss even AFTER Invariant 10's
+  `_fqn_variants()`-style fix lands per pass 46 — that fix covers the KNOWN drift dimensions
+  found so far, not a formal proof no other drift dimension exists).
+
+  **ADDED pass 52 (triple-click-zoom)**: `lineage.workspace_scope.violation_prevented` —
+  emitted whenever a Cypher query's `workspaceId` filter (Invariant 18, pass 50) is the
+  DIFFERENCE between a match and a non-match, i.e. a `uniqueId`/`relationName` match existed
+  in the graph but belonged to a DIFFERENT workspace than the caller's. This is a
+  security-relevant signal, not a generic no-match case — folding it into
+  `lineage.traversal.no_match` would hide a real cross-tenant collision behind a routine
+  "nothing found" log, undermining the exact isolation guarantee Invariant 18 exists to
+  provide observable proof of. Since Invariant 18 introduced the FIRST workspace-scoping
+  mechanism on `LineageNode`, this event has no precedent to mirror in this codebase — it is
+  new instrumentation, not a gap being closed on existing code.
 - **Metrics**: none proposed in this pass — could be added later (e.g.
   `lineage_traversal_no_match_rate`) once real production volume exists to judge a threshold
   against; premature to define one now.
@@ -1620,7 +1632,11 @@ metadata, both production surfaces.**
   real longitudinal-monitoring e2e precedent to extend for the anomaly-detection half.
   `e2e/surfaces/test_neo4j_integrity.py` is the real surface test to extend for
   LineageNode/DEPENDS_ON graph-integrity assertions (Property 1/2 above should get surface
-  cases here, not a new file). **No workflow-spec-lineage-specific e2e test exists yet** —
+  cases here, not a new file). **ADDED pass 52**: Invariant 18's cross-tenant isolation case
+  ("the lineage graph never leaks across workspaces on a colliding identifier") belongs here
+  too, against a real two-workspace Neo4j fixture — a mocked/single-workspace test cannot
+  exercise this invariant, since the whole risk is TWO real workspaces sharing a colliding
+  `uniqueId`/`relationName`. **No workflow-spec-lineage-specific e2e test exists yet** —
   this spec's §10 obligation includes adding the FIRST such case, not extending one that
   doesn't exist.
 
@@ -1639,7 +1655,7 @@ just that the Cypher string is syntactically well-formed.
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
 | Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
 | Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) AND a single shared `OGMAPISession` across the per-model loop (Invariant 17, pass 49) |
-| Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
+| Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | **CORRECTED pass 52 — this row was stale/wrong, contradicting this same spec's own pass-4 finding.** NOT "extends BH-1046's existing alert path" — confirmed (pass 4) there is no rendered Slack/webapp alert path to extend at all; the real insertion point is a new key inside `publish_completion_notification`'s existing JSON metadata dict (`quality_check_agent.py:1663`), and the base anomaly notification itself has zero human-visible rendering until BH-1066 ships (pass 5/48). This ticket adds `downstream_tables` data with nothing to render it until BH-1066 lands — not a delivery-mechanism extension. |
 
 ## Ticket Breakdown
 
