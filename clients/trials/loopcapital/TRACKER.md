@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 01:33 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 01:35 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -99,11 +99,11 @@ _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with
 | | Day | Outcome | Linked |
 |---|---|---|---|
 | ⬜ | Post-demo | BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing) | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) |
-| ⬜ | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
-| ⬜ | Post-demo | BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) |
+| ⬜ | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph. CORRECTED pass 50: that mirror is incomplete for tenancy — LineageNode needs its own native workspaceId field, since its dependsOn relationship (unlike AnomalyEventNode's dataAsset) never chains to WorkspaceNode. | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
+| ⬜ | Post-demo | BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge. Traversal MUST match on LineageNode.relationName (never uniqueId/name, pass 10), reuse the org's existing _fqn_variants() normalization for real format drift (pass 46), AND filter on workspaceId (pass 50) — three real correctness/isolation requirements, not one. | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) |
 | ⬜ | Post-demo | BH-1066 — CONFIRMED pass 5: GC-12 anomaly notifications have zero rendering in Slack/webapp today, independent of this epic's own changes. BH-1064's enrichment has nothing to enrich that a human sees until this ships. | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) |
-| ⬜ | Post-demo | BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half, reuses the existing SnowflakeConnection | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) |
-| ⬜ | Post-demo | BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) |
+| ⬜ | Post-demo | BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half connection-wise, reuses the existing SnowflakeConnection. CORRECTED pass 45: needs a permission/latency guard too — the recommended least-privilege role posture silently fails ACCOUNT_USAGE reads (already happened once in this org's real Longaeva POC role, #825), so this is not free just because the connection is reused. | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) |
+| ⬜ | Post-demo | BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check. ADDED pass 49: the per-model loop MUST share ONE OGMAPISession, not the bare default — that idiom re-authenticates via a live Cognito login on every construction, safe for existing once-per-turn call sites but not for a per-model loop over a real manifest's hundreds of models. | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) |
 | ⬜ | Post-demo | BH-1070 — test coverage gap: metric-snapshot.ts (BH-1063b's own cited precedent) has zero existing tests; non-blocking tech debt, tracked for visibility | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) |
 
 ### Non-blocking, tracked separately (0/7 🟢)
@@ -112,7 +112,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| ⬜ | Post-demo | BH-1044 Databricks storage-model decision (brightbot-only secret recommended, needs Kuri confirm) | [BH-1044](https://brighthiveio.atlassian.net/browse/BH-1044) |
+| ⬜ | Post-demo | BH-1044 Databricks credential storage/lookup design — RESOLVED pass 24 to a concrete pattern (mirror dbt's per-connection direct-boto3 secret read, keyed on workspace_id+service_id, no caching); ticket status is Needs Refinement (design settled, code not yet built), no longer an open decision | [BH-1044](https://brighthiveio.atlassian.net/browse/BH-1044) |
 | ⬜ | Post-demo | BH-1053 BrightSignals 3-way split-brain unification | [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) |
 | ⬜ | Post-demo | BH-1055 dispatcher concurrency hardening | [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) |
 | ⬜ | Post-demo | BH-1059 AgentCore/CEMAF migration tracking for the dispatcher's LangGraph Cloud dependency | [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) |
