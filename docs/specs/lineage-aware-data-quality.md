@@ -1825,6 +1825,17 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       uniqueId) never accidentally links or overwrites one engine's node using the other
       engine's edge list
 
+  Scenario: a disabled Unity Catalog system.access schema is never read as "no lineage exists"
+    Given a Databricks connection whose Unity Catalog metastore has NOT had system.access
+      enabled (the confirmed default posture, per §1 Hard Limitations)
+    When BH-1074's DatabricksLineageSource queries system.access.table_lineage
+    Then the query's permission/availability failure is surfaced as a distinct, actionable
+      error
+    And it is NOT silently folded into an empty LineageGraph indistinguishable from "this
+      workspace's Databricks tables genuinely have no lineage" — the same false-negative
+      risk Invariant 16 guards against for Snowflake's IMPORTED PRIVILEGES gap, now
+      formalized identically here (Invariant 23)
+
   Scenario: upserting a full manifest's worth of models never re-authenticates per model
     Given a real dbt manifest.json with hundreds of models
     When BH-1069's caller loops over every model, calling upsert_lineage_graph() once per model
