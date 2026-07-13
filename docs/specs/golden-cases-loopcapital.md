@@ -9,7 +9,7 @@ related:
     - proactive-pipeline-ingestion-monitoring.md
     - lineage-aware-data-quality.md
     - self-healing-pipelines.md
-  tickets: [BH-1042, BH-1043, BH-1045, BH-1046, BH-1047, BH-1054, BH-1057, BH-1058, BH-1067]
+  tickets: [BH-1042, BH-1043, BH-1045, BH-1046, BH-1047, BH-1054, BH-1057, BH-1058, BH-1067, BH-1087]
 ---
 
 # SPEC-GOLDEN-CASES-LOOPCAPITAL — Loop Capital Trial Bars
@@ -30,7 +30,7 @@ related:
 
 | GC | Title | Bar | Status today | Demo-gating? |
 |---|---|---|---|---|
-| GC-14 | Proactive monitor/detect/alert loop | Frank's ops team learns their nightly Asset Management dbt job broke BEFORE a portfolio manager asks why the SSRS holdings report looks wrong — via Slack + webapp, without anyone asking BrightAgent first | spec landed (BH-1042/1043/1046/1054), zero code | **Yes — 7/17** |
+| GC-14 | Proactive monitor/detect/alert loop | Frank's ops team learns their nightly Asset Management dbt job broke BEFORE a portfolio manager asks why the SSRS holdings report looks wrong — via Slack + webapp, without anyone asking BrightAgent first | spec landed (BH-1042/1043/1046/1054/1087), zero code — webapp detail-parity (BH-1087) is a real, scoped 3-5hr build, not an open question | **Yes — 7/17** |
 | GC-15 | SQL Server disk-space monitoring with no MCP | BrightAgent catches Loop's legacy SQL Server running low on disk — the exact box Frank said has no MCP and no BrightHive software installed — before SSIS jobs start failing from lack of space | spec landed (BH-1045), BH-1057 fixture not provisioned, zero code | **Yes — 7/17** |
 | GC-16 | Fix-recurrence surfacing via surgical PR | when the same class of pipeline break recurs, Frank's team gets a reviewable PR with a plain-language diagnosis instead of re-diagnosing from scratch — they merge it, BrightAgent never does | spec landed (BH-1047 reuses GC-11's mechanism), zero code, **BLOCKED on GC-17** | **Yes — 7/17** |
 | GC-17 | Auto-merge exclusion (safety precondition) | there is no code path by which BrightAgent can merge its own fix into Loop's pipeline — the one failure mode that would turn "careful digital coworker" into "software that changes our data without asking," and lose the deal | **CRITICAL, no code** — confirmed `github_merge_pull_request` still bound into `dbt_agent_react.py`'s `DBT_REACT_TOOLS` (brightbot, `dbt_agent_react.py`) | Gates GC-16, not independently demoed |
@@ -65,12 +65,30 @@ DTO — BH-1042) and 18 invariants, but BH-1043 (dbt poller), BH-1046 (dual-writ
 BH-1054 (watchdog node registration on the existing scheduled dispatcher) are all unimplemented.
 BH-1067 (renderer for 5 of 6 stage values) is also unimplemented for those 5 — without it, a
 detected failure on those stages would dual-write successfully but render as blank text on both
-surfaces, per that spec's Invariant 15. **The 6th stage, `dbt_run_failure` (this GC's own bar), is
-a narrower gap than "no renderer anywhere": brightbot-slack-server already has a real renderer
-(`renderDbtFailureDetails`) — the webapp side does not.** Confirmed against live code: no detail
-builder exists in platform-core's `sources` registry for `dbt_run_failure`, so today's webapp
-Notifications card would show a generic label, not the model/job/error detail Slack shows. This
-GC cannot claim webapp parity until that's built — a scope gap this file originally missed.
+surfaces, per that spec's Invariant 15.
+
+**The 6th stage, `dbt_run_failure` (this GC's own bar), is a narrower and cheaper gap — resolved
+here, corroborated against real platform-core/webapp code, not left open:** brightbot-slack-server
+already has a real renderer (`renderDbtFailureDetails`); the webapp side does not — no detail
+builder exists in platform-core's `sources` registry for `dbt_run_failure` (it's `{category:
+'dbt'}` only), so today's webapp Notifications card falls through to a generic label. **This is
+real, buildable capacity, not a hypothetical** — `quality_asset_result`'s existing registry entry
+(`formatQualityDisplay`/`buildQualityDetail`, `notifications.ts:243-244`) is a directly-copyable
+template: same signal-metadata-to-detail-object shape, no new GraphQL types, no schema migration.
+On webapp, `QualityNotificationCard.tsx` is the card-with-detail template to adapt (vs.
+`GenericNotificationCard.tsx`, what `dbt_run_failure` renders through today). Estimated 3-5 hours
+end to end (formatter + detail builder in platform-core, a new card + registry entry in webapp,
+one smoke test against a staging signal) — a single-afternoon build, not a multi-day one.
+
+**CORRECTING A REAL BUG THIS AUDIT FOUND, not just a doc gap**: BH-1046's own ticket text asserts
+"the formatter already exists per BH-1067's own verification" and frames its scope as "verify the
+existing renderer fires correctly" — that premise is FALSE for the webapp half; only Slack has a
+renderer. BH-1067 compounds this by explicitly excluding `dbt_run_failure` from its own scope,
+"mirroring dbt_run_failure's existing pattern" — a pattern that, on webapp, does not exist.
+**Resolved, not left open**: filed **BH-1087** for the corrected scope (add `formatDbtDisplay`/
+`buildDbtDetail` to platform-core's registry + a detail card to webapp, ~3-5 hours), and added
+correcting comments to BH-1046 and BH-1067 so this gap doesn't silently fall through either
+ticket's scope a third time.
 
 ### Code path
 No code. Contract only: `proactive-pipeline-ingestion-monitoring.md` §2 (`PipelineSource`,
@@ -132,22 +150,18 @@ Scenario: BrightAgent doesn't alert on a run Frank's own team intentionally canc
 
 **What proves this, underneath**: a `PipelineHealthSignal` is emitted for the failed run, the
 dual-write reaches BOTH brightbot-slack-server and brighthive-webapp Notifications (Invariant 1).
-**Correction — verified against live code, not assumed**: only brightbot-slack-server actually
-renders the four detail fields (`model_name`/`job_id`/`error`/`log_id`) today, via
-`renderDbtFailureDetails` (per Invariant 17). brighthive-webapp's Notifications page currently
-shows only a generic title/subtitle/status for this stage — platform-core's `sources` registry
-has no detail builder for `dbt_run_failure` (confirmed: `notifications.ts`'s registry entry is
-`{category: 'dbt'}` only), so the webapp card renders a label, not the same detail Slack shows.
-**This GC's bar for webapp parity is therefore currently UNMET, not just unimplemented** — closing
-it needs a detail builder + a non-generic card on the webapp side, a scope this spec had wrongly
-assumed BH-1067/1046 already covered. The third scenario (cancelled-run suppression) is not yet
-specified in any invariant of the sibling spec — flagging as a real, currently-uncovered gap this
-GC's harness should assert once a `RUN_CANCELLED`-vs-`RUN_FAILED` distinction is added to
-`PipelineHealthSignal`'s contract, not something to claim as already proven.
+Webapp parity for the 4 detail fields (`model_name`/`job_id`/`error`/`log_id`) is currently UNBUILT
+(see Status today) — tracked as **BH-1087**, a real, scoped, 3-5-hour build, not an open design
+question. Until BH-1087 lands, this scenario's webapp claim is aspirational, not yet demoable;
+the Slack half is real once BH-1043/1046/1054 ship. The third
+scenario (cancelled-run suppression) is not yet specified in any invariant of the sibling spec —
+flagging as a real, currently-uncovered gap this GC's harness should assert once a
+`RUN_CANCELLED`-vs-`RUN_FAILED` distinction is added to `PipelineHealthSignal`'s contract, not
+something to claim as already proven.
 
 ### Validation
 Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_14_proactive_monitor_alert.py`
-— `pytest.skip("BH-1043/1046/1054/1067 not started")` until code lands.
+— `pytest.skip("BH-1043/1046/1054/1067/1087 not started")` until code lands.
 
 ---
 
@@ -232,9 +246,29 @@ BH-1045 lands.
 ### Bar
 Suzanne's demo commitment #3, verbatim: "the ability to build skills that help surface the fixes
 the agent applied when they are not abided by so we can avoid the recurrence of the same kind of
-issue." Mechanism: reuse Longaeva's GC-11 surgical-PR loop (`self-healing-pipelines.md`), wired to
-this trial's own watchdog signals (GC-14) — but this GC is **blocked from ever running** until
-GC-17's safety gate ships, regardless of how complete the detection/PR-drafting code is.
+issue." **Descoped for 7/17, corroborated against real capacities, not left as an open
+question**: this GC's DEMO-GATING bar is narrowed to *surfacing a fast, reviewable fix with a
+plain-language diagnosis* — genuinely proving the pipeline break is no longer prevented from
+recurring is OUT OF SCOPE for 7/17 (see "What's demo-gated vs. future scope" below). Mechanism:
+reuse Longaeva's GC-11 surgical-PR loop (`self-healing-pipelines.md`), wired to this trial's own
+watchdog signals (GC-14) — but this GC is **blocked from ever running** until GC-17's safety gate
+ships, regardless of how complete the detection/PR-drafting code is.
+
+### What's demo-gated vs. future scope (resolved on review, not an open design question)
+Researched against real code before deciding, not assumed: making the drafted fix actually
+PREVENT the same drift from recurring (not just diagnose it fast) requires `root_cause_class`
+(BH-1047, today only DATA_SHAPE vs JOB_RUNTIME) to sub-classify further — type-drift vs
+missing-column vs renamed-column, each needing a different generalized fix template (e.g.
+explicit `CAST`/`TRY_CAST` staging models for type-drift, a well-established dbt pattern, but the
+CLASSIFICATION step that recognizes "this needs that template" does not exist in any tool today —
+confirmed: `analyze_dbt_error`/`convert_sql_to_dbt`/`generate_sql_model` all draft a fix scoped to
+the exact observed error, never a generalized category). **This is genuinely new classification
+capability, not a prompt tweak or a few-hour build** — unlike GC-14's webapp-parity gap (a real,
+scoped, few-hour fix), this is multi-day, unscoped work with no ticket. Demoing it honestly by
+7/17 is not realistic. The demo-gating bar below is scoped to what's real: a fast, reviewable,
+plain-language fix — not recurrence prevention. Frank should be told this distinction directly,
+not have it implied away — "faster, better-documented fixes" is still a genuine improvement over
+today's undocumented tribal-knowledge fixes, and it's what's actually being demoed.
 
 ### Status today
 **Spec landed, zero code, blocked on GC-17.** BH-1047 specifies wiring a `root_cause_class`
@@ -263,13 +297,12 @@ drift breaks the SAME pipeline again — because nothing captured *why* it broke
 fixed the first time, so the fix wasn't durable. This is Frank's literal ask #3: help him avoid
 the recurrence, not just re-detect the same fire every time.
 
-**Honesty check on the Bar, added on review**: the scenarios below prove BrightAgent proposes a
-reviewable fix fast — they do NOT prove the recurrence itself is prevented, only that recovering
-from it is faster and better-documented. Actually "avoiding the recurrence" would require the
-merged fix to change the pipeline durably enough that the SAME drift can't break it a third time
-— a real, distinct claim from "you get a nicer paper trail." Scenario 3 below is what a
-recurrence-PREVENTED case actually looks like; without it, this GC's demo would only be showing
-faster triage, and Frank should be told that difference plainly rather than have it implied away.
+**Honesty check on the Bar, resolved on review — not left open**: the demo-gating scenarios below
+prove BrightAgent proposes a reviewable fix fast, with a real paper trail. They do NOT prove the
+recurrence itself is prevented — that claim is explicitly OUT of 7/17 scope (see "What's
+demo-gated vs. future scope" above) because it needs classification capability that doesn't exist
+in any tool today, confirmed by direct code inspection, not assumed. Frank should be told this
+distinction plainly during the demo, not have it implied away.
 
 ```gherkin
 Scenario: BrightAgent proposes the fix instead of making Frank's team re-diagnose it from scratch
@@ -283,14 +316,8 @@ Scenario: BrightAgent proposes the fix instead of making Frank's team re-diagnos
     NUMBER to FLOAT, here's the diff that adapts the model"
   And the PR sits waiting for a human on Frank's team to review and merge it themselves —
     BrightAgent never merges its own fix, no matter how confident the diagnosis
-
-Scenario: the SAME drift, after the fix is merged, no longer breaks the pipeline a third time
-  Given Frank's team merged the PR from the scenario above
-  When the source table drifts again in the exact same way (the same column, the same type
-    change) — the real test of "avoided the recurrence," not just "diagnosed it faster"
-  Then the pipeline run succeeds without a new failure, because the merged fix already
-    generalized to this input — this is the difference between recurrence PREVENTED and
-    recurrence RE-DETECTED, and it's the one this GC's Bar promises Frank
+  And Frank's team now has a real, searchable PR history for this failure class — faster recovery
+    next time, even though this demo does not yet claim the recurrence itself is prevented
 
 Scenario: BrightAgent admits when it doesn't know, instead of guessing
   Given a pipeline failure that doesn't cleanly match a known root-cause pattern
@@ -300,16 +327,27 @@ Scenario: BrightAgent admits when it doesn't know, instead of guessing
     the "this is not live" reaction from 7/9
 ```
 
+**Future scope, NOT demo-gating — kept here so it isn't lost, not deleted just because it's hard**:
+```gherkin
+Scenario: the SAME drift, after the fix is merged, no longer breaks the pipeline a third time
+  Given Frank's team merged the PR from the scenario above
+  When the source table drifts again in the exact same way (the same column, the same type
+    change) — the real test of "avoided the recurrence," not just "diagnosed it faster"
+  Then the pipeline run succeeds without a new failure, because the merged fix already
+    generalized to this input — this is the difference between recurrence PREVENTED and
+    recurrence RE-DETECTED, and it's the stronger claim Suzanne's original commitment implies
+```
+This needs `root_cause_class` sub-classified into type-drift/missing-column/renamed-column (each
+with its own generalized fix template, e.g. explicit `CAST`/`TRY_CAST` for type-drift — a real
+dbt best practice, not invented here) — new capability, no ticket filed yet. Flagging as
+post-demo scope, not silently dropping Suzanne's stronger original wording.
+
 **What proves this, underneath**: reuses Longaeva's GC-11 surgical-PR loop
 (`self-healing-pipelines.md`) as the delivery mechanism, with BH-1047's `root_cause_class`
 classifier (DATA_SHAPE vs JOB_RUNTIME) as the new signal source routing Loop's failures into it.
 The "code-level auto-merge exclusion" referenced above is GC-17, in this spec's own numbering —
 see the Invariants below for how the two cases gate each other; Frank-facing material should
-never need to say "GC-17" out loud. **Scenario 2 (recurrence actually prevented) has no code or
-ticket backing it today** — it depends on the merged fix generalizing (e.g. a type-cast or
-schema-tolerant transform, not a one-off patch matching the exact failure), which is a property
-of how BH-1047's fix-drafting logic is built, not yet specified anywhere. Flagging this as new
-scope this GC's harness cannot claim until BH-1047 is designed with that generalization in mind.
+never need to say "GC-17" out loud.
 
 ### Validation
 Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
@@ -398,7 +436,7 @@ Should ship first among GC-14/15/16/17, both because it's cheapest and because i
 
 ```
 brightbot/tests/integration/golden_cases/
-├── test_gc_14_proactive_monitor_alert.py         # SKIP — BH-1043/1046/1054/1067 not started
+├── test_gc_14_proactive_monitor_alert.py         # SKIP — BH-1043/1046/1054/1067/1087 not started
 ├── test_gc_15_sql_server_disk_monitoring.py       # SKIP — BH-1045/1057 not started
 ├── test_gc_16_fix_recurrence_surfacing.py         # SKIP — BH-1047 not started; blocked on GC-17
 └── test_gc_17_auto_merge_exclusion.py             # SKIP — BH-1047 not started; cheapest to unblock
