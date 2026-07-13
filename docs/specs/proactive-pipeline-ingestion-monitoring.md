@@ -737,6 +737,39 @@ class PipelineHealthSignal:
     workspace_id: str
     source_type: Literal["dbt", "databricks", "etl"]
     job_id: str                       # the dbt job id / Databricks job id / ETL job identifier
+                                       #
+                                       # GAP FOUND, pass 80 (triple-click-zoom) — the SAME
+                                       # "required field never specified per-adapter" gap
+                                       # class found repeatedly in the sibling
+                                       # lineage-aware-data-quality.md spec (Invariants
+                                       # 20/21/22 there). This docstring assumes every source
+                                       # has a natural job/execution identifier — TRUE for
+                                       # dbt (a real dbt Cloud job_id) and Databricks (a real
+                                       # Databricks job_id), but FALSE for BH-1045's
+                                       # "source_disk_low" signal (SQL Server disk-space
+                                       # monitoring is CONNECTION/INSTANCE-scoped, not
+                                       # job-scoped — there is no "job" that ran) and
+                                       # genuinely ambiguous for BH-1051's queue/DLQ signal
+                                       # (a queue has a name/ARN, not a job_id). Since job_id
+                                       # is HALF the cooldown key (Invariant 3's 4-tuple
+                                       # (workspace_id, source_type, job_id, failure_type)),
+                                       # an adapter that invents an inconsistent job_id
+                                       # convention (or leaves it empty) breaks cooldown
+                                       # suppression for that signal type — either
+                                       # over-suppressing (if job_id is empty/constant across
+                                       # every disk check, ALL future disk-low alerts for
+                                       # that workspace collapse into ONE cooldown bucket
+                                       # regardless of which SQL Server instance triggered
+                                       # it) or never suppressing (if job_id is accidentally
+                                       # unique per poll, e.g. a timestamp). FIX, required:
+                                       # BH-1045 SHALL set job_id to a STABLE per-connection
+                                       # identifier (e.g. the warehouseServiceId this signal's
+                                       # connection resolves to, per Invariant 16's
+                                       # multi-connection disambiguation) — never empty, never
+                                       # timestamp-derived. BH-1051 SHALL set job_id to a
+                                       # STABLE per-queue identifier (e.g. the queue ARN or
+                                       # name) for the same reason. See Invariant 18 (new,
+                                       # pass 80).
     failure_type: str                 # the category/stage value, e.g. "dbt_run_failure",
                                        # "source_disk_low" — see the taxonomy list below.
                                        # Cooldown key (Invariant 3, Property 1) is
@@ -1266,6 +1299,33 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     otherwise-real renderer, not a missing renderer case. This is easy to miss precisely
     because the renderer's existence looks like "nothing to build here."`
 
+18. `EVERY PipelineSource adapter (BH-1043/1044/1045 — dbt, Databricks, SQL Server/ETL) SHALL
+    set PipelineHealthSignal.job_id to a STABLE, non-empty, per-source identifier — never
+    left empty and never derived from a value that changes per poll (e.g. a timestamp).
+    CRITICAL, found pass 80: `job_id`'s docstring assumes every source has a natural
+    job/execution identifier, true for dbt/Databricks but FALSE for BH-1045's SQL-Server
+    disk-space signal (connection/instance-scoped, not job-scoped — no "job" ran). Since
+    job_id is HALF of Invariant 3's 4-tuple cooldown key `(workspace_id, source_type, job_id,
+    failure_type)`, an adapter that leaves it empty or constant across every poll would
+    collapse ALL future alerts of that failure_type for a workspace into ONE cooldown bucket
+    — e.g. every SQL Server instance's disk-low alert suppressing every other instance's, if
+    job_id is empty for all of them. Conversely, a timestamp-derived job_id would defeat
+    cooldown entirely (never matching a prior key). BH-1045 SHALL set job_id to a stable
+    per-connection identifier (e.g. the warehouseServiceId this signal's connection resolves
+    to, per Invariant 16's multi-connection disambiguation).
+
+    CORRECTED pass 80 (self-correction, same pass) — this invariant does NOT extend to
+    BH-1051 (queue/DLQ). Verified: BH-1051 is an "IngestionSignalPort" adapter under BH-1048's
+    SEPARATE ingestion contract (§1, "BH-1048 (ingestion contract, separate from the
+    job-status contract above)") — NOT a PipelineSource emitting PipelineHealthSignal. This
+    exposes a DIFFERENT, more foundational gap: BH-1048's own "ingestion signal contract" has
+    NO DTO shape defined anywhere in this spec — `PipelineHealthSignal` is the ONLY concrete
+    signal type this spec actually specifies. BH-1048's implementer must define the ingestion
+    signal's own shape (including whatever its own equivalent of a stable per-source
+    identifier should be, e.g. a queue ARN/name for BH-1051) as part of closing that ticket —
+    it is not free to assume or inherit PipelineHealthSignal's shape without saying so
+    explicitly.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1330,6 +1390,16 @@ Feature: Proactive pipeline & ingestion monitoring
     Then workspace B's alert is NOT suppressed by workspace A's cooldown
     And this holds because the cooldown key includes workspace_id (per Invariant 3's pass-17
       correction — a 3-tuple key without workspace_id would have failed this scenario)
+
+  Scenario: two different SQL Server instances' disk-low alerts do not suppress each other
+    Given a workspace with TWO connected SQL Server instances (via two separate
+      warehouseServiceId connections), both running low on disk space independently
+    When BH-1045's watchdog polls both and emits a "source_disk_low" PipelineHealthSignal
+      for each
+    Then each signal's job_id is set to that specific connection's warehouseServiceId — NOT
+      left empty and NOT shared between the two instances
+    And instance A's disk-low alert does NOT suppress instance B's alert via the cooldown
+      key, since job_id differs between them (per Invariant 18)
 
   Scenario: a real dbt_run_failure event renders full detail, not a near-blank message
     Given BH-1054's watchdog writes a "dbt_run_failure" event's metadata using the EXACT keys
