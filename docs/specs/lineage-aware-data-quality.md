@@ -1839,6 +1839,30 @@ metadata, both production surfaces.**
   test_cases.py}`) but has ZERO existing GC-12/longitudinal-named eval cases (confirmed by
   grep) — there is no eval file to extend for this capability class yet; if BH-1062/1063/1064
   need eval-level coverage beyond unit tests, it starts a new pattern, not extends one.
+
+  **ADDED pass 66 (triple-click-zoom) — Invariants 15/16/17/19 (added passes 44/45/49/55,
+  after pass 14's original §10 pass) had zero corresponding test-coverage callout anywhere in
+  this section — the same class of completeness gap just found and fixed in the sibling
+  proactive-pipeline-ingestion-monitoring.md spec's §10 (pass 65). Closing it here too:**
+  - **Invariant 15** (BH-1062's credential-mismatch risk): a unit test mocking two dbt Cloud
+    accounts' cached session credentials, calling `fetch_lineage_artifacts()` with a `run_id`
+    belonging to the OTHER account, asserting the fetch either fails distinguishably or uses
+    an explicitly-threaded `account_id` — never silently succeeds against the wrong manifest.
+  - **Invariant 16** (BH-1068's Snowflake permission/latency guard): a unit test against a
+    mocked `SnowflakeConnection` returning a permission-denied response for `ACCOUNT_USAGE.*`,
+    asserting `SnowflakeNativeLineageSource` surfaces a distinct typed error — never folds it
+    into an empty "zero dependencies" result. A second case for the latency window (a
+    recently-created object, empty result, asserting the adapter does NOT treat this as
+    authoritative).
+  - **Invariant 17** (BH-1069's session-sharing requirement): a unit test asserting
+    `upsert_lineage_graph()`'s caller constructs exactly ONE `OGMAPISession` across a
+    multi-model loop — e.g. spy/count `OGMAPISession.__init__` calls across a 3-model fixture
+    manifest and assert the count is 1, not 3.
+  - **Invariant 19** (the Port/Adapter wiring gap): a unit test asserting BH-1064's traversal
+    code (or any future lineage-consuming code) imports/references ONLY `LineageSource`/
+    `LineageGraph` — never `fetch_lineage_artifacts`/`LineageArtifacts` directly (a static
+    import-boundary check, not a behavioral one — this is the exact regression pattern that
+    let the Port/Adapter contract silently go unimplemented for as long as it did).
 - **brighthive-platform-core**: `tests/unit/workflow-spec-status-enum.test.ts` is
   `upsertWorkflowStep`'s only direct unit coverage (enum-focused, not the mutation logic
   itself) — `tests/integration/execute-workflow-as-owner.test.ts` exercises the mutation
