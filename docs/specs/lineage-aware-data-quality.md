@@ -706,6 +706,18 @@ async def upsert_lineage_graph(
 # platform-core/src/graphql/ogm/workflow-spec-typedefs.ts:79-97):
 #   type LineageNode {
 #     id: ID! @id
+#     workspaceId: String!            # ADDED pass 50, CRITICAL — see the scoping-gap note
+#                                      # above. LineageNode has NO relationship path to
+#                                      # WorkspaceNode (dependsOn only points to other
+#                                      # LineageNodes) — unlike every other precedent checked
+#                                      # in this codebase. A plain scalar field is the fix:
+#                                      # every read query filters `WHERE workspaceId: $ws`
+#                                      # explicitly; the delete-then-MERGE upsert's MATCH
+#                                      # clause (Invariant 9) MUST include it too, or a
+#                                      # cross-tenant model with the same relation_name could
+#                                      # silently match/delete another workspace's node. MUST
+#                                      # be indexed (composite with relationName, since both
+#                                      # are real query filters, not cosmetic).
 #     uniqueId: String!              # dbt's fully-qualified unique_id, e.g. "model.proj.stg_orders"
 #     name: String!
 #     relationName: String            # ADDED pass 10, CRITICAL — see the bug note before
@@ -726,11 +738,35 @@ async def upsert_lineage_graph(
 # elsewhere in this section said "leave dependsOn undecorated," which CONTRADICTED this
 # quoted type. That contradiction is now resolved: keep `dependsOn` DECORATED as shown here.
 #
-# CONFIRMED: WorkflowStepNode has NO native workspaceId field either — scoping is transitive
-# via a parent relationship (step.spec.project.workspaceId). LineageNode has the same
-# problem (no natural parent to scope through) — the mutation's INPUT must carry workspaceId
-# explicitly and the @authorized directive must reference it there (see mutation shape below),
-# mirroring upsertWorkflowStep's own pattern exactly.
+# CORRECTED pass 50 (triple-click-zoom) — this paragraph was WRONG about WorkflowStepNode
+# and understated the real design gap for LineageNode; re-verified against real code, not
+# the earlier pass's paraphrase.
+#
+# WorkflowStepNode does NOT lack a natural parent — it has a real `spec: WorkflowSpecNode!`
+# relationship (ogm/workflow-spec-typedefs.ts:91) chaining to `WorkflowSpecNode → ProjectNode
+# → WorkspaceNode`. `UpsertWorkflowStepInput.workspaceId` (workflow-spec-typedefs.ts:212-224)
+# and its `@authorized(workspaceIdLoc: ["args", "input", "workspaceId"])` directive
+# (typedefs.ts:4819-4823, exact syntax: a path-segment ARRAY, not a dotted string, resolved
+# via `getId(source, args, workspaceIdLoc)` in `directives/authorized.ts:113`) are
+# DEFENSE-IN-DEPTH on top of that real relationship path, not a substitute for having none.
+#
+# This matters because it changes what "mirror the precedent" actually means for LineageNode.
+# Moot for the PUBLIC-mutation question specifically — Option B (below) already means
+# LineageNode never gets an `@authorized`/`workspaceIdLoc` mutation at all, since it's OGM-
+# only, never public-schema. But the DEEPER scoping question survives Option B and is NOT
+# yet resolved: `MetricSnapshotNode`/`AnomalyEventNode` — the actual OGM-only precedent this
+# spec cites — scope tenancy via their `dataAsset: DataAssetNode!` relationship, which chains
+# to `WorkspaceNode` (`metric-snapshot.ts:90-96,116,182`: writes connect via
+# `dataAsset: { connect: { where: { node: { id: ... } } } }`; reads filter via
+# `dataAsset: { workspaces_SOME: { id: $workspaceId } }`). A code comment there states this
+# explicitly: workspace scoping comes from the dataAsset connect, `input.workspaceId` is
+# intentionally NOT used in the write itself. LineageNode's own decorated relationship
+# (`dependsOn`) points to OTHER LineageNodes, not to any workspace-scoped anchor like
+# DataAssetNode — it does NOT close the same scoping loop `dataAsset` does for
+# AnomalyEventNode/MetricSnapshotNode. Every real OGM node type checked in this codebase
+# (WorkflowStepNode, MetricSnapshotNode, AnomalyEventNode) has at least one relationship
+# chain reaching WorkspaceNode; LineageNode as currently spec'd would be the FIRST fully
+# orphan node type with zero such path. See Invariant 18 (new) for the required fix.
 #
 # EXACT Cypher precedent (workflow-spec.ts:300-314, upsertWorkflowStep) — quoted verbatim,
 # not paraphrased:
@@ -851,9 +887,13 @@ async def upsert_lineage_graph(
 #     one implicit transaction, no new driver API. RECOMMENDATION, supersedes earlier
 #     `writeTransaction` guidance: write the delete-then-MERGE as ONE multi-statement Cypher
 #     string
-#     (`MATCH (n:LineageNode {uniqueId: $id})-[r:DEPENDS_ON]->() DELETE r WITH n UNWIND $depIds
-#     AS depId MATCH (dep:LineageNode {uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one
-#     `session.run()` call.
+#     (`MATCH (n:LineageNode {workspaceId: $workspace_id, uniqueId: $id})-[r:DEPENDS_ON]->()
+#     DELETE r WITH n UNWIND $depIds AS depId MATCH (dep:LineageNode {workspaceId:
+#     $workspace_id, uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one `session.run()`
+#     call. **`workspaceId` added to BOTH MATCH clauses pass 50** — without it on the `dep`
+#     lookup specifically, a dependency edge could silently MERGE across workspaces if two
+#     tenants' dbt projects happen to share a `uniqueId` (dbt's unique_id is
+#     project-namespaced, not globally unique across unrelated customers' projects).
 #     **CORRECTED pass 34 (triple-click-zoom) — this EXACT combined shape (DELETE + WITH +
 #     UNWIND + MERGE, all in ONE string) has NO literal precedent anywhere in this repo,
 #     verified by direct search — do not cite `deleteWorkflowStep` as proof it does.**
@@ -968,9 +1008,16 @@ async def find_downstream_impact(
 # `"MY_DB"."GOLD"."mart_daily_portfolio_exposure"`, the SAME namespace `anomaly.dataset`
 # lives in). BH-1062 must populate `relation_name` from the manifest node's own field; BH-1064
 # must match against it, not `name`/`uniqueId`:
-#   MATCH (start:LineageNode {relationName: $anomaly_dataset})
+#   MATCH (start:LineageNode {workspaceId: $workspace_id, relationName: $anomaly_dataset})
 #                   <-[:DEPENDS_ON*1..50]-(downstream:LineageNode)
 #                   RETURN DISTINCT downstream
+#
+# CRITICAL, added pass 50 — `workspaceId` in the MATCH is NOT optional. relation_name alone
+# is not guaranteed globally unique across workspaces (two customers' dbt projects can easily
+# both have a model materializing to a same-named schema.table, e.g. "GOLD.mart_revenue").
+# Without the workspace filter, this traversal could walk cross-tenant into a DIFFERENT
+# workspace's lineage graph — a real data-isolation violation (PS-13), not merely a
+# correctness nit. See Invariant 18.
 #
 # CORRECTED pass 33 (triple-click-zoom) — the original `*1..` (unbounded) query, verified
 # against this repo's real Cypher conventions and general Neo4j semantics, needed two fixes:
@@ -1227,6 +1274,24 @@ async def find_downstream_impact(
     connection pools per manifest load if copied unmodified into a per-model loop — a real
     cost and resource-leak risk, not a style nit.`
 
+18. `LineageNode SHALL carry a native workspaceId: String! scalar field, and EVERY Cypher
+    query targeting LineageNode (the delete-then-MERGE upsert per Invariant 9, and BH-1064's
+    downstream-impact traversal per Invariant 10) SHALL filter on workspaceId in its MATCH
+    clause, not merely on relationName/uniqueId. CRITICAL, found pass 50: every OGM node type
+    checked in this codebase (WorkflowStepNode, MetricSnapshotNode, AnomalyEventNode) has at
+    least one relationship chain reaching WorkspaceNode; LineageNode's own decorated
+    relationship (dependsOn) points to OTHER LineageNodes, not to any workspace-scoped
+    anchor — it does NOT close the same scoping loop dataAsset does for
+    AnomalyEventNode/MetricSnapshotNode. Without an explicit workspaceId filter, dbt's
+    unique_id (project-namespaced, not globally unique across unrelated customers) or a
+    warehouse-side relation_name collision (two tenants both materializing to a
+    similarly-named schema.table) could cause a cross-tenant MATCH — either silently deleting
+    or MERGE-ing another workspace's edges (a write-side isolation violation), or walking
+    BH-1064's downstream-impact traversal into a different workspace's graph (a read-side
+    isolation violation). This is a data-isolation requirement (PS-13), not a correctness
+    nit — LineageNode would otherwise be the first node type in this codebase with zero
+    workspace-scoping mechanism of any kind.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1375,6 +1440,20 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And the loop does NOT rely on the bare `session or OGMAPISession()` default per iteration,
       which would perform a fresh Cognito login and open a new unclosed connection pool on
       every single model
+
+  Scenario: the lineage graph never leaks across workspaces on a colliding identifier
+    Given workspace A has a LineageNode with uniqueId "model.shared_proj.stg_orders" and
+      relation_name "GOLD.mart_revenue"
+    And workspace B has a DIFFERENT LineageNode that happens to share the SAME uniqueId
+      and/or relation_name (a real possibility — dbt's unique_id is project-namespaced, not
+      globally unique across unrelated customers, and warehouse schema/table names commonly
+      collide across tenants)
+    When BH-1063's delete-then-MERGE upsert runs for workspace A, and separately when
+      BH-1064's downstream-impact traversal runs for an anomaly in workspace A
+    Then neither operation matches, deletes, merges, or returns workspace B's LineageNode or
+      its edges
+    And both operations' Cypher MATCH clauses filter on workspaceId, not merely on
+      uniqueId/relationName alone
 ```
 
 ## 5. Out of Scope
@@ -1440,7 +1519,12 @@ namespace and would silently match zero nodes for a real anomaly. **Extended pas
 namespace-correctness alone is not sufficient — `dataset` is CONFIRMED (via the already-
 shipped BH-743 fix) to vary in quoting/casing/part-count even within its own correct
 namespace, so the match SHALL also apply the SAME `_fqn_variants()`-style normalization
-already precedented for this drift class, not a bare exact-match.
+already precedented for this drift class, not a bare exact-match. **Extended pass 50**:
+correctness within a single workspace is also not sufficient — the match SHALL additionally
+filter on `LineageNode.workspaceId`, since `relation_name` is not guaranteed unique ACROSS
+workspaces (two tenants' warehouses can share a schema.table name); omitting this filter
+risks a cross-tenant match, a data-isolation violation (PS-13) distinct from the
+namespace/format-correctness this property already covers.
 
 **Validates: §3 Invariant 10, §4 Scenarios "the traversal never matches against the wrong
 identifier namespace" and "the traversal survives the SAME FQN drift already fixed once for
