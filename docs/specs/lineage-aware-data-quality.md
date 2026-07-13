@@ -651,6 +651,25 @@ async def upsert_lineage_graph(
 #    — NOT a bare `OGMAPISession()` singleton (the weaker variant at `quality_tools.py:820`,
 #    `profiler_task.py:150`, which this ticket should NOT copy).
 #
+#    CRITICAL, found pass 49 (triple-click-zoom) — the `session or OGMAPISession()` default
+#    is safe for the 9 existing call sites (each fires ONCE per agent turn) but is a genuine
+#    cost/connection-leak risk for THIS ticket specifically, verified against the class's real
+#    lifecycle, not assumed safe by precedent alone. `OGMAPISession.__init__`
+#    (ogm_api.py:44-56) opens a real `requests.Session()` (a pooled connection) and
+#    unconditionally calls `_authenticate()` (ogm_api.py:90-127) — a live Cognito
+#    `USER_PASSWORD_AUTH` HTTP round-trip — on EVERY construction. There is NO module-level
+#    or class-level token cache anywhere in `ogm_api.py` (confirmed by reading the full class
+#    body) and NO `__enter__`/`__exit__`/`close()`/`__del__` — the connection pool is only
+#    reclaimed by eventual Python GC, not deterministically. BH-1062/BH-1063's upsert is
+#    naturally called ONCE PER MODEL in a manifest (a real dbt project can have hundreds), so
+#    if BH-1069's caller loops over models and relies on the bare default (no session passed
+#    in), each iteration performs a fresh Cognito login AND opens a new unclosed connection
+#    pool — hundreds of logins and leaked sockets per manifest load, not the "authenticate
+#    once" cost the existing 9 call sites incur. FIX, REQUIRED not optional: the caller loop
+#    (wherever `upsert_lineage_graph` is invoked once per model) MUST construct ONE
+#    `OGMAPISession` OUTSIDE the loop and pass it explicitly into every call — never rely on
+#    the bare `session or OGMAPISession()` default inside a per-model loop body.
+#
 # 2. `ogm_api.py:146-160`'s real `OGMAPISession.mutation(graphql_mutation, variables,
 #    timeout)` delegates to `_execute_request` (`:162-193`), which calls
 #    `response.raise_for_status()` (raises on transport-level HTTP failure) and returns
@@ -674,9 +693,12 @@ async def upsert_lineage_graph(
 #    `variables`, never string-interpolated into `mutation`.
 #
 # 4. Auth is a FIXED Cognito service-account credential (`OGM_USER`/`OGM_PASSWORD` env vars,
-#    `ogm_api.py:44-116`), authenticated once at `OGMAPISession()` construction and cached on
-#    the instance — NOT a per-request/per-user token. No new auth code needed; this is
-#    already handled by the injected/default-constructed session.
+#    `ogm_api.py:44-116`), authenticated ONCE PER `OGMAPISession` INSTANCE (not cached across
+#    instances — see pass 49's finding above point 1) and cached on that instance — NOT a
+#    per-request/per-user token, and NOT free to construct repeatedly. No new auth CODE is
+#    needed (this class already exists) — but per pass 49, the CALLER must ensure only ONE
+#    instance is constructed across a per-model loop, or "no new auth code needed" silently
+#    becomes "hundreds of new auth calls."
 # SHARPENED pass 3 (triple-click-zoom) — verified against the REAL WorkflowStepNode OGM type
 # and upsertWorkflowStep mutation, not a paraphrase:
 #
@@ -1191,6 +1213,20 @@ async def find_downstream_impact(
     freshness before treating an empty result for a recently-created object as
     authoritative.`
 
+17. `WHEN BH-1069's upsert_lineage_graph() is called once per model in a loop (a real dbt
+    project can have hundreds of models per manifest), THE System SHALL reuse ONE
+    OGMAPISession instance constructed OUTSIDE the loop — it SHALL NOT rely on the bare
+    `session or OGMAPISession()` default inside the loop body. CRITICAL, found pass 49:
+    `OGMAPISession.__init__` (ogm_api.py:44-56) opens a `requests.Session()` and
+    unconditionally performs a live Cognito `USER_PASSWORD_AUTH` HTTP round-trip
+    (`_authenticate()`, ogm_api.py:90-127) on EVERY construction — confirmed no
+    module/class-level token cache exists anywhere in `ogm_api.py`, and no
+    `__enter__`/`__exit__`/`close()`/`__del__` exists to deterministically release the opened
+    connection pool. This default idiom is safe for this repo's 9 EXISTING call sites (each
+    fires once per agent turn) but would multiply into hundreds of Cognito logins and leaked
+    connection pools per manifest load if copied unmodified into a per-model loop — a real
+    cost and resource-leak risk, not a style nit.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1330,6 +1366,15 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       the view's own freshness/last-refresh signal indicates so
     And BH-1064's downstream-impact traversal does NOT treat this empty result as
       authoritative proof "nothing depends on this" while the latency window is still open
+
+  Scenario: upserting a full manifest's worth of models never re-authenticates per model
+    Given a real dbt manifest.json with hundreds of models
+    When BH-1069's caller loops over every model, calling upsert_lineage_graph() once per model
+    Then exactly ONE OGMAPISession is constructed for the entire loop, passed explicitly into
+      every call
+    And the loop does NOT rely on the bare `session or OGMAPISession()` default per iteration,
+      which would perform a fresh Cognito login and open a new unclosed connection pool on
+      every single model
 ```
 
 ## 5. Out of Scope
@@ -1509,7 +1554,7 @@ just that the Cypher string is syntactically well-formed.
 |---|---|---|
 | Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
 | Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
-| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) |
+| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) AND a single shared `OGMAPISession` across the per-model loop (Invariant 17, pass 49) |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
 
 ## Ticket Breakdown
@@ -1523,7 +1568,7 @@ just that the Cypher string is syntactically well-formed.
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
 | BH-1066 | feat: enrich the EXISTING quality_asset_result renderer (Slack + webapp) to surface metadata.longitudinal's real anomaly_count/families fields | Needs Refinement, filed pass 5, **CORRECTED pass 48** (not a new stage, real fields only, S not M) — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
 | BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8, **CORRECTED pass 45** — reuses existing SnowflakeConnection (no new connection type) but requires a permission/latency guard: the recommended least-privilege role posture already silently fails ACCOUNT_USAGE reads in this org's real Longaeva POC deployment (`#825`) |
-| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11 — formerly informal "BH-1063a," now its own trackable ticket |
+| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11, **CORRECTED pass 49** — formerly informal "BH-1063a," now its own trackable ticket; per-model loop MUST share ONE OGMAPISession, not the bare default (real Cognito-login/connection-leak cost otherwise) |
 | BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
 
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
