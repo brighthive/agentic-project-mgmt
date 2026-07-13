@@ -198,6 +198,12 @@ report). Non-blocking for 7/17.
 
 ## Engineering Artifacts
 
+- **Golden Cases (GC-14–17)**: `../../docs/specs/golden-cases-loopcapital.md` — the first Golden
+  Cases ever scoped to Loop Capital (continuing brightbot's Longaeva GC-1–13 numbering). Maps
+  Suzanne's 3 demo points 1:1 to GC-14 (proactive alert), GC-15 (SQL-Server-no-MCP), GC-16
+  (fix-recurrence PR), plus GC-17 (the auto-merge-exclusion safety gate GC-16 depends on).
+  Acceptance criteria are written as Frank's real scenes (a broken nightly Asset Management job,
+  a legacy SQL Server with nothing installed on it), not platform-feature Gherkin alone.
 - **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
   "Start Here" section first. Interface contracts, invariants (18, count re-verified pass 81 —
   was stale at 16), Gherkin AC, eval criteria, observability contract, full pass-by-pass
