@@ -85,6 +85,21 @@ This is a NEW, DISTINCT gap from BH-1091 — BH-1091 verifies the fix WORKED aft
 it; BH-1092 verifies the PR gets OPENED at all after the agent run starts. Both are the same
 "verify, don't assume" principle applied to different points in the same pipeline.
 
+**Confirmed NOT a systemic gap, checked on a follow-up trace**: GC-14/15's dbt/SQL-Server
+DETECTION path (BH-1043/1045/1054) rides the same `scheduled_agent_dispatcher` mechanism but is
+NOT affected by this bug — `quality_check_task`/`profiler_task`/`detect_recurring_patterns`
+(the real precedents BH-1054's watchdog is designed to match) are plain deterministic
+`StateGraph`s with zero LLM tool-choice step, unlike `dbt_agent_react_graph` (which wraps
+`create_agent`). The gap is specific to graphs that wrap `create_agent`/`create_react_agent` —
+currently only the remediation/PR-opening path, not detection. **One cheap hardening worth
+doing regardless**: `action_registry.py`'s `ACTION_REGISTRY` dict
+(`brighthive-platform-core/lambdas/scheduled_agent_dispatcher/action_registry.py:12-21`) has no
+marker distinguishing a deterministic graph from an LLM-agent graph — a future author could
+register a new scheduled action against an LLM-driven graph without the same "this needs
+BH-1092-style verification" flag this trace had to re-derive by reading code. Not filing a
+separate ticket for this — it's a one-line comment/tag addition, appropriately folded into
+BH-1092's own implementation rather than a new abstraction.
+
 ## Areas Involved
 
 | Area | Repo | Role |
