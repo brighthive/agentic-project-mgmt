@@ -779,11 +779,18 @@ class PipelineHealthSignal:
 # with zero visible content because neither brightbot-slack-server nor brighthive-webapp has
 # a rendering CASE for the "longitudinal" stage; the dual-write succeeds but nothing displays):
 # THE SAME GAP EXISTS HERE, CONFIRMED BY DIRECT CODE CHECK, for 5 of the 6 new stage values.
-#   - "dbt_run_failure" — SAFE. Real renderer exists on BOTH sides: brightbot-slack-server's
-#     formatter.ts:152→423 (renderDbtFailureDetails, reads job_id/model_name/error into real
-#     text) AND brighthive-webapp's mappers.ts:33 ("dbt run failed" label) +
-#     constants.ts:159 (grouped under pipeline). This one is genuinely reused, not just
-#     registered-and-ignored.
+#   - "dbt_run_failure" — SAFE, BUT NOT FREE, verified pass 64: real renderer exists on BOTH
+#     sides: brightbot-slack-server's formatter.ts:152→423 (renderDbtFailureDetails, reads
+#     EXACTLY metadata.model_name/job_id/error/log_id, all snake_case, nothing else) AND
+#     brighthive-webapp's mappers.ts:33 ("dbt run failed" label) + constants.ts:159 (grouped
+#     under pipeline). This one is genuinely reused, not just registered-and-ignored — BUT
+#     `NotificationEvent.metadata` is typed `Record<string, unknown>` (types.ts:119, fully
+#     free-form) and the write boundary (routes.ts:289-318) only checks "is metadata an
+#     object," never key names. If BH-1054 populates differently-named fields (jobId,
+#     errorMessage, model — all plausible without reading this exact renderer), the
+#     dual-write succeeds and delivers, but renders a near-blank message with no error/job/
+#     log detail — the SAME dead-end as the 5 missing-renderer stages below, just caused by a
+#     field-name mismatch instead of a missing case. BH-1054 MUST use these 4 exact keys.
 #   - "dbt_run_stale", "databricks_job_failure", "databricks_cluster_unhealthy",
 #     "etl_job_failure", "source_disk_low" — ALL 5 DO NOT EXIST in either repo's stage
 #     type union (brightbot-slack-server's NotificationStage, types.ts:2-36;
@@ -1223,6 +1230,20 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     confirmed, documented single-connection-per-workspace assumption for its target
     deployment — never a silent "pick the first" with no acknowledgment either way.`
 
+17. `WHEN BH-1054's watchdog writes a "dbt_run_failure" event's metadata, THE System SHALL use
+    EXACTLY the field names `model_name`/`job_id`/`error`/`log_id` (all snake_case) — no
+    other naming. CRITICAL, found pass 64: `renderDbtFailureDetails`
+    (brightbot-slack-server/src/notifications/formatter.ts:423-443) reads ONLY these 4 exact
+    keys off `event.metadata`. `NotificationEvent.metadata` is typed `Record<string,
+    unknown>` (types.ts:119) — fully free-form, no compile-time contract — and the write
+    boundary (routes.ts:289-318) only validates "is metadata a plain object," never key
+    names. A watchdog writer that populates differently-named fields (e.g. `jobId`,
+    `errorMessage`, `model`) would pass validation and deliver successfully, but render a
+    near-blank message with no error/job/log detail — the SAME visible dead-end Invariant 15
+    describes for 5 other stage values, except caused by a field-NAME mismatch on an
+    otherwise-real renderer, not a missing renderer case. This is easy to miss precisely
+    because the renderer's existence looks like "nothing to build here."`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1287,6 +1308,17 @@ Feature: Proactive pipeline & ingestion monitoring
     Then workspace B's alert is NOT suppressed by workspace A's cooldown
     And this holds because the cooldown key includes workspace_id (per Invariant 3's pass-17
       correction — a 3-tuple key without workspace_id would have failed this scenario)
+
+  Scenario: a real dbt_run_failure event renders full detail, not a near-blank message
+    Given BH-1054's watchdog writes a "dbt_run_failure" event's metadata using the EXACT keys
+      model_name, job_id, error, log_id (per Invariant 17)
+    When the event reaches brightbot-slack-server's renderDbtFailureDetails
+    Then the rendered message includes the real model name, job id, error text, and log id —
+      not just the generic "A dbt run failed." intro
+    And if the watchdog had instead used differently-named fields (e.g. jobId, errorMessage),
+      this scenario would catch it: the message would render near-blank despite the
+      dual-write succeeding and delivering — the exact silent-failure mode Invariant 17 exists
+      to prevent
 
   Scenario: DATA_SHAPE root cause routes to the existing surgical-PR loop
     Given a watchdog signal is classified root_cause_class=DATA_SHAPE
@@ -1668,11 +1700,11 @@ unless noted):
 |---|---|---|
 | BH-1053 | Decision: resolve BrightSignals' 3-way split-brain into a unified write entrypoint | Needs Refinement, non-blocking (watchdog dual-writes in the interim, per Invariant 6) |
 | BH-1042 | spec: watchdog capability-node contract (dbt/Databricks/ETL job-status) | Needs Refinement, revised to match this spec |
-| BH-1054 | feat: watchdog poller — the actual missing proactivity primitive | Needs Refinement, revised to ride existing dispatcher |
+| BH-1054 | feat: watchdog poller — the actual missing proactivity primitive | Needs Refinement, revised to ride existing dispatcher; **pass 64**: dbt_run_failure metadata MUST use exact model_name/job_id/error/log_id keys (Invariant 17) |
 | BH-1043 | feat: dbt job/run health poller | Needs Refinement |
 | BH-1044 | feat: Databricks job/cluster health adapter | Needs Refinement |
 | BH-1045 | feat: generic ETL / SQL-Server disk-via-existing-connection adapter | Needs Refinement, revised — tier-1 answer to Frank's objection |
-| BH-1046 | feat: verify watchdog events reach existing delivery (not new delivery code) | Needs Refinement, revised down to verification-only |
+| BH-1046 | feat: verify watchdog events reach existing delivery (not new delivery code) | Needs Refinement, revised down to verification-only; **pass 64**: verification MUST include the exact 4 metadata field names the renderer reads, not just "it renders" |
 | BH-1047 | feat: wire watchdog failures into self-healing-pipelines.md's surgical-PR loop | Needs Refinement, revised to extend GC-11 rather than compete |
 | BH-1048 | spec: ingestion signal contract — **CORRECTED pass 31**: "reuses an existing delivery path" was FALSE (the EventBridge→notification_dispatcher chain is undeployed); must choose between deploying that missing infra or routing through the CONFIRMED-real BrightSignals dual-write directly | Needs Refinement, revised pass 31 — real open decision, not settled (BH-1037) |
 | BH-1049 | feat: Airbyte/source-sync watchdog — greenfield IN BRIGHTBOT (pass 5) but a cheaper push-based path exists in platform-core's existing airbyte_notification_webhook (pass 13) | Needs Refinement, revised pass 13 — must evaluate extending the existing reactive webhook's no-op failure branch before defaulting to a new poller |
