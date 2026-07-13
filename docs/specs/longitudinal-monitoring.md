@@ -100,13 +100,13 @@ Feature: Longitudinal anomaly monitoring (GC-12 / GAP-8)
 
 ## Ticket Breakdown
 
-> **Status (2026-06-18, SHIPPED + staging-verified).** The algorithm was already done (#557/#563 pure functions); the build wired it in as an **agentic capability** — monitoring is something the quality agent *does*, reachable through the platform's existing `run_context` surfaces (ingestion/scheduled/on-demand), NOT parallel infra. All PRs merged + promoted develop→staging; staging E2E passed against OneTen + platform-core OGM (4 families detected, write→trailing-window→detect→read round-trip, workspace-scoped). See `longitudinal-monitoring-capability.md` for the interface contract + `longitudinal-monitoring-deployment.md` for the deploy/test record. Tickets roll up to BH-600 / GC-12 under epic BH-601.
+> **Status (2026-06-18, SHIPPED + staging-verified).** The algorithm was already done (#557/#563 pure functions); the build wired it in as an **agentic capability** — monitoring is something the quality agent *does*, reachable through the platform's existing `run_context` surfaces (ingestion/scheduled/on-demand), NOT parallel infra. All PRs merged + promoted develop→staging; staging E2E passed against OneTen + platform-core OGM (4 families detected, write→trailing-window→detect→read round-trip, workspace-scoped). See `longitudinal-monitoring-capability.md` for the interface contract + `longitudinal-monitoring-deployment.md` for the deploy/test record. Tickets roll up to BH-668/669/670 / GC-12 under epic BH-601 — **CORRECTED (triple-click-zoom loop, agentic-project-mgmt pass 63)**: "BH-600" in an earlier version of this line was a separate, unrelated child ticket under the same BH-601 epic (`In Progress`, not part of the shipped work below) — the real shipped tickets are the three listed in the table immediately below, all merged + staging.
 
 | Ticket | What | Repo | PR | Status |
 |---|---|---|---|---|
 | BH-668 | `MetricSnapshotNode` + `AnomalyEventNode` persistence (own store — NOT BH-503's execution store, which holds pass/fail not raw metrics). Workspace-scoped reads. | platform-core | #891 | ✅ merged + staging |
 | BH-669 | Longitudinal monitoring as a **capability node** in `quality_check_agent` (best-effort; INV-1 snapshot-every-run, INV-2 detect iff `run_context != INGESTION` + history). Consumes #557/#563. | brightbot | #575, #579 (flag) | ✅ merged + staging |
-| BH-670 | Runs on the **existing** scheduled dispatcher + `run_context` (reframed: no new EventBridge). Honors BH-503 `applyOnSchedule`. | platform-core | — | ⏳ small — cadence wiring remains |
+| BH-670 | Runs on the **existing** scheduled dispatcher + `run_context` (reframed: no new EventBridge). Honors BH-503 `applyOnSchedule`. | platform-core / brightbot | #724 | ✅ merged 2026-06-25 — confirmed wired end-to-end 2026-07-10 (`scheduled_agent_dispatcher/actions/langgraph_action.py` → `quality_check_task.py` → `quality_check_agent.py` → `longitudinal_node.py`) |
 | BH-671 | Analyst read path — `get_anomalies` MCP tool (grounded in `AnomalyEventNode`, workspace-scoped from principal). | brightbot | #575 | ✅ merged + staging (E2E-verified) |
 | BH-672 | `longitudinal_anomaly` QualityRule type — validation (closed family set) + webapp "Data Drift Monitor" editor + runtime feature flag. | platform-core + webapp | #891, #1178, #1181 | ✅ merged + staging |
 | BH-673 | Anomaly → dbt-agent self-healing bridge — **DEFERRED**. | brightbot | — | deferred |
@@ -120,3 +120,4 @@ Feature: Longitudinal anomaly monitoring (GC-12 / GAP-8)
 - `clients/trials/longaeva/BRIGHTHIVE_GAPS.md` §GAP-8 — gap inventory
 - `clients/trials/longaeva/sandbox/monitoring/` — proven reference implementation (DDL + monitor)
 - `brightbot/tests/integration/golden_cases/test_gc_12_longitudinal_anomaly.py` — acceptance bar
+- **Extended by**: `proactive-pipeline-ingestion-monitoring.md` — reuses this spec's capability-node + existing-dispatcher scheduling pattern for job/run-STATUS watchdogs (distinct from this spec's data-quality metrics)

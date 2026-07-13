@@ -1,11 +1,11 @@
 ---
 title: BrightRoutines Intent Loop
 epic: BH-876
-tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-949, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970]
+tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-949, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970, BH-1001, BH-1002, BH-1003, BH-1004]
 author: codex
-status: in-progress
+status: implemented-verified-staging
 created: 2026-06-30
-last-reviewed: 2026-07-06
+last-reviewed: 2026-07-13
 generates: tickets
 tags:
   - brightagent
@@ -723,6 +723,9 @@ all fixed (each in a green PR; the one live-harm item merged + deployed):
   recipients / contributors; unowned routine forbidden; Neo4j edges as SSOT.
 
 ### Not yet built (next phase)
+> These two items are tracked as separate follow-up tickets, not blockers on
+> the epic's Done status — BH-876 itself shipped and is verified live on
+> staging without them.
 - **§11 online eval / circuit breaker** — designed, unbuilt (BH-956/957).
 - **Capture OTel spans** (BH-972) — classify + write path spans (spec §9).
 
@@ -790,7 +793,7 @@ BH-885 (webapp UI) starts.
 
 ---
 
-## 15. W/P/U Scoring Layer (BH-950, 2026-07-03)
+## 16. W/P/U Scoring Layer (BH-950, 2026-07-03)
 
 Rollup layer on top of §6's per-pattern outputs. Answers *"which
 workspace / project / user has the strongest routine adoption?"* without
@@ -873,6 +876,121 @@ a chat-turn capability. Wrapping it in a skill (`brightbot/skills/`) or
 subagent (`docs/CREATING_SUBAGENTS.md`) would add a conversational loop
 with no user to converse with. Pure Python module + Protocol store +
 MCP read-tool is the right encapsulation.
+
+## 16. Action/Artifact Type + Accountability Model (BH-963, shipped 2026-07-04)
+
+Kuri (2026-07-03): a routine card showed title + cadence but not WHAT the
+routine is (SQL? dbt run? table refresh? PDF? execution?) or WHO owns,
+accepts, and receives it. A 4-agent panel (solutions-architect,
+brighthive-product-voice, ux-designer, brightagent-enduser) converged on
+the design below. Implementation shipped ahead of this write-up landing
+(BH-964/965/966/968/969/970, PR #765 and follow-ons) — this section is the
+retroactive spec-first record, confirmed against the merged code.
+
+### 16.1 "What is it" — two orthogonal axes, outcome-framed
+
+```python
+ActionKind     = SQL_QUERY | DBT_RUN | QUALITY_CHECK | AGENT_TASK | EXPORT
+OutputArtifact = TABLE | VIEW | CSV | PDF | DASHBOARD | SLACK_MESSAGE | NOTIFICATION | CHAT_ANSWER
+```
+
+Two-phase provenance, both nullable on `RoutineSuggestion`:
+
+- **Offer time**: `proposed_action_kind` / `proposed_output_artifact` — hints
+  from the Haiku classifier (§5), low-confidence. Most resolve to
+  `AGENT_TASK` + `CHAT_ANSWER` until more graphs than `summary-agent` exist
+  (BH-955). Do not overclaim.
+- **Schedule time**: `resolved_action_kind` / `resolved_output_artifact` —
+  deterministic from the WorkflowSpec's AGENT step + tool allowlist
+  (`dbt.*`→`DBT_RUN`, `warehouse.query`→`SQL_QUERY`, `quality.*`→
+  `QUALITY_CHECK`, `export.*`→`EXPORT`). This is the UI source-of-truth once
+  scheduled — `RoutineSuggestionCard.tsx` prefers `resolved_*` over
+  `proposed_*` (`suggestion.resolved_action_kind ?? suggestion.proposed_action_kind`).
+
+**UX rule**: the card shows the OUTCOME, never the pipeline noun — "Report in
+Slack" / "Refreshes the customer_orders table", never "dbt run" /
+"execute_workflow". `outcomeLabel()` (`webapp/src/Context/routines/format.ts`)
+buckets into **delivers-to-you** (read, calm grey) vs **changes-your-data**
+(write, amber caution tint).
+
+### 16.2 The one trust primitive: read/write authority
+
+The safe-vs-reckless axis is blast radius, surfaced as "Read-only · runs as
+you". §9 invariant 5 (runs under owner perms, rechecked per run) and
+invariant 6 (read-only default) already encoded this; `outcomeLabel()`'s
+`changesData` flag is what makes it visible on the card.
+
+### 16.3 Accountability — four roles
+
+- **OWNER** (`owner_user_id`) — accountable, runs under their perms.
+  **New §9 invariant 10: an unowned routine cannot run** — enforced in code
+  by `persistRoutineOwnership` (`platform-core/src/graphql/service/neo4j/routine-ownership.ts`),
+  which throws if `ownerUserId` is falsy rather than writing a partial edge.
+- **ACCEPTER** (`accepted_by` + `accepted_at`) — who clicked Schedule; audit;
+  defaults to owner. Currently always equals owner (no delegated-scheduling
+  path exists yet — `accepterUserId: ownerUserId` in
+  `scheduleRoutineSuggestion`).
+- **RECIPIENTS** (`recipient_user_ids`) — who gets output; editable at
+  schedule-time via the `recipientUserIds` GraphQL arg, defaults to
+  `[owner]`. Requested recipients are filtered down to real workspace
+  members by `filterRecipientsToWorkspaceMembers` (Cypher `IS_A`/`HAS_A`
+  membership check) before being persisted — closes the cross-tenant leak
+  where a caller could name a user from another workspace. **New §9
+  invariant 11: Viewers can never be recipients** (membership filter matches
+  on role edge presence, not role type, so this still needs an explicit role
+  check — tracked as BH-984's unbounded-fanout hardening ticket, not yet a
+  role-exclusion; recorded here as a known gap, not closed by this section).
+- **CONTRIBUTORS** (on the pattern) — distinct users whose signals triggered
+  it; not yet wired into recipient defaulting (would drive "suggest sending
+  to the people who asked" — unshipped, no ticket filed yet).
+
+Pre-accept (`OFFERED`) there is no owner — ownership is post-accept only,
+matching the "Scheduling makes you the owner" framing.
+
+### 16.4 Storage
+
+Neo4j SSOT edges, `platform-core/src/graphql/service/neo4j/routine-ownership.ts`:
+
+```text
+(User)-[:OWNS]->(RoutineScheduleNode)
+(User)-[:ACCEPTED {at}]->(RoutineScheduleNode)
+(User)-[:RECEIVES]->(RoutineScheduleNode)
+(RoutineScheduleNode)-[:DERIVED_FROM]->(RoutineSuggestionNode)
+```
+
+Written non-blocking at the tail of `scheduleRoutineSuggestion`'s commit —
+a graph write failure logs loudly and does not fail the mutation, since the
+DynamoDB row is already committed and linked; a reconcile pass repairs the
+edges. DynamoDB keeps the fast-read mirror (`owner_user_id`,
+`recipient_user_ids`) that the list/read surfaces actually query.
+
+### 16.5 Spec deltas realized
+
+- §3 DTOs: `RoutineSuggestion` GraphQL type gained `proposedActionKind`,
+  `proposedOutputArtifact`, `resolvedActionKind`, `resolvedOutputArtifact`,
+  `ownership: RoutineOwnership` (`ownerUserId`, `ownerName`,
+  `recipientUserIds`).
+- §4 storage: Neo4j ownership edges (§16.4) added alongside the existing
+  DynamoDB attrs in §4.3; no new DynamoDB attrs beyond `owner_user_id`/
+  `recipient_user_ids` (already listed in §4.3, now populated in production).
+- §5 classifier: not yet emitting `action_kind`/`output_artifact` hints —
+  `proposed_action_kind`/`proposed_output_artifact` are wired end-to-end
+  but currently always null pending a classifier update. Tracked as an open
+  gap, not closed by BH-963's shipped scope.
+- §7 schedule flow: owner/accepter split and editable recipients (BH-970)
+  both shipped; contributor-based recipient defaulting (§16.3) unshipped.
+- §9 governance: invariants 10 (no unowned routine runs) and 11 (Viewers
+  excluded from recipients — partially; see §16.3 gap note) added.
+
+### 16.6 End-to-end verification (2026-07-06)
+
+Full ownership lifecycle confirmed against real deployed staging as part of
+the BH-982 fix verification: `scheduleRoutineSuggestion` set
+`ownership.ownerUserId` to the caller's Cognito `sub`; `unscheduleRoutine`
+cleared it back to `null`. Neo4j edge writes were not independently queried
+in that pass (DynamoDB mirror + GraphQL response were the verification
+surface) — a dedicated Neo4j-edge read-back test is the natural next
+real-behavior check, not yet performed.
 
 ## 17. BH-949 Spec Revisit — Kuri's Decisions (2026-07-06)
 
