@@ -288,8 +288,11 @@ already computed, not a new BrightHive-built lineage engine.
 1. No manifest/catalog fetch or parse exists (BH-1062 closes this).
 2. No dbt DAG in Neo4j (BH-1063 closes this).
 3. No anomaly→lineage bridge (BH-1064 closes this, and closes the pre-existing BH-673 gap).
-4. No Databricks lineage consumption at all (deferred until BH-1044 resolves AND the
-   connection-plumbing gap above is separately built).
+4. No Databricks lineage consumption at all — **now tracked as BH-1074 (filed pass 72,
+   previously the one gap in this list with no real ticket)**. Deferred until BH-1044
+   resolves (a DIFFERENT ticket, Track B's job/cluster health monitoring — reuse its
+   credential-storage pattern only) AND the connection-plumbing gap above is separately
+   built.
 5. No Snowflake-native lineage consumption at all (Snowpipe/Tasks/Streams/Dynamic Tables via
    ACCOUNT_USAGE views) — NEW gap, added pass 8, not previously scoped. Cheaper than gap 4
    (reuses existing SnowflakeConnection) but equally unbuilt today.
@@ -354,8 +357,10 @@ class LineageNode:
 # reuse the SAME registry shape here, don't invent a third variant):
 LINEAGE_SOURCE_ADAPTERS: dict[str, type[LineageSource]] = {
     DBT: DbtLineageSource,           # BH-1062 implements this adapter — FIRST, not ONLY
-    DATABRICKS: DatabricksLineageSource,  # future — CORRECTED pass 7: greenfield regardless
-                                           # of BH-1044 (credential-location decision only);
+    DATABRICKS: DatabricksLineageSource,  # BH-1074, filed pass 72 — future, CORRECTED pass 7:
+                                           # greenfield regardless of BH-1044 (a DIFFERENT
+                                           # ticket, Track B's job/cluster health monitoring,
+                                           # not lineage — credential-storage pattern only);
                                            # needs NEW WarehouseType enum members on BOTH
                                            # brightbot + platform-core (currently closed to
                                            # redshift/snowflake/azure_synapse/postgres) PLUS
@@ -1690,7 +1695,8 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | `WorkflowStepNode`'s `DEPENDS_ON` delete-then-MERGE precedent (`workflow-spec.ts:299-317`) | Non-blocking (pattern mirrored, not reinvented) — corrected pass 1, was wrongly cited as DataAssetNode | Live |
 | brightbot's OGM HTTP path (`ogm_api.py:34-70`) | Blocking — BH-1063's brightbot half MUST go through this, no new Neo4j driver | Live |
 | **platform-core engineering capacity** (verified pass 1: BH-1063 is 2-repo work) | Blocking — this spec cannot ship with brightbot-only resourcing | New dependency, not previously called out |
-| BH-1044 (Databricks credential storage/lookup design) | Blocking for the Databricks half, but NOT sufficient by itself — see below | **RE-CHECKED pass 53 (fresh, not carried forward)**: no longer just an "open decision" — its own ticket (pass 24, in the sibling proactive-pipeline-ingestion-monitoring.md's Track B scope) resolved the design to a concrete pattern: mirror dbt's per-CONNECTION direct-boto3 secret read (`_retrieve_dbt_cloud_api_token()`, `credentials_tools.py:166-200`) keyed on `(workspace_id, service_id)`, not workspace_id alone, with no caching layer. Confirmed Jira status still `Needs Refinement` — the DESIGN is settled, the code is not yet built. This spec's Databricks lineage adapter (DatabricksLineageSource) should reuse this SAME resolved credential pattern once BH-1044 ships, not re-derive its own. |
+| BH-1044 (Databricks credential storage/lookup design — a DIFFERENT ticket, Track B's job/cluster health monitoring) | Blocking for BH-1074's credential pattern, but NOT sufficient by itself — see below | **RE-CHECKED pass 53 (fresh, not carried forward)**: no longer just an "open decision" — its own ticket (pass 24, in the sibling proactive-pipeline-ingestion-monitoring.md's Track B scope) resolved the design to a concrete pattern: mirror dbt's per-CONNECTION direct-boto3 secret read (`_retrieve_dbt_cloud_api_token()`, `credentials_tools.py:166-200`) keyed on `(workspace_id, service_id)`, not workspace_id alone, with no caching layer. Confirmed Jira status still `Needs Refinement` — the DESIGN is settled, the code is not yet built. |
+| BH-1074 (Databricks LINEAGE adapter — DatabricksLineageSource, filed pass 72) | Blocking for Gap 4; was previously the one gap in this spec's own list with NO real ticket | **FILED pass 72** — reuses BH-1044's resolved credential pattern once it ships, but implements a DIFFERENT Protocol (LineageSource, not PipelineMonitorPort) for a different purpose (fetching Unity Catalog's own lineage, not polling job/cluster health). Do not conflate the two Databricks tickets. |
 | Databricks connection-type plumbing (new WarehouseType enum + connector + Unity Catalog system-schema enablement) | Blocking for the Databricks half, independent of BH-1044 | **CORRECTED pass 7**: confirmed zero Databricks code exists in brightbot or platform-core outside vendored deps — this is greenfield regardless of how BH-1044 resolves, not merely gated behind it |
 | BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, **CORRECTED pass 48**: not a new `NotificationStage`/`BackendStage` case — the `metadata.longitudinal` blob already rides inside the existing `quality_asset_result` stage; this ticket enriches that stage's renderer to surface `anomaly_count`/`families` (real fields — `dataset`/`family`/`severity` do NOT exist on this blob, an earlier pass's ticket text was wrong), downgraded M→S |
 | Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — permits arbitrary `SELECT` syntactically, but **CORRECTED pass 45**: its own docstring recommends a least-privilege role, and ACCOUNT_USAGE reads need IMPORTED PRIVILEGES/ACCOUNTADMIN — confirmed via SNOWFLAKE_POC_HANDOFF.md that the real Longaeva POC role already hit and silenced this exact permission gap (`#825`) |
@@ -1921,6 +1927,7 @@ just that the Cypher string is syntactically well-formed.
 | BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8, **CORRECTED pass 45** — reuses existing SnowflakeConnection (no new connection type) but requires a permission/latency guard: the recommended least-privilege role posture already silently fails ACCOUNT_USAGE reads in this org's real Longaeva POC deployment (`#825`) |
 | BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph(graph: LineageGraph) | Needs Refinement, filed pass 11, **CORRECTED pass 49, pass 56** — formerly informal "BH-1063a," now its own trackable ticket; per-model loop MUST share ONE OGMAPISession (not the bare default); signature takes the shared LineageGraph shape, not dbt-specific LineageArtifacts |
 | BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
+| BH-1074 | feat(lineage): Databricks lineage adapter (DatabricksLineageSource) | Needs Refinement, filed pass 72 — closes Gap 4, which had NO ticket despite every other spec gap being tracked; distinct from BH-1044 (Track B's Databricks job/cluster health monitoring — different Protocol, different purpose) |
 
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
 

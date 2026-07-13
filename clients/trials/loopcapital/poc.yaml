@@ -189,6 +189,9 @@ phases:
       - day: "Post-demo"
         outcome: "BH-1070 — test coverage gap: metric-snapshot.ts (BH-1063b's own cited precedent) has zero existing tests; non-blocking tech debt, tracked for visibility"
         linked: [BH-1070]
+      - day: "Post-demo"
+        outcome: "BH-1074 — filed pass 72: Databricks lineage adapter (DatabricksLineageSource) closes Gap 4, which had NO ticket of any kind despite every other spec gap being tracked. Distinct from BH-1044 (Track B's Databricks job/cluster health monitoring — a different Protocol, easily confused since both are 'the Databricks ticket')."
+        linked: [BH-1074]
 
   - title: "Non-blocking, tracked separately"
     description: >
