@@ -171,8 +171,10 @@ status-code branch on an already-read field, not new capability. Still unbuilt, 
 of GC-14, but no longer zero-ticket.
 
 ### Validation
-Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_14_proactive_monitor_alert.py`
-— `pytest.skip("BH-1043/1046/1054/1067/1087 not started")` until code lands.
+**Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_14_proactive_monitor_alert.py`
+— one main verdict-recording test + 3 documented sub-case stubs (dual-write, retry-storm
+suppression, cancelled-run suppression). All 4 currently `pytest.skip` until BH-1043/1046/1054/
+1067/1087 land — verified they collect and skip cleanly, zero collection errors.
 
 ---
 
@@ -261,10 +263,11 @@ instance; the second scenario (DR replica) is not yet exercised against a real s
 flagging as the one part of GC-15 still resting on the invariant text alone, not a live test.
 
 ### Validation
-Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_15_sql_server_disk_monitoring.py`
-— can now point directly at `clients/trials/loopcapital/sandbox/` for its fixture instead of
-`pytest.skip`ping on missing infrastructure; still blocked on BH-1045's actual query code landing
-in brightbot.
+**Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_15_sql_server_disk_monitoring.py`
+— points directly at `clients/trials/loopcapital/sandbox/` for its fixture (no longer
+`pytest.skip`ping on missing infrastructure, since that's built and verified). 3 sub-case
+stubs (disk-check, job-status, multi-connection disambiguation) still `pytest.skip` — blocked
+on BH-1045's actual query code landing in brightbot.
 
 ---
 
@@ -377,9 +380,12 @@ see the Invariants below for how the two cases gate each other; Frank-facing mat
 never need to say "GC-17" out loud.
 
 ### Validation
-Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
-— `pytest.skip("BH-1047 not started; blocked on GC-17")`. The harness MUST assert GC-17's
-verdict is PASS before executing GC-16's own scenarios, not just skip independently.
+**Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
+— `pytest.skip("BH-1047 not started; blocked on GC-17")` on the main test, plus a dedicated
+sub-case stub (`test_gc_16_requires_gc_17_pass_as_precondition`) documenting the still-unbuilt
+cross-GC precondition check, and an `xfail(strict=False)` stub for the future-scope
+recurrence-prevented scenario. The harness MUST assert GC-17's verdict is PASS before executing
+GC-16's own scenarios once that precondition check is implemented — not just skip independently.
 
 ---
 
@@ -451,15 +457,17 @@ this is enforced ONLY by a system-prompt instruction (`dbt_react_system_prompt.p
 zero code-level backstop — the gap this GC exists to close before GC-16 is ever demoed.
 
 ### Validation
-Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_17_auto_merge_exclusion.py`
-— a **pure static/unit test**, no live Snowflake/AWS gate needed: assert
-`"github_merge_pull_request" not in {t.name for t in REMEDIATION_TOOLS}`. This is the cheapest
-GC in this spec to make LIVE — no infrastructure blocker, only code that hasn't been written yet.
-Should ship first among GC-14/15/16/17, both because it's cheapest and because it gates GC-16.
+**Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_17_auto_merge_exclusion.py`
+— a **pure static/unit test**, no live Snowflake/AWS gate needed: will assert
+`"github_merge_pull_request" not in {t.name for t in REMEDIATION_TOOLS}` once `REMEDIATION_TOOLS`
+exists. This is the cheapest GC in this spec to make LIVE — no infrastructure blocker, only code
+that hasn't been written yet, and the cheapest test file in this whole set to promote out of
+skip. Should ship first among GC-14/15/16/17, both because it's cheapest and because it gates
+GC-16.
 
 ---
 
-## Per-GC harness layout (proposed, mirrors brightbot's existing convention)
+## Per-GC harness layout (FILED — brightbot PR #811, mirrors brightbot's existing convention)
 
 ```
 brightbot/tests/integration/golden_cases/
@@ -469,9 +477,10 @@ brightbot/tests/integration/golden_cases/
 └── test_gc_17_auto_merge_exclusion.py             # SKIP — BH-1047 not started; cheapest to unblock
 ```
 
-None of these files exist yet — filing them is a small, mechanical follow-up once this spec is
-reviewed, not gated on any of BH-1042–1067 landing first (the `pytest.skip` reason string is
-itself useful CI-visible tracking even with zero implementation).
+All 4 files now exist (brightbot PR #811, 2026-07-13) — 16 tests total (4 main verdict-recording
+tests + 12 documented sub-case stubs), verified to collect and skip cleanly under pytest. The
+`pytest.skip` reason strings are CI-visible tracking even with zero implementation; each stub's
+docstring names the exact assertion it will make once its blocking ticket lands.
 
 ## Relationship to Longaeva's Golden Cases
 
