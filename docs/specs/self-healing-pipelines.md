@@ -76,14 +76,35 @@ DIFFERENT failure mode than "the tool call failed" (which would be a visible err
 "the model never tried," and nothing in this spec's Acceptance Criteria or Eval Criteria
 catches it.
 
-**Filed: BH-1092.** Scope: option (a) — a deterministic verification step after the agent run
-completes (did a PR with the expected shape actually get opened? if not, alert, don't stay
-silent). Option (b) — a more direct invocation path than "start an LLM thread and hope,"
-bypassing the agent loop for this one deterministic action — is explicitly OUT of BH-1092's
-scope; that's a larger architectural change needing its own design pass, not this ticket's job.
-This is a NEW, DISTINCT gap from BH-1091 — BH-1091 verifies the fix WORKED after a human merges
-it; BH-1092 verifies the PR gets OPENED at all after the agent run starts. Both are the same
-"verify, don't assume" principle applied to different points in the same pipeline.
+**Filed: BH-1092. Deliberately does NOT bypass the deep-agent loop** — the platform's own
+direction is skills/tools/agents with pseudo-deterministic pathways where it matters (a thin,
+checkable boundary at the edges) while letting the deep agent itself reason freely about
+diagnosis, fix authoring, and PR content. Rewriting the invocation mechanism to force a
+deterministic tool call (bypassing the agent's own judgment about HOW to fix the failure) would
+trade away exactly the flexibility that makes an agent useful for a problem class this
+mechanical. **Scope, kept narrow on purpose**: a thin, deterministic CHECK after the agent run
+completes — did a PR matching the expected signature actually get opened? If not, alert; don't
+stay silent. The agent still decides everything about the fix itself; this only confirms the
+outcome landed. This is a NEW, DISTINCT gap from BH-1091 — BH-1091 verifies the fix WORKED
+after a human merges it; BH-1092 verifies the PR gets OPENED at all after the agent run starts.
+Both are the same "trust the agent, verify the outcome" principle applied to different points
+in the same pipeline — neither second-guesses the agent's reasoning, both just confirm the
+real-world side effect actually happened.
+
+**Eval criterion for BH-1092, closing a gap found on review**: `RemediationScopeEvaluator`
+(`proactive-pipeline-ingestion-monitoring.md` §8) checks diff-SCOPING on a PR that already
+exists — it says nothing about whether a PR exists at all. Neither evaluator exists as code
+yet (both are spec-prose, confirmed by grep against `brightbot`), but the DESIGN should not
+conflate the two concerns. BH-1092 needs its OWN deterministic check, not a reuse of
+`RemediationScopeEvaluator`:
+
+- **PRExistenceCheck** (deterministic, no LLM judge needed — a GitHub API / platform-core
+  query, not a judgment call): given a `(workspace_id, source_type, job_id, failure_type)` that
+  triggered a remediation agent run, does a PR exist, opened within the expected window, whose
+  branch/title references that signature? A yes/no fact, not a fuzzy "expected shape" judgment
+  — deliberately scoped narrow so this doesn't need an LLM judge at all, unlike
+  `RemediationScopeEvaluator`'s diff-analysis (which DOES need to reason about "unrelated file
+  changes").
 
 **Confirmed NOT a systemic gap, checked on a follow-up trace**: GC-14/15's dbt/SQL-Server
 DETECTION path (BH-1043/1045/1054) rides the same `scheduled_agent_dispatcher` mechanism but is
