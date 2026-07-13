@@ -306,12 +306,25 @@ from scratch.
   (`typedefs.ts:873-874`), and a single workspace CAN have multiple `TransformationService`
   nodes (`WorkspaceNode.transformationServices: [TransformationServiceNode!]!`,
   `typedefs.ts:289/463` — a plural relationship). `_find_connected_dbt_service()`
-  (`credentials_tools.py:154-163`) explicitly picks the FIRST `provider == "DBT_CLOUD"`
-  service, which is fine for today's single-dbt-connection-per-workspace common case but is
-  NOT a structural guarantee — the watchdog's per-workspace throttling/cooldown reasoning
-  (same class of concern as Invariant 3's cooldown-key fix, pass 17) should key on
-  `(workspace_id, service_id)` if a workspace with 2+ dbt connections is ever a real case,
-  not assume `workspace_id` alone identifies one credential set. This is a self-throttling
+  (`credentials_tools.py:154-163`) explicitly picks the FIRST `provider == "DBT_CLOUD" AND
+  status == "CONNECTED"` service, which is fine for today's single-dbt-connection-per-
+  workspace common case but is NOT a structural guarantee.
+  **SHARPENED further, pass 43 (triple-click-zoom) — this earlier note UNDERSTATED the real
+  severity: it's not a cooldown-key/self-throttling nuance, it's a MONITORING-SCOPE GAP.**
+  Confirmed via direct trace: `_find_connected_dbt_service`'s single returned service dict
+  supplies `account_id`/`project_id` that `fetch_dbt_credentials()`
+  (`credentials_tools.py:390-684`) writes into agent state, which `list_jobs`
+  (`dbt_cloud_tools.py:564-625`, via `_get_dbt_cloud_credentials`) uses to scope its
+  `GET /api/v2/accounts/{account_id}/jobs/` call ENTIRELY to that one service. **If a
+  workspace has 2 CONNECTED dbt Cloud services (e.g. a legacy project + an active one), the
+  watchdog would silently monitor ONLY the first one found (order controlled by
+  Platform Core's GraphQL response, not by relevance) — the second project's jobs are NEVER
+  polled, with zero error, warning, or log distinguishing "only one of several" from "the
+  only one that exists."** This is the SAME structural pattern as BH-1045's
+  `warehouseServiceId`-disambiguation gap (Invariant 5, pass 42) — this spec's watchdog
+  (BH-1042/1043/1044/1054) SHALL NOT assume `workspace_id` alone identifies a complete
+  monitoring scope for ANY source type (dbt, Databricks, SQL Server) without an explicit
+  check per adapter. This is a self-throttling
   concern, not a cross-tenant one, but the granularity assumption should be explicit, not
   implicit.
 
@@ -728,7 +741,10 @@ class PipelineHealthSignal:
 # closes a gap: earlier passes treated "dual-write" as roughly "call two functions with the
 # same payload." CONFIRMED that is WRONG — the two paths take genuinely different shapes,
 # and BH-1053 remains unshipped (no unification exists; both paths are still independent,
-# confirmed by direct read — neither imports the other):
+# confirmed by direct read — neither imports the other).
+# RE-VERIFIED pass 54 (checked fresh, not carried forward): every citation below still
+# matches current code exactly (file:line, signatures, fan-out mechanism), and BH-1053 is
+# still Needs Refinement in Jira with zero `git log --all --grep="BH-1053"` hits — no drift.
 #
 #   (1) writeNotificationSignal(input: WriteNotificationInput) — Promise<WriteNotificationResult>
 #       (platform-core/src/graphql/service/aws/notification-signal.ts:46)
@@ -872,18 +888,55 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    alert-only — it SHALL NOT guess a fix.`
 5. `WHEN a SQL Server is monitored for disk/job health, THE System SHALL do so through the
    EXISTING warehouse-connection machinery already required to catalog it as a BYOW source —
-   no new on-host collector for this signal class. Concrete call chain (verified pass 7 —
-   "WarehousePort" is Ports & Adapters terminology, not a literal class name; the real
-   equivalent is confirmed to exist): get_warehouse_connection_info(workspace_id)
-   (brightbot/tools/platform_queries.py:361) resolves credentials → WarehouseTool(...)
-   (brightbot/utils/warehouse.py:184) builds the connection via
-   WarehouseConnectionFactory.create_connection() (warehouse_connections.py:1241) →
-   .connection.execute_query(sql) (warehouse.py:510) runs the DMV query. Existing consumers
-   of this exact pattern: sv_qc_tools.py:114, workflow_agent/tools.py:174 — follow their
-   usage, don't reinvent. **Known gap**: no dedicated SQL-Server dialect class exists today
-   (SynapseConnection is the nearest match, Azure Synapse dialect, not true SQL Server) — this
-   spec's BH-1045 must add one (or confirm Synapse's dialect is close enough for
-   sys.dm_os_volume_stats specifically) before this invariant is satisfiable end-to-end.
+   no new on-host collector for this signal class. **CORRECTED pass 42 (triple-click-zoom)
+   — the cited call chain's FIRST HOP was dead code, and the real runtime path has NO
+   connection-disambiguation mechanism, a real gap not previously found.**
+   `get_warehouse_connection_info(workspace_id)` (`brightbot/tools/platform_queries.py:361`)
+   is DEFINED but NEVER CALLED anywhere in this repo (confirmed by grep, excluding coverage
+   artifacts) — no agent/tool/route imports or invokes it. The REAL runtime path is
+   `get_warehouse_config_from_secrets(workspace_id)` (`platform_queries.py`), also keyed by
+   `workspace_id` ALONE. `WarehouseTool.__init__` (`warehouse.py:184`, real signature
+   `(warehouse_type: WarehouseType = REDSHIFT, warehouse_config: dict | None = None)`) takes
+   an ALREADY-RESOLVED single config — disambiguation, if any, must happen BEFORE this call.
+   **CRITICAL GAP**: `WorkspaceNode.warehouseServices` is PLURAL (`schema.graphql:643`,
+   `[WarehouseServiceOutput!]!`), and `WarehouseServiceFilterInput`
+   (`schema.graphql:2073`) DOES support a `warehouseServiceId: ID!` filter for
+   disambiguation — but NEITHER real code path (`get_warehouse_connection_info` nor
+   `get_warehouse_config_from_secrets`) passes that filter; both resolve by `workspace_id`
+   alone, with no selection logic for "which connection." If a workspace has BOTH a primary
+   analytics warehouse (e.g. Snowflake) AND a separate SQL Server BYOW connection
+   specifically for this watchdog's disk/job monitoring, THIS SIGNAL CLASS HAS NO BUILT-IN
+   WAY TO TARGET THE SQL SERVER SPECIFICALLY — it would need bespoke filtering/selection
+   logic added, which does not exist today (confirmed: no selection code exists anywhere,
+   since the unused function never needed one). BH-1045's implementer MUST either (a) add
+   the missing `warehouseServiceId`-filtered resolution path (using the REAL, CALLED
+   `get_warehouse_config_from_secrets` function, extended to accept an optional service ID,
+   not the dead `get_warehouse_connection_info`), or (b) confirm the demo/target workspace
+   genuinely has exactly ONE warehouse connection (making disambiguation moot for THIS
+   demo specifically, but not a durable multi-connection solution). Existing consumers of
+   the real resolution pattern: `sv_qc_tools.py:114`, `workflow_agent/tools.py:174` — follow
+   THEIR usage (which also assumes single-connection-per-workspace, confirmed not checked
+   before this pass either), don't cite the unused function as precedent.
+   **RESOLVED pass 41 (triple-click-zoom) — the "known gap" below was
+   framed as an open question ("must add a class or CONFIRM Synapse's dialect is close
+   enough"); now definitively confirmed, not merely assumed.** `SynapseConnection`
+   (`warehouse_connections.py:248-309`) is, AS WRITTEN TODAY, a generic pymssql/T-SQL client
+   with ZERO Azure/Synapse-exclusive requirements: no hostname pattern validation anywhere
+   (confirmed by grep — zero checks for `.database.windows.net`/`.sql.azuresynapse.net` in
+   `WarehouseConnectionFactory.create_connection()` or the class itself), plain SQL-auth
+   `user`/`password` (no Azure-AD-only mode enforced), a generic port/TLS/tds_version
+   negotiation with fallback logic that's pure pymssql/FreeTDS compatibility handling, not
+   an Azure-only path. No Synapse-pool-specific SQL dialect assumptions exist anywhere in
+   the class or its shared helpers (`_ansi_list_tables` uses plain ANSI
+   `INFORMATION_SCHEMA` joins, no `sys.pdw_*`/`sys.dm_pdw_*`/`CREATE TABLE ... WITH
+   (DISTRIBUTION=...)` anywhere). The ONE Synapse-named constant that exists
+   (`_SYNAPSE_SYSTEM_SCHEMAS = {"information_schema", "sys"}`, `warehouse_base.py:340`) is
+   confirmed introspection-ONLY (filters `list_tables()`'s customer-facing table listing) —
+   it has ZERO reference inside `execute_query()`, which has its own independent,
+   schema-name-blind guard (keyword-prefix + no-semicolon). A direct `SELECT ... FROM
+   sys.master_files ...`/`msdb.dbo.sysjobs` query is UNAFFECTED by this constant. **NO new
+   dialect class is needed — `SynapseConnection` connects to and queries a real RDS SQL
+   Server with zero code changes, confirmed, not assumed.**
    **SECOND KNOWN GAP, found pass 12 (triple-click-zoom), CRITICAL — the "no new
    connectivity, protocol, or on-host software" claim is TRUE but INCOMPLETE, missing a
    permission grant.** Confirmed against platform-core: EVERY BYOW connection type's real
@@ -904,6 +957,99 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    message, not a generic query error. This is a genuine, if small, customer-side
    administrative action — "no new connectivity/protocol/on-host software" undersells it as
    zero customer action, which it is not.`
+   **CONFIRMED pass 38 (triple-click-zoom) — the exact query text, never shown before this
+   pass (only referenced by DMV name in every earlier pass), verified to pass the REAL
+   `SynapseConnection.execute_query()` safety guard as written:**
+   ```sql
+   SELECT
+       DB_NAME(vs.database_id) AS database_name,
+       mf.name AS logical_file_name,
+       vs.total_bytes,
+       vs.available_bytes,
+       CAST(vs.available_bytes * 100.0 / vs.total_bytes AS DECIMAL(5,2)) AS percent_free
+   FROM sys.master_files AS mf
+   CROSS APPLY sys.dm_os_volume_stats(mf.database_id, mf.file_id) AS vs
+   ```
+   Confirmed against the real guard (`warehouse_connections.py:360-383`,
+   `warehouse_base.py:131-164`): the multi-statement check (`";" in query.rstrip(";")`)
+   strips trailing semicolons FIRST, then checks for any remaining — a single trailing `;`
+   (habit-appended) passes cleanly; there is no keyword blocklist for `CROSS APPLY`, no
+   schema-prefix check for `sys.`-qualified identifiers (the guard does zero semantic SQL
+   parsing, no AST, no `sqlparse`), no multi-line-string check (`.lstrip().upper()
+   .startswith("SELECT")` only inspects the leading token), and no query-length/JOIN-count
+   limit anywhere in either function. This exact query is confirmed buildable and
+   guard-compliant TODAY — the remaining gaps are the dialect class (above) and the
+   permission grant (above), not the query text itself.
+   **CONFIRMED pass 39 (triple-click-zoom) — the SECOND SQL Server signal this invariant
+   requires (`msdb.dbo.sysjobs`/`sysjobhistory` job-status, mentioned throughout but never
+   itself shown), verified against real SQL Server semantics AND the same safety guard:**
+   ```sql
+   WITH LatestRun AS (
+       SELECT
+           j.job_id,
+           j.name AS job_name,
+           h.run_status,
+           h.run_date,
+           h.run_time,
+           ROW_NUMBER() OVER (
+               PARTITION BY j.job_id
+               ORDER BY h.run_date DESC, h.run_time DESC
+           ) AS rn
+       FROM msdb.dbo.sysjobs AS j
+       JOIN msdb.dbo.sysjobhistory AS h
+           ON h.job_id = j.job_id
+       WHERE h.step_id = 0
+   )
+   SELECT
+       job_name,
+       CASE run_status
+           WHEN 0 THEN 'Failed'
+           WHEN 1 THEN 'Succeeded'
+           WHEN 2 THEN 'Retry'
+           WHEN 3 THEN 'Canceled'
+           WHEN 4 THEN 'In Progress'
+           ELSE 'Unknown'
+       END AS run_status_text,
+       CAST(
+           STUFF(STUFF(CAST(run_date AS CHAR(8)), 5, 0, '-'), 8, 0, '-')
+           + ' ' +
+           STUFF(STUFF(RIGHT('000000' + CAST(run_time AS VARCHAR(6)), 6), 3, 0, ':'), 6, 0, ':')
+           AS DATETIME
+       ) AS last_run_datetime
+   FROM LatestRun
+   WHERE rn = 1
+   ORDER BY last_run_datetime DESC
+   ```
+   **Correctness notes, general SQL Server platform knowledge**: `step_id = 0` is the
+   job-outcome roll-up row, not a step — `sysjobhistory` has one row PER STEP, so a naive
+   query without this filter would return every step's result, not the job's overall
+   outcome. `run_status` is an INTEGER code (0-4), never a readable string — the `CASE`
+   maps it. `run_date`/`run_time` are stored as bizarre zero-padded INTEGERs (e.g. 1:02:03
+   AM as `10203`, not `010203`), NOT a real `DATETIME` — the `STUFF`/`RIGHT`/`CAST` chain
+   reformats them correctly, a genuinely easy mistake to get wrong without this exact
+   pattern (a naive `CAST(run_time AS VARCHAR)` on a value like `10203` would misparse the
+   time). `ROW_NUMBER() OVER (PARTITION BY job_id ...)` picks the LATEST run per job — the
+   equivalent alternative is a correlated `MAX(instance_id)` subquery, either is fine.
+   **Guard-compliance**: same conclusion as the disk-check query — starts with `WITH`
+   (allowed), no semicolons, no keyword/schema-prefix blocklist, no multi-line check. This
+   query sails through `execute_query()`'s guard cleanly, same as the disk-check query.
+   **CONFIRMED pass 40 (triple-click-zoom), permission requirement resolved with precision
+   — this query needs NO new grant at all, not merely "a lower bar" than the disk-check
+   query.** `sysjobs`/`sysjobhistory` are ordinary `dbo`-schema user tables in `msdb` — they
+   carry NO special permission class, unlike `sys.dm_os_volume_stats`, which is gated by
+   the server-level `VIEW SERVER STATE` permission checked in SQL Server's own engine code,
+   not by schema/table grants. Object- or schema-level `SELECT` (`GRANT SELECT ON
+   SCHEMA::dbo TO [user]` inside `msdb`) is fully sufficient — NO msdb role membership
+   (`SQLAgentUserRole`/`SQLAgentReaderRole`/`SQLAgentOperatorRole`) is involved; those roles
+   exist to gate the Agent stored procedures/GUI/filtered views (`sp_help_job`,
+   `sysjobs_view`), not the base tables this query reads directly. A principal with plain
+   `SELECT` sees EVERY job/row regardless of ownership — broader visibility than even
+   `SQLAgentReaderRole`'s filtered interface provides. **Net effect: the standard BYOW
+   provisioning flow's EXISTING schema-level `GRANT SELECT` (already granted for every
+   connection type today, confirmed in an earlier pass) already covers this query in full
+   — zero new provisioning step, not "a lower bar."** Invariant 5's permission-grant
+   requirement is scoped EXCLUSIVELY to the disk-check query — this job-status query needs
+   nothing new at all.
 6. `WHILE BrightSignals' 3-way split-brain (BH-1053, see §6) is unresolved as a UNIFIED write
    path, THE System's watchdog SHALL perform the explicit dual-write in Invariant 1 itself —
    it SHALL NOT wait for BH-1053 to add a fourth ad-hoc path.`
@@ -1056,6 +1202,24 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     exists on both surfaces — see BH-1067. This mirrors the identical dead-end confirmed for
     GC-12's `longitudinal_anomaly` stage in the sibling lineage-aware-data-quality.md spec
     (BH-1065/1066).`
+16. `WHEN a watchdog adapter (dbt, Databricks, or SQL Server) resolves which connection/
+    service to poll for a workspace, THE System SHALL NOT assume workspace_id alone
+    identifies a COMPLETE monitoring scope if the workspace has multiple connections of
+    the same provider type. CRITICAL, found passes 24/42/43 (triple-click-zoom): confirmed
+    real, structural instances of this gap in TWO of the three adapters this spec defines —
+    `_find_connected_dbt_service()` (dbt, `credentials_tools.py:154-163`) picks the FIRST
+    `CONNECTED` `DBT_CLOUD` service and feeds its `account_id`/`project_id` into
+    `list_jobs()`'s entire scope, silently never polling a second connected dbt project if
+    one exists (zero error, zero warning); the SQL-Server-adjacent warehouse-resolution
+    path (`get_warehouse_config_from_secrets`, Invariant 5) has the identical structural gap
+    for `WorkspaceNode.warehouseServices` (also plural). Databricks (BH-1044, greenfield) has
+    no existing code to inherit this bug from, but MUST NOT introduce it fresh — design its
+    connection resolution with explicit multi-connection disambiguation from the start,
+    learning from dbt/SQL-Server's retrofit cost rather than repeating it. Each adapter
+    ticket (BH-1043/1044/1045) SHALL explicitly document EITHER (a) an added
+    disambiguation mechanism (e.g. a `serviceId`/`warehouseServiceId` parameter), or (b) a
+    confirmed, documented single-connection-per-workspace assumption for its target
+    deployment — never a silent "pick the first" with no acknowledgment either way.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -1092,6 +1256,19 @@ Feature: Proactive pipeline & ingestion monitoring
     And this is surfaced as a permission-specific, actionable message — NOT the generic
       catch-all error handling azure_synapse.ts:133-138/byow-preview.ts:402-403 use today,
       which does not distinguish a permissions failure from any other query failure
+
+  Scenario: the watchdog targets the correct warehouse connection when a workspace has multiple
+    Given a workspace with BOTH a primary analytics warehouse (e.g. Snowflake) AND a separate
+      SQL Server BYOW connection registered specifically for disk/job monitoring
+    When BH-1045's watchdog resolves which connection to query
+    Then it explicitly targets the SQL Server connection by its warehouseServiceId — it does
+      NOT rely on workspace_id alone resolving to "the" warehouse
+    And this differs deliberately from the cited precedent (sv_qc_tools.py:114,
+      workflow_agent/tools.py:174), which assumes single-connection-per-workspace and was
+      never checked for multi-connection correctness before this invariant (CRITICAL, found
+      pass 42 — the real resolution functions, get_warehouse_connection_info AND
+      get_warehouse_config_from_secrets, both key by workspace_id alone with zero
+      disambiguation, despite the schema supporting a warehouseServiceId filter)
 
   Scenario: repeated failure does not spam
     Given a "dbt_run_failure" signal was already alerted for job X in workspace A in the

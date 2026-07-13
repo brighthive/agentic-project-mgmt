@@ -112,9 +112,15 @@ number in front of a customer or exec) has already happened.
                                   │     USAGE (Snowpipe/Tasks/│
                                   │     Streams/Dynamic       │
                                   │     Tables) — BH-1068,     │
-                                  │     CHEAPEST (reuses live  │
+                                  │     CHEAPEST connection-   │
+                                  │     wise (reuses live      │
                                   │     SnowflakeConnection,  │
-                                  │     no new connector)      │
+                                  │     no new connector) BUT  │
+                                  │     needs a permission/    │
+                                  │     latency guard — least- │
+                                  │     privilege roles fail   │
+                                  │     ACCOUNT_USAGE reads    │
+                                  │     silently (pass 45)     │
                                   │                          │
                                   │  All 3 feed the SAME       │
                                   │  LineageGraph shape →      │
@@ -163,29 +169,32 @@ repos' notification pipelines.
   ┌──────────┐                   ┌──────────┐        ┌──────────────┐    ┌──────────┐
   │ BH-1062  │                   │ BH-1069  │        │ BH-1063b     │    │ BH-1064  │
   │ Fetch +  │──────────────────▶│ call OGM │───────▶│ NEW           │───▶│ Wire      │
-  │ parse    │                   │ mutation │        │ LineageNode│    │ anomaly → │
-  │ manifest │                   │ (existing│        │ + DEPENDS_ON  │    │ graph walk│
-  │ .json /  │                   │  ogm_api │        │ + delete-then-│    │ (closes   │
-  │ catalog  │                   │  .py     │        │ MERGE mutation│    │  BH-673)  │
-  │ .json    │                   │  plumbing│        │ (2-3 files,   │    │           │
-  └──────────┘                   │  — no new│        │ NO public     │    └──────────┘
-                                  │  driver) │        │ schema touch, │
-                                  └──────────┘        │ mirrors       │
-                                                        │ AnomalyEvent- │
-                                                        │ Node OGM-only │
-                                                        │ pattern)      │
-                                                        └──────────────┘
+  │ parse    │                   │ mutation │        │ LineageNode:  │    │ anomaly → │
+  │ manifest │                   │ (existing│        │  workspaceId! │    │ graph walk│
+  │ .json /  │                   │  ogm_api │        │  uniqueId!    │    │ (closes   │
+  │ catalog  │                   │  .py     │        │  relationName │    │  BH-673)  │
+  │ .json    │                   │  plumbing│        │  dependsOn    │    │ MATCH also│
+  └──────────┘                   │  — no new│        │  + DEPENDS_ON │    │ filters   │
+                                  │  driver, │        │  + delete-then│    │ workspaceId│
+                                  │  ONE     │        │  MERGE, BOTH  │    └──────────┘
+                                  │  SHARED  │        │  match clauses│
+                                  │  session │        │  workspace-   │
+                                  │  across  │        │  scoped)      │
+                                  │  the loop│        └──────────────┘
+                                  └──────────┘
 
 "brightbot already      "brightbot calls a NEW       "platform-core owns the    "we already have
  knows how to fetch       platform-core mutation       Neo4j schema + upsert —    both halves —
  dbt Cloud artifacts —    the same way it calls        brightbot NEVER touches    longitudinal
- just never asked for     every other OGM write —      Neo4j directly for this"   monitoring fires
- manifest.json before"    no new Neo4j driver code"                               events, dbt
-                                                                                   already wrote
-                                                                                   its own lineage —
-                                                                                   this ticket is
-                                                                                   purely the
-                                                                                   connective glue"
+ just never asked for     every other OGM write —      Neo4j directly for this.   monitoring fires
+ manifest.json before"    no new Neo4j driver code,    workspaceId is NATIVE,     events, dbt
+                          ONE session shared across    not inherited via a        already wrote
+                          the per-model loop (pass 49) relationship — LineageNode its own lineage —
+                          — the default idiom would    is the FIRST node type     this ticket is
+                          re-authenticate per model"    with no relationship      purely the
+                                                         path to WorkspaceNode,    connective glue,
+                                                         so it needed its own     now with real
+                                                         scoping field (pass 50)" tenant isolation"
 ```
 
 ### Use Case / Goal
@@ -377,9 +386,144 @@ LINEAGE_SOURCE_ADAPTERS: dict[str, type[LineageSource]] = {
 def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
     return LINEAGE_SOURCE_ADAPTERS[engine](config=config)
 
+# CRITICAL CORRECTION, pass 45 (triple-click-zoom) — "SnowflakeConnection already exists and
+# can run arbitrary SELECT against ACCOUNT_USAGE, no new connection type needed" is TRUE but
+# is the wrong bar; it glosses over a real, likely-blocking permission gap, verified against
+# actual repo history, not general Snowflake knowledge alone.
+#
+# `SnowflakeConnection.connect()` (warehouse_connections.py:803-806) treats `role` as OPTIONAL,
+# pulled from whatever the workspace's Secrets Manager payload happens to contain — if unset,
+# it falls back to the Snowflake user's default role, unverified. The class's own docstring
+# (warehouse_connections.py:708-711) states the INTENDED posture — "the account binds to a
+# role that should itself be SELECT-only at the grant level, defense in depth" — but nothing
+# in the code checks the bound role's actual grants. That intended least-privilege posture is
+# exactly the posture that BREAKS ACCOUNT_USAGE reads: those views require the querying role to
+# either be ACCOUNTADMIN or hold `IMPORTED PRIVILEGES` on the `SNOWFLAKE` database — a
+# privilege a "should be SELECT-only" role does NOT have by design.
+#
+# This is not hypothetical — it already happened in this org. The one real deployed instance
+# on record, brighthive-platform-core/docs/SNOWFLAKE_POC_HANDOFF.md:32, runs as
+# `LONGAEVA_POC_ROLE` (service user `BRIGHTHIVE_SERVICE`), and the SAME doc, line 64, records
+# the team's own fix for this exact failure mode: `#825` dropped
+# `raise_from_status(raise_warnings=True)` specifically because "a Snowflake scan emits
+# per-sub-query failures for optional metadata (`ACCOUNT_USAGE.*` a least-privilege role can't
+# read) even when tables ingest fine" — i.e., the fix was to SILENCE the permission failure,
+# not to grant the privilege or detect the gap. Confirmed by grep across both repos: zero hits
+# for "IMPORTED PRIVILEGES", zero for ACCOUNT_USAGE latency handling anywhere outside that one
+# doc line.
+#
+# Second, independent risk in the same query surface: ACCOUNT_USAGE views have documented
+# ingestion latency (Snowflake's own docs: up to ~45 min–3 hrs depending on the view) versus
+# real-time `INFORMATION_SCHEMA`. A freshly-created Task/Dynamic Table/Snowpipe dependency can
+# be genuinely absent from OBJECT_DEPENDENCIES for hours after creation — indistinguishable,
+# without an explicit check, from "this object truly has no dependencies." BH-1064's
+# downstream-impact traversal reading a false "no dependencies" would suppress a real alert,
+# the same false-negative risk already called out for BH-1063's atomicity gap (Invariant 9).
+#
+# Invariant 16 (new): the SnowflakeNativeLineageSource adapter (BH-1068) SHALL verify
+# `IMPORTED PRIVILEGES` (or ACCOUNTADMIN) on the bound role BEFORE relying on an empty
+# ACCOUNT_USAGE result as "no dependencies" — a permission failure and a genuine empty result
+# SHALL be distinguishable, never silently conflated. THE adapter SHALL also surface each
+# ACCOUNT_USAGE view's last-refreshed timestamp (queryable via
+# `ACCOUNT_USAGE.OBJECT_DEPENDENCIES`'s own metadata or `INFORMATION_SCHEMA.LOAD_HISTORY`-style
+# freshness checks) so a caller can tell "just polled, not yet reflected" from "confirmed no
+# dependencies." BH-1068's scope MUST include this permission-and-latency guard — it is not
+# optional cleanup, it is the difference between the adapter working and the adapter silently
+# reporting zero lineage for every real customer running least-privilege roles, which per this
+# org's own docstring is the intended, recommended posture for this exact connection.
+
 # Adding a NEW engine (Apache Airflow's own lineage API, Fivetran, etc.) later = one new
 # adapter class + one registry line — the port, BH-1063's graph-write code, and BH-1064's
 # walk-and-enrich code NEVER change. This is the concrete meaning of "low-effort to switch."
+```
+
+### How one shared code path handles multiple engines, and where it sits in the rest of BrightHive
+
+**Added pass 60 (triple-click-zoom) — a fourth diagram, at a zoom level not yet drawn: how the
+multi-engine adapter registry above connects concretely to Neo4j nodes, to workspace/tenant
+scoping, and to the rest of BrightHive's monitoring/alert surfaces. Every box below cites a
+real file:line or an already-verified invariant — nothing here is aspirational.**
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  ENGINES (as many as customers use)     one shared code path      BRIGHTHIVE SYSTEMS   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+  dbt Cloud          Databricks         Snowflake-native      (future: Airflow,
+  ┌─────────┐        ┌─────────┐        ┌─────────┐            Fivetran, etc.)
+  │ manifest │        │ Unity    │        │ ACCOUNT_ │
+  │ .json /  │        │ Catalog  │        │ USAGE    │           Adding one of these =
+  │ catalog  │        │ system   │        │ views    │           ONE new adapter class +
+  │ .json    │        │ tables   │        │          │           ONE registry line. The
+  └────┬─────┘        └────┬─────┘        └────┬─────┘           rest of this diagram
+       │                   │                   │                 NEVER changes (§2).
+       ▼                   ▼                   ▼
+  ┌──────────────┐  ┌──────────────────┐  ┌────────────────────┐
+  │DbtLineage-   │  │DatabricksLineage- │  │SnowflakeNative-     │  ◀── each is a thin
+  │Source        │  │Source (greenfield,│  │LineageSource (needs │      TRANSLATION layer,
+  │(BH-1062,     │  │needs new          │  │a permission/latency │      not new fetch logic —
+  │REAL today)   │  │WarehouseType +    │  │guard, pass 45 —     │      each maps its OWN
+  │              │  │connector, BH-1044)│  │least-privilege roles│      engine's shape onto
+  │              │  │                   │  │silently fail        │      ONE shared shape below
+  └──────┬───────┘  └─────────┬─────────┘  │ACCOUNT_USAGE, pass 16)│
+         │                    │            └──────────┬──────────┘
+         └────────────────────┴───────────────────────┘
+                               │
+                               ▼
+                    ┌─────────────────────────┐
+                    │   LineageGraph           │  ◀── the ONE shape every engine's
+                    │   (§2, engine-agnostic)  │      adapter returns. BH-1064's
+                    │   nodes: dict[unique_id, │      traversal/enrichment code
+                    │     LineageNode]         │      only ever calls THIS — it
+                    │   source_engine: string  │      never branches on "dbt" vs
+                    │   (observability only,   │      "databricks" anywhere (§2).
+                    │    never branched on)    │
+                    └───────────┬─────────────┘
+                                 │  BH-1069: upsert_lineage_graph(graph, workspace_id)
+                                 │  — ONE shared OGMAPISession per manifest load (pass 49)
+                                 ▼
+              brightbot ──HTTP (ogm_api.py)──▶ platform-core (OGM schema, isSystemAdmin-gated)
+                                 │
+                                 ▼
+                    ┌─────────────────────────────┐
+                    │  Neo4j: LineageNode           │  ◀── BH-1063. NOTE (pass 50, real
+                    │  ┌───────────────────────┐    │      finding): this node has NO
+                    │  │ workspaceId  (NATIVE  │    │      relationship to ProjectNode/
+                    │  │   scalar — pass 50)   │    │      WorkflowSpecNode — unlike
+                    │  │ uniqueId               │    │      WorkflowStepNode, it does
+                    │  │ relationName           │    │      NOT sit inside BrightHive's
+                    │  │ hasColumnMetadata      │    │      existing Project hierarchy.
+                    │  │ dependsOn ─┐           │    │      It is scoped ONLY by the
+                    │  └────────────┼───────────┘    │      workspaceId field — every
+                    │               │ DEPENDS_ON     │      Cypher query MUST filter on
+                    │               ▼ (to another    │      it explicitly (Invariant 18).
+                    │            LineageNode,         │      A future Track D (per-Project
+                    │            SAME workspace only) │      pipeline view) would need to
+                    └─────────────┬───────────────────┘      ADD that relationship — it
+                                  │                           does not exist today.
+                                  │  AnomalyEventNode.dataset (GC-12, already shipped)
+                                  │  matches LineageNode.relationName (Invariant 10,
+                                  │  workspace-filtered per Invariant 18)
+                                  ▼
+                    ┌─────────────────────────┐
+                    │ BH-1064: downstream-walk │  ◀── writes into the SAME anomaly
+                    │ (DEPENDS_ON*1..50,       │      notification's existing JSON
+                    │  DISTINCT, bounded)      │      metadata blob — NOT a new alert
+                    └───────────┬─────────────┘      path (pass 4/48 correction).
+                                 │
+                                 ▼
+        ┌────────────────────────────────────────────────────┐
+        │  metadata["longitudinal"]["downstream_tables"] = [...]│
+        └───────────────────┬────────────────────────────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              ▼                             ▼
+     brightbot-slack-server         brighthive-webapp Notifications
+     quality_asset_result stage     quality_asset_result stage
+     renderer — BH-1066 enriches    renderer — BH-1066 enriches
+     it to surface downstream_      it to surface downstream_
+     tables (NOT a new stage —      tables (same correction —
+     confirmed pass 48)             confirmed pass 48)
 ```
 
 ### BH-1062 as the dbt adapter (the FIRST implementation of LineageSource, not the design)
@@ -467,6 +611,92 @@ async def fetch_lineage_artifacts(
 # Reuses _fetch_artifact() (dbt_cloud_tools.py:256-280) with artifact_path="manifest.json"
 # and artifact_path="catalog.json" — no new HTTP/auth code, just new artifact-name arguments
 # PLUS the step-discovery + error-disambiguation logic above, which IS new code.
+
+# CRITICAL GAP FOUND, pass 55 (triple-click-zoom) — §2 declares that every lineage source
+# (dbt, Databricks, Snowflake-native) should implement the SAME LineageSource interface and
+# return the SAME LineageGraph shape, but that was NEVER actually connected to this
+# function; verified by grepping this spec for every `LineageGraph`/`DbtLineageSource`
+# occurrence — neither is ever produced, consumed, or even referenced again outside §2's
+# abstract definition and the platform-level diagram. `fetch_lineage_artifacts()` has a
+# DIFFERENT name, DIFFERENT parameters (`job_id`/`run_id` explicit, not a generic
+# `run_context: dict`), and a DIFFERENT return type (`LineageArtifacts`, not `LineageGraph`)
+# than what `LineageSource.fetch_lineage()` declares. This is exactly the drift
+# `docs/CLAUDE.md`'s own house rule warns against ("a spec drifted into vendor-hardcoded
+# naming before a second engine was even due") — except here it drifted the OTHER direction:
+# §2's shared shape stayed abstract while the real implementation quietly diverged from it,
+# so adding a second lineage source (Databricks, Snowflake-native) today would have NOTHING
+# real to match — each would invent its own shape independently, defeating the whole point
+# of settling on one shared shape first.
+#
+# FIX: `DbtLineageSource` (referenced in the §2 registry, never defined) is the missing
+# adapter class — a thin translation layer, not new fetch logic:
+class DbtLineageSource:
+    """The dbt Cloud lineage source. Unpacks the engine-agnostic run_context into
+    dbt's own job_id/run_id, delegates to fetch_lineage_artifacts() (the real fetch+parse
+    logic), and translates LineageArtifacts -> LineageGraph so BH-1064's traversal never
+    has to know dbt-specific shapes exist."""
+
+    async def fetch_lineage(
+        self, *, workspace_id: str, run_context: dict,
+    ) -> LineageGraph:
+        artifacts = await fetch_lineage_artifacts(
+            workspace_id=workspace_id,
+            job_id=run_context["job_id"],
+            run_id=run_context["run_id"],
+        )
+        return LineageGraph(
+            nodes={
+                uid: LineageNode(
+                    unique_id=m.unique_id, name=m.name, depends_on=m.depends_on,
+                    columns=m.columns, relation_name=m.relation_name,
+                )
+                for uid, m in artifacts.models.items()
+            },
+            has_column_metadata=artifacts.has_column_metadata,
+            fetch_error=artifacts.fetch_error,
+            source_engine=DBT,
+        )
+# `run_context["job_id"]`/`["run_id"]` are dbt-specific KEYS inside the generic dict — every
+# adapter defines its OWN required keys for run_context (Databricks might need
+# {"job_id", "run_id"} too, or something entirely different like {"pipeline_id"}); this is
+# the seam that keeps BH-1064's traversal engine-agnostic while each adapter stays free to
+# need whatever identifiers its own source system requires. BH-1069's caller (which invokes
+# the fetch step per model in a manifest loop, per Invariant 17) should be updated to
+# construct `DbtLineageSource().fetch_lineage(...)` — or, if the extra translation layer is
+# judged unnecessary overhead for a single-source MVP, this spec should say so EXPLICITLY
+# and drop the unused `LineageSource`/`LineageGraph` types from §2 rather than leave them as
+# never-implemented aspirational scaffolding. Pick one; do not ship both a declared shared
+# shape and a real implementation that silently ignores it.
+#
+# CRITICAL, pass 44 (triple-click-zoom) — this function INHERITS the same
+# multi-connection monitoring-scope gap already confirmed in the sibling
+# proactive-pipeline-ingestion-monitoring.md spec (Invariant 16, passes 24/42/43) for
+# BH-1043/1045. Traced the real credential path: `_fetch_artifact()` takes
+# `api_endpoint`/`api_token`/`account_id` as explicit params — it does no resolution
+# itself. Its real analog call site, `get_job_run_error` (`dbt_cloud_tools.py:647-725`),
+# reads credentials via `_get_dbt_cloud_credentials(state)` (`dbt_cloud_tools.py:53-64`), a
+# PURE STATE READ populated ONCE PER SESSION by `fetch_dbt_credentials()`
+# (`credentials_tools.py:390`), which internally calls the SAME `_find_connected_dbt_
+# service()` (`credentials_tools.py:154-163`) that picks the FIRST `CONNECTED`
+# `DBT_CLOUD` service for a workspace. **CONFIRMED: `run_id` is NEVER used to select or
+# validate which dbt Cloud account/service owns it — it is only interpolated into the
+# artifact URL (`{api_endpoint}/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/
+# ...`) against WHATEVER account was cached at session-init time.** A naive hope that
+# "run_id already scopes the account, so the ambiguity is resolved by fetch time" is
+# WRONG — the ambiguity is resolved once per SESSION, not per run_id. If a workspace has
+# 2 connected dbt Cloud services and BH-1054's watchdog (or a human) somehow triggers
+# this fetch for a run_id belonging to the SECOND service while the session's cached
+# credentials point at the FIRST, this function would either 404 (wrong account_id) or,
+# worse, silently fetch the WRONG account's manifest.json for a DIFFERENT run_id's
+# lineage — a genuinely dangerous cross-project data-shape confusion, not just a missed
+# poll. BH-1062's implementer MUST either (a) confirm this fetch call always executes in
+# the SAME session/state context that resolved the run_id in the first place (so the
+# cached credentials are guaranteed consistent with the run_id's real owner — plausible
+# if BH-1054's watchdog and BH-1062's fetch run in the same node invocation, but NOT
+# verified in this pass — confirm before assuming), or (b) thread the actual account_id
+# through explicitly from wherever the run_id was discovered, bypassing session-cached
+# state entirely for this specific call. See the sibling spec's Invariant 16 for the
+# cross-cutting requirement this closes.
 
 @dataclass(frozen=True)
 class LineageArtifacts:
@@ -558,13 +788,28 @@ class LineageModelNode:
 #    delete-then-MERGE shape), and brightbot calls that mutation over its existing
 #    Cognito-authed OGM HTTP path — the same way it reaches every other Neo4j write today.
 async def upsert_lineage_graph(
-    *, workspace_id: str, artifacts: LineageArtifacts, session: OGMAPISession | None = None,
+    *, workspace_id: str, graph: LineageGraph, session: OGMAPISession | None = None,
 ) -> None: ...
 # brightbot-side: calls a NEW platform-core GraphQL mutation over the existing OGM HTTP
 # path (ogm_api.py) — it does not touch Neo4j directly.
 # platform-core-side (NEW scope, not previously called out): a mutation implementing the
 # delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new LineageNode
 # type + DEPENDS_ON relationship.
+#
+# CORRECTED pass 56 (triple-click-zoom) — this signature previously took `artifacts:
+# LineageArtifacts` (the dbt-specific type BH-1062's fetch function returns directly),
+# the SAME Port-bypass bug Invariant 19 (pass 55) fixed on the READ side of this pipeline.
+# If `upsert_lineage_graph()` only accepts `LineageArtifacts`, BH-1068's Snowflake-native
+# adapter (or a future Databricks one) — both of which produce a `LineageGraph` via their
+# own `LineageSource.fetch_lineage()` implementation, per Invariant 19 — would have NOTHING
+# to call on the write side without either overloading this function per-engine or
+# converting `LineageGraph` back into a fake `LineageArtifacts` just to satisfy the wrong
+# parameter type. FIX: this function's caller (whichever module loops fetch -> upsert per
+# model) receives a `LineageGraph` from the adapter (DbtLineageSource today, others later)
+# and passes IT, not the dbt-specific intermediate `LineageArtifacts`, into this function.
+# `LineageArtifacts` remains real and used INTERNALLY within `DbtLineageSource.fetch_lineage()`
+# (it's what `fetch_lineage_artifacts()` still returns) — it never crosses the adapter
+# boundary into code that's supposed to be engine-agnostic.
 #
 # BH-1069's (formerly informally called "BH-1063a" — now filed as its own ticket, pass 11)
 # REAL call-site shape, verified pass 11 (triple-click-zoom) — not paraphrased:
@@ -574,6 +819,25 @@ async def upsert_lineage_graph(
 #    9 existing call sites, e.g. `longitudinal_node.py:147,309`, `metric_history_store.py:96`)
 #    — NOT a bare `OGMAPISession()` singleton (the weaker variant at `quality_tools.py:820`,
 #    `profiler_task.py:150`, which this ticket should NOT copy).
+#
+#    CRITICAL, found pass 49 (triple-click-zoom) — the `session or OGMAPISession()` default
+#    is safe for the 9 existing call sites (each fires ONCE per agent turn) but is a genuine
+#    cost/connection-leak risk for THIS ticket specifically, verified against the class's real
+#    lifecycle, not assumed safe by precedent alone. `OGMAPISession.__init__`
+#    (ogm_api.py:44-56) opens a real `requests.Session()` (a pooled connection) and
+#    unconditionally calls `_authenticate()` (ogm_api.py:90-127) — a live Cognito
+#    `USER_PASSWORD_AUTH` HTTP round-trip — on EVERY construction. There is NO module-level
+#    or class-level token cache anywhere in `ogm_api.py` (confirmed by reading the full class
+#    body) and NO `__enter__`/`__exit__`/`close()`/`__del__` — the connection pool is only
+#    reclaimed by eventual Python GC, not deterministically. BH-1062/BH-1063's upsert is
+#    naturally called ONCE PER MODEL in a manifest (a real dbt project can have hundreds), so
+#    if BH-1069's caller loops over models and relies on the bare default (no session passed
+#    in), each iteration performs a fresh Cognito login AND opens a new unclosed connection
+#    pool — hundreds of logins and leaked sockets per manifest load, not the "authenticate
+#    once" cost the existing 9 call sites incur. FIX, REQUIRED not optional: the caller loop
+#    (wherever `upsert_lineage_graph` is invoked once per model) MUST construct ONE
+#    `OGMAPISession` OUTSIDE the loop and pass it explicitly into every call — never rely on
+#    the bare `session or OGMAPISession()` default inside a per-model loop body.
 #
 # 2. `ogm_api.py:146-160`'s real `OGMAPISession.mutation(graphql_mutation, variables,
 #    timeout)` delegates to `_execute_request` (`:162-193`), which calls
@@ -598,9 +862,12 @@ async def upsert_lineage_graph(
 #    `variables`, never string-interpolated into `mutation`.
 #
 # 4. Auth is a FIXED Cognito service-account credential (`OGM_USER`/`OGM_PASSWORD` env vars,
-#    `ogm_api.py:44-116`), authenticated once at `OGMAPISession()` construction and cached on
-#    the instance — NOT a per-request/per-user token. No new auth code needed; this is
-#    already handled by the injected/default-constructed session.
+#    `ogm_api.py:44-116`), authenticated ONCE PER `OGMAPISession` INSTANCE (not cached across
+#    instances — see pass 49's finding above point 1) and cached on that instance — NOT a
+#    per-request/per-user token, and NOT free to construct repeatedly. No new auth CODE is
+#    needed (this class already exists) — but per pass 49, the CALLER must ensure only ONE
+#    instance is constructed across a per-model loop, or "no new auth code needed" silently
+#    becomes "hundreds of new auth calls."
 # SHARPENED pass 3 (triple-click-zoom) — verified against the REAL WorkflowStepNode OGM type
 # and upsertWorkflowStep mutation, not a paraphrase:
 #
@@ -608,6 +875,18 @@ async def upsert_lineage_graph(
 # platform-core/src/graphql/ogm/workflow-spec-typedefs.ts:79-97):
 #   type LineageNode {
 #     id: ID! @id
+#     workspaceId: String!            # ADDED pass 50, CRITICAL — see the scoping-gap note
+#                                      # above. LineageNode has NO relationship path to
+#                                      # WorkspaceNode (dependsOn only points to other
+#                                      # LineageNodes) — unlike every other precedent checked
+#                                      # in this codebase. A plain scalar field is the fix:
+#                                      # every read query filters `WHERE workspaceId: $ws`
+#                                      # explicitly; the delete-then-MERGE upsert's MATCH
+#                                      # clause (Invariant 9) MUST include it too, or a
+#                                      # cross-tenant model with the same relation_name could
+#                                      # silently match/delete another workspace's node. MUST
+#                                      # be indexed (composite with relationName, since both
+#                                      # are real query filters, not cosmetic).
 #     uniqueId: String!              # dbt's fully-qualified unique_id, e.g. "model.proj.stg_orders"
 #     name: String!
 #     relationName: String            # ADDED pass 10, CRITICAL — see the bug note before
@@ -628,11 +907,35 @@ async def upsert_lineage_graph(
 # elsewhere in this section said "leave dependsOn undecorated," which CONTRADICTED this
 # quoted type. That contradiction is now resolved: keep `dependsOn` DECORATED as shown here.
 #
-# CONFIRMED: WorkflowStepNode has NO native workspaceId field either — scoping is transitive
-# via a parent relationship (step.spec.project.workspaceId). LineageNode has the same
-# problem (no natural parent to scope through) — the mutation's INPUT must carry workspaceId
-# explicitly and the @authorized directive must reference it there (see mutation shape below),
-# mirroring upsertWorkflowStep's own pattern exactly.
+# CORRECTED pass 50 (triple-click-zoom) — this paragraph was WRONG about WorkflowStepNode
+# and understated the real design gap for LineageNode; re-verified against real code, not
+# the earlier pass's paraphrase.
+#
+# WorkflowStepNode does NOT lack a natural parent — it has a real `spec: WorkflowSpecNode!`
+# relationship (ogm/workflow-spec-typedefs.ts:91) chaining to `WorkflowSpecNode → ProjectNode
+# → WorkspaceNode`. `UpsertWorkflowStepInput.workspaceId` (workflow-spec-typedefs.ts:212-224)
+# and its `@authorized(workspaceIdLoc: ["args", "input", "workspaceId"])` directive
+# (typedefs.ts:4819-4823, exact syntax: a path-segment ARRAY, not a dotted string, resolved
+# via `getId(source, args, workspaceIdLoc)` in `directives/authorized.ts:113`) are
+# DEFENSE-IN-DEPTH on top of that real relationship path, not a substitute for having none.
+#
+# This matters because it changes what "mirror the precedent" actually means for LineageNode.
+# Moot for the PUBLIC-mutation question specifically — Option B (below) already means
+# LineageNode never gets an `@authorized`/`workspaceIdLoc` mutation at all, since it's OGM-
+# only, never public-schema. But the DEEPER scoping question survives Option B and is NOT
+# yet resolved: `MetricSnapshotNode`/`AnomalyEventNode` — the actual OGM-only precedent this
+# spec cites — scope tenancy via their `dataAsset: DataAssetNode!` relationship, which chains
+# to `WorkspaceNode` (`metric-snapshot.ts:90-96,116,182`: writes connect via
+# `dataAsset: { connect: { where: { node: { id: ... } } } }`; reads filter via
+# `dataAsset: { workspaces_SOME: { id: $workspaceId } }`). A code comment there states this
+# explicitly: workspace scoping comes from the dataAsset connect, `input.workspaceId` is
+# intentionally NOT used in the write itself. LineageNode's own decorated relationship
+# (`dependsOn`) points to OTHER LineageNodes, not to any workspace-scoped anchor like
+# DataAssetNode — it does NOT close the same scoping loop `dataAsset` does for
+# AnomalyEventNode/MetricSnapshotNode. Every real OGM node type checked in this codebase
+# (WorkflowStepNode, MetricSnapshotNode, AnomalyEventNode) has at least one relationship
+# chain reaching WorkspaceNode; LineageNode as currently spec'd would be the FIRST fully
+# orphan node type with zero such path. See Invariant 18 (new) for the required fix.
 #
 # EXACT Cypher precedent (workflow-spec.ts:300-314, upsertWorkflowStep) — quoted verbatim,
 # not paraphrased:
@@ -753,9 +1056,13 @@ async def upsert_lineage_graph(
 #     one implicit transaction, no new driver API. RECOMMENDATION, supersedes earlier
 #     `writeTransaction` guidance: write the delete-then-MERGE as ONE multi-statement Cypher
 #     string
-#     (`MATCH (n:LineageNode {uniqueId: $id})-[r:DEPENDS_ON]->() DELETE r WITH n UNWIND $depIds
-#     AS depId MATCH (dep:LineageNode {uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one
-#     `session.run()` call.
+#     (`MATCH (n:LineageNode {workspaceId: $workspace_id, uniqueId: $id})-[r:DEPENDS_ON]->()
+#     DELETE r WITH n UNWIND $depIds AS depId MATCH (dep:LineageNode {workspaceId:
+#     $workspace_id, uniqueId: depId}) MERGE (n)-[:DEPENDS_ON]->(dep)`), one `session.run()`
+#     call. **`workspaceId` added to BOTH MATCH clauses pass 50** — without it on the `dep`
+#     lookup specifically, a dependency edge could silently MERGE across workspaces if two
+#     tenants' dbt projects happen to share a `uniqueId` (dbt's unique_id is
+#     project-namespaced, not globally unique across unrelated customers' projects).
 #     **CORRECTED pass 34 (triple-click-zoom) — this EXACT combined shape (DELETE + WITH +
 #     UNWIND + MERGE, all in ONE string) has NO literal precedent anywhere in this repo,
 #     verified by direct search — do not cite `deleteWorkflowStep` as proof it does.**
@@ -870,9 +1177,16 @@ async def find_downstream_impact(
 # `"MY_DB"."GOLD"."mart_daily_portfolio_exposure"`, the SAME namespace `anomaly.dataset`
 # lives in). BH-1062 must populate `relation_name` from the manifest node's own field; BH-1064
 # must match against it, not `name`/`uniqueId`:
-#   MATCH (start:LineageNode {relationName: $anomaly_dataset})
+#   MATCH (start:LineageNode {workspaceId: $workspace_id, relationName: $anomaly_dataset})
 #                   <-[:DEPENDS_ON*1..50]-(downstream:LineageNode)
 #                   RETURN DISTINCT downstream
+#
+# CRITICAL, added pass 50 — `workspaceId` in the MATCH is NOT optional. relation_name alone
+# is not guaranteed globally unique across workspaces (two customers' dbt projects can easily
+# both have a model materializing to a same-named schema.table, e.g. "GOLD.mart_revenue").
+# Without the workspace filter, this traversal could walk cross-tenant into a DIFFERENT
+# workspace's lineage graph — a real data-isolation violation (PS-13), not merely a
+# correctness nit. See Invariant 18.
 #
 # CORRECTED pass 33 (triple-click-zoom) — the original `*1..` (unbounded) query, verified
 # against this repo's real Cypher conventions and general Neo4j semantics, needed two fixes:
@@ -891,15 +1205,17 @@ async def find_downstream_impact(
 #      (a common, normal shape in any real DAG with diamond dependencies) would be RETURNED
 #      MULTIPLE TIMES — the original query would have silently produced duplicate
 #      downstream-table entries in the anomaly's enrichment metadata.
-# REMAINING GAP, flagged not silently assumed solved: dbt's `relation_name` format
-# (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) may not exactly string-match
-# `asset_details.get("snowflakeTableName")`'s format (unverified in this pass — no code path
-# in this repo currently produces or compares these two strings side by side, since this
-# bridge has never existed before). BH-1062/1064's implementer MUST confirm the two strings'
-# exact casing/quoting/part-count match on a REAL workspace with both a dbt connection and a
-# DataAssetNode for the same physical table before trusting an exact-match Cypher lookup — a
-# normalization step (strip quotes, uppercase/lowercase consistently, drop the DB part if
-# `dataset` is 2-part) may be required. Do not assume string equality without this check.
+# RESOLVED pass 46 (was flagged here as an open "REMAINING GAP" — do not re-open without new
+# evidence). dbt's `relation_name` format (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) is NOT
+# repo-confirmed to string-match `asset_details.get("snowflakeTableName")`'s format directly —
+# but this is no longer an unverified open question, because the SAME drift class (quoting,
+# casing, 2-part vs 3-part) is CONFIRMED to already occur on the `AnomalyEventNode.dataset`
+# side alone: traced end-to-end (quality_check_agent.py:362-366 -> longitudinal_node.py:348 ->
+# metric_history_store.py:181, zero normalization anywhere in that path) and cross-referenced
+# against the ALREADY-SHIPPED BH-743 fix (`_fqn_variants()`, longitudinal.py:150+), which
+# exists precisely because Neo4j's exact-match filter does not case-fold or normalize on its
+# own. See Invariant 10 for the full trace and required fix: BH-1064's traversal SHALL reuse
+# `_fqn_variants()`'s existing normalization pattern rather than assume exact-match works.
 #
 # Writes into the metadata dict BEFORE publish_completion_notification's existing
 # json.dumps(...) call (quality_check_agent.py:1663) — this ticket adds one new key, it does
@@ -974,7 +1290,20 @@ async def find_downstream_impact(
    non-deprecated driver-v5 API, per package.json:47's neo4j-driver ^5.0.0 — NOT
    session.writeTransaction, which is deprecated at this version) is the fallback ONLY if the
    upsert needs to read an intermediate result back into JS before the MERGE, which is not
-   expected here.`
+   expected here.
+
+   RE-CONFIRMED pass 44 — `executeWrite`/`writeTransaction`/`beginTransaction` usage across
+   platform-core's TypeScript `src/` is still zero (grep-confirmed again, not re-trusting the
+   pass-9 finding blindly). The only place `write_transaction` (the driver's deprecated
+   snake_case alias) is actually used in this org's codebase is two Python Lambdas —
+   `openmetadata_webhook_lambda/utils/neo4j_client.py:158,176` and
+   `neo4j_connector_lambda/db/neo4j_connector.py:77` — neither reachable from, nor precedent
+   for, the TS OGM/GraphQL write path BH-1063 touches; do not cite them as proof this repo has
+   an atomic-multi-statement pattern to copy. `neo4j_connector.py`'s
+   `_create_and_connect_data_asset_tx` (lines 23-115) IS a real 5-statement atomic write inside
+   one `write_transaction` call — but MERGE/CREATE-only, no DELETE, and in a different language
+   and deploy unit. It demonstrates the driver CAN do this, not that this repo's TS layer ever
+   has.`
 10. `THE downstream-impact traversal (BH-1064) SHALL match a LineageNode against
     AnomalyEventNode.dataset using LineageNode.relation_name — it SHALL NOT match against
     LineageNode.unique_id or LineageNode.name. CRITICAL, found pass 10: unique_id/name live
@@ -983,10 +1312,35 @@ async def find_downstream_impact(
     exposure", sourced from DataAssetNode's redshiftTableName/snowflakeTableName/tableFQN via
     quality_check_agent.py:362-366). Matching against the wrong field would silently return
     zero downstream tables for every real anomaly — no error, just a defeated epic. BH-1062
-    MUST populate relation_name from dbt manifest.json's own relation_name field per node;
-    string-format equality between relation_name and anomaly.dataset (quoting, casing,
-    2-part vs 3-part) is UNVERIFIED against a real workspace and MUST be confirmed — a
-    normalization step may be required before the exact-match Cypher lookup is trustworthy.`
+    MUST populate relation_name from dbt manifest.json's own relation_name field per node.
+
+    RESOLVED pass 46 (triple-click-zoom) — the format-equality question is no longer
+    hypothetical; confirmed against real code, and this org has ALREADY built and shipped the
+    fix for the exact same drift class, just for a different pair of fields. Tracing
+    `dataset`'s real value end to end: `quality_check_agent.py:362-366` resolves
+    `dataset_table_name` via the SAME `DataAssetNode` fallback chain
+    (redshiftTableName→snowflakeTableName→tableFQN→tableName) with ZERO normalization, flows
+    unmodified through `longitudinal_node.py:348` and `metric_history_store.py:181` into
+    `AnomalyEventNode.dataset`. Confirmed real-world drift, per
+    `mcp/tools/longitudinal.py:100-110` and `tests/integration/golden_cases/
+    test_longaeva_uat_mcp.py:340-346`: Snowflake actually stores this as 2-part, unquoted,
+    mixed-case (`GOLD.mart_daily_portfolio_exposure`), while callers commonly pass 3-part,
+    uppercase (`LONGAEVA_POC.GOLD.MART_DAILY_PORTFOLIO_EXPOSURE`) — and this exact
+    casing/qualification drift was ALREADY a real bug (BH-743), already fixed client-side via
+    `_fqn_variants()` (`longitudinal.py:150+`), because "the Neo4j `where: { dataset: <exact>
+    }` filter is case-sensitive" (`longitudinal.py:109`) — Neo4j string equality does not
+    case-fold or normalize on its own. dbt's `manifest.json` `relation_name` field is
+    typically a quoted 3-part identifier (`"database"."schema"."table"`) — general dbt
+    platform knowledge, NOT repo-confirmed, since zero manifest-parsing precedent exists here
+    (unchanged from earlier passes). Given `dataset` is CONFIRMED to already vary in exactly
+    the dimensions (quoting, casing, 2-part vs 3-part) `relation_name` would introduce, an
+    exact-match Cypher lookup between the two is confirmed NOT safe to assume. FIX: BH-1064's
+    traversal SHALL reuse the SAME variant-probe normalization pattern `_fqn_variants()`
+    already established for this drift class (try exact form, then strip DB-prefix, then
+    lowercase) rather than inventing a new one — either by calling an equivalent
+    Cypher-side `toLower()`/prefix-stripped OR pattern, or by generating the same variant list
+    client-side before the traversal query. This is a precedented fix to copy, not a new
+    design problem.`
 11. `WHEN brightbot's upsert_lineage_graph() calls platform-core's OGM mutation via
     OGMAPISession.mutation(), THE System SHALL check the returned response for a non-empty
     "errors" key and treat that as a failure (log + do not silently proceed) — it SHALL NOT
@@ -1021,7 +1375,9 @@ async def find_downstream_impact(
     bug, a self-referencing model), this can blow up exponentially on a cycle. Without
     DISTINCT, a downstream node reachable via multiple paths (a normal shape in any DAG with
     diamond dependencies) would be returned multiple times, producing duplicate
-    downstream-table entries in the anomaly's enrichment metadata.`
+    downstream-table entries in the anomaly's enrichment metadata. RE-CONFIRMED pass 58
+    (fresh grep for `*1..`/`*0..`/variable-length hop syntax across platform-core's `src/`,
+    zero hits) — still no precedent exists, finding unchanged.`
 14. `THE System SHALL NOT claim, imply, or name any field as "column lineage" for data
     sourced from dbt's catalog.json — catalog.json contains ZERO column-to-column
     DEPENDENCY information (general dbt platform knowledge, confirmed pass 36: it is a
@@ -1037,6 +1393,95 @@ async def find_downstream_impact(
     separate, proprietary Column-Level Lineage feature or a third-party SQL parser (e.g.
     sqlglot) statically analyzing compiled SQL — genuinely new scope, out of this spec
     entirely (see §5 Out of Scope).`
+15. `WHEN BH-1062's fetch_lineage_artifacts() fetches manifest.json/catalog.json for a
+    specific run_id, THE System SHALL NOT assume the session's cached dbt Cloud
+    credentials (account_id/api_token, resolved once per session by
+    _find_connected_dbt_service()'s first-match behavior) are guaranteed to match the
+    run_id's actual owning account/service. CRITICAL, found pass 44: confirmed
+    _fetch_artifact() takes account_id/api_token as explicit params with no internal
+    resolution, and its real analog call site reads them via a pure state read populated
+    ONCE PER SESSION — run_id is NEVER used to select or validate the account, only
+    interpolated into the artifact URL against whatever was cached at init. IF a workspace
+    has multiple connected dbt Cloud services, a mismatch between the cached session
+    credentials and the run_id's real owner risks either a 404 or, worse, silently
+    fetching a WRONG account's manifest.json for an unrelated run_id — a cross-project
+    data-shape confusion, not merely a missed poll. BH-1062's implementer SHALL either
+    confirm this fetch always executes in the same session/state context that resolved
+    the run_id (verified, not assumed), or thread the real account_id through explicitly
+    from wherever the run_id was discovered. This mirrors the sibling
+    proactive-pipeline-ingestion-monitoring.md spec's Invariant 16 (the same class of gap,
+    confirmed in 2 of its 3 adapters) — this spec's own fetch step is a THIRD confirmed
+    instance, not a hypothetical extension.`
+
+16. `WHEN BH-1068's SnowflakeNativeLineageSource adapter queries SNOWFLAKE.ACCOUNT_USAGE.*
+    views, THE System SHALL distinguish a genuine "no dependencies found" result from a
+    permission failure ("the bound role lacks IMPORTED PRIVILEGES / ACCOUNTADMIN") and from
+    a latency gap ("the view has not yet ingested this recently-created object"). CRITICAL,
+    found pass 45: `SnowflakeConnection`'s own docstring (warehouse_connections.py:708-711)
+    states the account SHOULD bind to a SELECT-only, least-privilege role — exactly the
+    posture ACCOUNT_USAGE views reject without an explicit IMPORTED PRIVILEGES grant. This
+    already happened in this org: the real deployed Longaeva POC role
+    (`LONGAEVA_POC_ROLE`, SNOWFLAKE_POC_HANDOFF.md:32) hit this precisely, and the
+    documented fix (`#825`, same doc line 64) was to SILENCE the resulting per-query
+    failures, not detect or resolve them. An adapter that treats a silenced permission
+    failure as "confirmed zero lineage" reports false negatives for every customer running
+    the recommended least-privilege posture — the majority case, not an edge case. THE
+    adapter SHALL surface a distinct, typed error/status for a permission failure (never
+    fold it into an empty result), and SHALL check each queried view's last-refresh
+    freshness before treating an empty result for a recently-created object as
+    authoritative.`
+
+17. `WHEN BH-1069's upsert_lineage_graph() is called once per model in a loop (a real dbt
+    project can have hundreds of models per manifest), THE System SHALL reuse ONE
+    OGMAPISession instance constructed OUTSIDE the loop — it SHALL NOT rely on the bare
+    `session or OGMAPISession()` default inside the loop body. CRITICAL, found pass 49:
+    `OGMAPISession.__init__` (ogm_api.py:44-56) opens a `requests.Session()` and
+    unconditionally performs a live Cognito `USER_PASSWORD_AUTH` HTTP round-trip
+    (`_authenticate()`, ogm_api.py:90-127) on EVERY construction — confirmed no
+    module/class-level token cache exists anywhere in `ogm_api.py`, and no
+    `__enter__`/`__exit__`/`close()`/`__del__` exists to deterministically release the opened
+    connection pool. This default idiom is safe for this repo's 9 EXISTING call sites (each
+    fires once per agent turn) but would multiply into hundreds of Cognito logins and leaked
+    connection pools per manifest load if copied unmodified into a per-model loop — a real
+    cost and resource-leak risk, not a style nit.`
+
+18. `LineageNode SHALL carry a native workspaceId: String! scalar field, and EVERY Cypher
+    query targeting LineageNode (the delete-then-MERGE upsert per Invariant 9, and BH-1064's
+    downstream-impact traversal per Invariant 10) SHALL filter on workspaceId in its MATCH
+    clause, not merely on relationName/uniqueId. CRITICAL, found pass 50: every OGM node type
+    checked in this codebase (WorkflowStepNode, MetricSnapshotNode, AnomalyEventNode) has at
+    least one relationship chain reaching WorkspaceNode; LineageNode's own decorated
+    relationship (dependsOn) points to OTHER LineageNodes, not to any workspace-scoped
+    anchor — it does NOT close the same scoping loop dataAsset does for
+    AnomalyEventNode/MetricSnapshotNode. Without an explicit workspaceId filter, dbt's
+    unique_id (project-namespaced, not globally unique across unrelated customers) or a
+    warehouse-side relation_name collision (two tenants both materializing to a
+    similarly-named schema.table) could cause a cross-tenant MATCH — either silently deleting
+    or MERGE-ing another workspace's edges (a write-side isolation violation), or walking
+    BH-1064's downstream-impact traversal into a different workspace's graph (a read-side
+    isolation violation). This is a data-isolation requirement (PS-13), not a correctness
+    nit — LineageNode would otherwise be the first node type in this codebase with zero
+    workspace-scoping mechanism of any kind.`
+
+19. `BH-1062's dbt fetch/parse logic SHALL be reachable ONLY through DbtLineageSource — no
+    caller SHALL invoke fetch_lineage_artifacts() directly. CRITICAL, found pass 55: §2
+    declares that every lineage source (dbt, Databricks, Snowflake-native) implements the
+    SAME LineageSource interface and returns the SAME LineageGraph shape, so that a
+    downstream traversal never has to know which source produced it — but this was never
+    actually connected to BH-1062's real fetch function: fetch_lineage_artifacts() has a
+    different name, different parameters (job_id/run_id explicit vs a generic run_context
+    dict), and a different return type (LineageArtifacts vs LineageGraph) than what
+    LineageSource declares. Verified by grep: LineageGraph/DbtLineageSource are referenced
+    ONLY in §2's abstract definition and the platform-level diagram — never produced or
+    consumed anywhere in the actual BH-1062/1063/1064 implementation described later in this
+    spec. Left unfixed, adding a SECOND lineage source (Databricks or Snowflake-native, both
+    already planned) would have nothing real to match — each would invent its own shape
+    independently, defeating the whole point of settling on one shared shape first. THE
+    System SHALL either (a) implement DbtLineageSource as the translation layer (unpack
+    run_context into job_id/run_id, delegate to fetch_lineage_artifacts(), translate
+    LineageArtifacts to LineageGraph), or (b) if the extra indirection is judged unnecessary
+    for a single-source MVP, explicitly drop the unused LineageSource/LineageGraph types from
+    §2 rather than leave them as aspirational scaffolding nothing implements.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -1061,6 +1506,19 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And it would NOT have found this node had it matched on unique_id or name instead
       (CRITICAL, found pass 10 — this is the exact bug that silently returns zero downstream
       tables for every real anomaly if regressed)
+
+  Scenario: the traversal survives the SAME FQN drift already fixed once for this org (BH-743)
+    Given a LineageNode with relation_name stored as dbt's quoted 3-part form
+      ("db"."GOLD"."mart_daily_portfolio_exposure")
+    And an AnomalyEventNode with dataset stored in the Snowflake 2-part unquoted mixed-case
+      form ("GOLD.mart_daily_portfolio_exposure") — CONFIRMED real drift, per
+      longitudinal.py:100-110 and the existing BH-743 fix for this exact class of mismatch
+    When BH-1064's traversal looks up the starting node for this anomaly
+    Then it finds the node by reusing the SAME variant-probe normalization _fqn_variants()
+      already applies for this drift class (exact form, then DB-prefix stripped, then
+      lowercased) — not a fresh, unproven normalization scheme
+    And it does NOT silently return zero downstream tables merely because the two fields'
+      quoting/casing/part-count differ
 
   Scenario: the traversal is bounded and deduplicated
     Given a LineageNode with two separate DEPENDS_ON paths converging on the SAME downstream
@@ -1131,6 +1589,74 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       timeout, streaming parse) was built for this artifact class specifically
     And the existing 30-second timeout tuned for KB-scale run_results.json/sources.json is
       NOT silently assumed safe at 100x+ that data volume without one of the above
+
+  Scenario: the manifest fetch never uses stale session-cached credentials for a mismatched run_id
+    Given a workspace with TWO connected dbt Cloud services (accounts A and B)
+    And the session's cached credentials currently point at account A (the first-matched
+      service, per _find_connected_dbt_service()'s known first-match behavior)
+    When BH-1062 fetches manifest.json for a run_id that actually belongs to account B
+    Then the fetch does NOT silently succeed against account A's manifest.json for account
+      B's run_id (a cross-project data-shape confusion)
+    And EITHER the fetch call is confirmed to always execute in the same session context
+      that resolved this specific run_id, OR the real account_id is threaded through
+      explicitly rather than read from session-cached state
+
+  Scenario: a least-privilege Snowflake role's permission failure is never read as "no dependencies"
+    Given a Snowflake connection bound to a SELECT-only, least-privilege role — the posture
+      SnowflakeConnection's own docstring recommends — which lacks IMPORTED PRIVILEGES on
+      the SNOWFLAKE database
+    When BH-1068's SnowflakeNativeLineageSource queries SNOWFLAKE.ACCOUNT_USAGE.
+      OBJECT_DEPENDENCIES for a real table with real dependencies
+    Then the query's permission failure is surfaced as a distinct, typed error/status
+    And it is NOT silently swallowed or folded into an empty "zero dependencies" result,
+      the way #825's fix (SNOWFLAKE_POC_HANDOFF.md:64) already did for this org's real
+      Longaeva POC role
+    And the adapter does not report "this table has no dependencies" when the true state is
+      "this role cannot see dependencies"
+
+  Scenario: a freshly-created Snowflake Task's dependency is never read as "does not exist"
+    Given a Snowflake Task created less than the ACCOUNT_USAGE view's documented refresh
+      latency window ago (up to ~45 min–3 hrs, view-dependent)
+    When BH-1068 queries OBJECT_DEPENDENCIES for that Task immediately after creation
+    Then an empty result is treated as "not yet reflected, latency window not elapsed" if
+      the view's own freshness/last-refresh signal indicates so
+    And BH-1064's downstream-impact traversal does NOT treat this empty result as
+      authoritative proof "nothing depends on this" while the latency window is still open
+
+  Scenario: upserting a full manifest's worth of models never re-authenticates per model
+    Given a real dbt manifest.json with hundreds of models
+    When BH-1069's caller loops over every model, calling upsert_lineage_graph() once per model
+    Then exactly ONE OGMAPISession is constructed for the entire loop, passed explicitly into
+      every call
+    And the loop does NOT rely on the bare `session or OGMAPISession()` default per iteration,
+      which would perform a fresh Cognito login and open a new unclosed connection pool on
+      every single model
+
+  Scenario: the lineage graph never leaks across workspaces on a colliding identifier
+    Given workspace A has a LineageNode with uniqueId "model.shared_proj.stg_orders" and
+      relation_name "GOLD.mart_revenue"
+    And workspace B has a DIFFERENT LineageNode that happens to share the SAME uniqueId
+      and/or relation_name (a real possibility — dbt's unique_id is project-namespaced, not
+      globally unique across unrelated customers, and warehouse schema/table names commonly
+      collide across tenants)
+    When BH-1063's delete-then-MERGE upsert runs for workspace A, and separately when
+      BH-1064's downstream-impact traversal runs for an anomaly in workspace A
+    Then neither operation matches, deletes, merges, or returns workspace B's LineageNode or
+      its edges
+    And both operations' Cypher MATCH clauses filter on workspaceId, not merely on
+      uniqueId/relationName alone
+
+  Scenario: a second lineage adapter has a real port to conform to, not a shape to invent
+    Given the LineageSource Protocol declared in §2 (fetch_lineage(workspace_id, run_context)
+      -> LineageGraph)
+    And BH-1062's real fetch/parse logic (fetch_lineage_artifacts, returning LineageArtifacts)
+    When DbtLineageSource is implemented as the adapter bridging the two
+    Then BH-1064's traversal calls ONLY LineageSource.fetch_lineage() and LineageGraph — it
+      never references fetch_lineage_artifacts, LineageArtifacts, or any dbt-specific name
+    And adding BH-1068's SnowflakeNativeLineageSource or a future DatabricksLineageSource
+      means implementing the SAME Protocol against the SAME LineageGraph return type — not
+      inventing a new shape, because a real, exercised adapter already proved the contract
+      works
 ```
 
 ## 5. Out of Scope
@@ -1157,24 +1683,26 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 
 | Dependency | Type | Status |
 |---|---|---|
-| Longitudinal monitoring (GC-12, BH-601) | Blocking (this spec enriches its alerts) | Shipped + staging-verified |
+| Longitudinal monitoring (GC-12, BH-669) | Blocking (this spec enriches its alerts) | **CORRECTED pass 59**: cited ticket was wrong — BH-601 is the umbrella "14 Golden Cases" tracker (still `Needs Refinement`, unrelated to GC-12 shipping status specifically); the real GC-12 capability ticket is BH-669, confirmed `Done` in live Jira. Shipped + staging-verified claim holds, citation didn't. |
 | BH-673 (anomaly→lineage bridge) | This spec's BH-1064 closes it | Deferred, now actively scoped |
 | `_fetch_artifact()` plumbing (dbt_cloud_tools.py) | Non-blocking (reused, not built here) | Live |
 | `WorkflowStepNode`'s `DEPENDS_ON` delete-then-MERGE precedent (`workflow-spec.ts:299-317`) | Non-blocking (pattern mirrored, not reinvented) — corrected pass 1, was wrongly cited as DataAssetNode | Live |
 | brightbot's OGM HTTP path (`ogm_api.py:34-70`) | Blocking — BH-1063's brightbot half MUST go through this, no new Neo4j driver | Live |
 | **platform-core engineering capacity** (verified pass 1: BH-1063 is 2-repo work) | Blocking — this spec cannot ship with brightbot-only resourcing | New dependency, not previously called out |
-| BH-1044 (Databricks credential-location decision) | Blocking for the Databricks half, but NOT sufficient by itself — see below | Open decision, not yet confirmed |
+| BH-1044 (Databricks credential storage/lookup design) | Blocking for the Databricks half, but NOT sufficient by itself — see below | **RE-CHECKED pass 53 (fresh, not carried forward)**: no longer just an "open decision" — its own ticket (pass 24, in the sibling proactive-pipeline-ingestion-monitoring.md's Track B scope) resolved the design to a concrete pattern: mirror dbt's per-CONNECTION direct-boto3 secret read (`_retrieve_dbt_cloud_api_token()`, `credentials_tools.py:166-200`) keyed on `(workspace_id, service_id)`, not workspace_id alone, with no caching layer. Confirmed Jira status still `Needs Refinement` — the DESIGN is settled, the code is not yet built. This spec's Databricks lineage adapter (DatabricksLineageSource) should reuse this SAME resolved credential pattern once BH-1044 ships, not re-derive its own. |
 | Databricks connection-type plumbing (new WarehouseType enum + connector + Unity Catalog system-schema enablement) | Blocking for the Databricks half, independent of BH-1044 | **CORRECTED pass 7**: confirmed zero Databricks code exists in brightbot or platform-core outside vendored deps — this is greenfield regardless of how BH-1044 resolves, not merely gated behind it |
-| BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, Needs Refinement — same class of gap as BH-1067 in the sibling proactive-pipeline-ingestion-monitoring.md spec |
-| Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — already permits arbitrary `SELECT`, including against `ACCOUNT_USAGE` views |
-| BH-1068 (Snowflake-native lineage adapter: Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Non-blocking for 7/17; cheaper than the Databricks half (gap 4) but equally unbuilt | **Filed pass 8** — user-raised, confirmed real gap, confirmed cheap relative to Databricks |
+| BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, **CORRECTED pass 48**: not a new `NotificationStage`/`BackendStage` case — the `metadata.longitudinal` blob already rides inside the existing `quality_asset_result` stage; this ticket enriches that stage's renderer to surface `anomaly_count`/`families` (real fields — `dataset`/`family`/`severity` do NOT exist on this blob, an earlier pass's ticket text was wrong), downgraded M→S |
+| Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — permits arbitrary `SELECT` syntactically, but **CORRECTED pass 45**: its own docstring recommends a least-privilege role, and ACCOUNT_USAGE reads need IMPORTED PRIVILEGES/ACCOUNTADMIN — confirmed via SNOWFLAKE_POC_HANDOFF.md that the real Longaeva POC role already hit and silenced this exact permission gap (`#825`) |
+| BH-1068 (Snowflake-native lineage adapter: Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Non-blocking for 7/17; cheaper than the Databricks half (gap 4) but equally unbuilt | **Filed pass 8, CORRECTED pass 45**: "no new connection type" is true but understates the real gap — needs a new Invariant 16 permission/latency guard (least-privilege roles silently fail ACCOUNT_USAGE reads; views lag INFORMATION_SCHEMA by up to hours) or it will report false "zero lineage" for the recommended, common role posture |
 
 ## 7. Correctness Properties
 
 **Added pass 14 (triple-click-zoom) — required per `spec-driven.md`'s §7 trigger: this spec
 involves a state machine (LineageNode's DEPENDS_ON edges, delete-and-recreate per manifest
 run) and a correctness-critical traversal (BH-1064's downstream-impact walk, whose match-key
-bug was the CRITICAL finding of pass 10). Both conditions trigger the §7 requirement.**
+bug was the CRITICAL finding of pass 10). Both conditions trigger the §7 requirement.
+EXTENDED pass 57: Invariant 18 (pass 50) added a THIRD independent trigger — a security/
+safety boundary (multi-tenant data isolation) — covered by Property 5 below.**
 
 ### Property 1: a LineageNode's DEPENDS_ON edges never observably reach zero mid-upsert
 
@@ -1192,10 +1720,20 @@ lineage edges"**
 LineageNode SHALL match against `LineageNode.relation_name`, which SHALL be populated from
 the same warehouse-qualified namespace as `AnomalyEventNode.dataset` — never against
 `LineageNode.unique_id` or `LineageNode.name`, which live in dbt's own model-identifier
-namespace and would silently match zero nodes for a real anomaly.
+namespace and would silently match zero nodes for a real anomaly. **Extended pass 46**:
+namespace-correctness alone is not sufficient — `dataset` is CONFIRMED (via the already-
+shipped BH-743 fix) to vary in quoting/casing/part-count even within its own correct
+namespace, so the match SHALL also apply the SAME `_fqn_variants()`-style normalization
+already precedented for this drift class, not a bare exact-match. **Extended pass 50**:
+correctness within a single workspace is also not sufficient — the match SHALL additionally
+filter on `LineageNode.workspaceId`, since `relation_name` is not guaranteed unique ACROSS
+workspaces (two tenants' warehouses can share a schema.table name); omitting this filter
+risks a cross-tenant match, a data-isolation violation (PS-13) distinct from the
+namespace/format-correctness this property already covers.
 
-**Validates: §3 Invariant 10, §4 Scenario "the traversal never matches against the wrong
-identifier namespace"**
+**Validates: §3 Invariant 10, §4 Scenarios "the traversal never matches against the wrong
+identifier namespace" and "the traversal survives the SAME FQN drift already fixed once for
+this org (BH-743)"**
 
 ### Property 3: a GraphQL-level mutation failure is never silently treated as success
 
@@ -1215,6 +1753,27 @@ absent.
 
 **Validates: §3 Invariant 7, §4 Scenario "a real fetch error is never mistaken for 'no
 lineage available'"**
+
+### Property 5: no Cypher operation against LineageNode ever crosses a workspace boundary
+
+**Added pass 57 (triple-click-zoom) — Invariant 18 (pass 50) introduced LineageNode's first
+workspace-scoping mechanism in this codebase; per §7's own trigger criteria this is a
+security/safety boundary (multi-tenant data isolation, PS-13), which independently qualifies
+for a Correctness Property even setting aside the state-machine/traversal triggers already
+cited above.**
+
+*For any* two workspaces A and B where a `LineageNode` in A shares a `uniqueId` and/or
+`relationName` with a DIFFERENT `LineageNode` in B (a real possibility — dbt's `unique_id` is
+project-namespaced, not globally unique across unrelated customers, and warehouse
+`relation_name` collisions across tenants are plausible), no Cypher operation issued for
+workspace A's context (the delete-then-MERGE upsert per Invariant 9, or the downstream-impact
+traversal per Invariant 10) SHALL match, read, modify, or return any node or edge belonging
+to workspace B. Every such operation's MATCH clause SHALL filter on `workspaceId` as
+confirmed by Invariant 18 — this holds regardless of how `uniqueId`/`relationName` happen to
+collide across tenants.
+
+**Validates: §3 Invariant 18, §4 Scenario "the lineage graph never leaks across workspaces
+on a colliding identifier"**
 
 ## 8. Eval Criteria
 
@@ -1247,8 +1806,20 @@ metadata, both production surfaces.**
   silent GraphQL failure has no operator-visible trace at all), `lineage.traversal.no_match`
   (when BH-1064's traversal finds zero downstream nodes — this event is what would have
   caught pass 10's original match-key bug in production, had it shipped; every occurrence
-  should be reviewed as a potential relation_name format mismatch, per Invariant 10's
-  remaining gap).
+  should be reviewed as a potential normalization miss even AFTER Invariant 10's
+  `_fqn_variants()`-style fix lands per pass 46 — that fix covers the KNOWN drift dimensions
+  found so far, not a formal proof no other drift dimension exists).
+
+  **ADDED pass 52 (triple-click-zoom)**: `lineage.workspace_scope.violation_prevented` —
+  emitted whenever a Cypher query's `workspaceId` filter (Invariant 18, pass 50) is the
+  DIFFERENCE between a match and a non-match, i.e. a `uniqueId`/`relationName` match existed
+  in the graph but belonged to a DIFFERENT workspace than the caller's. This is a
+  security-relevant signal, not a generic no-match case — folding it into
+  `lineage.traversal.no_match` would hide a real cross-tenant collision behind a routine
+  "nothing found" log, undermining the exact isolation guarantee Invariant 18 exists to
+  provide observable proof of. Since Invariant 18 introduced the FIRST workspace-scoping
+  mechanism on `LineageNode`, this event has no precedent to mirror in this codebase — it is
+  new instrumentation, not a gap being closed on existing code.
 - **Metrics**: none proposed in this pass — could be added later (e.g.
   `lineage_traversal_no_match_rate`) once real production volume exists to judge a threshold
   against; premature to define one now.
@@ -1287,7 +1858,11 @@ metadata, both production surfaces.**
   real longitudinal-monitoring e2e precedent to extend for the anomaly-detection half.
   `e2e/surfaces/test_neo4j_integrity.py` is the real surface test to extend for
   LineageNode/DEPENDS_ON graph-integrity assertions (Property 1/2 above should get surface
-  cases here, not a new file). **No workflow-spec-lineage-specific e2e test exists yet** —
+  cases here, not a new file). **ADDED pass 52**: Invariant 18's cross-tenant isolation case
+  ("the lineage graph never leaks across workspaces on a colliding identifier") belongs here
+  too, against a real two-workspace Neo4j fixture — a mocked/single-workspace test cannot
+  exercise this invariant, since the whole risk is TWO real workspaces sharing a colliding
+  `uniqueId`/`relationName`. **No workflow-spec-lineage-specific e2e test exists yet** —
   this spec's §10 obligation includes adding the FIRST such case, not extending one that
   doesn't exist.
 
@@ -1303,23 +1878,23 @@ just that the Cypher string is syntactically well-formed.
 
 | Area | Repo | Impact |
 |---|---|---|
-| Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
+| Manifest/catalog fetch + parse + DbtLineageSource adapter (BH-1062) | `brightbot` | New parser module reuses existing artifact-fetch plumbing; **CORRECTED pass 55**: also includes the `DbtLineageSource` class translating `LineageArtifacts` -> the shared `LineageGraph` shape §2 declares, previously never actually implemented despite §2 committing to it |
 | Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
-| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) |
-| Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | Extends BH-1046's existing alert path, no new delivery mechanism |
+| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11), a single shared `OGMAPISession` across the per-model loop (Invariant 17, pass 49), AND accepts the engine-agnostic `LineageGraph` (not `LineageArtifacts`) per Invariant 19 (pass 56) |
+| Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | **CORRECTED pass 52 — this row was stale/wrong, contradicting this same spec's own pass-4 finding.** NOT "extends BH-1046's existing alert path" — confirmed (pass 4) there is no rendered Slack/webapp alert path to extend at all; the real insertion point is a new key inside `publish_completion_notification`'s existing JSON metadata dict (`quality_check_agent.py:1663`), and the base anomaly notification itself has zero human-visible rendering until BH-1066 ships (pass 5/48). This ticket adds `downstream_tables` data with nothing to render it until BH-1066 lands — not a delivery-mechanism extension. |
 
 ## Ticket Breakdown
 
 | Ticket | Summary | Status |
 |---|---|---|
 | BH-1061 | Epic: Lineage-Aware Data Quality | Needs Refinement |
-| BH-1062 | feat: fetch + parse manifest.json/catalog.json | Needs Refinement |
+| BH-1062 | feat: fetch + parse manifest.json/catalog.json + DbtLineageSource adapter | Needs Refinement, **CORRECTED pass 55** — scope now includes wiring the fetch function to the declared LineageSource Port (§2), not just the fetch/parse logic in isolation |
 | BH-1063 | feat: load parsed DAG into Neo4j as queryable lineage graph | Needs Refinement |
 | BH-1064 | feat: wire anomalies to walk the graph forward (closes BH-673) | Needs Refinement |
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
-| BH-1066 | feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed) | Needs Refinement, filed pass 5 — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
-| BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8 — user-raised, confirmed cheaper than the Databricks adapter (reuses existing SnowflakeConnection, no new connection type) |
-| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11 — formerly informal "BH-1063a," now its own trackable ticket |
+| BH-1066 | feat: enrich the EXISTING quality_asset_result renderer (Slack + webapp) to surface metadata.longitudinal's real anomaly_count/families fields | Needs Refinement, filed pass 5, **CORRECTED pass 48** (not a new stage, real fields only, S not M) — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
+| BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8, **CORRECTED pass 45** — reuses existing SnowflakeConnection (no new connection type) but requires a permission/latency guard: the recommended least-privilege role posture already silently fails ACCOUNT_USAGE reads in this org's real Longaeva POC deployment (`#825`) |
+| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph(graph: LineageGraph) | Needs Refinement, filed pass 11, **CORRECTED pass 49, pass 56** — formerly informal "BH-1063a," now its own trackable ticket; per-model loop MUST share ONE OGMAPISession (not the bare default); signature takes the shared LineageGraph shape, not dbt-specific LineageArtifacts |
 | BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
 
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)

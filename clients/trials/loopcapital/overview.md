@@ -175,8 +175,9 @@ confirmed against real code, not assumed.
 ## Engineering Artifacts
 
 - **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
-  "Start Here" section first. Interface contracts, invariants (14), Gherkin AC, eval criteria,
-  observability contract, full pass-by-pass verification log.
+  "Start Here" section first. Interface contracts, invariants (16, count re-verified pass 47 —
+  was stale at 14), Gherkin AC, eval criteria, observability contract, full pass-by-pass
+  verification log.
 - **Jira**: epics **BH-1036** (Monitoring Agents) and **BH-1037** (Ingestion Observability),
   plus BH-1038–1041 (BrightRoutines MCP/A2A, under BH-115), BH-1053/1055/1059 (infra tracking),
   BH-1060 (security follow-up).
@@ -189,20 +190,33 @@ confirmed against real code, not assumed.
   architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
   glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1070.
 - **This client folder**: merged to master via PR [#96](https://github.com/brighthive/agentic-project-mgmt/pull/96) (2026-07-12).
-- **Open follow-up PR**: [#97](https://github.com/brighthive/agentic-project-mgmt/pull/97) —
-  dual-write shape correction (BH-1054/BH-1046), on `drchinca/BH-1061/triple-click-zoom-pass-15`.
-  Opened fresh after #94/#95/#96 merged; ongoing verification passes land here until it's next
-  merged.
+- **PR #97 — merged** to master (dual-write shape correction, BH-1054/BH-1046), verified
+  pass 47 via `gh pr view 97` rather than trusting a prior pass's "open" note as still true.
+- **Open follow-up PR**: [#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) —
+  on `drchinca/BH-1061/triple-click-zoom-pass-38`. Opened fresh after #97 merged (crossed the
+  900-line split threshold); ongoing verification passes land here until it's next merged.
 
 ## Two things that must happen before 7/17, not yet done
 
+**RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
+Jira status + real code, not carried forward from an earlier pass's note:**
+
 1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
    demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs). **Not yet
-   executed** — needs a deliberate go-ahead from Kuri (this is a real, billable AWS resource).
+   executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead from Kuri
+   (this is a real, billable AWS resource).
 2. **BH-1047's safety fix** — the remediation loop's tool-binding must exclude
-   `github_merge_pull_request` at the code level (found: "never auto-merge" was previously a
-   prompt-only instruction with no code enforcement). Must ship before any remediation-PR flow
-   is demoed, regardless of timeline.
+   `github_merge_pull_request` at the code level. Re-confirmed pass 51: `github_merge_pull_request`
+   (`github_tools.py:503-560`) is still fully bound into `dbt_agent_react.py`'s live
+   `DBT_REACT_TOOLS` list with zero exclusion logic anywhere in the repo — "never auto-merge"
+   is STILL only a system-prompt instruction (`dbt_react_system_prompt.py:119-125`), not a
+   code-level gate. Confirmed Jira status is still `Needs Refinement` — the concrete fix
+   (a `REMEDIATION_TOOLS` list built via direct import, omitting the merge tool by name) is
+   already fully specified in BH-1047's ticket, just not yet implemented. Must ship before any
+   remediation-PR flow is demoed, regardless of timeline. Note: the underlying GC-11
+   self-healing loop itself has zero code today either (`test_gc_11_self_healing.py` is a
+   literal `pytest.skip("GC-11: GAP-7")` stub) — this ticket builds new orchestration, it is
+   not merely closing a gap in existing code.
 
 ## Open Blockers
 

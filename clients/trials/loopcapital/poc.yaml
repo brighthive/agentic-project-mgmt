@@ -172,19 +172,19 @@ phases:
         outcome: "BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing)"
         linked: [BH-1062]
       - day: "Post-demo"
-        outcome: "BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph"
+        outcome: "BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph. CORRECTED pass 50: that mirror is incomplete for tenancy — LineageNode needs its own native workspaceId field, since its dependsOn relationship (unlike AnomalyEventNode's dataAsset) never chains to WorkspaceNode."
         linked: [BH-1063]
       - day: "Post-demo"
-        outcome: "BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge"
+        outcome: "BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge. Traversal MUST match on LineageNode.relationName (never uniqueId/name, pass 10), reuse the org's existing _fqn_variants() normalization for real format drift (pass 46), AND filter on workspaceId (pass 50) — three real correctness/isolation requirements, not one."
         linked: [BH-1064]
       - day: "Post-demo"
         outcome: "BH-1066 — CONFIRMED pass 5: GC-12 anomaly notifications have zero rendering in Slack/webapp today, independent of this epic's own changes. BH-1064's enrichment has nothing to enrich that a human sees until this ships."
         linked: [BH-1066]
       - day: "Post-demo"
-        outcome: "BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half, reuses the existing SnowflakeConnection"
+        outcome: "BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half connection-wise, reuses the existing SnowflakeConnection. CORRECTED pass 45: needs a permission/latency guard too — the recommended least-privilege role posture silently fails ACCOUNT_USAGE reads (already happened once in this org's real Longaeva POC role, #825), so this is not free just because the connection is reused."
         linked: [BH-1068]
       - day: "Post-demo"
-        outcome: "BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check"
+        outcome: "BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check. ADDED pass 49: the per-model loop MUST share ONE OGMAPISession, not the bare default — that idiom re-authenticates via a live Cognito login on every construction, safe for existing once-per-turn call sites but not for a per-model loop over a real manifest's hundreds of models."
         linked: [BH-1069]
       - day: "Post-demo"
         outcome: "BH-1070 — test coverage gap: metric-snapshot.ts (BH-1063b's own cited precedent) has zero existing tests; non-blocking tech debt, tracked for visibility"
@@ -196,7 +196,7 @@ phases:
       Track B above.
     expectations:
       - day: "Post-demo"
-        outcome: "BH-1044 Databricks storage-model decision (brightbot-only secret recommended, needs Kuri confirm)"
+        outcome: "BH-1044 Databricks credential storage/lookup design — RESOLVED pass 24 to a concrete pattern (mirror dbt's per-connection direct-boto3 secret read, keyed on workspace_id+service_id, no caching); ticket status is Needs Refinement (design settled, code not yet built), no longer an open decision"
         linked: [BH-1044]
       - day: "Post-demo"
         outcome: "BH-1053 BrightSignals 3-way split-brain unification"
