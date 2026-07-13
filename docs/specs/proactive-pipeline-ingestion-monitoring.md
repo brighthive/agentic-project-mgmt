@@ -741,7 +741,10 @@ class PipelineHealthSignal:
 # closes a gap: earlier passes treated "dual-write" as roughly "call two functions with the
 # same payload." CONFIRMED that is WRONG — the two paths take genuinely different shapes,
 # and BH-1053 remains unshipped (no unification exists; both paths are still independent,
-# confirmed by direct read — neither imports the other):
+# confirmed by direct read — neither imports the other).
+# RE-VERIFIED pass 54 (checked fresh, not carried forward): every citation below still
+# matches current code exactly (file:line, signatures, fan-out mechanism), and BH-1053 is
+# still Needs Refinement in Jira with zero `git log --all --grep="BH-1053"` hits — no drift.
 #
 #   (1) writeNotificationSignal(input: WriteNotificationInput) — Promise<WriteNotificationResult>
 #       (platform-core/src/graphql/service/aws/notification-signal.ts:46)
