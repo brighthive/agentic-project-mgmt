@@ -872,15 +872,36 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    alert-only — it SHALL NOT guess a fix.`
 5. `WHEN a SQL Server is monitored for disk/job health, THE System SHALL do so through the
    EXISTING warehouse-connection machinery already required to catalog it as a BYOW source —
-   no new on-host collector for this signal class. Concrete call chain (verified pass 7 —
-   "WarehousePort" is Ports & Adapters terminology, not a literal class name; the real
-   equivalent is confirmed to exist): get_warehouse_connection_info(workspace_id)
-   (brightbot/tools/platform_queries.py:361) resolves credentials → WarehouseTool(...)
-   (brightbot/utils/warehouse.py:184) builds the connection via
-   WarehouseConnectionFactory.create_connection() (warehouse_connections.py:1241) →
-   .connection.execute_query(sql) (warehouse.py:510) runs the DMV query. Existing consumers
-   of this exact pattern: sv_qc_tools.py:114, workflow_agent/tools.py:174 — follow their
-   usage, don't reinvent. **RESOLVED pass 41 (triple-click-zoom) — the "known gap" below was
+   no new on-host collector for this signal class. **CORRECTED pass 42 (triple-click-zoom)
+   — the cited call chain's FIRST HOP was dead code, and the real runtime path has NO
+   connection-disambiguation mechanism, a real gap not previously found.**
+   `get_warehouse_connection_info(workspace_id)` (`brightbot/tools/platform_queries.py:361`)
+   is DEFINED but NEVER CALLED anywhere in this repo (confirmed by grep, excluding coverage
+   artifacts) — no agent/tool/route imports or invokes it. The REAL runtime path is
+   `get_warehouse_config_from_secrets(workspace_id)` (`platform_queries.py`), also keyed by
+   `workspace_id` ALONE. `WarehouseTool.__init__` (`warehouse.py:184`, real signature
+   `(warehouse_type: WarehouseType = REDSHIFT, warehouse_config: dict | None = None)`) takes
+   an ALREADY-RESOLVED single config — disambiguation, if any, must happen BEFORE this call.
+   **CRITICAL GAP**: `WorkspaceNode.warehouseServices` is PLURAL (`schema.graphql:643`,
+   `[WarehouseServiceOutput!]!`), and `WarehouseServiceFilterInput`
+   (`schema.graphql:2073`) DOES support a `warehouseServiceId: ID!` filter for
+   disambiguation — but NEITHER real code path (`get_warehouse_connection_info` nor
+   `get_warehouse_config_from_secrets`) passes that filter; both resolve by `workspace_id`
+   alone, with no selection logic for "which connection." If a workspace has BOTH a primary
+   analytics warehouse (e.g. Snowflake) AND a separate SQL Server BYOW connection
+   specifically for this watchdog's disk/job monitoring, THIS SIGNAL CLASS HAS NO BUILT-IN
+   WAY TO TARGET THE SQL SERVER SPECIFICALLY — it would need bespoke filtering/selection
+   logic added, which does not exist today (confirmed: no selection code exists anywhere,
+   since the unused function never needed one). BH-1045's implementer MUST either (a) add
+   the missing `warehouseServiceId`-filtered resolution path (using the REAL, CALLED
+   `get_warehouse_config_from_secrets` function, extended to accept an optional service ID,
+   not the dead `get_warehouse_connection_info`), or (b) confirm the demo/target workspace
+   genuinely has exactly ONE warehouse connection (making disambiguation moot for THIS
+   demo specifically, but not a durable multi-connection solution). Existing consumers of
+   the real resolution pattern: `sv_qc_tools.py:114`, `workflow_agent/tools.py:174` — follow
+   THEIR usage (which also assumes single-connection-per-workspace, confirmed not checked
+   before this pass either), don't cite the unused function as precedent.
+   **RESOLVED pass 41 (triple-click-zoom) — the "known gap" below was
    framed as an open question ("must add a class or CONFIRM Synapse's dialect is close
    enough"); now definitively confirmed, not merely assumed.** `SynapseConnection`
    (`warehouse_connections.py:248-309`) is, AS WRITTEN TODAY, a generic pymssql/T-SQL client
@@ -1201,6 +1222,19 @@ Feature: Proactive pipeline & ingestion monitoring
     And this is surfaced as a permission-specific, actionable message — NOT the generic
       catch-all error handling azure_synapse.ts:133-138/byow-preview.ts:402-403 use today,
       which does not distinguish a permissions failure from any other query failure
+
+  Scenario: the watchdog targets the correct warehouse connection when a workspace has multiple
+    Given a workspace with BOTH a primary analytics warehouse (e.g. Snowflake) AND a separate
+      SQL Server BYOW connection registered specifically for disk/job monitoring
+    When BH-1045's watchdog resolves which connection to query
+    Then it explicitly targets the SQL Server connection by its warehouseServiceId — it does
+      NOT rely on workspace_id alone resolving to "the" warehouse
+    And this differs deliberately from the cited precedent (sv_qc_tools.py:114,
+      workflow_agent/tools.py:174), which assumes single-connection-per-workspace and was
+      never checked for multi-connection correctness before this invariant (CRITICAL, found
+      pass 42 — the real resolution functions, get_warehouse_connection_info AND
+      get_warehouse_config_from_secrets, both key by workspace_id alone with zero
+      disambiguation, despite the schema supporting a warehouseServiceId filter)
 
   Scenario: repeated failure does not spam
     Given a "dbt_run_failure" signal was already alerted for job X in workspace A in the
