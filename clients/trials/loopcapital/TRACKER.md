@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 16:46 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 17:06 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -98,8 +98,8 @@ _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| 🟡 | Post-demo | BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing) | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) |
-| ⬜ | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph. CORRECTED pass 50: that mirror is incomplete for tenancy — LineageNode needs its own native workspaceId field, since its dependsOn relationship (unlike AnomalyEventNode's dataAsset) never chains to WorkspaceNode. | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
+| ⬜ | Post-demo | BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing) | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) |
+| 🟡 | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph. CORRECTED pass 50: that mirror is incomplete for tenancy — LineageNode needs its own native workspaceId field, since its dependsOn relationship (unlike AnomalyEventNode's dataAsset) never chains to WorkspaceNode. | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
 | ⬜ | Post-demo | BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge. Traversal MUST match on LineageNode.relationName (never uniqueId/name, pass 10), reuse the org's existing _fqn_variants() normalization for real format drift (pass 46), AND filter on workspaceId (pass 50) — three real correctness/isolation requirements, not one. | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) |
 | ⬜ | Post-demo | BH-1066 — CONFIRMED pass 5: GC-12 anomaly notifications have zero rendering in Slack/webapp today, independent of this epic's own changes. BH-1064's enrichment has nothing to enrich that a human sees until this ships. | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) |
 | ⬜ | Post-demo | BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half connection-wise, reuses the existing SnowflakeConnection. CORRECTED pass 45: needs a permission/latency guard too — the recommended least-privilege role posture silently fails ACCOUNT_USAGE reads (already happened once in this org's real Longaeva POC role, #825), so this is not free just because the connection is reused. | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) |
@@ -146,7 +146,7 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 ## 📊 Summary
 
 - **1/39** tickets done · 0 in progress · 38 to do
-- PRs: 7 merged · 1 ready for review · 2 draft
+- PRs: 8 merged · 1 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
@@ -178,7 +178,7 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) | provision a dbt Cloud job that can be deliberately triggered to… | Kuri Chinca | — |
 | [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) | track: scheduled_agent_dispatcher's LangGraph Cloud dependency is… | Kuri Chinca | — |
 | [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) | security: evaluate customer PII/data-value redaction for diagnosis… | Kuri Chinca | — |
-| [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | — |
+| [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#100](https://github.com/brighthive/agentic-project-mgmt/pull/100) |
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(lineage): wire longitudinal-monitoring anomalies to walk the… | Kuri Chinca | — |
 | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) | feat: render longitudinal anomaly notifications in Slack + webapp… | Kuri Chinca | — |
 | [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | — |
@@ -196,7 +196,7 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
 | [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#101](https://github.com/brighthive/agentic-project-mgmt/pull/101)<br>[🔵 Review agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🟢 Merged agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
-| [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#100](https://github.com/brighthive/agentic-project-mgmt/pull/100) |
+| [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#102](https://github.com/brighthive/agentic-project-mgmt/pull/102) |
 
 ### ✅ Done (1)
 
