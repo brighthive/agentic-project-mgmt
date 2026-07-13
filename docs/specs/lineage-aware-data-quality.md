@@ -1072,10 +1072,35 @@ async def find_downstream_impact(
     exposure", sourced from DataAssetNode's redshiftTableName/snowflakeTableName/tableFQN via
     quality_check_agent.py:362-366). Matching against the wrong field would silently return
     zero downstream tables for every real anomaly — no error, just a defeated epic. BH-1062
-    MUST populate relation_name from dbt manifest.json's own relation_name field per node;
-    string-format equality between relation_name and anomaly.dataset (quoting, casing,
-    2-part vs 3-part) is UNVERIFIED against a real workspace and MUST be confirmed — a
-    normalization step may be required before the exact-match Cypher lookup is trustworthy.`
+    MUST populate relation_name from dbt manifest.json's own relation_name field per node.
+
+    RESOLVED pass 46 (triple-click-zoom) — the format-equality question is no longer
+    hypothetical; confirmed against real code, and this org has ALREADY built and shipped the
+    fix for the exact same drift class, just for a different pair of fields. Tracing
+    `dataset`'s real value end to end: `quality_check_agent.py:362-366` resolves
+    `dataset_table_name` via the SAME `DataAssetNode` fallback chain
+    (redshiftTableName→snowflakeTableName→tableFQN→tableName) with ZERO normalization, flows
+    unmodified through `longitudinal_node.py:348` and `metric_history_store.py:181` into
+    `AnomalyEventNode.dataset`. Confirmed real-world drift, per
+    `mcp/tools/longitudinal.py:100-110` and `tests/integration/golden_cases/
+    test_longaeva_uat_mcp.py:340-346`: Snowflake actually stores this as 2-part, unquoted,
+    mixed-case (`GOLD.mart_daily_portfolio_exposure`), while callers commonly pass 3-part,
+    uppercase (`LONGAEVA_POC.GOLD.MART_DAILY_PORTFOLIO_EXPOSURE`) — and this exact
+    casing/qualification drift was ALREADY a real bug (BH-743), already fixed client-side via
+    `_fqn_variants()` (`longitudinal.py:150+`), because "the Neo4j `where: { dataset: <exact>
+    }` filter is case-sensitive" (`longitudinal.py:109`) — Neo4j string equality does not
+    case-fold or normalize on its own. dbt's `manifest.json` `relation_name` field is
+    typically a quoted 3-part identifier (`"database"."schema"."table"`) — general dbt
+    platform knowledge, NOT repo-confirmed, since zero manifest-parsing precedent exists here
+    (unchanged from earlier passes). Given `dataset` is CONFIRMED to already vary in exactly
+    the dimensions (quoting, casing, 2-part vs 3-part) `relation_name` would introduce, an
+    exact-match Cypher lookup between the two is confirmed NOT safe to assume. FIX: BH-1064's
+    traversal SHALL reuse the SAME variant-probe normalization pattern `_fqn_variants()`
+    already established for this drift class (try exact form, then strip DB-prefix, then
+    lowercase) rather than inventing a new one — either by calling an equivalent
+    Cypher-side `toLower()`/prefix-stripped OR pattern, or by generating the same variant list
+    client-side before the traversal query. This is a precedented fix to copy, not a new
+    design problem.`
 11. `WHEN brightbot's upsert_lineage_graph() calls platform-core's OGM mutation via
     OGMAPISession.mutation(), THE System SHALL check the returned response for a non-empty
     "errors" key and treat that as a failure (log + do not silently proceed) — it SHALL NOT
@@ -1187,6 +1212,19 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And it would NOT have found this node had it matched on unique_id or name instead
       (CRITICAL, found pass 10 — this is the exact bug that silently returns zero downstream
       tables for every real anomaly if regressed)
+
+  Scenario: the traversal survives the SAME FQN drift already fixed once for this org (BH-743)
+    Given a LineageNode with relation_name stored as dbt's quoted 3-part form
+      ("db"."GOLD"."mart_daily_portfolio_exposure")
+    And an AnomalyEventNode with dataset stored in the Snowflake 2-part unquoted mixed-case
+      form ("GOLD.mart_daily_portfolio_exposure") — CONFIRMED real drift, per
+      longitudinal.py:100-110 and the existing BH-743 fix for this exact class of mismatch
+    When BH-1064's traversal looks up the starting node for this anomaly
+    Then it finds the node by reusing the SAME variant-probe normalization _fqn_variants()
+      already applies for this drift class (exact form, then DB-prefix stripped, then
+      lowercased) — not a fresh, unproven normalization scheme
+    And it does NOT silently return zero downstream tables merely because the two fields'
+      quoting/casing/part-count differ
 
   Scenario: the traversal is bounded and deduplicated
     Given a LineageNode with two separate DEPENDS_ON paths converging on the SAME downstream
@@ -1351,10 +1389,15 @@ lineage edges"**
 LineageNode SHALL match against `LineageNode.relation_name`, which SHALL be populated from
 the same warehouse-qualified namespace as `AnomalyEventNode.dataset` — never against
 `LineageNode.unique_id` or `LineageNode.name`, which live in dbt's own model-identifier
-namespace and would silently match zero nodes for a real anomaly.
+namespace and would silently match zero nodes for a real anomaly. **Extended pass 46**:
+namespace-correctness alone is not sufficient — `dataset` is CONFIRMED (via the already-
+shipped BH-743 fix) to vary in quoting/casing/part-count even within its own correct
+namespace, so the match SHALL also apply the SAME `_fqn_variants()`-style normalization
+already precedented for this drift class, not a bare exact-match.
 
-**Validates: §3 Invariant 10, §4 Scenario "the traversal never matches against the wrong
-identifier namespace"**
+**Validates: §3 Invariant 10, §4 Scenarios "the traversal never matches against the wrong
+identifier namespace" and "the traversal survives the SAME FQN drift already fixed once for
+this org (BH-743)"**
 
 ### Property 3: a GraphQL-level mutation failure is never silently treated as success
 
