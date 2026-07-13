@@ -1879,7 +1879,15 @@ committed scope" framing)
 - **A DB-level (not per-table) summary report** — "PROFILER against a DB level," per the
   user's own framing — aggregating per-table profile results into one health-check report for
   the whole database, a genuinely new report shape (today's profiler output is always
-  per-asset, never rolled up). **Filed as BH-1077, pass 82.**
+  per-asset, never rolled up). **Filed as BH-1077, pass 82. CRITICAL, pass 84**: verified the
+  existing per-asset persistence path is NOT directly reusable — `save_to_s3`
+  (`quality_check_agent.py:1371-1418`) hard-requires a real `data_asset_id` as its S3 key
+  component and fails without one; `generate_markdown_report` (line 1316-1367) is
+  LLM-generated over a SINGLE asset's profile, no multi-table template exists to copy.
+  Since BH-1076's discovered tables may be genuinely uncatalogued (no `data_asset_id` at
+  all), this ticket needs its OWN persistence scheme, not a reuse of the per-asset path —
+  a real, previously-unflagged design requirement, not an assumption that "same pattern"
+  meant "same code."
 - **Explicitly OUT of scope for this track**: registering every discovered table as a
   permanent `DataAssetNode` (a separate, larger decision about catalog ingestion — this track
   is about ad-hoc/exploratory agentic profiling, not permanent cataloguing, unless a future
@@ -1934,7 +1942,7 @@ unless noted):
 | BH-1071 | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current | Filed pass 32 — non-blocking for 7/17, blocked by BH-1053's real-vs-retire decision (BH-1036) |
 | BH-1075 | feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvider connection type | Filed pass 82 (Track E, user-raised pass 81) — non-blocking for 7/17. Naming decision resolved against real webapp UI convention: a genuine new connection type, not a reuse of azure_synapse's label. Connector code reuses SynapseConnection unchanged. |
 | BH-1076 | feat(quality): chain warehouse discovery -> per-table profiling for uncatalogued tables | Filed pass 82, **CONFIRMED pure orchestration pass 83** (Track E) — non-blocking for 7/17. `analyze_dataset_structure_direct` already accepts a bare table-name string with zero OGM dependency (`quality_tools.py:84-88`) — discovered tables feed it directly, no adaptation layer. Downgraded S from M. |
-| BH-1077 | feat(quality): DB-level rollup report aggregating per-table profiler results | Filed pass 82 (Track E) — non-blocking for 7/17. Closes the user's own "PROFILER against a DB level" ask; today's profiler output is always per-asset, never rolled up. |
+| BH-1077 | feat(quality): DB-level rollup report aggregating per-table profiler results | Filed pass 82, **CORRECTED pass 84** (Track E) — non-blocking for 7/17. Closes the user's own "PROFILER against a DB level" ask, but needs its OWN persistence path — `save_to_s3` hard-requires a real `data_asset_id` this rollup may not have (uncatalogued tables per BH-1076), and no multi-table report template exists to copy (existing one is LLM-generated, single-asset-scoped). |
 
 ## Related
 
