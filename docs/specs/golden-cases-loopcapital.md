@@ -18,7 +18,7 @@ related:
     - proactive-pipeline-ingestion-monitoring.md
     - lineage-aware-data-quality.md
     - self-healing-pipelines.md
-  tickets: [BH-1042, BH-1043, BH-1045, BH-1046, BH-1047, BH-1054, BH-1057, BH-1058, BH-1067, BH-1087, BH-1091]
+  tickets: [BH-1042, BH-1043, BH-1045, BH-1046, BH-1047, BH-1054, BH-1057, BH-1058, BH-1067, BH-1087, BH-1091, BH-1092]
 ---
 
 # SPEC-GOLDEN-CASES-LOOPCAPITAL — Loop Capital Trial Bars
@@ -432,6 +432,20 @@ same explicit-not-demo-gating treatment given to the recurrence-prevention scena
 Bar for GC-16 as demoed is still "fast, reviewable fix, never auto-merged," unaffected by
 whether BH-1091 has shipped yet.
 
+**A separate, earlier-in-the-pipeline gap found by an architecture trace, ALSO not demo-gating
+but more urgent to design than BH-1091**: this GC's mechanism assumes the watchdog can reliably
+open a PR once it decides to. Confirmed by reading the real invocation code
+(`scheduled_agent_dispatcher`'s `LangGraphActionHandler.execute`,
+`brighthive-platform-core/lambdas/scheduled_agent_dispatcher/actions/langgraph_action.py:44-92`):
+the ONLY automation hook available starts a full LLM-driven agent thread — it cannot call a
+specific tool deterministically. "The watchdog opens a surgical PR" really means "an agent run
+starts, and the model has to decide to call the PR tool correctly" — a probabilistic step this
+GC's Acceptance scenarios don't currently surface. **Filed BH-1092**: verify after the fact that
+the expected PR actually exists, and alert if it doesn't, rather than trusting "the agent run
+finished" as a proxy for "the fix was proposed." See `self-healing-pipelines.md`'s "Real
+architectural gap found on review" section for the full trace. Distinct from BH-1091 (which
+verifies the merged fix WORKED) — this verifies the PR gets OPENED at all.
+
 ### Validation
 **Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
 — `pytest.skip("BH-1047 not started; blocked on GC-17")` on the main test, plus a dedicated
@@ -640,6 +654,7 @@ live Jira, not assumed.
 | `dbt_run_failure` webapp detail parity | BH-1087 | Needs Refinement (filed this session) | `test_gc_14_dbt_run_failure_dual_write_real_content` |
 | Cancelled-run suppression (Invariant 19) | BH-1043 (comment added) | folded into BH-1043 scope | `test_gc_14_cancelled_run_never_alerts` |
 | Post-merge verification loop (`VERIFYING` cooldown state, honest re-detect) | **BH-1091** (filed this session, extends self-healing-pipelines.md) | Needs Refinement | (no GC stub yet — new scope found after GC-16's stubs were already filed) |
+| PR-actually-opened verification (agent run finishing != PR existing) | **BH-1092** (filed this session, extends self-healing-pipelines.md — found by an end-to-end architecture trace) | Needs Refinement | (no GC stub yet — same reason as BH-1091) |
 | Cross-GC precondition check (GC-16 needs GC-17 PASS) | **NONE — documented gap, not a ticket** | N/A | `test_gc_16_requires_gc_17_pass_as_precondition` (stub only; harness doesn't support this yet) |
 | Recurrence-PREVENTED (not just re-detected) | **NONE — documented future scope, no ticket filed** | N/A | `test_gc_16_recurrence_actually_prevented_not_just_redetected` (`xfail(strict=False)`) |
 | Multi-connection disambiguation, 2nd real SQL Server instance | Invariant 16 (proactive-pipeline spec) — no dedicated ticket beyond BH-1045 | covered under BH-1045 | `test_gc_15_multi_connection_disambiguation_invariant_16` (needs a 2nd sandbox instance, not yet built) |

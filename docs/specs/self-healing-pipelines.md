@@ -49,6 +49,42 @@ A pipeline run fails (or a monitor flags an anomaly — see `longitudinal-monito
 - **Surgical PR**: reuse the dbt agent's `commitSemanticViewToGitHub`-style scoped-PR path; the PR body carries the diagnosis; the diff is the surgical DDL only (the fix `heal()` encodes). **Never auto-merge** — human approval gate (matches the platform's HITL pattern for destructive ops).
 - **Bound the blast radius**: the agent emits *only* the surgical fix the fixture encodes; a PR that touches more than the failure's scope fails the eval.
 
+### Real architectural gap found on review — headless invocation is NOT deterministic today
+
+**Confirmed by reading the actual code, not assumed.** "Reuse the dbt agent's scoped-PR path"
+is real at the function level — `ship_semantic_view_to_github`
+(`brightbot/agents/dbt_agent/tools/semantic_view_commit_tools.py:68-100+`) → the real, live,
+e2e-verified `commitSemanticViewToGitHub` GraphQL mutation. But that function is exposed ONLY
+as a LangChain `@tool` — something the model decides to call *during an agent's own
+tool-calling turn*, not a function anything can invoke directly from outside an agent run.
+
+The ONLY real automation hook that could trigger this loop unattended —
+`scheduled_agent_dispatcher`'s `LangGraphActionHandler.execute`
+(`brighthive-platform-core/lambdas/scheduled_agent_dispatcher/actions/langgraph_action.py:44-92`)
+— does exactly one thing: create a fresh thread, then `POST /threads/{id}/runs` with an
+`assistant_id` and an `input` payload. It starts a full LLM-driven agent run. **It has no
+mechanism to call a specific tool deterministically.** So "the watchdog opens a surgical PR"
+really means: the dispatcher starts a new agent thread, and the model — reading its prompt and
+the failure context — has to correctly DECIDE to call `ship_semantic_view_to_github` (or its
+successor) with the right arguments. That is a probabilistic dependency this spec's language
+("wire the watchdog's output into the surgical-PR loop") does not surface as such.
+
+**Why this matters, concretely**: a prompt that fails to elicit the tool call produces a
+silent no-op — no PR, no error, nothing for the watchdog to notice, because from the
+dispatcher's point of view the agent run "succeeded" (it just didn't do the thing). This is a
+DIFFERENT failure mode than "the tool call failed" (which would be a visible error) — it's
+"the model never tried," and nothing in this spec's Acceptance Criteria or Eval Criteria
+catches it.
+
+**Filed: BH-1092.** Scope: option (a) — a deterministic verification step after the agent run
+completes (did a PR with the expected shape actually get opened? if not, alert, don't stay
+silent). Option (b) — a more direct invocation path than "start an LLM thread and hope,"
+bypassing the agent loop for this one deterministic action — is explicitly OUT of BH-1092's
+scope; that's a larger architectural change needing its own design pass, not this ticket's job.
+This is a NEW, DISTINCT gap from BH-1091 — BH-1091 verifies the fix WORKED after a human merges
+it; BH-1092 verifies the PR gets OPENED at all after the agent run starts. Both are the same
+"verify, don't assume" principle applied to different points in the same pipeline.
+
 ## Areas Involved
 
 | Area | Repo | Role |
@@ -179,6 +215,7 @@ this is a genuine missing product behavior.
 | Lineage/run-log read path | brightbot + platform-core | integ |
 | Trigger wiring (pipeline-failure event / anomaly) | brightbot | integ |
 | **Post-merge verification loop (`VERIFYING` cooldown state + two-outcome poll)** — **BH-1091**, see "Post-merge verification loop" above | brightbot | behavior + real-behavior (a merged fix's actual re-run result must be observed, not mocked) |
+| **PR-actually-opened verification (agent run completing != PR existing)** — **BH-1092**, see "Real architectural gap found on review" above | brightbot + platform-core | behavior — a real GitHub-API/platform-core check, not an assumption from run status |
 | Flip GC-11 skip → live (4/4 modes → surgical PR on staging) | brightbot | full Gherkin / UAT |
 
 ## Related
