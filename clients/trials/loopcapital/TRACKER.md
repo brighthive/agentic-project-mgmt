@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 16:29 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 16:38 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -121,15 +121,15 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | ⬜ | Post-demo | BH-1037/1048-1052 ingestion observability (Airbyte/Step-Functions/queue watchdogs) — not named in Frank's 3 points, build after Track B lands | [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048), [BH-1049](https://brighthiveio.atlassian.net/browse/BH-1049), [BH-1050](https://brighthiveio.atlassian.net/browse/BH-1050), [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051), [BH-1052](https://brighthiveio.atlassian.net/browse/BH-1052) |
 | ⬜ | Post-demo | BH-115/1038-1041 BrightRoutines MCP/A2A surface — separate concern, unaffected by Track B | [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038), [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039), [BH-1040](https://brighthiveio.atlassian.net/browse/BH-1040), [BH-1041](https://brighthiveio.atlassian.net/browse/BH-1041) |
 
-### Track E — Agentic SQL Server profiling & DB-level quality health checks (proposed, added pass 81, user-raised) (0/0 🟢)
+### Track E — Agentic SQL Server profiling & DB-level quality health checks (added pass 81, tickets filed pass 82, user-raised) (0/3 🟢)
 
-_Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, connect MCP against Microsoft SQL Server so a legacy DB can be agentically identified, scanned, and quality-health-checked — a PROFILER at the DB/warehouse level, not just per-table. Verified: most plumbing already exists (SynapseConnection already connects to bare SQL Server with zero code changes; introspect_warehouse_schema already does warehouse-level table discovery with no pre-registered DataAssetNode needed) but the profiler/quality- check layer is entirely asset-ID-gated today — no "point it at a whole DB" mode exists, and discovery + profiling are never chained end to end. See docs/specs/proactive-pipeline-ingestion-monitoring.md's new "Track E" section for full detail. NOT yet filed as concrete tickets — naming/scope questions (is SQL Server a distinct WarehouseType, or a reuse of azure_synapse's connector?) need an explicit answer first._
+_Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, connect MCP against Microsoft SQL Server so a legacy DB can be agentically identified, scanned, and quality-health-checked — a PROFILER at the DB/warehouse level, not just per-table. Verified: most plumbing already exists (SynapseConnection already connects to bare SQL Server with zero code changes; introspect_warehouse_schema already does warehouse-level table discovery with no pre-registered DataAssetNode needed) but the profiler/quality- check layer is entirely asset-ID-gated today — no "point it at a whole DB" mode exists, and discovery + profiling are never chained end to end. See docs/specs/proactive-pipeline-ingestion-monitoring.md's new "Track E" section for full detail. Naming decision (is SQL Server a distinct WarehouseType, or a reuse of azure_synapse's connector?) RESOLVED pass 82 against the real webapp UI convention — a genuine new connection type, not a reuse. 3 tickets filed under epic BH-1036._
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| 🔲 | Post-demo | Scope decision: new sql_server WarehouseType member vs. reusing azure_synapse's connector under a new discriminator — a naming/product decision, not yet made | _manual_ |
-| 🔲 | Post-demo | New orchestration chaining introspect_warehouse_schema (discovery) -> per-table profiling (quality_check_agent/analyze_dataset_structure) for tables with no pre-registered DataAssetNode | _manual_ |
-| 🔲 | Post-demo | A new DB-level (not per-table) summary report shape — today's profiler output is always per-asset, never rolled up | _manual_ |
+| ⬜ | Post-demo | BH-1075 — new sql_server WarehouseType/WarehouseServiceProvider connection type across brightbot/platform-core/webapp; connector code reuses SynapseConnection unchanged, only the enum/UI discriminator is new | [BH-1075](https://brighthiveio.atlassian.net/browse/BH-1075) |
+| ⬜ | Post-demo | BH-1076 — new orchestration chaining introspect_warehouse_schema (discovery) -> per-table profiling (quality_check_agent/analyze_dataset_structure) for tables with no pre-registered DataAssetNode | [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) |
+| ⬜ | Post-demo | BH-1077 — a new DB-level (not per-table) summary report shape aggregating BH-1076's per-table outputs — today's profiler output is always per-asset, never rolled up | [BH-1077](https://brighthiveio.atlassian.net/browse/BH-1077) |
 
 
 ## 🏁 Who's done what
@@ -141,16 +141,16 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 2 | 33 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 2 | 36 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
-- **1/36** tickets done · 0 in progress · 35 to do
+- **1/39** tickets done · 0 in progress · 38 to do
 - PRs: 7 merged · 1 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (33)
+### 🟡 To Do (36)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -187,6 +187,9 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) | test: add missing unit/integration test coverage for metric-snapshot.… | Kuri Chinca | — |
 | [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe… | Kuri Chinca | — |
 | [BH-1074](https://brighthiveio.atlassian.net/browse/BH-1074) | feat(lineage): Databricks lineage adapter (DatabricksLineageSource)… | Kuri Chinca | — |
+| [BH-1075](https://brighthiveio.atlassian.net/browse/BH-1075) | feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvide… | Kuri Chinca | — |
+| [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) | feat(quality): chain warehouse discovery -> per-table profiling for… | Kuri Chinca | — |
+| [BH-1077](https://brighthiveio.atlassian.net/browse/BH-1077) | feat(quality): DB-level rollup report aggregating per-table… | Kuri Chinca | — |
 
 ### 🔵 In Review (2)
 
@@ -204,6 +207,9 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-13** · [BH-1077](https://brighthiveio.atlassian.net/browse/BH-1077) — Needs Refinement · Kuri Chinca
+- **2026-07-13** · [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) — Needs Refinement · Kuri Chinca
+- **2026-07-13** · [BH-1075](https://brighthiveio.atlassian.net/browse/BH-1075) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) — Needs Refinement · Kuri Chinca
@@ -221,11 +227,8 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 - **2026-07-12** · [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) — To Do · Kuri Chinca
 - **2026-07-12** · [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) — Needs Refinement · Kuri Chinca
 
-_(+16 older updates not shown.)_
+_(+19 older updates not shown.)_
 
 ## 📝 Daily Notes
 
