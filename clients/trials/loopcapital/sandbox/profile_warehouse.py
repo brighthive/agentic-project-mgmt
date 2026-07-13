@@ -4,11 +4,16 @@ SQL Server, standing in for Frank's legacy box — closes the loop on Kuri's
 ask: "we gotta do a profiler on the warehouse & db as well so we can surface
 that context added value info to the bank."
 
-This is a standalone script, not a brightbot in-repo test — it exercises
-brightbot's actual SynapseConnection class (brightbot/tools/warehouse_
-connections.py:248-424) directly, the same class GC-15's disk/job-status
-queries reuse, proving profiling works through the identical connectivity
-path — no new connector, no mock.
+This is a standalone script, not a brightbot in-repo test — it does NOT
+import SynapseConnection directly (corrected after review: an earlier
+docstring overstated this). It calls pymssql.connect() with the SAME
+connection shape SynapseConnection.connect() builds (brightbot/tools/
+warehouse_connections.py:248-424) — same host/port/user/password/database/
+tds_version, same TDS wire protocol, no encryption keyword since this
+sandbox has no TLS cert configured. Proves profiling works over the
+identical connectivity path a real watchdog would use — no new connector,
+no mock — without requiring brightbot's own workspace/secrets plumbing to
+run this sandbox-side script.
 
 Confirmed real, not assumed: brightbot's profiler chain already supports
 warehouse_type="azure_synapse" end to end (build_sample_query ->

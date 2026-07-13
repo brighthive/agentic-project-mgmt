@@ -1,6 +1,6 @@
 services:
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
     container_name: loopcapital-sql-sandbox
     platform: linux/amd64 # no native arm64 image; Rosetta/QEMU on Apple Silicon
     environment:
@@ -14,20 +14,22 @@ services:
     ports:
       - "1433:1433"
     volumes:
-      # System/config volume — unbounded, holds SQL Server's own install +
-      # msdb/master. Kept separate from the fixed-size data volume below so
-      # the disk-space demo has one predictable volume to fill, not the
-      # whole SQL Server install.
+      # System volume — SQL Server's OWN install + the DEFAULT data path
+      # (/var/opt/mssql/data), which is where master.mdf/msdb.mdf/model.mdf
+      # actually live. This is a real, persistent volume, NOT tmpfs — an
+      # earlier version of this file tmpfs-mounted the default data path
+      # directly, which wiped master/msdb on every container restart and
+      # left SQL Server unable to start (caught in review, fixed here).
       - loopcapital-mssql-system:/var/opt/mssql
-      # Fixed-CAPACITY tmpfs mount for the actual data files. sys.dm_os_
+      # Fixed-CAPACITY tmpfs mount for LoopCapitalAM's OWN data files ONLY,
+      # at a path OUTSIDE SQL Server's default data directory. sys.dm_os_
       # volume_stats reports THIS mount's real free space — a plain bind
       # mount or default Docker volume has no size cap and won't show
-      # "20% free" on its own. tmpfs with a `size` option is the portable
-      # way to get a real, fixed-size volume we can deliberately fill —
-      # works identically on Docker Desktop (Mac/Windows, Linux VM
-      # under the hood) and native Linux hosts.
+      # "20% free" on its own. sql/01_create_database.sql places
+      # LoopCapitalAM's files here explicitly via CREATE DATABASE ... ON
+      # (FILENAME = ...) — system databases never touch this mount.
       - type: tmpfs
-        target: /var/opt/mssql/data
+        target: /var/opt/mssql/loopcapital_data
         tmpfs:
           size: ${LOOPCAPITAL_DATA_VOLUME_BYTES:-2147483648} # 2GiB default
     healthcheck:

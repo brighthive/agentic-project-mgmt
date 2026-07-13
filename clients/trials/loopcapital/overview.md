@@ -139,7 +139,7 @@ ZERO errors on the pipeline; but that value change is producing wrong numbers on
 gold/diamond data products." Verified this is a real, unaddressed gap — longitudinal
 monitoring (GC-12) can catch the null spike itself if configured, but nothing today traces
 which downstream Gold/Diamond tables it poisons. Full spec:
-`../../docs/specs/lineage-aware-data-quality.md`.
+`../../../docs/specs/lineage-aware-data-quality.md`.
 
 **Key framing, not a gap to hide from Frank**: BrightHive doesn't rebuild lineage — dbt and
 Databricks already compute their own. BrightHive's differentiator is being the glue that
@@ -164,7 +164,7 @@ legacy-fallback branch, a tab/route access-gate mismatch letting Collaborators r
 Admin-hidden page, no accessibility attributes, zero component tests, and more) — all
 confirmed against real code, not assumed.
 
-**Re-scoped as two pieces** (full detail in `../../docs/specs/lineage-aware-data-quality.md`'s
+**Re-scoped as two pieces** (full detail in `../../../docs/specs/lineage-aware-data-quality.md`'s
 "Track D" section):
 - **D1**: fix the 7 confirmed defects in the EXISTING `WorkflowSpecPage` — closer to a
   bug/tech-debt backlog than new-feature work, could be ticketed now.
@@ -187,7 +187,7 @@ But the profiler/quality-check layer (`profiler_task.py`, the 3 MCP quality tool
 ENTIRELY asset-ID-gated today — there is no "point it at the whole DB and profile everything"
 mode, and discovery + profiling are never chained end to end.
 
-**Full detail**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s "Track E"
+**Full detail**: `../../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s "Track E"
 section (added pass 81, tickets filed pass 82). The naming/scope decision (is SQL Server a
 distinct `WarehouseType`, or a reuse of `azure_synapse`'s connector?) was RESOLVED against the
 real webapp UI convention — every warehouse provider gets its own first-class label/icon
@@ -198,13 +198,13 @@ report). Non-blocking for 7/17.
 
 ## Engineering Artifacts
 
-- **Golden Cases (GC-14–17)**: `../../docs/specs/golden-cases-loopcapital.md` — the first Golden
+- **Golden Cases (GC-14–17)**: `../../../docs/specs/golden-cases-loopcapital.md` — the first Golden
   Cases ever scoped to Loop Capital (continuing brightbot's Longaeva GC-1–13 numbering). Maps
   Suzanne's 3 demo points 1:1 to GC-14 (proactive alert), GC-15 (SQL-Server-no-MCP), GC-16
   (fix-recurrence PR), plus GC-17 (the auto-merge-exclusion safety gate GC-16 depends on).
   Acceptance criteria are written as Frank's real scenes (a broken nightly Asset Management job,
   a legacy SQL Server with nothing installed on it), not platform-feature Gherkin alone.
-- **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
+- **Handover spec**: `../../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
   "Start Here" section first. Interface contracts, invariants (18, count re-verified pass 81 —
   was stale at 16), Gherkin AC, eval criteria, observability contract, full pass-by-pass
   verification log.
@@ -213,9 +213,9 @@ report). Non-blocking for 7/17.
   BH-1060 (security follow-up).
 - **Verification memory**: `~/.claude/projects/-Users-bado-iccha-brighthive/memory/project_loop_capital_pass_index.md` — one-line index into 34+ detailed pass files.
 - **Full demo plan**: `poc.yaml` (scope/ownership/demo-relative phases: T-5 → T-0) → renders `TRACKER.md` (live ticket/PR status, regenerate with `make poc-tracker-no-slack CLIENT=loopcapital`). Plan is organized by Suzanne's 3 committed demo points, not calendar days — see `poc.yaml`'s phase titles.
-- **Handover spec, Track B**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`
+- **Handover spec, Track B**: `../../../docs/specs/proactive-pipeline-ingestion-monitoring.md`
   — **merged to master** via PR [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) (2026-07-12).
-- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` — **merged to master**
+- **Track C spec**: `../../../docs/specs/lineage-aware-data-quality.md` — **merged to master**
   via PR [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) (2026-07-12). ASCII
   architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
   glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1070.

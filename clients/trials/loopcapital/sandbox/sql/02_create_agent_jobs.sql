@@ -57,11 +57,11 @@ GO
 EXEC sp_start_job @job_name = 'LoopCapital_NightlyExtract_FAILED';
 GO
 
--- Give SQLCMD's login (sa, in this sandbox) VIEW SERVER STATE — the exact
--- grant BH-1045's ticket flags as required ONLY for the disk-check query
--- (sys.dm_os_volume_stats). The job-status query needs no extra grant beyond
--- standard SELECT, per the same ticket's pass-40 correction.
-USE master;
-GO
-GRANT VIEW SERVER STATE TO sa;
-GO
+-- BH-1045's ticket flags VIEW SERVER STATE as required for the disk-check
+-- query (sys.dm_os_volume_stats) on a NON-sysadmin login. This sandbox
+-- connects as `sa`, which already has sysadmin (and SQL Server refuses to
+-- GRANT anything to sa explicitly — confirmed directly: "Cannot grant, deny,
+-- or revoke permissions to sa... or yourself" — caught by this script's own
+-- strict -b error checking). No grant statement needed here; this comment
+-- exists so a reader porting this fixture to a non-sa login knows to add
+-- `GRANT VIEW SERVER STATE TO [that_login];` themselves.

@@ -6,9 +6,23 @@
 -- BrightHive's watchdog can query a real SQL Server, not to be a full
 -- Asset Management data model.
 
+-- Placed explicitly on the dedicated tmpfs mount (docker-compose.yml's
+-- loopcapital_data path), NOT SQL Server's default /var/opt/mssql/data —
+-- system databases (master/msdb/model) stay on the persistent system
+-- volume untouched. A prior version of this fixture tmpfs-mounted the
+-- DEFAULT data path directly, which wiped system databases on restart
+-- (caught in review, fixed here).
 IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'LoopCapitalAM')
 BEGIN
-  CREATE DATABASE LoopCapitalAM;
+  CREATE DATABASE LoopCapitalAM
+  ON (
+    NAME = LoopCapitalAM,
+    FILENAME = '/var/opt/mssql/loopcapital_data/LoopCapitalAM.mdf'
+  )
+  LOG ON (
+    NAME = LoopCapitalAM_log,
+    FILENAME = '/var/opt/mssql/loopcapital_data/LoopCapitalAM_log.ldf'
+  );
 END
 GO
 
@@ -28,16 +42,8 @@ BEGIN
 END
 GO
 
--- Deterministic seed — same shape every setup.sh run, no RNG.
-IF NOT EXISTS (SELECT 1 FROM holdings_raw)
-BEGIN
-  INSERT INTO holdings_raw (portfolio_id, instrument_id, quantity, as_of_date)
-  SELECT
-    'PORT-' + RIGHT('000' + CAST((n % 5) + 1 AS VARCHAR), 3),
-    'INST-' + RIGHT('0000' + CAST(n AS VARCHAR), 4),
-    1000.0 + (n * 12.5),
-    DATEADD(DAY, -1 * (n % 30), CAST(SYSUTCDATETIME() AS DATE))
-  FROM (SELECT TOP (2000) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
-        FROM sys.all_objects) AS seq;
-END
-GO
+-- Schema only, deliberately NOT seeded here. reset.py owns all seeding
+-- (baseline row count + scenario data) so there is exactly ONE seeding
+-- mechanism, not two — a prior version seeded here AND in reset.py's
+-- seed_baseline(), silently doubling every row count (caught in review).
+-- setup.sh calls reset.py --scenario baseline right after this file runs.

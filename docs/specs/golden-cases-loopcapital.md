@@ -1,3 +1,12 @@
+<!--
+  Frontmatter intentionally uses brightbot's SPEC-GOLDEN-CASES.md template
+  (spec-id/status/owner/trial), NOT docs/specs/SPEC_TEMPLATE.md's shape
+  (title/epic/author/created/generates/tags) — this doc extends that
+  sibling template's Golden Case format, the same way brightbot's own
+  file does. Flagged by review (docs/AGENTS.md says specs use
+  SPEC_TEMPLATE.md); noting the deviation explicitly here rather than
+  force-fitting an unrelated template shape onto a Golden Case catalog.
+-->
 ---
 spec-id: SPEC-GOLDEN-CASES-LOOPCAPITAL
 status: draft
