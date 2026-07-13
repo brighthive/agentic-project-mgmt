@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 15:15 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 15:25 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -92,7 +92,7 @@ _Decision gate._
 | 🔲 | 2026-07-17 | Demo delivered to Frank | _manual_ |
 | 🔲 | Post | Decision recorded (Won / Lost / Extended) with rationale | _manual_ |
 
-### Track C — Lineage-aware data quality (post-demo, honest framing for 7/17) (0/7 🟢, 1 🟡)
+### Track C — Lineage-aware data quality (post-demo, honest framing for 7/17) (0/8 🟢, 1 🟡)
 
 _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with ZERO errors while a source column silently degrades (NULLs where real values used to be), poisoning Gold/Diamond numbers with no alert anywhere. NOT achievable by 7/17 — this is genuinely new, multi-week work. Full spec: docs/specs/lineage-aware-data-quality.md. For the demo: show the anomaly-detection half (real, shipped, GC-12) and frame the lineage-tracing half honestly as "we glue dbt/Databricks' own lineage to what they can't see themselves" — a real differentiator, not a gap to hide._
 
@@ -105,6 +105,7 @@ _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with
 | ⬜ | Post-demo | BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half connection-wise, reuses the existing SnowflakeConnection. CORRECTED pass 45: needs a permission/latency guard too — the recommended least-privilege role posture silently fails ACCOUNT_USAGE reads (already happened once in this org's real Longaeva POC role, #825), so this is not free just because the connection is reused. | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) |
 | ⬜ | Post-demo | BH-1069 — brightbot call site for upsert_lineage_graph (formerly informal 'BH-1063a'), real ogm_api.py plumbing + GraphQL-errors-key check. ADDED pass 49: the per-model loop MUST share ONE OGMAPISession, not the bare default — that idiom re-authenticates via a live Cognito login on every construction, safe for existing once-per-turn call sites but not for a per-model loop over a real manifest's hundreds of models. | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) |
 | ⬜ | Post-demo | BH-1070 — test coverage gap: metric-snapshot.ts (BH-1063b's own cited precedent) has zero existing tests; non-blocking tech debt, tracked for visibility | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) |
+| ⬜ | Post-demo | BH-1074 — filed pass 72: Databricks lineage adapter (DatabricksLineageSource) closes Gap 4, which had NO ticket of any kind despite every other spec gap being tracked. Distinct from BH-1044 (Track B's Databricks job/cluster health monitoring — a different Protocol, easily confused since both are 'the Databricks ticket'). | [BH-1074](https://brighthiveio.atlassian.net/browse/BH-1074) |
 
 ### Non-blocking, tracked separately (0/7 🟢)
 
@@ -130,16 +131,16 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 3 | 31 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 3 | 32 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
-- **1/35** tickets done · 0 in progress · 34 to do
+- **1/36** tickets done · 0 in progress · 35 to do
 - PRs: 5 merged · 2 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (31)
+### 🟡 To Do (32)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
@@ -174,6 +175,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) | feat(lineage): brightbot call site for upsert_lineage_graph (BH-1063a) | Kuri Chinca | — |
 | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) | test: add missing unit/integration test coverage for metric-snapshot.… | Kuri Chinca | — |
 | [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe… | Kuri Chinca | — |
+| [BH-1074](https://brighthiveio.atlassian.net/browse/BH-1074) | feat(lineage): Databricks lineage adapter (DatabricksLineageSource)… | Kuri Chinca | — |
 
 ### 🔵 In Review (3)
 
@@ -192,6 +194,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-13** · [BH-1074](https://brighthiveio.atlassian.net/browse/BH-1074) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1046](https://brighthiveio.atlassian.net/browse/BH-1046) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) — Needs Refinement · Kuri Chinca
@@ -211,9 +214,8 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-12** · [BH-1071](https://brighthiveio.atlassian.net/browse/BH-1071) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) — Needs Refinement · Kuri Chinca
 
-_(+15 older updates not shown.)_
+_(+16 older updates not shown.)_
 
 ## 📝 Daily Notes
 
