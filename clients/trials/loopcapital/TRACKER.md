@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 03:21 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 03:24 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -135,7 +135,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 ## 📊 Summary
 
 - **1/35** tickets done · 0 in progress · 34 to do
-- PRs: 5 merged · 0 ready for review · 2 draft
+- PRs: 5 merged · 2 ready for review · 1 draft
 
 ## 📋 Tickets by status
 
@@ -180,8 +180,8 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
-| [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) | feat(monitoring): generic ETL pipeline adapter port + registry entry | Kuri Chinca | [🟡 Draft agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
-| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98)<br>[🟢 Merged agentic-project-mgmt#97](https://github.com/brighthive/agentic-project-mgmt/pull/97)<br>[🟢 Merged agentic-project-mgmt#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) |
+| [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) | feat(monitoring): generic ETL pipeline adapter port + registry entry | Kuri Chinca | [🔵 Review agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
+| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🔵 Review agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98)<br>[🟢 Merged agentic-project-mgmt#97](https://github.com/brighthive/agentic-project-mgmt/pull/97) |
 
 ### ✅ Done (1)
 
@@ -192,6 +192,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-12** · [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
@@ -211,7 +212,6 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 - **2026-07-12** · [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) — To Do · Kuri Chinca
-- **2026-07-12** · [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) — To Do · Kuri Chinca
 
 _(+15 older updates not shown.)_
 
