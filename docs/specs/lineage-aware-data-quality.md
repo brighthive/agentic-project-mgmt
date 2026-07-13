@@ -1594,7 +1594,7 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 
 | Dependency | Type | Status |
 |---|---|---|
-| Longitudinal monitoring (GC-12, BH-601) | Blocking (this spec enriches its alerts) | Shipped + staging-verified |
+| Longitudinal monitoring (GC-12, BH-669) | Blocking (this spec enriches its alerts) | **CORRECTED pass 59**: cited ticket was wrong — BH-601 is the umbrella "14 Golden Cases" tracker (still `Needs Refinement`, unrelated to GC-12 shipping status specifically); the real GC-12 capability ticket is BH-669, confirmed `Done` in live Jira. Shipped + staging-verified claim holds, citation didn't. |
 | BH-673 (anomaly→lineage bridge) | This spec's BH-1064 closes it | Deferred, now actively scoped |
 | `_fetch_artifact()` plumbing (dbt_cloud_tools.py) | Non-blocking (reused, not built here) | Live |
 | `WorkflowStepNode`'s `DEPENDS_ON` delete-then-MERGE precedent (`workflow-spec.ts:299-317`) | Non-blocking (pattern mirrored, not reinvented) — corrected pass 1, was wrongly cited as DataAssetNode | Live |
