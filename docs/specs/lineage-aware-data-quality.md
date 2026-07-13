@@ -790,6 +790,34 @@ class LineageModelNode:
                                            # find_downstream_impact for the full bug. None if
                                            # the manifest node genuinely lacks it (e.g. a
                                            # non-materialized ephemeral model).
+                                           #
+                                           # GAP FOUND, pass 76 (triple-click-zoom) — the SAME
+                                           # class of gap just found for has_column_metadata
+                                           # (Invariant 20, pass 74), but far more severe: EVERY
+                                           # discussion of relation_name in this spec is
+                                           # dbt-specific. If BH-1068 (Snowflake) or BH-1074
+                                           # (Databricks) leaves this field unpopulated (None),
+                                           # BH-1064's traversal — which matches EXCLUSIVELY on
+                                           # relation_name (Invariant 10) — would silently find
+                                           # ZERO downstream nodes for every anomaly on a
+                                           # non-dbt-sourced table, the EXACT class of bug pass
+                                           # 10 found and fixed for dbt. This is not optional
+                                           # metadata like has_column_metadata; it is the
+                                           # traversal's ENTIRE match key. Both engines can
+                                           # construct this: Snowflake's ACCOUNT_USAGE.
+                                           # OBJECT_DEPENDENCIES exposes referencing_database/
+                                           # referencing_schema/referencing_object_name (and
+                                           # the referenced_* equivalents) — general Snowflake
+                                           # platform knowledge, unverified in-repo since no
+                                           # code queries this view yet — directly composable
+                                           # into the SAME quoted 3-part form dbt uses.
+                                           # Databricks Unity Catalog's system.access.
+                                           # table_lineage similarly exposes source/target
+                                           # table identifiers with catalog.schema.table
+                                           # granularity. EVERY LineageSource adapter SHALL
+                                           # populate this field from its own engine's real
+                                           # fully-qualified identifier — see Invariant 21
+                                           # (new, pass 76).
 
 # BH-1063: Neo4j load — CORRECTED pass 1 of the triple-click-zoom loop, verified against
 # real code, not assumed:
@@ -1540,6 +1568,25 @@ async def find_downstream_impact(
     only WHETHER each adapter populates the existence data at all, not what kind of data it
     is once populated.`
 
+21. `EVERY LineageSource adapter SHALL populate LineageModelNode.relation_name with its own
+    engine's real fully-qualified table identifier — it SHALL NOT leave this field None for
+    a table that genuinely exists and is queryable. CRITICAL, found pass 76: this is the
+    SAME class of gap Invariant 20 closed for has_column_metadata, but far more severe —
+    relation_name is not optional enrichment, it is BH-1064's ENTIRE traversal match key
+    (Invariant 10). If BH-1068 (Snowflake) or BH-1074 (Databricks) leaves this field
+    unpopulated, BH-1064's traversal would silently find ZERO downstream nodes for every
+    anomaly on a non-dbt-sourced table — the EXACT bug class pass 10 found and fixed for dbt,
+    now reintroduced for any other engine unless explicitly guarded against. Both engines can
+    construct this real value (general platform knowledge, unverified in-repo since no code
+    queries either source yet): Snowflake's ACCOUNT_USAGE.OBJECT_DEPENDENCIES exposes
+    referencing_database/referencing_schema/referencing_object_name (and the referenced_*
+    equivalents), directly composable into the SAME quoted 3-part form dbt's relation_name
+    uses; Databricks Unity Catalog's system.access.table_lineage exposes source/target table
+    identifiers at catalog.schema.table granularity. Invariant 10's FQN-normalization
+    requirement (reusing `_fqn_variants()`, per pass 46) applies identically to whichever
+    engine populated this field — the normalization logic does not care which adapter
+    produced the string, only that the string is real and populated.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1689,6 +1736,19 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       such source existed for that engine
     And this column-existence data is still never treated as column-DEPENDENCY lineage
       (Invariant 14's contract applies identically to every engine, not just dbt)
+
+  Scenario: a non-dbt anomaly is still found by the downstream-impact traversal
+    Given a Snowflake-native or Databricks-sourced LineageNode with relation_name populated
+      from that engine's own real fully-qualified table identifier (per Invariant 21) —
+      NOT left None
+    And an AnomalyEventNode with a dataset value in the SAME warehouse-qualified namespace
+    When BH-1064's traversal looks up the starting node for this anomaly
+    Then it finds this node by matching on relation_name, exactly as it would for a
+      dbt-sourced LineageNode
+    And if relation_name had been left None (the bug this scenario guards against), the
+      traversal would have silently returned zero downstream tables — the SAME class of
+      defeated-epic bug pass 10 originally found and fixed for dbt, reintroduced for a
+      different engine
 
   Scenario: upserting a full manifest's worth of models never re-authenticates per model
     Given a real dbt manifest.json with hundreds of models
