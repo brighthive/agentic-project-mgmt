@@ -1286,7 +1286,9 @@ async def find_downstream_impact(
     bug, a self-referencing model), this can blow up exponentially on a cycle. Without
     DISTINCT, a downstream node reachable via multiple paths (a normal shape in any DAG with
     diamond dependencies) would be returned multiple times, producing duplicate
-    downstream-table entries in the anomaly's enrichment metadata.`
+    downstream-table entries in the anomaly's enrichment metadata. RE-CONFIRMED pass 58
+    (fresh grep for `*1..`/`*0..`/variable-length hop syntax across platform-core's `src/`,
+    zero hits) — still no precedent exists, finding unchanged.`
 14. `THE System SHALL NOT claim, imply, or name any field as "column lineage" for data
     sourced from dbt's catalog.json — catalog.json contains ZERO column-to-column
     DEPENDENCY information (general dbt platform knowledge, confirmed pass 36: it is a
