@@ -85,7 +85,83 @@ Feature: Self-healing pipelines (GC-11 / GAP-7)
     Given any of the 4 failure modes
     When the agent proposes a fix
     Then the diff is scoped to the failure (no unrelated files / full-model rewrite)
+
+  Scenario: a merged fix that worked gets an honest confirmation, not silence
+    Given a human merged a surgical PR for a detected failure
+    When the watchdog's next poll (within the VERIFYING window, not the full cooldown) finds
+      the same failure signature is GONE
+    Then a success confirmation is posted on the SAME alert thread — not just an absence of
+      a second alert, a positive "this is confirmed fixed" signal
+
+  Scenario: a merged fix that did NOT work is never silently suppressed
+    Given a human merged a surgical PR for a detected failure
+    When the watchdog's next poll finds the SAME failure signature has recurred
+    Then a NEW, higher-severity alert fires immediately — bypassing the normal cooldown —
+      explicitly stating the prior merge did not resolve it
+    And this is NOT an automatic new fix proposal — it goes through the same human-approval
+      gate as the original, never an unattended retry loop
 ```
+
+## Post-merge verification loop (added on review — real gap, not previously designed)
+
+**The question that exposed this gap**: "once approved how does the PR build and self-correct
+until success? imagine this is production and it fails a pipeline, we can't PR and hope for the
+best — then it fails, then what?" Researched against real code before answering, not invented:
+
+**What already exists, confirmed real**: `interruptible()`
+(`brightbot/brightbot/utils/interrupt_utils.py:102-131`, a LangGraph `interrupt()` wrapper) is
+the platform's real, shipped "agent proposes → pauses → human decides → resumes" pattern —
+`agents/super_agent/nodes/agents/dbt.py:379-405` already uses it for exactly this shape
+(propose a commit/PR, pause, wait for `approval_status`). This spec's "never auto-merge" gate
+should be built ON this existing primitive, not a new one.
+
+**What genuinely does NOT exist anywhere in brightbot, confirmed by direct search**: any
+"propose → apply → re-run → verify → iterate if still broken" loop. Every existing fix-proposing
+capability (dbt commits, quality expectation selection) is strictly one-shot — propose once,
+human decides, done. `registration_tools.py:129-157` states this explicitly: once a PR merges,
+the code assumes success and never re-checks. **This spec's own Acceptance Criteria (Scenario
+"a failure mode yields exactly the surgical fix," line 75) only asserts the SANDBOX fixture's
+guarantee ("applying the PR clears detection — `heal()` confirms") — that guarantee lives in
+the sandbox's `failure_modes.py`, not in any real product loop.** Nothing wires "the human
+merged it, now go check if it actually worked" into a real pipeline.
+
+**Consequence, confirmed as a real risk, not hypothetical**: `proactive-pipeline-ingestion-
+monitoring.md`'s Invariant 3 (cooldown key `(workspace_id, source_type, job_id, failure_type)`,
+default 1hr window) keys on the FAILURE SIGNATURE, not "was the last alert resolved." A merged
+fix that is WRONG — doesn't actually address the root cause — would leave the SAME
+`failure_type` recurring on the SAME `job_id`. The watchdog has no "did the fix land" state,
+only "have I alerted on this signature recently" — so a bad merge gets SILENTLY SUPPRESSED for
+up to the cooldown window, the opposite of what Frank needs to trust this feature. This is a
+real correctness gap this spec must close, not a nice-to-have.
+
+**Proposed design** (new scope, not yet ticketed — flagging for a dedicated follow-up spec pass
+before BH-1047 is built, since this changes BH-1047's contract):
+
+1. **The cooldown key gets a third state, not just "cooling down" vs "cold."** When a PR
+   resulting from this loop MERGES, the cooldown entry for that `(workspace_id, source_type,
+   job_id, failure_type)` transitions to `VERIFYING` (not `SUPPRESSED`) — a state that shortens
+   the next poll interval for THIS specific signature (e.g. poll within 15 min instead of
+   waiting out the full cooldown) rather than lengthening it.
+2. **On the next poll after `VERIFYING`, two outcomes, both real signals, neither silent**:
+   - Failure signature is GONE (the job succeeded) → close the loop, notify success ("the fix
+     you merged worked — here's the run that confirms it") on the SAME alert thread, giving
+     Frank's team positive confirmation, not just an absence of a second alert.
+   - Failure signature RECURS → this is NOT the same alert as before; it is a DISTINCT,
+     higher-severity signal ("the fix merged on {date} did not resolve this — same failure
+     recurred") that bypasses the normal cooldown entirely, since silence here is the exact
+     trust failure this whole epic exists to prevent.
+3. **This is NOT an automatic retry loop that keeps proposing new fixes unattended** — that
+   would reintroduce the auto-merge risk GC-17 exists to close, just one layer removed (an
+   agent that keeps proposing fix-after-fix without a human in the loop is barely different
+   from one that merges its own fix). The loop's job is DETECTION + HONEST REPORTING of
+   whether the human's merge worked — a new fix proposal after a failed one goes through the
+   SAME human-approval gate as the first, not an autonomous retry.
+
+**New ticket needed** (not filed yet — flagging here first since it changes an existing
+ticket's contract): extend BH-1047's scope (or a dedicated follow-up) to add the `VERIFYING`
+cooldown state + the two-outcome poll logic above. This is the single most important open
+design gap in the whole Loop Capital chain as of this pass — everything else this session
+fixed was tracking/traceability; this is a genuine missing product behavior.
 
 ## Dependencies
 
@@ -103,6 +179,7 @@ Feature: Self-healing pipelines (GC-11 / GAP-7)
 | Surgical-PR emission (reuse dbt scoped-PR path; surgical DDL only; no auto-merge) | brightbot | behavior + write-safety review |
 | Lineage/run-log read path | brightbot + platform-core | integ |
 | Trigger wiring (pipeline-failure event / anomaly) | brightbot | integ |
+| **Post-merge verification loop (`VERIFYING` cooldown state + two-outcome poll)** — new, not yet filed, see "Post-merge verification loop" above | brightbot | behavior + real-behavior (a merged fix's actual re-run result must be observed, not mocked) |
 | Flip GC-11 skip → live (4/4 modes → surgical PR on staging) | brightbot | full Gherkin / UAT |
 
 ## Related

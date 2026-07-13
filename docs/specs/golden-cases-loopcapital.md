@@ -18,7 +18,7 @@ related:
     - proactive-pipeline-ingestion-monitoring.md
     - lineage-aware-data-quality.md
     - self-healing-pipelines.md
-  tickets: [BH-1042, BH-1043, BH-1045, BH-1046, BH-1047, BH-1054, BH-1057, BH-1058, BH-1067, BH-1087]
+  tickets: [BH-1042, BH-1043, BH-1045, BH-1046, BH-1047, BH-1054, BH-1057, BH-1058, BH-1067, BH-1087, BH-1091]
 ---
 
 # SPEC-GOLDEN-CASES-LOOPCAPITAL — Loop Capital Trial Bars
@@ -56,6 +56,37 @@ exists, not that it resolves something Frank actually asked for. Each GC still c
 **Invariants**, **Acceptance** (the scene + Gherkin + underlying proof), **Validation** (pointer
 to `tests/integration/golden_cases/test_gc_NN_<slug>.py` in brightbot, once filed — none exist yet
 for these four).
+
+## Who benefits, and how — the webapp is not the product (added on review)
+
+**The question that prompted this section**: "webapp is mostly an admin/manager view to
+interact with BrightHive but a whole company gets benefited from BrightHive without using
+webapp — what UX are we looking to create alongside this feature capacity?" Answered against
+real, shipped capability, not aspiration:
+
+- **Frank's ops team never needs to open the webapp for GC-14/15/16.** The real, live delivery
+  channel is Slack, via BrightSignals (`brightbot-slack-server`, Socket Mode → ECS Fargate →
+  BrightAgent) — a genuinely shipped architecture, not a plan. An engineer on Frank's team gets
+  the 2am alert, the disk-space warning, and the surgical-PR notification entirely inside
+  Slack. The webapp is where an admin/manager goes to configure connections, review the
+  Notifications inbox historically, or manage workspace settings — it is not the primary
+  surface this GC set is designed around.
+- **Real caveat, already tracked, not hidden**: BrightSignals today has a confirmed 3-way
+  split-brain (an old `NOTIFICATIONS_TABLE`→Slack poller, a new `NotificationInbox`→webapp
+  path, and a dead EventBridge dispatcher — BH-1053 owns unifying these). This spec's own
+  Invariant 1 (dual-write) is the load-bearing reason GC-14 works TODAY despite that split —
+  the watchdog writes to both paths explicitly rather than waiting for BH-1053's eventual
+  single entrypoint. Slack-first does not mean webapp-never; it means Slack is not a
+  second-class fallback.
+- **The GitHub PR itself (GC-16) is a THIRD non-webapp surface.** Whoever reviews and merges
+  the surgical PR does so in GitHub, using GitHub's own review tools — not a BrightHive UI at
+  all. This is deliberate: the fix lands where Loop's engineers already work, not in a new tool
+  they have to learn.
+- **What this means for GC-14-17's design going forward**: every Frank-facing acceptance scene
+  in this spec is written Slack-first (see each GC's "Acceptance" section) precisely because
+  that's the real primary channel — the webapp-parity work (BH-1087) exists to make the
+  webapp's Notifications inbox an accurate HISTORICAL record of what already happened in
+  Slack, not to make webapp the primary way anyone learns about a failure.
 
 ---
 
@@ -377,7 +408,21 @@ post-demo scope, not silently dropping Suzanne's stronger original wording.
 classifier (DATA_SHAPE vs JOB_RUNTIME) as the new signal source routing Loop's failures into it.
 The "code-level auto-merge exclusion" referenced above is GC-17, in this spec's own numbering —
 see the Invariants below for how the two cases gate each other; Frank-facing material should
-never need to say "GC-17" out loud.
+never need to say "GC-17" out loud. The human-approval pause itself reuses `interruptible()`
+(`brightbot/utils/interrupt_utils.py:102-131`, a LangGraph `interrupt()` wrapper) — the SAME
+primitive `agents/super_agent/nodes/agents/dbt.py:379-405` already uses for commit/PR approval
+today, not a new mechanism.
+
+**What happens after Frank's team merges — a real design gap found on review, closed by
+BH-1091**: this GC's scenarios stop at "the PR is merged" — they never answered "does anyone
+check if the fix actually worked?" Confirmed by direct code search: nothing in brightbot
+re-runs a pipeline after a human merges a fix to verify it worked, and Invariant 3's cooldown
+key (keyed on the failure SIGNATURE, not "was it resolved") would otherwise SILENTLY SUPPRESS a
+bad merge's recurrence for up to an hour. BH-1091 adds a `VERIFYING` cooldown state + honest
+two-outcome re-detection (confirmed-fixed vs. recurred-and-escalated) — see
+`self-healing-pipelines.md`'s "Post-merge verification loop" section for the full design. This
+is explicitly NOT an automatic retry loop; a second fix proposal after a failed one goes
+through the SAME human-approval gate as the first.
 
 ### Validation
 **Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
@@ -586,6 +631,7 @@ live Jira, not assumed.
 | Renderers for 5-of-6 stage values | BH-1067 | Needs Refinement (AC added this session) | (feeds `test_gc_14_*`, no separate GC stub) |
 | `dbt_run_failure` webapp detail parity | BH-1087 | Needs Refinement (filed this session) | `test_gc_14_dbt_run_failure_dual_write_real_content` |
 | Cancelled-run suppression (Invariant 19) | BH-1043 (comment added) | folded into BH-1043 scope | `test_gc_14_cancelled_run_never_alerts` |
+| Post-merge verification loop (`VERIFYING` cooldown state, honest re-detect) | **BH-1091** (filed this session, extends self-healing-pipelines.md) | Needs Refinement | (no GC stub yet — new scope found after GC-16's stubs were already filed) |
 | Cross-GC precondition check (GC-16 needs GC-17 PASS) | **NONE — documented gap, not a ticket** | N/A | `test_gc_16_requires_gc_17_pass_as_precondition` (stub only; harness doesn't support this yet) |
 | Recurrence-PREVENTED (not just re-detected) | **NONE — documented future scope, no ticket filed** | N/A | `test_gc_16_recurrence_actually_prevented_not_just_redetected` (`xfail(strict=False)`) |
 | Multi-connection disambiguation, 2nd real SQL Server instance | Invariant 16 (proactive-pipeline spec) — no dedicated ticket beyond BH-1045 | covered under BH-1045 | `test_gc_15_multi_connection_disambiguation_invariant_16` (needs a 2nd sandbox instance, not yet built) |

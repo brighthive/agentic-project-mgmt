@@ -960,7 +960,20 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    (`(workspace_id, source_type, job_id, failure_type)`, a 4-tuple, not 3), or (b) the
    storage partition the lookup queries against — mirroring BrightRoutines' actual pattern,
    not just its comparison idiom. BH-1054's implementer MUST pick one explicitly; do not
-   ship a 3-tuple key against unpartitioned storage.`
+   ship a 3-tuple key against unpartitioned storage.
+
+   **GAP FOUND on review, closed by BH-1091 — this cooldown key as specified has no notion of
+   "a fix was merged for this signature."** A merged-but-wrong fix for `self-healing-
+   pipelines.md`'s surgical-PR loop (GC-16) would leave the SAME `(workspace_id, source_type,
+   job_id, failure_type)` recurring, and this invariant as written would SILENTLY SUPPRESS the
+   re-alert for the full cooldown window — the opposite of the trust this epic exists to
+   build. BH-1091 adds a `VERIFYING` state to this key (set when a remediation PR merges,
+   shortening the next poll interval for THAT signature and changing what "suppress" means:
+   confirmed-fixed → a success notification, recurred → an immediate escalation bypassing
+   normal cooldown). This invariant's "SHALL NOT re-emit a duplicate alert" only holds for the
+   NORMAL case (no merge happened); BH-1091's design note in `self-healing-pipelines.md`
+   is the authoritative source once it ships — this invariant will need a corresponding
+   revision at that point, not just an addendum.`
 4. `IF a signal's root_cause_class is DATA_SHAPE but has no matching mode in
    self-healing-pipelines.md's 4-mode taxonomy, THEN THE System SHALL fall back to
    alert-only — it SHALL NOT guess a fix.`
