@@ -1869,7 +1869,13 @@ committed scope" framing)
   invoke the SAME profiling logic `analyze_dataset_structure`/`quality_check_agent` already
   runs for registered assets — WITHOUT requiring a pre-registered `DataAssetNode` for tables
   that have never been catalogued. This is new orchestration (chaining discovery → profiling
-  per table), not new profiling logic. **Filed as BH-1076, pass 82.**
+  per table), not new profiling logic. **Filed as BH-1076, pass 82. CONFIRMED pass 83**: read
+  `analyze_dataset_structure_direct`'s real signature (`quality_tools.py:84-88`) — it takes a
+  bare `dataset_table_name: str`, NOT a `data_asset_id`, and resolves the warehouse connection
+  directly via `get_warehouse_config_from_secrets(workspace_id)` with zero OGM dependency.
+  `introspect_warehouse_schema_data`'s discovered table names can feed this function DIRECTLY
+  — no adaptation layer needed. This settles what pass 82 left as an open "check whether"
+  question: BH-1076 IS purely orchestration, downgraded S from M.
 - **A DB-level (not per-table) summary report** — "PROFILER against a DB level," per the
   user's own framing — aggregating per-table profile results into one health-check report for
   the whole database, a genuinely new report shape (today's profiler output is always
@@ -1927,7 +1933,7 @@ unless noted):
 | BH-1067 | feat: renderers for 5 new watchdog notification stages (Slack + webapp) — dbt_run_stale, databricks_job_failure, databricks_cluster_unhealthy, etl_job_failure, source_disk_low | Filed pass 35 — CRITICAL for demo-visibility, blocks BH-1043/1044/1045's alerts from being human-visible (BH-1036) |
 | BH-1071 | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current | Filed pass 32 — non-blocking for 7/17, blocked by BH-1053's real-vs-retire decision (BH-1036) |
 | BH-1075 | feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvider connection type | Filed pass 82 (Track E, user-raised pass 81) — non-blocking for 7/17. Naming decision resolved against real webapp UI convention: a genuine new connection type, not a reuse of azure_synapse's label. Connector code reuses SynapseConnection unchanged. |
-| BH-1076 | feat(quality): chain warehouse discovery -> per-table profiling for uncatalogued tables | Filed pass 82 (Track E) — non-blocking for 7/17. Both halves (introspect_warehouse_schema, per-table profiling) already exist and work independently; this is new orchestration wiring them together. |
+| BH-1076 | feat(quality): chain warehouse discovery -> per-table profiling for uncatalogued tables | Filed pass 82, **CONFIRMED pure orchestration pass 83** (Track E) — non-blocking for 7/17. `analyze_dataset_structure_direct` already accepts a bare table-name string with zero OGM dependency (`quality_tools.py:84-88`) — discovered tables feed it directly, no adaptation layer. Downgraded S from M. |
 | BH-1077 | feat(quality): DB-level rollup report aggregating per-table profiler results | Filed pass 82 (Track E) — non-blocking for 7/17. Closes the user's own "PROFILER against a DB level" ask; today's profiler output is always per-asset, never rolled up. |
 
 ## Related
