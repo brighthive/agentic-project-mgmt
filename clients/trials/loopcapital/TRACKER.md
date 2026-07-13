@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 15:52 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 15:56 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -136,7 +136,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 ## 📊 Summary
 
 - **1/36** tickets done · 0 in progress · 35 to do
-- PRs: 5 merged · 2 ready for review · 2 draft
+- PRs: 5 merged · 3 ready for review · 2 draft
 
 ## 📋 Tickets by status
 
@@ -182,7 +182,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
 | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) | feat(monitoring): generic ETL pipeline adapter port + registry entry | Kuri Chinca | [🔵 Review agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
-| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🔵 Review agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98)<br>[🟢 Merged agentic-project-mgmt#97](https://github.com/brighthive/agentic-project-mgmt/pull/97) |
+| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#101](https://github.com/brighthive/agentic-project-mgmt/pull/101)<br>[🔵 Review agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🔵 Review agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
 | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#100](https://github.com/brighthive/agentic-project-mgmt/pull/100) |
 
 ### ✅ Done (1)
