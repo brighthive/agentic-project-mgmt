@@ -467,6 +467,36 @@ async def fetch_lineage_artifacts(
 # Reuses _fetch_artifact() (dbt_cloud_tools.py:256-280) with artifact_path="manifest.json"
 # and artifact_path="catalog.json" — no new HTTP/auth code, just new artifact-name arguments
 # PLUS the step-discovery + error-disambiguation logic above, which IS new code.
+#
+# CRITICAL, pass 44 (triple-click-zoom) — this function INHERITS the same
+# multi-connection monitoring-scope gap already confirmed in the sibling
+# proactive-pipeline-ingestion-monitoring.md spec (Invariant 16, passes 24/42/43) for
+# BH-1043/1045. Traced the real credential path: `_fetch_artifact()` takes
+# `api_endpoint`/`api_token`/`account_id` as explicit params — it does no resolution
+# itself. Its real analog call site, `get_job_run_error` (`dbt_cloud_tools.py:647-725`),
+# reads credentials via `_get_dbt_cloud_credentials(state)` (`dbt_cloud_tools.py:53-64`), a
+# PURE STATE READ populated ONCE PER SESSION by `fetch_dbt_credentials()`
+# (`credentials_tools.py:390`), which internally calls the SAME `_find_connected_dbt_
+# service()` (`credentials_tools.py:154-163`) that picks the FIRST `CONNECTED`
+# `DBT_CLOUD` service for a workspace. **CONFIRMED: `run_id` is NEVER used to select or
+# validate which dbt Cloud account/service owns it — it is only interpolated into the
+# artifact URL (`{api_endpoint}/api/v2/accounts/{account_id}/runs/{run_id}/artifacts/
+# ...`) against WHATEVER account was cached at session-init time.** A naive hope that
+# "run_id already scopes the account, so the ambiguity is resolved by fetch time" is
+# WRONG — the ambiguity is resolved once per SESSION, not per run_id. If a workspace has
+# 2 connected dbt Cloud services and BH-1054's watchdog (or a human) somehow triggers
+# this fetch for a run_id belonging to the SECOND service while the session's cached
+# credentials point at the FIRST, this function would either 404 (wrong account_id) or,
+# worse, silently fetch the WRONG account's manifest.json for a DIFFERENT run_id's
+# lineage — a genuinely dangerous cross-project data-shape confusion, not just a missed
+# poll. BH-1062's implementer MUST either (a) confirm this fetch call always executes in
+# the SAME session/state context that resolved the run_id in the first place (so the
+# cached credentials are guaranteed consistent with the run_id's real owner — plausible
+# if BH-1054's watchdog and BH-1062's fetch run in the same node invocation, but NOT
+# verified in this pass — confirm before assuming), or (b) thread the actual account_id
+# through explicitly from wherever the run_id was discovered, bypassing session-cached
+# state entirely for this specific call. See the sibling spec's Invariant 16 for the
+# cross-cutting requirement this closes.
 
 @dataclass(frozen=True)
 class LineageArtifacts:
@@ -1037,6 +1067,25 @@ async def find_downstream_impact(
     separate, proprietary Column-Level Lineage feature or a third-party SQL parser (e.g.
     sqlglot) statically analyzing compiled SQL — genuinely new scope, out of this spec
     entirely (see §5 Out of Scope).`
+15. `WHEN BH-1062's fetch_lineage_artifacts() fetches manifest.json/catalog.json for a
+    specific run_id, THE System SHALL NOT assume the session's cached dbt Cloud
+    credentials (account_id/api_token, resolved once per session by
+    _find_connected_dbt_service()'s first-match behavior) are guaranteed to match the
+    run_id's actual owning account/service. CRITICAL, found pass 44: confirmed
+    _fetch_artifact() takes account_id/api_token as explicit params with no internal
+    resolution, and its real analog call site reads them via a pure state read populated
+    ONCE PER SESSION — run_id is NEVER used to select or validate the account, only
+    interpolated into the artifact URL against whatever was cached at init. IF a workspace
+    has multiple connected dbt Cloud services, a mismatch between the cached session
+    credentials and the run_id's real owner risks either a 404 or, worse, silently
+    fetching a WRONG account's manifest.json for an unrelated run_id — a cross-project
+    data-shape confusion, not merely a missed poll. BH-1062's implementer SHALL either
+    confirm this fetch always executes in the same session/state context that resolved
+    the run_id (verified, not assumed), or thread the real account_id through explicitly
+    from wherever the run_id was discovered. This mirrors the sibling
+    proactive-pipeline-ingestion-monitoring.md spec's Invariant 16 (the same class of gap,
+    confirmed in 2 of its 3 adapters) — this spec's own fetch step is a THIRD confirmed
+    instance, not a hypothetical extension.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -1131,6 +1180,17 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       timeout, streaming parse) was built for this artifact class specifically
     And the existing 30-second timeout tuned for KB-scale run_results.json/sources.json is
       NOT silently assumed safe at 100x+ that data volume without one of the above
+
+  Scenario: the manifest fetch never uses stale session-cached credentials for a mismatched run_id
+    Given a workspace with TWO connected dbt Cloud services (accounts A and B)
+    And the session's cached credentials currently point at account A (the first-matched
+      service, per _find_connected_dbt_service()'s known first-match behavior)
+    When BH-1062 fetches manifest.json for a run_id that actually belongs to account B
+    Then the fetch does NOT silently succeed against account A's manifest.json for account
+      B's run_id (a cross-project data-shape confusion)
+    And EITHER the fetch call is confirmed to always execute in the same session context
+      that resolved this specific run_id, OR the real account_id is threaded through
+      explicitly rather than read from session-cached state
 ```
 
 ## 5. Out of Scope
