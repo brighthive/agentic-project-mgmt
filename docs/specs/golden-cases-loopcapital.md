@@ -63,9 +63,14 @@ visible on both Slack and the webapp within one poll cycle.
 contract (§2 `PipelineSource` Protocol, `PIPELINE_SOURCE_ADAPTERS` registry, `PipelineHealthSignal`
 DTO — BH-1042) and 18 invariants, but BH-1043 (dbt poller), BH-1046 (dual-write alert path), and
 BH-1054 (watchdog node registration on the existing scheduled dispatcher) are all unimplemented.
-BH-1067 (renderer for 5 of 6 stage values) is also unimplemented — without it, a detected failure
-would dual-write successfully but render as blank text on both surfaces, per that spec's
-Invariant 15.
+BH-1067 (renderer for 5 of 6 stage values) is also unimplemented for those 5 — without it, a
+detected failure on those stages would dual-write successfully but render as blank text on both
+surfaces, per that spec's Invariant 15. **The 6th stage, `dbt_run_failure` (this GC's own bar), is
+a narrower gap than "no renderer anywhere": brightbot-slack-server already has a real renderer
+(`renderDbtFailureDetails`) — the webapp side does not.** Confirmed against live code: no detail
+builder exists in platform-core's `sources` registry for `dbt_run_failure`, so today's webapp
+Notifications card would show a generic label, not the model/job/error detail Slack shows. This
+GC cannot claim webapp parity until that's built — a scope gap this file originally missed.
 
 ### Code path
 No code. Contract only: `proactive-pipeline-ingestion-monitoring.md` §2 (`PipelineSource`,
@@ -100,26 +105,45 @@ changed shape and the transform errored. Nobody at Loop is watching a dashboard 
 Scenario: Frank's team learns about a broken pipeline before the portfolio managers do
   Given the nightly Asset Management dbt job fails at 2:14am with a real transform error
   And no one at Loop Capital has opened BrightAgent or asked about this job
-  When BrightAgent's watchdog next polls (within one cycle)
-  Then a message lands in Loop's #brighthive-ops Slack channel by the time Frank checks his
-    phone in the morning, naming the job, the model that broke, and the error
-  And the SAME failure is visible on the BrightAgent webapp Notifications page if Frank opens
-    it later that day — not just in Slack, and not a different, inconsistent story
-  And the message is specific enough that Frank's team knows WHICH holdings numbers are stale
+  When BrightAgent's watchdog runs its next scheduled check — target: within 15 minutes of the
+    failure, the cadence BH-1054's dispatcher is expected to run at for job-status checks (the
+    exact number is still an implementer decision as of this spec — see the sibling spec's
+    Invariant 12 — but 15 minutes is the bar this GC is written against, not an open question)
+  Then a message lands in Loop's #brighthive-ops Slack channel naming the job, the model that
+    broke, and the error — in time for Frank's team to see it well before the morning SSRS run
+  And Frank's team knows, from that one Slack message alone, WHICH holdings numbers are stale —
     before a portfolio manager asks why the SSRS report looks wrong
 
 Scenario: BrightAgent doesn't spam Frank's team on every retry
-  Given the same job fails again on its next scheduled retry within the same incident window
+  Given the same job fails again on its next scheduled retry, less than an hour after the first
+    failure (Invariant 3's cooldown window)
   When the watchdog polls again
   Then Loop's ops channel gets ONE actionable alert for this incident, not one per retry —
     Frank's team should never learn to ignore BrightAgent because it cried wolf
+
+Scenario: BrightAgent doesn't alert on a run Frank's own team intentionally cancelled
+  Given someone on Frank's team manually cancels a dbt run mid-flight for a planned reason
+    (e.g. a maintenance window) — not a genuine pipeline failure
+  When the watchdog observes this run's terminal status
+  Then no alert fires — a cancelled-by-a-human run is not treated the same as a failed run
+  And this distinction is what keeps every alert BrightAgent sends trustworthy enough that
+    Frank's team acts on it, rather than second-guessing whether it's real
 ```
 
 **What proves this, underneath**: a `PipelineHealthSignal` is emitted for the failed run, the
-dual-write reaches BOTH brightbot-slack-server and brighthive-webapp Notifications (Invariant 1),
-the message renders real `model_name`/`job_id`/`error`/`log_id` text on both surfaces rather than
-a blank stage (Invariants 15/17), and the second scenario is enforced by Invariant 3's 4-tuple
-cooldown key.
+dual-write reaches BOTH brightbot-slack-server and brighthive-webapp Notifications (Invariant 1).
+**Correction — verified against live code, not assumed**: only brightbot-slack-server actually
+renders the four detail fields (`model_name`/`job_id`/`error`/`log_id`) today, via
+`renderDbtFailureDetails` (per Invariant 17). brighthive-webapp's Notifications page currently
+shows only a generic title/subtitle/status for this stage — platform-core's `sources` registry
+has no detail builder for `dbt_run_failure` (confirmed: `notifications.ts`'s registry entry is
+`{category: 'dbt'}` only), so the webapp card renders a label, not the same detail Slack shows.
+**This GC's bar for webapp parity is therefore currently UNMET, not just unimplemented** — closing
+it needs a detail builder + a non-generic card on the webapp side, a scope this spec had wrongly
+assumed BH-1067/1046 already covered. The third scenario (cancelled-run suppression) is not yet
+specified in any invariant of the sibling spec — flagging as a real, currently-uncovered gap this
+GC's harness should assert once a `RUN_CANCELLED`-vs-`RUN_FAILED` distinction is added to
+`PipelineHealthSignal`'s contract, not something to claim as already proven.
 
 ### Validation
 Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_14_proactive_monitor_alert.py`
@@ -170,19 +194,22 @@ Scenario: BrightAgent catches a disk problem on a box it was never installed on
   Given Loop Capital's SQL Server (real staging instance, standing in for their production box)
     has NO MCP server, agent, or BrightHive software of any kind installed on it
   And its free disk space has dropped to 18% — below the 20% threshold Frank named
-  When BrightAgent's watchdog runs its next poll, reaching the SQL Server the same way any
-    warehouse connection reaches a customer's database — a credentialed query, nothing installed
+  When BrightAgent's watchdog runs its next scheduled check — target: within 15 minutes of
+    crossing the threshold
   Then Frank's team gets an alert naming the SQL Server instance and its current free-space
     percentage, before an SSIS job fails from lack of disk
   And Frank can verify, by asking his own IT team, that nothing was installed on that box to
     make this possible — because nothing was
 
-Scenario: two of Loop's SQL Server instances don't drown each other out
-  Given Loop Capital connects a SECOND SQL Server instance (e.g. a DR replica or a second
-    business unit's box) that is also low on disk
-  When BrightAgent polls both
+Scenario: Loop's DR replica for the same SQL Server doesn't get its alert swallowed by the primary
+  Given Loop Capital's SSIS/SSRS setup includes a disaster-recovery replica of the same SQL
+    Server (a real posture for a production database backing daily reporting, not a
+    hypothetical) — and that replica is also low on disk
+  When BrightAgent polls both the primary and the replica
   Then Frank's team gets a distinct alert per instance, naming which one — an alert about the
-    primary server never gets silently swallowed because a different server alerted first
+    replica never gets silently swallowed because the primary alerted first, and vice versa,
+    since losing disk on the replica is exactly as disruptive to Frank's DR posture as losing
+    it on the primary
 ```
 
 **What proves this, underneath**: `SynapseConnection` (`warehouse_connections.py:248-424`) reused
@@ -236,20 +263,34 @@ drift breaks the SAME pipeline again — because nothing captured *why* it broke
 fixed the first time, so the fix wasn't durable. This is Frank's literal ask #3: help him avoid
 the recurrence, not just re-detect the same fire every time.
 
+**Honesty check on the Bar, added on review**: the scenarios below prove BrightAgent proposes a
+reviewable fix fast — they do NOT prove the recurrence itself is prevented, only that recovering
+from it is faster and better-documented. Actually "avoiding the recurrence" would require the
+merged fix to change the pipeline durably enough that the SAME drift can't break it a third time
+— a real, distinct claim from "you get a nicer paper trail." Scenario 3 below is what a
+recurrence-PREVENTED case actually looks like; without it, this GC's demo would only be showing
+faster triage, and Frank should be told that difference plainly rather than have it implied away.
+
 ```gherkin
 Scenario: BrightAgent proposes the fix instead of making Frank's team re-diagnose it from scratch
-  Given GC-17's auto-merge exclusion has already passed (precondition — this scenario is unsafe
-    to run otherwise)
-  And GC-14's watchdog detects a column-type-drift failure on the Asset Management pipeline —
-    the same failure CLASS that broke this pipeline once before
+  Given the code-level auto-merge exclusion (this spec's other gating case) has already shipped —
+    unsafe to demo this scenario otherwise
+  And BrightAgent's watchdog detects a column-type-drift failure on the Asset Management pipeline
+    — the same failure CLASS that broke this pipeline once before
   When BrightAgent's remediation loop drafts a fix
   Then a pull request opens against Loop's dbt project with a plain-language explanation any of
     Frank's engineers can read without opening the stack trace — "source column X changed from
     NUMBER to FLOAT, here's the diff that adapts the model"
   And the PR sits waiting for a human on Frank's team to review and merge it themselves —
     BrightAgent never merges its own fix, no matter how confident the diagnosis
-  And the NEXT time this same class of drift happens, Frank's team has a real PR history to point
-    to — "we've seen this before, here's how we fixed it" — instead of starting over
+
+Scenario: the SAME drift, after the fix is merged, no longer breaks the pipeline a third time
+  Given Frank's team merged the PR from the scenario above
+  When the source table drifts again in the exact same way (the same column, the same type
+    change) — the real test of "avoided the recurrence," not just "diagnosed it faster"
+  Then the pipeline run succeeds without a new failure, because the merged fix already
+    generalized to this input — this is the difference between recurrence PREVENTED and
+    recurrence RE-DETECTED, and it's the one this GC's Bar promises Frank
 
 Scenario: BrightAgent admits when it doesn't know, instead of guessing
   Given a pipeline failure that doesn't cleanly match a known root-cause pattern
@@ -262,6 +303,13 @@ Scenario: BrightAgent admits when it doesn't know, instead of guessing
 **What proves this, underneath**: reuses Longaeva's GC-11 surgical-PR loop
 (`self-healing-pipelines.md`) as the delivery mechanism, with BH-1047's `root_cause_class`
 classifier (DATA_SHAPE vs JOB_RUNTIME) as the new signal source routing Loop's failures into it.
+The "code-level auto-merge exclusion" referenced above is GC-17, in this spec's own numbering —
+see the Invariants below for how the two cases gate each other; Frank-facing material should
+never need to say "GC-17" out loud. **Scenario 2 (recurrence actually prevented) has no code or
+ticket backing it today** — it depends on the merged fix generalizing (e.g. a type-cast or
+schema-tolerant transform, not a one-off patch matching the exact failure), which is a property
+of how BH-1047's fix-drafting logic is built, not yet specified anywhere. Flagging this as new
+scope this GC's harness cannot claim until BH-1047 is designed with that generalization in mind.
 
 ### Validation
 Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
@@ -281,12 +329,17 @@ agent that can open PRs against pipeline code.
 ### Status today
 **CRITICAL, no code.** Confirmed: `github_merge_pull_request` (`brightbot/agents/dbt_agent/tools/github_tools.py:503-560`) is
 still fully bound into `dbt_agent_react.py`'s live `DBT_REACT_TOOLS` list with zero exclusion
-logic anywhere in the repo. "Never auto-merge" is currently enforced ONLY by
-`dbt_react_system_prompt.py:119-125`'s system-prompt instruction — a prompt injection or a model
-error is the only thing standing between today's code and an unattended auto-merge into a
-customer's pipeline repo. Jira status: `Needs Refinement`. The concrete fix (a `REMEDIATION_TOOLS`
-list built via direct import, omitting the merge tool by name) is already specified in BH-1047's
-ticket text, just not implemented.
+logic anywhere in the repo. **Corrected on review** — the merge guard today is weaker than "never
+auto-merge, prompt-only": `dbt_react_system_prompt.py:119-125` actually reads *"Only call
+`github_merge_pull_request` when the user explicitly wants the PR merged (and CI is green)"* —
+that is a conditional PERMISSION to merge on request, not a prohibition. There is no "never
+merge" instruction anywhere in the prompt, only a general note that the agent shouldn't bypass
+the PR by committing directly to the base branch on failure. So the real gap is worse than
+originally stated: nothing today — not code, not prompt — instructs the remediation loop to
+never merge; it is fully capable of merging today if a user (or a misrouted signal) asks it to.
+Jira status: `Needs Refinement`. The concrete fix (a `REMEDIATION_TOOLS` list built via direct
+import, omitting the merge tool by name) is already specified in BH-1047's ticket text, just not
+implemented.
 
 ### Code path
 `brightbot/agents/dbt_agent/dbt_agent_react.py` (`DBT_REACT_TOOLS`, includes
@@ -311,7 +364,7 @@ That's not a bug report, it's a lost deal.
 
 ```gherkin
 Scenario: there is no code path by which BrightAgent can merge its own fix
-  Given the remediation loop that GC-16 uses to open a PR against Loop's pipeline
+  Given the remediation loop that opens a PR against Loop's pipeline when a fix is proposed
   When the tool list that loop is actually bound to is inspected directly — not by watching
     what the model chose to do in a test run, but by looking at what it's ALLOWED to do
   Then the merge capability is simply not present in that list
