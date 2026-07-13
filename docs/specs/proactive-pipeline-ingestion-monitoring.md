@@ -9,7 +9,7 @@ tags: [monitoring, observability, dbt, databricks, etl, ingestion, brightsignals
 related:
   features: []
   pocs: []
-  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md"]
+  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md"]
 ---
 
 # Proactive Pipeline & Ingestion Monitoring
@@ -63,32 +63,54 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│  ADDED pass 25 (triple-click-zoom) — the full dependency graph, PUSH vs PULL   │
-│  options called out where this loop found a cheaper push-based alternative     │
+│  ADDED pass 25, REFRESHED pass 68 (triple-click-zoom) — full dependency graph, │
+│  PUSH vs PULL options + the infra/render gaps found in later passes, none of   │
+│  which appeared in the original pass-25 version                                │
 └────────────────────────────────────────────────────────────────────────────────┘
+
+  DEMO-BLOCKING INFRA (zero code — human setup, still To Do as of pass 62):
+  BH-1057 (staging SQL Server, RDS Web edition, ~3-5hrs + GRANT VIEW SERVER STATE)
+  BH-1058 (dbt Cloud deliberate-failure fixture, ~XS, real RUNTIME error not compile-time)
+    — both REQUIRED before BH-1045/BH-1043's e2e cases can run against real infra
 
   BH-1042 (contract: PipelineSource Protocol, PIPELINE_SOURCE_ADAPTERS registry,
            PipelineHealthSignal DTO, get_pipeline_health MCP tool, §8 eval design)
       │
-      ├──▶ BH-1043 (dbt watchdog — wraps EXISTING dbt_cloud_tools.py, adds backoff)
+      ├──▶ BH-1043 (dbt watchdog — wraps EXISTING dbt_cloud_tools.py, adds backoff;
+      │             needs BH-1058's fixture for its e2e case)
       ├──▶ BH-1044 (Databricks watchdog — GREENFIELD connector + credentials, mirrors
-      │             dbt's per-CONNECTION direct-boto3 secretsmanager pattern exactly)
+      │             dbt's per-CONNECTION direct-boto3 secretsmanager pattern exactly;
+      │             credential DESIGN resolved pass 24, code not yet built)
       └──▶ BH-1054 (watchdog capability node — rides EXISTING scheduled_agent_dispatcher,
                      owns the dual-write: per-member fanout + resolveSignal() derivation,
                      NOT a same-payload-twice call; cooldown keyed on (workspace_id,
-                     source_type, job_id, failure_type) — 4-tuple, not 3)
+                     source_type, job_id, failure_type) — 4-tuple, not 3; dbt_run_failure
+                     metadata MUST use exact model_name/job_id/error/log_id keys —
+                     Invariant 17, pass 64, or the ONE stage with a real renderer
+                     still renders near-blank)
              │
              ├──▶ BH-1045 (SQL Server disk/job query — existing WarehousePort/Synapse
              │             connection chain PLUS a NEW VIEW SERVER STATE grant, a real
-             │             customer-side permission action, not "zero new anything")
+             │             customer-side permission action, not "zero new anything";
+             │             needs BH-1057's fixture to demo against real infra)
              ├──▶ BH-1046 (delivery verify — dbt_run_failure ONLY, narrow scope,
-             │             does NOT duplicate BH-1067's 5-stage renderer work)
-             └──▶ BH-1047 (remediation — builds GC-11's loop for the FIRST time, since
-                           self-healing-pipelines.md is itself unbuilt; REMEDIATION_TOOLS
-                           via direct import, github_merge_pull_request omitted by
-                           construction, mirrors retrieval_agent_react.py's real pattern)
+             │             does NOT duplicate BH-1067's 5-stage renderer work; MUST
+             │             confirm the exact metadata field names above, pass 64)
+             ├──▶ BH-1047 (remediation — builds GC-11's loop for the FIRST time, since
+             │             self-healing-pipelines.md is itself unbuilt; REMEDIATION_TOOLS
+             │             via direct import, github_merge_pull_request omitted by
+             │             construction, mirrors retrieval_agent_react.py's real pattern)
+             └──▶ BH-1067 (CRITICAL, filed pass 35 — 5 of 6 new stage values have ZERO
+                           renderer on either Slack or webapp; the dual-write SUCCEEDS
+                           but nothing visible happens without this — same class of gap
+                           as GC-12's own confirmed dead-end, BH-1065/1066)
 
-  BH-1048 (ingestion contract, separate from the job-status contract above)
+  BH-1048 (ingestion contract, separate from the job-status contract above — GAP FOUND
+           pass 80: this ticket has never actually defined its own signal DTO's field
+           list anywhere in this spec; PipelineHealthSignal is the ONLY concrete DTO
+           this spec specifies. BH-1049/1050/1051 below cannot be considered fully
+           specified until BH-1048 closes this — a cross-cutting blocker, not a detail
+           buried in one adapter ticket.)
       │
       ├──▶ BH-1049 (Airbyte — PUSH option confirmed cheaper: extend platform-core's
       │             airbyte_notification_webhook's existing no-op failure branch,
@@ -96,7 +118,10 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
       │             new brightbot poller from zero)
       ├──▶ BH-1050 (Step Functions — PUSH option confirmed cheaper: extend the LIVE
       │             data_ingestion_stack.py EventBridge rule already routing FAILED
-      │             executions to Slack via SNS, vs. a new execution-history poller)
+      │             executions to Slack via SNS, vs. a new execution-history poller;
+      │             a SEPARATE, unrelated silent-failure gap found in
+      │             dbt_validation_stack.py — flagged, deliberately NOT filed unless
+      │             a customer actually hits it, pass 22)
       └──▶ BH-1051 (queue/DLQ — THREE options, evaluate cheapest first: (a) extend
                     cadenceToCron [touches shared scheduling infra], (b) new scoped
                     EventBridge rule [also shared], (c) native CloudWatch Alarm on the
@@ -110,7 +135,9 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
                            since SNS→Slack alone doesn't touch the webapp today)
 
   Cross-cutting, non-blocking: BH-1053 (dual-write unification), BH-1055 (dispatcher
-  hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision)
+  hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision,
+  now confirmed 4 sinks not 3 — pass 28), BH-1071 (NOTIFICATION_SYSTEM_PLAN.md stale
+  docs, blocked by BH-1053's real-vs-retire decision)
 ```
 
 **One open human decision, not resolved by this spec**: BH-1044 (Databricks) recommends
@@ -209,7 +236,9 @@ existing systems already cover most of the intended scope:
   channel set today — this spec's dual-write is not an incomplete 2-of-3, it covers everything
   real. Email delivery, if ever built, is BH-412's scope (BrightSignals MVP, still unbuilt),
   not a gap in this spec.
-- **Longitudinal Monitoring** (GC-12, BH-601, **SHIPPED + staging-verified 2026-06-18**) —
+- **Longitudinal Monitoring** (GC-12, BH-669, **SHIPPED + staging-verified 2026-06-18** —
+  **CORRECTED pass 63**: was wrongly cited as BH-601, the unrelated umbrella "14 Golden Cases"
+  tracker; BH-669 is the real GC-12 capability ticket, confirmed Done) —
   stateful *data-quality* anomaly detection (row_count_drift, cardinality_breakdown,
   distributional_skew, null_spike), running as a **capability node inside
   `quality_check_agent`**, triggered by the **existing scheduled dispatcher + `run_context`**
@@ -713,6 +742,39 @@ class PipelineHealthSignal:
     workspace_id: str
     source_type: Literal["dbt", "databricks", "etl"]
     job_id: str                       # the dbt job id / Databricks job id / ETL job identifier
+                                       #
+                                       # GAP FOUND, pass 80 (triple-click-zoom) — the SAME
+                                       # "required field never specified per-adapter" gap
+                                       # class found repeatedly in the sibling
+                                       # lineage-aware-data-quality.md spec (Invariants
+                                       # 20/21/22 there). This docstring assumes every source
+                                       # has a natural job/execution identifier — TRUE for
+                                       # dbt (a real dbt Cloud job_id) and Databricks (a real
+                                       # Databricks job_id), but FALSE for BH-1045's
+                                       # "source_disk_low" signal (SQL Server disk-space
+                                       # monitoring is CONNECTION/INSTANCE-scoped, not
+                                       # job-scoped — there is no "job" that ran) and
+                                       # genuinely ambiguous for BH-1051's queue/DLQ signal
+                                       # (a queue has a name/ARN, not a job_id). Since job_id
+                                       # is HALF the cooldown key (Invariant 3's 4-tuple
+                                       # (workspace_id, source_type, job_id, failure_type)),
+                                       # an adapter that invents an inconsistent job_id
+                                       # convention (or leaves it empty) breaks cooldown
+                                       # suppression for that signal type — either
+                                       # over-suppressing (if job_id is empty/constant across
+                                       # every disk check, ALL future disk-low alerts for
+                                       # that workspace collapse into ONE cooldown bucket
+                                       # regardless of which SQL Server instance triggered
+                                       # it) or never suppressing (if job_id is accidentally
+                                       # unique per poll, e.g. a timestamp). FIX, required:
+                                       # BH-1045 SHALL set job_id to a STABLE per-connection
+                                       # identifier (e.g. the warehouseServiceId this signal's
+                                       # connection resolves to, per Invariant 16's
+                                       # multi-connection disambiguation) — never empty, never
+                                       # timestamp-derived. BH-1051 SHALL set job_id to a
+                                       # STABLE per-queue identifier (e.g. the queue ARN or
+                                       # name) for the same reason. See Invariant 18 (new,
+                                       # pass 80).
     failure_type: str                 # the category/stage value, e.g. "dbt_run_failure",
                                        # "source_disk_low" — see the taxonomy list below.
                                        # Cooldown key (Invariant 3, Property 1) is
@@ -777,11 +839,18 @@ class PipelineHealthSignal:
 # with zero visible content because neither brightbot-slack-server nor brighthive-webapp has
 # a rendering CASE for the "longitudinal" stage; the dual-write succeeds but nothing displays):
 # THE SAME GAP EXISTS HERE, CONFIRMED BY DIRECT CODE CHECK, for 5 of the 6 new stage values.
-#   - "dbt_run_failure" — SAFE. Real renderer exists on BOTH sides: brightbot-slack-server's
-#     formatter.ts:152→423 (renderDbtFailureDetails, reads job_id/model_name/error into real
-#     text) AND brighthive-webapp's mappers.ts:33 ("dbt run failed" label) +
-#     constants.ts:159 (grouped under pipeline). This one is genuinely reused, not just
-#     registered-and-ignored.
+#   - "dbt_run_failure" — SAFE, BUT NOT FREE, verified pass 64: real renderer exists on BOTH
+#     sides: brightbot-slack-server's formatter.ts:152→423 (renderDbtFailureDetails, reads
+#     EXACTLY metadata.model_name/job_id/error/log_id, all snake_case, nothing else) AND
+#     brighthive-webapp's mappers.ts:33 ("dbt run failed" label) + constants.ts:159 (grouped
+#     under pipeline). This one is genuinely reused, not just registered-and-ignored — BUT
+#     `NotificationEvent.metadata` is typed `Record<string, unknown>` (types.ts:119, fully
+#     free-form) and the write boundary (routes.ts:289-318) only checks "is metadata an
+#     object," never key names. If BH-1054 populates differently-named fields (jobId,
+#     errorMessage, model — all plausible without reading this exact renderer), the
+#     dual-write succeeds and delivers, but renders a near-blank message with no error/job/
+#     log detail — the SAME dead-end as the 5 missing-renderer stages below, just caused by a
+#     field-name mismatch instead of a missing case. BH-1054 MUST use these 4 exact keys.
 #   - "dbt_run_stale", "databricks_job_failure", "databricks_cluster_unhealthy",
 #     "etl_job_failure", "source_disk_low" — ALL 5 DO NOT EXIST in either repo's stage
 #     type union (brightbot-slack-server's NotificationStage, types.ts:2-36;
@@ -1221,6 +1290,47 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     confirmed, documented single-connection-per-workspace assumption for its target
     deployment — never a silent "pick the first" with no acknowledgment either way.`
 
+17. `WHEN BH-1054's watchdog writes a "dbt_run_failure" event's metadata, THE System SHALL use
+    EXACTLY the field names `model_name`/`job_id`/`error`/`log_id` (all snake_case) — no
+    other naming. CRITICAL, found pass 64: `renderDbtFailureDetails`
+    (brightbot-slack-server/src/notifications/formatter.ts:423-443) reads ONLY these 4 exact
+    keys off `event.metadata`. `NotificationEvent.metadata` is typed `Record<string,
+    unknown>` (types.ts:119) — fully free-form, no compile-time contract — and the write
+    boundary (routes.ts:289-318) only validates "is metadata a plain object," never key
+    names. A watchdog writer that populates differently-named fields (e.g. `jobId`,
+    `errorMessage`, `model`) would pass validation and deliver successfully, but render a
+    near-blank message with no error/job/log detail — the SAME visible dead-end Invariant 15
+    describes for 5 other stage values, except caused by a field-NAME mismatch on an
+    otherwise-real renderer, not a missing renderer case. This is easy to miss precisely
+    because the renderer's existence looks like "nothing to build here."`
+
+18. `EVERY PipelineSource adapter (BH-1043/1044/1045 — dbt, Databricks, SQL Server/ETL) SHALL
+    set PipelineHealthSignal.job_id to a STABLE, non-empty, per-source identifier — never
+    left empty and never derived from a value that changes per poll (e.g. a timestamp).
+    CRITICAL, found pass 80: `job_id`'s docstring assumes every source has a natural
+    job/execution identifier, true for dbt/Databricks but FALSE for BH-1045's SQL-Server
+    disk-space signal (connection/instance-scoped, not job-scoped — no "job" ran). Since
+    job_id is HALF of Invariant 3's 4-tuple cooldown key `(workspace_id, source_type, job_id,
+    failure_type)`, an adapter that leaves it empty or constant across every poll would
+    collapse ALL future alerts of that failure_type for a workspace into ONE cooldown bucket
+    — e.g. every SQL Server instance's disk-low alert suppressing every other instance's, if
+    job_id is empty for all of them. Conversely, a timestamp-derived job_id would defeat
+    cooldown entirely (never matching a prior key). BH-1045 SHALL set job_id to a stable
+    per-connection identifier (e.g. the warehouseServiceId this signal's connection resolves
+    to, per Invariant 16's multi-connection disambiguation).
+
+    CORRECTED pass 80 (self-correction, same pass) — this invariant does NOT extend to
+    BH-1051 (queue/DLQ). Verified: BH-1051 is an "IngestionSignalPort" adapter under BH-1048's
+    SEPARATE ingestion contract (§1, "BH-1048 (ingestion contract, separate from the
+    job-status contract above)") — NOT a PipelineSource emitting PipelineHealthSignal. This
+    exposes a DIFFERENT, more foundational gap: BH-1048's own "ingestion signal contract" has
+    NO DTO shape defined anywhere in this spec — `PipelineHealthSignal` is the ONLY concrete
+    signal type this spec actually specifies. BH-1048's implementer must define the ingestion
+    signal's own shape (including whatever its own equivalent of a stable per-source
+    identifier should be, e.g. a queue ARN/name for BH-1051) as part of closing that ticket —
+    it is not free to assume or inherit PipelineHealthSignal's shape without saying so
+    explicitly.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1285,6 +1395,27 @@ Feature: Proactive pipeline & ingestion monitoring
     Then workspace B's alert is NOT suppressed by workspace A's cooldown
     And this holds because the cooldown key includes workspace_id (per Invariant 3's pass-17
       correction — a 3-tuple key without workspace_id would have failed this scenario)
+
+  Scenario: two different SQL Server instances' disk-low alerts do not suppress each other
+    Given a workspace with TWO connected SQL Server instances (via two separate
+      warehouseServiceId connections), both running low on disk space independently
+    When BH-1045's watchdog polls both and emits a "source_disk_low" PipelineHealthSignal
+      for each
+    Then each signal's job_id is set to that specific connection's warehouseServiceId — NOT
+      left empty and NOT shared between the two instances
+    And instance A's disk-low alert does NOT suppress instance B's alert via the cooldown
+      key, since job_id differs between them (per Invariant 18)
+
+  Scenario: a real dbt_run_failure event renders full detail, not a near-blank message
+    Given BH-1054's watchdog writes a "dbt_run_failure" event's metadata using the EXACT keys
+      model_name, job_id, error, log_id (per Invariant 17)
+    When the event reaches brightbot-slack-server's renderDbtFailureDetails
+    Then the rendered message includes the real model name, job id, error text, and log id —
+      not just the generic "A dbt run failed." intro
+    And if the watchdog had instead used differently-named fields (e.g. jobId, errorMessage),
+      this scenario would catch it: the message would render near-blank despite the
+      dual-write succeeding and delivering — the exact silent-failure mode Invariant 17 exists
+      to prevent
 
   Scenario: DATA_SHAPE root cause routes to the existing surgical-PR loop
     Given a watchdog signal is classified root_cause_class=DATA_SHAPE
@@ -1409,7 +1540,7 @@ Feature: Proactive pipeline & ingestion monitoring
 | dbt_cloud_tools.py, quality_tools.py on-demand tools | Non-blocking (reused as poll targets) | Live |
 | AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, SHARPENED pass 29 — not inferred, and now explicitly time-bounded) | LangGraph `StateGraph`/`add_node` unchanged by AgentCore's CURRENT leaf-runtime-only scope (`agentcore-deployment-migration.md`'s "Recommended Approach": only sub-agents — retrieval/analyst/governance/dbt — become AgentCore Container runtimes; the LangGraph Deep Agent SUPERVISOR remains the orchestration runtime) — safe to build on TODAY. **NOT a permanent guarantee**: CEMAF (`brightagent-v3`) is the CONFIRMED long-term supervisor replacement (`langgraph-cloud-detach.md:17,24`), using a structurally different `DAGExecutor` model, not `StateGraph`/`add_node` — this spec's watchdog capability nodes survive today's AgentCore leaf-runtime work unchanged, but would need a REAL redesign (as Goal/Result DTOs, per CEMAF's own migration notes, not a mechanical `add_node` port) once the supervisor layer itself migrates to CEMAF. Treat "unchanged by the migration" as scoped to AgentCore's current phase, not a claim about CEMAF's eventual arrival. |
 | `scheduled_agent_dispatcher`'s LangGraph Cloud invocation path (`langgraph_action.py` → `/threads/{id}/runs`) | Non-blocking for THIS spec | Verified pass 19 (`langgraph-cloud-detach.md`, 2026-07-09): explicitly named as "a third, separate LangGraph Cloud dependency... not covered by either track." **BH-1059 filed** (tracking placeholder under BH-453) so this gap is visible when the migration track reaches it, rather than rediscovered later. |
-| **BH-1067: renderers for 5 new notification stages on brightbot-slack-server + brighthive-webapp** | **BLOCKING for demo-visibility of `dbt_run_stale`, `databricks_job_failure`, `databricks_cluster_unhealthy`, `etl_job_failure`, `source_disk_low`** — the dual-write (Invariant 1) succeeds today, but nothing renders (Invariant 15) | **Filed pass 35** — mirrors `dbt_run_failure`'s existing pattern (`formatter.ts:423`, `mappers.ts:33`/`constants.ts:159`); not started |
+| **BH-1067: renderers for 5 new notification stages on brightbot-slack-server + brighthive-webapp** | **BLOCKING for demo-visibility of `dbt_run_stale`, `databricks_job_failure`, `databricks_cluster_unhealthy`, `etl_job_failure`, `source_disk_low`** — the dual-write (Invariant 1) succeeds today, but nothing renders (Invariant 15) | **Filed pass 35, RE-VERIFIED pass 61** (fresh grep, not trusted from pass 35 given demo proximity — zero drift, nothing shipped since) — mirrors `dbt_run_failure`'s existing pattern (`formatter.ts:423`, shared with `dbt_model_error`; `mappers.ts:33`/`constants.ts:159`; also add `QualityNotificationCard.tsx:32`'s local `stageTitle` switch, a third file not previously named); not started |
 | `airbyte_notification_webhook`'s existing auth client + connection-mapping (`app.py:47-59,97-101,141-159`) | Non-blocking (reused, not built, IF BH-1049 chooses Option A) | **CONFIRMED pass 13** — live, deployed, already-authenticated; its failure branch (`app.py:88-90`) is currently a no-op BH-1049 could extend cheaply instead of building a new poller |
 | **BH-1071: `NOTIFICATION_SYSTEM_PLAN.md` stale-docs cleanup** | Non-blocking for 7/17; blocked BY BH-1053's decision (deploy path 3 for real, or retire it) before it can be finalized | **Filed pass 32** — the plan doc (never updated since 2026-04-20) describes 4+ pieces of never-built/undeployed infra as current (a `notification-subscriptions` table that was never created, a speculative DynamoDB Stream, a `notification_dispatcher_stack.py` file that doesn't exist, and SES email delivery the slack-server team's own README labels "Future direction") |
 
@@ -1620,7 +1751,7 @@ convention in this codebase.
 
 | Repo | Suite | What to add |
 |---|---|---|
-| `brightbot` | `brightbot/tests/` + `brightbot/brightbot/evals/` (L0/L1/L2) | L0: one case per §2 MCP tool contract entry, PLUS the required `capabilities.py` catalog row for `get_pipeline_health` and its addition to the live-tool enumeration tests (`test_permissions.py`, `test_tool_invariants.py`/`test_mcp_live_tools.py`-style lists) — these are CI-pinned and fail closed if skipped (verified pass 6). **CRITICAL, added pass 26: `get_pipeline_health` MUST pass the EXISTING repo-wide `test_no_principal_fields_in_tool_args` test (`test_tool_invariants.py`) — this is not optional/new, it's an existing gate the tool must not violate.** L1: routing case confirming watchdog capability node is reachable via the existing dispatcher (not a new entry point). L2: one case per §3 invariant (1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14) + FailureClassificationEvaluator gated at 0.9 + RootCauseClassEvaluator gated at 0.95 precision on DATA_SHAPE. Invariant 10/11 cases must mock a 429 response from dbt_cloud_tools.py's HTTP calls (which today has zero backoff handling, confirmed by code read — this is new behavior, not existing coverage) and assert per-workspace isolation (Property 5). Invariant 12 case (BH-1051 only): assert the deployed schedule expression is NOT one of cadenceToCron()'s hardcoded DAILY..QUARTERLY 08:00 values. Invariant 13 case: feed a fixture diagnosis string containing a fake credential shape (e.g. a `postgres://user:pass@host` connection string) through the diagnosis pipeline and assert `scrub_text()` redacted it before any sink write (Property 7). **Invariant 7 case, CRITICAL (verified pass 24): enumerate the remediation loop's bound tools at construction time and assert `github_merge_pull_request` is absent — this is a code-level assertion, not a prompt-content check, and this specific test MUST exist before BH-1047 is considered done (Property 2).** **Invariant 14 case, CRITICAL (verified pass 26): construct two fake principals for Workspace A and B, call `get_pipeline_health` as each, assert A never sees B's signals and vice versa — this test MUST exist before BH-1042 is considered done (Property 8).** |
+| `brightbot` | `brightbot/tests/` + `brightbot/brightbot/evals/` (L0/L1/L2) | L0: one case per §2 MCP tool contract entry, PLUS the required `capabilities.py` catalog row for `get_pipeline_health` and its addition to the live-tool enumeration tests (`test_permissions.py`, `test_tool_invariants.py`/`test_mcp_live_tools.py`-style lists) — these are CI-pinned and fail closed if skipped (verified pass 6). **CRITICAL, added pass 26: `get_pipeline_health` MUST pass the EXISTING repo-wide `test_no_principal_fields_in_tool_args` test (`test_tool_invariants.py`) — this is not optional/new, it's an existing gate the tool must not violate.** L1: routing case confirming watchdog capability node is reachable via the existing dispatcher (not a new entry point). L2: one case per §3 invariant (1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 — **pass 65 correction: the original list stopped at 14, missing three invariants added in later passes**) + FailureClassificationEvaluator gated at 0.9 + RootCauseClassEvaluator gated at 0.95 precision on DATA_SHAPE. Invariant 15 case: assert a dual-write for each of the 5 currently-unrendered stage values (`dbt_run_stale`/`databricks_job_failure`/`databricks_cluster_unhealthy`/`etl_job_failure`/`source_disk_low`) is caught by an explicit renderer-existence check (fails until BH-1067 ships), not left as a silent visual gap. Invariant 16 case: construct a workspace fixture with 2 connected services of the same provider type and assert the adapter either polls both or raises/logs a documented single-connection assumption — never silently polls only the first. **Invariant 17 case, CRITICAL (added pass 64/65): construct a real `dbt_run_failure` event, feed it through `renderDbtFailureDetails` with metadata keyed EXACTLY `model_name`/`job_id`/`error`/`log_id`, and assert the rendered text contains all 4 values — then construct a SECOND case with differently-named keys (e.g. `jobId`/`errorMessage`) and assert the renderer's output is detectably incomplete (a regression test that would have caught BH-1054 shipping the wrong field names silently).** Invariant 10/11 cases must mock a 429 response from dbt_cloud_tools.py's HTTP calls (which today has zero backoff handling, confirmed by code read — this is new behavior, not existing coverage) and assert per-workspace isolation (Property 5). Invariant 12 case (BH-1051 only): assert the deployed schedule expression is NOT one of cadenceToCron()'s hardcoded DAILY..QUARTERLY 08:00 values. Invariant 13 case: feed a fixture diagnosis string containing a fake credential shape (e.g. a `postgres://user:pass@host` connection string) through the diagnosis pipeline and assert `scrub_text()` redacted it before any sink write (Property 7). **Invariant 7 case, CRITICAL (verified pass 24): enumerate the remediation loop's bound tools at construction time and assert `github_merge_pull_request` is absent — this is a code-level assertion, not a prompt-content check, and this specific test MUST exist before BH-1047 is considered done (Property 2).** **Invariant 14 case, CRITICAL (verified pass 26): construct two fake principals for Workspace A and B, call `get_pipeline_health` as each, assert A never sees B's signals and vice versa — this test MUST exist before BH-1042 is considered done (Property 8).** |
 | `brighthive-platform-core` | `brighthive-platform-core/tests/` | Two tests confirming a watchdog-emitted event round-trips through BOTH the old `NOTIFICATIONS_TABLE` (Slack-visible) and `NotificationInbox` (webapp-visible) with zero new delivery code — one test per table, plus one negative test asserting `watchdog.dualwrite.partial_total` fires if either write is mocked to fail (validates Invariant 1 + 6, Property 4). |
 | `brighthive-e2e` | `brighthive-e2e/e2e/` | One feature test: real dbt Cloud sandbox job failure → real staging watchdog poll → real Slack/in-app alert, end-to-end (§4 happy path). One error-path test: SQL Server disk-low scenario against a real staging BYOW SQL Server connection (§4 "SQL Server disk monitoring" scenario) — this is the literal demo scenario and must be proven against a real backend per `test-behavior-real.md`, not mocked. |
 
@@ -1646,6 +1777,135 @@ has a corresponding test case, confirm all green. **Confirm BH-1057 and BH-1058 
 first** — a §10 test case that names a fixture which doesn't exist is not a test plan, it's a
 placeholder.
 
+## Track E: agentic SQL Server profiling & quality health checks (added pass 81, tickets filed pass 82 — user-raised)
+
+**ADDED pass 81 (triple-click-zoom, user-raised)**: "part of this new vision of the BrightHive
+SaaS, we want to have the capacity to connect MCP against Microsoft SQL Server, so with a
+legacy DB we can agentically identify and scan and quality health check the database
+capacities — like provide PROFILER against a DB level and/or warehouse."
+
+This is a REAL, coherent extension of BH-1045's SQL-Server-with-no-MCP work — NOT a
+duplicate. BH-1045 (Track B, Point 2) is narrowly scoped to disk-space + job-status
+monitoring on a SQL Server the watchdog already knows how to connect to. This track is
+broader: agentic, warehouse-LEVEL discovery + profiling + quality health checks against a
+SQL Server database the platform has never seen before — the "point an agent at a legacy DB
+and let it explore" capability Frank's original SSIS/SSRS ask (Track A) gestured at but never
+delivered, since Track A's diagnosis is entirely local-file-upload-based (no live SQL Server
+connection exists for SSIS/SSRS specifically, per `overview.md`'s own Track A correction).
+
+### What already exists (verified pass 81, not assumed)
+
+Most of the plumbing this capability needs is ALREADY REAL, just not wired together for SQL
+Server specifically:
+
+1. **Warehouse-agnostic connection layer, confirmed reusable.** `WarehouseConnectionFactory`
+   (`brightbot/tools/warehouse_connections.py:1238-1261`) dispatches on `WarehouseType`
+   (`brightbot/utils/warehouse_types.py:19-25`, currently `Literal["redshift", "snowflake",
+   "azure_synapse", "postgres"]` — exactly 4 values, NO `sql_server`/`mssql` entry).
+   `SynapseConnection` (`warehouse_connections.py:248-424`) is CONFIRMED (pass 41, this same
+   spec) plain pymssql/T-SQL with ZERO Azure-exclusive requirements — it already connects to
+   a bare SQL Server instance with zero code changes, the SAME confirmed fact BH-1045's disk/
+   job queries already rely on.
+2. **Warehouse-LEVEL schema discovery already exists via MCP, genuinely table-agnostic.**
+   `introspect_warehouse_schema` (`brightbot/mcp/tools/dbt_introspection.py:535`, backed by
+   `introspect_warehouse_schema_data`,
+   `brightbot/agents/dbt_agent/tools/introspection_tools.py:55-107`) takes ONLY `workspace_id`
+   (+ optional database/schema filters) — resolves the connection, calls `list_tables()` —
+   full catalog discovery with NO pre-registered `DataAssetNode` required. The module's own
+   docstring confirms it is "warehouse-AGNOSTIC ... no warehouse is hardcoded." This is the
+   real precedent for "point an agent at a whole warehouse and let it explore."
+3. **Quality/profiling logic is already warehouse-dialect-aware.** `quality_tools.py`/
+   `quality_check_agent.py`'s batch-SQL validation paths already branch per warehouse dialect
+   (Synapse/Snowflake/Redshift-specific fragments exist side by side, e.g. Synapse's
+   `COUNT_BIG(*)` vs generic `COUNT(*)`) — adding a SQL Server dialect branch would follow an
+   established pattern, not invent one.
+
+### What's genuinely missing (the real gap this track closes)
+
+1. **No `sql_server`/`mssql` `WarehouseType` entry** — small gap, connector logic is already
+   generic (per #1 above), but the enum itself is closed on both `brightbot` AND
+   platform-core's mirrored `WarehouseServiceProvider` (same class of closed-enum gap already
+   confirmed for Databricks in this spec's §1 Hard Limitations).
+2. **The profiler/quality-check layer is ENTIRELY asset-ID-gated, never warehouse-level.**
+   `profiler_task.py` (`governance_agent/sub_agents/profiler_task.py:1-333`) takes
+   `data_asset_ids` — a list of PRE-REGISTERED assets, never discovers anything itself. All 3
+   MCP quality tools (`brightbot/mcp/tools/governance_quality.py:358-384`,
+   `analyze_dataset_structure`/`generate_quality_expectations`/`execute_library_quality_rules`)
+   require the caller to already know `dataset_table_name` or `data_asset_id` — none discover
+   tables. There is NO "point the profiler at the whole DB and profile everything it finds"
+   mode anywhere in this codebase today.
+3. **Discovery and profiling are NOT chained.** `introspect_warehouse_schema` (discovery) and
+   the quality/profiler tools (per-table checks) exist as two independent capabilities.
+   Nothing wires "discover every table in this SQL Server → profile/quality-check each one"
+   end to end — confirmed by direct code read, not assumed.
+
+### Proposed scope (NOT yet a committed epic — flagging for scoping, mirroring the sibling
+lineage-aware-data-quality.md spec's own "Track D: proposed, genuinely new, NOT yet a
+committed scope" framing)
+
+- **New WarehouseType member: `sql_server`, RESOLVED pass 82 — verified against the real
+  webapp UI convention, not left as an open question.** Checked `brighthive-webapp`'s actual
+  connection-type picker (`AddWarehouse.tsx:59-93`): EVERY warehouse provider today gets its
+  own first-class, separately-titled/iconed/described entry — `WAREHOUSE_DESCRIPTIONS` maps
+  `AzureSynapse` to the literal label "Connect your Azure Synapse Analytics instance," and
+  even the "coming soon" placeholders (Postgres, Databricks, BigQuery) are distinct tiles, not
+  folded into an existing provider's label. There is NO existing "generic SQL/Synapse"
+  grouping convention anywhere in this codebase to justify reusing `azure_synapse`'s label for
+  bare SQL Server — doing so would be the FIRST instance of that pattern, not a mirror of one,
+  and would directly violate this org's naming rule (a customer choosing "Azure Synapse" to
+  connect a plain on-prem/RDS SQL Server, with zero Azure involvement, is exactly the
+  "wouldn't mean the thing it does" case that rule exists to catch). DECISION: add a genuine
+  new `sql_server` WarehouseServiceProvider/WarehouseType member, its own UI tile (title
+  "SQL Server", description e.g. "Connect your SQL Server instance"), its own icon, and its
+  own field-config block mirroring Synapse's real host/port/username/password shape
+  (`AddWarehouseConfig.tsx:120-144`) — confirmed a small, well-templated addition (~4 files:
+  enum, `WAREHOUSE_DESCRIPTIONS`, icon, field config), NOT a large UI lift, since every other
+  provider already followed this exact pattern. The CONNECTOR CODE still reuses
+  `SynapseConnection`'s real pymssql/T-SQL logic unchanged (confirmed pass 41/81 — zero
+  Azure-exclusive requirements) — only the customer-facing discriminator/label is new, not
+  the underlying implementation. **Filed as BH-1075, pass 82.**
+- **A new MCP tool (or an extension of `introspect_warehouse_schema`)**: given a SQL Server
+  connection, enumerate every table/schema (reusing #2's real precedent), then for each,
+  invoke the SAME profiling logic `analyze_dataset_structure`/`quality_check_agent` already
+  runs for registered assets — WITHOUT requiring a pre-registered `DataAssetNode` for tables
+  that have never been catalogued. This is new orchestration (chaining discovery → profiling
+  per table), not new profiling logic. **Filed as BH-1076, pass 82. CONFIRMED pass 83**: read
+  `analyze_dataset_structure_direct`'s real signature (`quality_tools.py:84-88`) — it takes a
+  bare `dataset_table_name: str`, NOT a `data_asset_id`, and resolves the warehouse connection
+  directly via `get_warehouse_config_from_secrets(workspace_id)` with zero OGM dependency.
+  `introspect_warehouse_schema_data`'s discovered table names can feed this function DIRECTLY
+  — no adaptation layer needed. This settles what pass 82 left as an open "check whether"
+  question: BH-1076 IS purely orchestration, downgraded S from M.
+- **A DB-level (not per-table) summary report** — "PROFILER against a DB level," per the
+  user's own framing — aggregating per-table profile results into one health-check report for
+  the whole database, a genuinely new report shape (today's profiler output is always
+  per-asset, never rolled up). **Filed as BH-1077, pass 82. CRITICAL, pass 84**: verified the
+  existing per-asset persistence path is NOT directly reusable — `save_to_s3`
+  (`quality_check_agent.py:1371-1418`) hard-requires a real `data_asset_id` as its S3 key
+  component and fails without one; `generate_markdown_report` (line 1316-1367) is
+  LLM-generated over a SINGLE asset's profile, no multi-table template exists to copy.
+  Since BH-1076's discovered tables may be genuinely uncatalogued (no `data_asset_id` at
+  all), this ticket needs its OWN persistence scheme, not a reuse of the per-asset path —
+  a real, previously-unflagged design requirement, not an assumption that "same pattern"
+  meant "same code." **ESCALATED pass 85 — the OGM half has the SAME structural gap,
+  confirmed at the schema/mutation level, not just the Python parameter check.**
+  `create_capability_execution` (`brightbot/tools/ogm_queries.py:123-150`) writes
+  `AgentCapabilityExecutionNode` via a REQUIRED `dataAsset: {connect: {where: {node: {id:
+  data_asset_id}}}}` relationship to an EXISTING `DataAssetNode` — a real platform-core
+  schema constraint, not a brightbot-side check alone. This ticket therefore needs a
+  cross-repo platform-core schema change (a new rollup-execution node type, or a nullable
+  `dataAsset` relationship variant) — the pass-84 "reassess to M if a schema change is
+  needed" condition is now CONFIRMED, not hypothetical. Size escalated M from S.
+- **Explicitly OUT of scope for this track**: registering every discovered table as a
+  permanent `DataAssetNode` (a separate, larger decision about catalog ingestion — this track
+  is about ad-hoc/exploratory agentic profiling, not permanent cataloguing, unless a future
+  pass scopes that explicitly).
+
+**Non-blocking for 7/17** — this is a genuinely new capability. The naming/scope question
+raised at pass 81 was resolved at pass 82 (verified against the real webapp UI convention,
+not left as an assumption), and 3 concrete tickets (BH-1075/1076/1077) are now filed under
+epic BH-1036, all `Needs Refinement`.
+
 ## Areas Involved
 
 | Area | Repo | Impact |
@@ -1656,6 +1916,9 @@ placeholder.
 | MCP read path (`get_pipeline_health`) | `brightbot` (MCP server) | New tool, mirrors `get_anomalies` |
 | SQL Server disk/job query | `brightbot` (via existing WarehousePort adapter) | New T-SQL health-check queries through existing connection — no new adapter type |
 | Airbyte source-sync watchdog (BH-1049) | `brightbot` (if Option B, poller) OR **`brighthive-platform-core`** (if Option A, extending `airbyte_notification_webhook`'s no-op failure branch) | **CORRECTED pass 13**: NOT brightbot-only as originally scoped — Option A (cheaper, reuses existing auth/connection-mapping code) lives in platform-core's existing webhook Lambda, not a new brightbot poller |
+| **Ingestion signal DTO (BH-1048) — currently UNDEFINED** | `brightbot` or `brighthive-platform-core` (TBD, depends on delivery-path decision) | **GAP FOUND, pass 80**: `PipelineHealthSignal` (BH-1042) is the ONLY concrete signal DTO this spec actually defines in code anywhere. BH-1048 owns "the ingestion signal contract" by name but has never specified its field list — BH-1049/1050/1051 cannot be considered fully specified until this exists. This is a cross-cutting blocker for all 3 ingestion adapters, not a detail buried in one ticket. |
+| Step Functions ingestion watchdog (BH-1050) | `brighthive-data-organization-cdk` (if Option A, extending the LIVE EventBridge→SNS rule) OR `brightbot` (if Option B, a new poller) | Same PUSH-vs-PULL choice structure as BH-1049; also blocked on BH-1048's DTO per pass 80 |
+| Queue/DLQ ingestion watchdog (BH-1051) | TBD (native CloudWatch Alarm, a new EventBridge rule, or extending cadenceToCron — 3 options, see Invariant 12) | Blocked on BH-1048's DTO shape (pass 80) — cannot "conform to the same shape" as sibling adapters until one is defined, and needs its own stable per-queue identifier analogous to job_id (Invariant 18) |
 
 ## Ticket Breakdown
 
@@ -1666,11 +1929,11 @@ unless noted):
 |---|---|---|
 | BH-1053 | Decision: resolve BrightSignals' 3-way split-brain into a unified write entrypoint | Needs Refinement, non-blocking (watchdog dual-writes in the interim, per Invariant 6) |
 | BH-1042 | spec: watchdog capability-node contract (dbt/Databricks/ETL job-status) | Needs Refinement, revised to match this spec |
-| BH-1054 | feat: watchdog poller — the actual missing proactivity primitive | Needs Refinement, revised to ride existing dispatcher |
+| BH-1054 | feat: watchdog poller — the actual missing proactivity primitive | Needs Refinement, revised to ride existing dispatcher; **pass 64**: dbt_run_failure metadata MUST use exact model_name/job_id/error/log_id keys (Invariant 17) |
 | BH-1043 | feat: dbt job/run health poller | Needs Refinement |
 | BH-1044 | feat: Databricks job/cluster health adapter | Needs Refinement |
 | BH-1045 | feat: generic ETL / SQL-Server disk-via-existing-connection adapter | Needs Refinement, revised — tier-1 answer to Frank's objection |
-| BH-1046 | feat: verify watchdog events reach existing delivery (not new delivery code) | Needs Refinement, revised down to verification-only |
+| BH-1046 | feat: verify watchdog events reach existing delivery (not new delivery code) | Needs Refinement, revised down to verification-only; **pass 64**: verification MUST include the exact 4 metadata field names the renderer reads, not just "it renders" |
 | BH-1047 | feat: wire watchdog failures into self-healing-pipelines.md's surgical-PR loop | Needs Refinement, revised to extend GC-11 rather than compete |
 | BH-1048 | spec: ingestion signal contract — **CORRECTED pass 31**: "reuses an existing delivery path" was FALSE (the EventBridge→notification_dispatcher chain is undeployed); must choose between deploying that missing infra or routing through the CONFIRMED-real BrightSignals dual-write directly | Needs Refinement, revised pass 31 — real open decision, not settled (BH-1037) |
 | BH-1049 | feat: Airbyte/source-sync watchdog — greenfield IN BRIGHTBOT (pass 5) but a cheaper push-based path exists in platform-core's existing airbyte_notification_webhook (pass 13) | Needs Refinement, revised pass 13 — must evaluate extending the existing reactive webhook's no-op failure branch before defaulting to a new poller |
@@ -1685,6 +1948,9 @@ unless noted):
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |
 | BH-1067 | feat: renderers for 5 new watchdog notification stages (Slack + webapp) — dbt_run_stale, databricks_job_failure, databricks_cluster_unhealthy, etl_job_failure, source_disk_low | Filed pass 35 — CRITICAL for demo-visibility, blocks BH-1043/1044/1045's alerts from being human-visible (BH-1036) |
 | BH-1071 | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current | Filed pass 32 — non-blocking for 7/17, blocked by BH-1053's real-vs-retire decision (BH-1036) |
+| BH-1075 | feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvider connection type | Filed pass 82 (Track E, user-raised pass 81) — non-blocking for 7/17. Naming decision resolved against real webapp UI convention: a genuine new connection type, not a reuse of azure_synapse's label. Connector code reuses SynapseConnection unchanged. |
+| BH-1076 | feat(quality): chain warehouse discovery -> per-table profiling for uncatalogued tables | Filed pass 82, **CONFIRMED pure orchestration pass 83** (Track E) — non-blocking for 7/17. `analyze_dataset_structure_direct` already accepts a bare table-name string with zero OGM dependency (`quality_tools.py:84-88`) — discovered tables feed it directly, no adaptation layer. Downgraded S from M. |
+| BH-1077 | feat(quality): DB-level rollup report aggregating per-table profiler results | Filed pass 82, **CORRECTED pass 84, ESCALATED pass 85** (Track E) — non-blocking for 7/17. Closes the user's own "PROFILER against a DB level" ask, but needs a NEW persistence path on BOTH S3 (data_asset_id-keyed, confirmed pass 84) AND OGM (`AgentCapabilityExecutionNode`'s mutation requires a real `dataAsset` connect, confirmed pass 85 at the schema level) — a real cross-repo (brightbot + platform-core) schema-change dependency, size escalated M from S. |
 
 ## Related
 

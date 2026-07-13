@@ -172,11 +172,35 @@ confirmed against real code, not assumed.
   watchdog/anomaly/downstream-impact signals, rather than building a competing new tab — still
   needs a `/write-spec` + design pass before ticketing.
 
+## Track E: Agentic SQL Server Profiling & DB-Level Quality Health Checks — SCOPED (2026-07-13)
+
+Kuri's follow-up (2026-07-13): part of the broader BrightHive SaaS vision — connect MCP
+against Microsoft SQL Server so a legacy DB can be agentically identified, scanned, and
+quality-health-checked, a PROFILER at the DB/warehouse level, not just per-table.
+
+**Verified against real code (not assumed)**: most of the plumbing already exists.
+`SynapseConnection` already connects to a bare SQL Server instance with zero code changes
+(the same confirmed fact BH-1045's disk/job queries already rely on). `introspect_warehouse_schema`
+already does warehouse-LEVEL table discovery via MCP with no pre-registered `DataAssetNode`
+required — the real precedent for "point an agent at a whole warehouse and let it explore."
+But the profiler/quality-check layer (`profiler_task.py`, the 3 MCP quality tools) is
+ENTIRELY asset-ID-gated today — there is no "point it at the whole DB and profile everything"
+mode, and discovery + profiling are never chained end to end.
+
+**Full detail**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s "Track E"
+section (added pass 81, tickets filed pass 82). The naming/scope decision (is SQL Server a
+distinct `WarehouseType`, or a reuse of `azure_synapse`'s connector?) was RESOLVED against the
+real webapp UI convention — every warehouse provider gets its own first-class label/icon
+today, so a genuine new `sql_server` type is the correct choice, not a Synapse relabel. 3
+tickets filed under epic BH-1036: **BH-1075** (new connection type, connector code unchanged),
+**BH-1076** (discovery → per-table profiling orchestration), **BH-1077** (DB-level rollup
+report). Non-blocking for 7/17.
+
 ## Engineering Artifacts
 
 - **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
-  "Start Here" section first. Interface contracts, invariants (16, count re-verified pass 47 —
-  was stale at 14), Gherkin AC, eval criteria, observability contract, full pass-by-pass
+  "Start Here" section first. Interface contracts, invariants (18, count re-verified pass 81 —
+  was stale at 16), Gherkin AC, eval criteria, observability contract, full pass-by-pass
   verification log.
 - **Jira**: epics **BH-1036** (Monitoring Agents) and **BH-1037** (Ingestion Observability),
   plus BH-1038–1041 (BrightRoutines MCP/A2A, under BH-115), BH-1053/1055/1059 (infra tracking),
@@ -196,16 +220,25 @@ confirmed against real code, not assumed.
   on `drchinca/BH-1061/triple-click-zoom-pass-38`. Opened fresh after #97 merged (crossed the
   900-line split threshold); ongoing verification passes land here until it's next merged.
 
-## Two things that must happen before 7/17, not yet done
+## Things that must happen before 7/17, not yet done
+
+**RE-VERIFIED pass 62 (2026-07-12) — all still genuinely open, checked fresh against live
+Jira status + real code, not carried forward from an earlier pass's note. Updated from "two
+things" to the real current count.**
 
 **RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
 Jira status + real code, not carried forward from an earlier pass's note:**
 
 1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
-   demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs). **Not yet
-   executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead from Kuri
-   (this is a real, billable AWS resource).
-2. **BH-1047's safety fix** — the remediation loop's tool-binding must exclude
+   demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs, fully
+   detailed in BH-1057's own ticket, including the required `GRANT VIEW SERVER STATE` step).
+   **Not yet executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead
+   from Kuri (this is a real, billable AWS resource).
+2. **BH-1058** — the dbt Cloud deliberate-failure fixture BH-1043's e2e case depends on.
+   Re-checked pass 62: still `To Do`; the fix itself (a genuine runtime SQL error, not a
+   compile-time `raise_compiler_error`) is already correctly specified in the ticket, just not
+   yet executed — a one-time human dbt Cloud UI setup, ~XS effort, not code.
+3. **BH-1047's safety fix** — the remediation loop's tool-binding must exclude
    `github_merge_pull_request` at the code level. Re-confirmed pass 51: `github_merge_pull_request`
    (`github_tools.py:503-560`) is still fully bound into `dbt_agent_react.py`'s live
    `DBT_REACT_TOOLS` list with zero exclusion logic anywhere in the repo — "never auto-merge"
@@ -217,6 +250,8 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    self-healing loop itself has zero code today either (`test_gc_11_self_healing.py` is a
    literal `pytest.skip("GC-11: GAP-7")` stub) — this ticket builds new orchestration, it is
    not merely closing a gap in existing code.
+4. **Confirm Loop Capital's real dbt Cloud connection count (pass 62, new)** — see Open
+   Blocker #5 below. A small, concrete pre-demo check, not yet done.
 
 ## Open Blockers
 
@@ -226,6 +261,7 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | — |
 | 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |
+| 5 | **Added pass 62**: BH-1043's own ticket explicitly requires confirming whether Loop Capital's real demo workspace has exactly ONE connected dbt Cloud service (`_find_connected_dbt_service()`'s first-match behavior silently misses any second one, zero error). This frontmatter's `workspace_id` field is still blank (line 12) — nobody has confirmed this against the REAL demo workspace yet. If it turns out Loop Capital has 2+ dbt connections, BH-1043's watchdog would silently monitor only one during the live 7/17 demo. Needs a direct DynamoDB/platform-core check against the real workspace_id before the demo, not an assumption. | Kuri | 2026-07-12 | — |
 
 ## Decision
 

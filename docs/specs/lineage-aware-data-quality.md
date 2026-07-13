@@ -288,8 +288,11 @@ already computed, not a new BrightHive-built lineage engine.
 1. No manifest/catalog fetch or parse exists (BH-1062 closes this).
 2. No dbt DAG in Neo4j (BH-1063 closes this).
 3. No anomaly→lineage bridge (BH-1064 closes this, and closes the pre-existing BH-673 gap).
-4. No Databricks lineage consumption at all (deferred until BH-1044 resolves AND the
-   connection-plumbing gap above is separately built).
+4. No Databricks lineage consumption at all — **now tracked as BH-1074 (filed pass 72,
+   previously the one gap in this list with no real ticket)**. Deferred until BH-1044
+   resolves (a DIFFERENT ticket, Track B's job/cluster health monitoring — reuse its
+   credential-storage pattern only) AND the connection-plumbing gap above is separately
+   built.
 5. No Snowflake-native lineage consumption at all (Snowpipe/Tasks/Streams/Dynamic Tables via
    ACCOUNT_USAGE views) — NEW gap, added pass 8, not previously scoped. Cheaper than gap 4
    (reuses existing SnowflakeConnection) but equally unbuilt today.
@@ -327,6 +330,25 @@ class LineageGraph:
                                        # all. The old name has_column_lineage was a real,
                                        # unverified false claim about what this artifact
                                        # provides.
+                                       #
+                                       # GAP FOUND, pass 74 (triple-click-zoom) — this field is
+                                       # REQUIRED (non-Optional bool) on every LineageGraph, but
+                                       # this spec only ever discusses what value BH-1062
+                                       # (dbt) sets. BH-1068 (SnowflakeNativeLineageSource) and
+                                       # BH-1074 (DatabricksLineageSource) have NO specified
+                                       # value anywhere. Both engines have a real, cheap
+                                       # column-EXISTENCE source available — Snowflake's
+                                       # `ACCOUNT_USAGE.COLUMNS` view, Databricks'
+                                       # `information_schema.columns` — genuinely analogous to
+                                       # dbt's catalog.json column metadata (existence/type,
+                                       # never dependency). Each adapter SHALL set
+                                       # has_column_metadata=True and populate
+                                       # LineageModelNode.columns from ITS OWN engine's
+                                       # column-existence source if queried, or explicitly
+                                       # document why it does not (e.g. deferred to keep the
+                                       # first cut cheap) — it SHALL NOT silently default to
+                                       # False as if no such source exists for that engine,
+                                       # which would be false for both Snowflake and Databricks.
     fetch_error: str | None
     source_engine: str               # "dbt" | "databricks" | future engines — for observability only,
                                       # never branched on by downstream consumers (BH-1063/1064)
@@ -354,8 +376,10 @@ class LineageNode:
 # reuse the SAME registry shape here, don't invent a third variant):
 LINEAGE_SOURCE_ADAPTERS: dict[str, type[LineageSource]] = {
     DBT: DbtLineageSource,           # BH-1062 implements this adapter — FIRST, not ONLY
-    DATABRICKS: DatabricksLineageSource,  # future — CORRECTED pass 7: greenfield regardless
-                                           # of BH-1044 (credential-location decision only);
+    DATABRICKS: DatabricksLineageSource,  # BH-1074, filed pass 72 — future, CORRECTED pass 7:
+                                           # greenfield regardless of BH-1044 (a DIFFERENT
+                                           # ticket, Track B's job/cluster health monitoring,
+                                           # not lineage — credential-storage pattern only);
                                            # needs NEW WarehouseType enum members on BOTH
                                            # brightbot + platform-core (currently closed to
                                            # redshift/snowflake/azure_synapse/postgres) PLUS
@@ -462,10 +486,11 @@ real file:line or an already-verified invariant — nothing here is aspirational
   │DbtLineage-   │  │DatabricksLineage- │  │SnowflakeNative-     │  ◀── each is a thin
   │Source        │  │Source (greenfield,│  │LineageSource (needs │      TRANSLATION layer,
   │(BH-1062,     │  │needs new          │  │a permission/latency │      not new fetch logic —
-  │REAL today)   │  │WarehouseType +    │  │guard, pass 45 —     │      each maps its OWN
-  │              │  │connector, BH-1044)│  │least-privilege roles│      engine's shape onto
-  │              │  │                   │  │silently fail        │      ONE shared shape below
-  └──────┬───────┘  └─────────┬─────────┘  │ACCOUNT_USAGE, pass 16)│
+  │REAL today)   │  │WarehouseType +    │  │guard — Invariant 16,│      each maps its OWN
+  │              │  │connector, BH-1044)│  │pass 45: least-      │      engine's shape onto
+  │              │  │                   │  │privilege roles      │      ONE shared shape below
+  └──────┬───────┘  └─────────┬─────────┘  │silently fail         │
+         │                    │            │ACCOUNT_USAGE)        │
          │                    │            └──────────┬──────────┘
          └────────────────────┴───────────────────────┘
                                │
@@ -729,6 +754,37 @@ class LineageModelNode:
                                            # before treating this shape as final.)
     name: str
     depends_on: list[str]                 # upstream unique_ids (manifest's depends_on.nodes)
+                                           #
+                                           # GAP FOUND, pass 77 (triple-click-zoom) — a THIRD
+                                           # instance of the has_column_metadata/relation_name
+                                           # gap class (Invariants 20/21), and load-bearing in
+                                           # a DIFFERENT way than either: unique_id/depends_on
+                                           # are NOT the traversal's starting-node lookup key
+                                           # (that's relation_name, Invariant 21) — they are
+                                           # the EDGE-CONSTRUCTION mechanism. BH-1063's
+                                           # delete-then-MERGE upsert MATCHes on uniqueId to
+                                           # build DEPENDS_ON relationships (`MATCH
+                                           # (dep:LineageNode {workspaceId: $workspace_id,
+                                           # uniqueId: depId})`) — confirmed by reading the
+                                           # actual Cypher this spec specifies (Invariant 9).
+                                           # If BH-1068/BH-1074 populate unique_id/depends_on
+                                           # with an inconsistent or absent convention, the
+                                           # upsert's dependency edges either fail to MATCH
+                                           # (silently creating an edgeless node) or, worse,
+                                           # COLLIDE with an unrelated dbt model that happens
+                                           # to share a unique_id string in the same
+                                           # workspace. EVERY LineageSource adapter SHALL
+                                           # generate its OWN unique_id namespace that cannot
+                                           # collide with another engine's or another table's
+                                           # — e.g. prefixing with the source_engine value
+                                           # already carried on LineageGraph (pass-8's own
+                                           # field), such as "snowflake_native.<db>.<schema>.
+                                           # <object>" or "databricks.<catalog>.<schema>.
+                                           # <table>" — mirroring dbt's own namespacing
+                                           # convention ("model.<project>.<name>") rather than
+                                           # reusing bare object names, which WOULD collide
+                                           # across engines/workspaces. See Invariant 22 (new,
+                                           # pass 77).
     columns: dict[str, ColumnMetadata] | None  # CRITICAL, CORRECTED pass 36 (triple-click-
                                            # zoom) — this was `list[str] | None`, WRONG on
                                            # two counts, verified against general dbt
@@ -765,6 +821,34 @@ class LineageModelNode:
                                            # find_downstream_impact for the full bug. None if
                                            # the manifest node genuinely lacks it (e.g. a
                                            # non-materialized ephemeral model).
+                                           #
+                                           # GAP FOUND, pass 76 (triple-click-zoom) — the SAME
+                                           # class of gap just found for has_column_metadata
+                                           # (Invariant 20, pass 74), but far more severe: EVERY
+                                           # discussion of relation_name in this spec is
+                                           # dbt-specific. If BH-1068 (Snowflake) or BH-1074
+                                           # (Databricks) leaves this field unpopulated (None),
+                                           # BH-1064's traversal — which matches EXCLUSIVELY on
+                                           # relation_name (Invariant 10) — would silently find
+                                           # ZERO downstream nodes for every anomaly on a
+                                           # non-dbt-sourced table, the EXACT class of bug pass
+                                           # 10 found and fixed for dbt. This is not optional
+                                           # metadata like has_column_metadata; it is the
+                                           # traversal's ENTIRE match key. Both engines can
+                                           # construct this: Snowflake's ACCOUNT_USAGE.
+                                           # OBJECT_DEPENDENCIES exposes referencing_database/
+                                           # referencing_schema/referencing_object_name (and
+                                           # the referenced_* equivalents) — general Snowflake
+                                           # platform knowledge, unverified in-repo since no
+                                           # code queries this view yet — directly composable
+                                           # into the SAME quoted 3-part form dbt uses.
+                                           # Databricks Unity Catalog's system.access.
+                                           # table_lineage similarly exposes source/target
+                                           # table identifiers with catalog.schema.table
+                                           # granularity. EVERY LineageSource adapter SHALL
+                                           # populate this field from its own engine's real
+                                           # fully-qualified identifier — see Invariant 21
+                                           # (new, pass 76).
 
 # BH-1063: Neo4j load — CORRECTED pass 1 of the triple-click-zoom loop, verified against
 # real code, not assumed:
@@ -1392,7 +1476,22 @@ async def find_downstream_impact(
     "flagged for a future pass." True column-level lineage would require dbt Cloud's
     separate, proprietary Column-Level Lineage feature or a third-party SQL parser (e.g.
     sqlglot) statically analyzing compiled SQL — genuinely new scope, out of this spec
-    entirely (see §5 Out of Scope).`
+    entirely (see §5 Out of Scope).
+
+    **CAVEAT flagged pass 73 for BH-1074's implementer — this invariant's scope is
+    explicitly limited to dbt's catalog.json; it does NOT extend the same limitation onto
+    Databricks by default.** Unity Catalog's `system.access.column_lineage` (cited §1 Hard
+    Limitations, pass 7) is, per general Databricks platform knowledge (unverified in-repo,
+    zero Databricks code exists to check), a GENUINE column-to-column dependency graph —
+    categorically different from dbt's metadata-only snapshot this invariant describes. If
+    BH-1074's `DatabricksLineageSource` populates only model-level fields (mirroring
+    `DbtLineageSource` for consistency), that is a DELIBERATE scoping choice matching this
+    spec's model-level traversal (BH-1064) — not a limitation Databricks itself imposes.
+    Conversely, if BH-1074 (or a later ticket) ever wants to actually USE Databricks' real
+    column-lineage data, THAT is new scope requiring its own invariant and a redesign of
+    BH-1064's traversal (currently hardcoded to model-level `LineageNode.relation_name`
+    matching, per Invariant 10) — do not silently bolt column-level data onto the existing
+    model-level `LineageGraph`/`LineageNode` shape without that explicit design work first.`
 15. `WHEN BH-1062's fetch_lineage_artifacts() fetches manifest.json/catalog.json for a
     specific run_id, THE System SHALL NOT assume the session's cached dbt Cloud
     credentials (account_id/api_token, resolved once per session by
@@ -1482,6 +1581,74 @@ async def find_downstream_impact(
     LineageArtifacts to LineageGraph), or (b) if the extra indirection is judged unnecessary
     for a single-source MVP, explicitly drop the unused LineageSource/LineageGraph types from
     §2 rather than leave them as aspirational scaffolding nothing implements.`
+
+20. `EVERY LineageSource adapter SHALL set LineageGraph.has_column_metadata based on ITS OWN
+    engine's real column-existence capability — it SHALL NOT default to False as if no
+    column-existence source exists for that engine, when one does. CRITICAL, found pass 74:
+    this spec thoroughly specifies has_column_metadata's VALUE and MEANING for dbt (BH-1062,
+    via catalog.json — Invariant 14) but never once specifies what BH-1068
+    (SnowflakeNativeLineageSource) or BH-1074 (DatabricksLineageSource) should set here,
+    despite it being a required (non-Optional) field on every LineageGraph. Both engines have
+    a real, cheap column-existence source available and genuinely analogous to dbt's
+    catalog.json column metadata (existence/type only, never dependency) —
+    `ACCOUNT_USAGE.COLUMNS` for Snowflake, `information_schema.columns` for Databricks.
+    Leaving this unspecified risks each adapter either inventing its own inconsistent
+    convention, or silently defaulting to False (falsely implying no column data is available
+    when it genuinely is, for both engines). Invariant 14's dbt-specific "never column
+    DEPENDENCY, only existence" contract applies identically here — this invariant governs
+    only WHETHER each adapter populates the existence data at all, not what kind of data it
+    is once populated.`
+
+21. `EVERY LineageSource adapter SHALL populate LineageModelNode.relation_name with its own
+    engine's real fully-qualified table identifier — it SHALL NOT leave this field None for
+    a table that genuinely exists and is queryable. CRITICAL, found pass 76: this is the
+    SAME class of gap Invariant 20 closed for has_column_metadata, but far more severe —
+    relation_name is not optional enrichment, it is BH-1064's ENTIRE traversal match key
+    (Invariant 10). If BH-1068 (Snowflake) or BH-1074 (Databricks) leaves this field
+    unpopulated, BH-1064's traversal would silently find ZERO downstream nodes for every
+    anomaly on a non-dbt-sourced table — the EXACT bug class pass 10 found and fixed for dbt,
+    now reintroduced for any other engine unless explicitly guarded against. Both engines can
+    construct this real value (general platform knowledge, unverified in-repo since no code
+    queries either source yet): Snowflake's ACCOUNT_USAGE.OBJECT_DEPENDENCIES exposes
+    referencing_database/referencing_schema/referencing_object_name (and the referenced_*
+    equivalents), directly composable into the SAME quoted 3-part form dbt's relation_name
+    uses; Databricks Unity Catalog's system.access.table_lineage exposes source/target table
+    identifiers at catalog.schema.table granularity. Invariant 10's FQN-normalization
+    requirement (reusing `_fqn_variants()`, per pass 46) applies identically to whichever
+    engine populated this field — the normalization logic does not care which adapter
+    produced the string, only that the string is real and populated.`
+
+22. `EVERY LineageSource adapter SHALL generate LineageModelNode.unique_id (and its
+    depends_on edge-list) in an engine-namespaced form that cannot collide with another
+    engine's unique_id in the SAME workspace. CRITICAL, found pass 77: a THIRD instance of
+    the Invariant 20/21 gap class, load-bearing in a DIFFERENT way — unique_id/depends_on
+    are not the traversal's starting-node lookup (that's relation_name, Invariant 21); they
+    are the EDGE-CONSTRUCTION mechanism BH-1063's upsert MATCHes on (`MATCH (dep:LineageNode
+    {workspaceId: $workspace_id, uniqueId: depId})`, per Invariant 9's real Cypher). A
+    workspace running BOTH dbt AND Snowflake-native pipelines could have a dbt model and an
+    unrelated Snowflake table collide on a bare object-name unique_id (workspaceId scoping,
+    Invariant 18, prevents CROSS-workspace collision, but does nothing for a same-workspace,
+    cross-ENGINE collision within the SAME LineageNode label). THE System SHALL prefix
+    unique_id with the adapter's own source_engine value (already carried on LineageGraph)
+    — e.g. "snowflake_native.<db>.<schema>.<object>", "databricks.<catalog>.<schema>.<table>"
+    — mirroring dbt's own real namespacing convention ("model.<project>.<name>") rather than
+    reusing bare object names.`
+
+23. `WHEN BH-1074's DatabricksLineageSource adapter queries Unity Catalog's system.access.*
+    tables, THE System SHALL distinguish a genuine "no lineage found" result from a
+    permission failure ("system.access is not enabled for this workspace's Unity Catalog
+    metastore, or the connected credential lacks SELECT on it"). ADDED pass 78 — Invariant
+    16 formalized this exact guard for Snowflake (BH-1068) as a spec Invariant, but the
+    equivalent Databricks requirement had only ever lived in BH-1074's Jira Acceptance
+    Criteria, never promoted to a §3 Invariant — an asymmetry between the two sibling
+    adapters worth closing for consistency. `system.access.table_lineage`/`column_lineage`
+    are confirmed (§1 Hard Limitations, pass 7) to be DISABLED BY DEFAULT, requiring a
+    separate admin action to enable the schema and grant SELECT — structurally the SAME
+    class of admin-gated, disabled-by-default risk as Snowflake's IMPORTED PRIVILEGES gap,
+    just a different specific gate. An adapter that silently returns an empty LineageGraph
+    when system.access is unavailable would be indistinguishable from "this table genuinely
+    has no dependencies" — the same false-negative risk Invariant 16 guards against for
+    Snowflake, now formalized identically here.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -1623,6 +1790,52 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And BH-1064's downstream-impact traversal does NOT treat this empty result as
       authoritative proof "nothing depends on this" while the latency window is still open
 
+  Scenario: a non-dbt lineage source does not falsely claim it has no column data
+    Given BH-1068's SnowflakeNativeLineageSource queries ACCOUNT_USAGE.COLUMNS for a real
+      table, OR BH-1074's DatabricksLineageSource queries information_schema.columns
+    When either adapter builds its LineageGraph
+    Then has_column_metadata is set to True and LineageModelNode.columns is populated from
+      that engine's real column-existence data — it is NOT silently left False as if no
+      such source existed for that engine
+    And this column-existence data is still never treated as column-DEPENDENCY lineage
+      (Invariant 14's contract applies identically to every engine, not just dbt)
+
+  Scenario: a non-dbt anomaly is still found by the downstream-impact traversal
+    Given a Snowflake-native or Databricks-sourced LineageNode with relation_name populated
+      from that engine's own real fully-qualified table identifier (per Invariant 21) —
+      NOT left None
+    And an AnomalyEventNode with a dataset value in the SAME warehouse-qualified namespace
+    When BH-1064's traversal looks up the starting node for this anomaly
+    Then it finds this node by matching on relation_name, exactly as it would for a
+      dbt-sourced LineageNode
+    And if relation_name had been left None (the bug this scenario guards against), the
+      traversal would have silently returned zero downstream tables — the SAME class of
+      defeated-epic bug pass 10 originally found and fixed for dbt, reintroduced for a
+      different engine
+
+  Scenario: a dbt model and a Snowflake-native table never collide on unique_id in the same workspace
+    Given a workspace running BOTH dbt (a model materializing to "GOLD.mart_revenue") AND
+      Snowflake-native pipelines (a Task named "mart_revenue" in the same GOLD schema)
+    When both LineageSource adapters populate LineageModelNode.unique_id for their
+      respective nodes
+    Then the dbt model's unique_id is namespaced "model.<project>.mart_revenue" and the
+      Snowflake Task's unique_id is namespaced "snowflake_native.<db>.GOLD.mart_revenue" —
+      they do NOT collide on a bare object name
+    And BH-1063's delete-then-MERGE upsert's DEPENDS_ON edge construction (which MATCHes on
+      uniqueId) never accidentally links or overwrites one engine's node using the other
+      engine's edge list
+
+  Scenario: a disabled Unity Catalog system.access schema is never read as "no lineage exists"
+    Given a Databricks connection whose Unity Catalog metastore has NOT had system.access
+      enabled (the confirmed default posture, per §1 Hard Limitations)
+    When BH-1074's DatabricksLineageSource queries system.access.table_lineage
+    Then the query's permission/availability failure is surfaced as a distinct, actionable
+      error
+    And it is NOT silently folded into an empty LineageGraph indistinguishable from "this
+      workspace's Databricks tables genuinely have no lineage" — the same false-negative
+      risk Invariant 16 guards against for Snowflake's IMPORTED PRIVILEGES gap, now
+      formalized identically here (Invariant 23)
+
   Scenario: upserting a full manifest's worth of models never re-authenticates per model
     Given a real dbt manifest.json with hundreds of models
     When BH-1069's caller loops over every model, calling upsert_lineage_graph() once per model
@@ -1689,7 +1902,8 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | `WorkflowStepNode`'s `DEPENDS_ON` delete-then-MERGE precedent (`workflow-spec.ts:299-317`) | Non-blocking (pattern mirrored, not reinvented) — corrected pass 1, was wrongly cited as DataAssetNode | Live |
 | brightbot's OGM HTTP path (`ogm_api.py:34-70`) | Blocking — BH-1063's brightbot half MUST go through this, no new Neo4j driver | Live |
 | **platform-core engineering capacity** (verified pass 1: BH-1063 is 2-repo work) | Blocking — this spec cannot ship with brightbot-only resourcing | New dependency, not previously called out |
-| BH-1044 (Databricks credential storage/lookup design) | Blocking for the Databricks half, but NOT sufficient by itself — see below | **RE-CHECKED pass 53 (fresh, not carried forward)**: no longer just an "open decision" — its own ticket (pass 24, in the sibling proactive-pipeline-ingestion-monitoring.md's Track B scope) resolved the design to a concrete pattern: mirror dbt's per-CONNECTION direct-boto3 secret read (`_retrieve_dbt_cloud_api_token()`, `credentials_tools.py:166-200`) keyed on `(workspace_id, service_id)`, not workspace_id alone, with no caching layer. Confirmed Jira status still `Needs Refinement` — the DESIGN is settled, the code is not yet built. This spec's Databricks lineage adapter (DatabricksLineageSource) should reuse this SAME resolved credential pattern once BH-1044 ships, not re-derive its own. |
+| BH-1044 (Databricks credential storage/lookup design — a DIFFERENT ticket, Track B's job/cluster health monitoring) | Blocking for BH-1074's credential pattern, but NOT sufficient by itself — see below | **RE-CHECKED pass 53 (fresh, not carried forward)**: no longer just an "open decision" — its own ticket (pass 24, in the sibling proactive-pipeline-ingestion-monitoring.md's Track B scope) resolved the design to a concrete pattern: mirror dbt's per-CONNECTION direct-boto3 secret read (`_retrieve_dbt_cloud_api_token()`, `credentials_tools.py:166-200`) keyed on `(workspace_id, service_id)`, not workspace_id alone, with no caching layer. Confirmed Jira status still `Needs Refinement` — the DESIGN is settled, the code is not yet built. |
+| BH-1074 (Databricks LINEAGE adapter — DatabricksLineageSource, filed pass 72) | Blocking for Gap 4; was previously the one gap in this spec's own list with NO real ticket | **FILED pass 72** — reuses BH-1044's resolved credential pattern once it ships, but implements a DIFFERENT Protocol (LineageSource, not PipelineMonitorPort) for a different purpose (fetching Unity Catalog's own lineage, not polling job/cluster health). Do not conflate the two Databricks tickets. |
 | Databricks connection-type plumbing (new WarehouseType enum + connector + Unity Catalog system-schema enablement) | Blocking for the Databricks half, independent of BH-1044 | **CORRECTED pass 7**: confirmed zero Databricks code exists in brightbot or platform-core outside vendored deps — this is greenfield regardless of how BH-1044 resolves, not merely gated behind it |
 | BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, **CORRECTED pass 48**: not a new `NotificationStage`/`BackendStage` case — the `metadata.longitudinal` blob already rides inside the existing `quality_asset_result` stage; this ticket enriches that stage's renderer to surface `anomaly_count`/`families` (real fields — `dataset`/`family`/`severity` do NOT exist on this blob, an earlier pass's ticket text was wrong), downgraded M→S |
 | Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — permits arbitrary `SELECT` syntactically, but **CORRECTED pass 45**: its own docstring recommends a least-privilege role, and ACCOUNT_USAGE reads need IMPORTED PRIVILEGES/ACCOUNTADMIN — confirmed via SNOWFLAKE_POC_HANDOFF.md that the real Longaeva POC role already hit and silenced this exact permission gap (`#825`) |
@@ -1839,6 +2053,30 @@ metadata, both production surfaces.**
   test_cases.py}`) but has ZERO existing GC-12/longitudinal-named eval cases (confirmed by
   grep) — there is no eval file to extend for this capability class yet; if BH-1062/1063/1064
   need eval-level coverage beyond unit tests, it starts a new pattern, not extends one.
+
+  **ADDED pass 66 (triple-click-zoom) — Invariants 15/16/17/19 (added passes 44/45/49/55,
+  after pass 14's original §10 pass) had zero corresponding test-coverage callout anywhere in
+  this section — the same class of completeness gap just found and fixed in the sibling
+  proactive-pipeline-ingestion-monitoring.md spec's §10 (pass 65). Closing it here too:**
+  - **Invariant 15** (BH-1062's credential-mismatch risk): a unit test mocking two dbt Cloud
+    accounts' cached session credentials, calling `fetch_lineage_artifacts()` with a `run_id`
+    belonging to the OTHER account, asserting the fetch either fails distinguishably or uses
+    an explicitly-threaded `account_id` — never silently succeeds against the wrong manifest.
+  - **Invariant 16** (BH-1068's Snowflake permission/latency guard): a unit test against a
+    mocked `SnowflakeConnection` returning a permission-denied response for `ACCOUNT_USAGE.*`,
+    asserting `SnowflakeNativeLineageSource` surfaces a distinct typed error — never folds it
+    into an empty "zero dependencies" result. A second case for the latency window (a
+    recently-created object, empty result, asserting the adapter does NOT treat this as
+    authoritative).
+  - **Invariant 17** (BH-1069's session-sharing requirement): a unit test asserting
+    `upsert_lineage_graph()`'s caller constructs exactly ONE `OGMAPISession` across a
+    multi-model loop — e.g. spy/count `OGMAPISession.__init__` calls across a 3-model fixture
+    manifest and assert the count is 1, not 3.
+  - **Invariant 19** (the Port/Adapter wiring gap): a unit test asserting BH-1064's traversal
+    code (or any future lineage-consuming code) imports/references ONLY `LineageSource`/
+    `LineageGraph` — never `fetch_lineage_artifacts`/`LineageArtifacts` directly (a static
+    import-boundary check, not a behavioral one — this is the exact regression pattern that
+    let the Port/Adapter contract silently go unimplemented for as long as it did).
 - **brighthive-platform-core**: `tests/unit/workflow-spec-status-enum.test.ts` is
   `upsertWorkflowStep`'s only direct unit coverage (enum-focused, not the mutation logic
   itself) — `tests/integration/execute-workflow-as-owner.test.ts` exercises the mutation
@@ -1896,6 +2134,7 @@ just that the Cypher string is syntactically well-formed.
 | BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8, **CORRECTED pass 45** — reuses existing SnowflakeConnection (no new connection type) but requires a permission/latency guard: the recommended least-privilege role posture already silently fails ACCOUNT_USAGE reads in this org's real Longaeva POC deployment (`#825`) |
 | BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph(graph: LineageGraph) | Needs Refinement, filed pass 11, **CORRECTED pass 49, pass 56** — formerly informal "BH-1063a," now its own trackable ticket; per-model loop MUST share ONE OGMAPISession (not the bare default); signature takes the shared LineageGraph shape, not dbt-specific LineageArtifacts |
 | BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
+| BH-1074 | feat(lineage): Databricks lineage adapter (DatabricksLineageSource) | Needs Refinement, filed pass 72 — closes Gap 4, which had NO ticket despite every other spec gap being tracked; distinct from BH-1044 (Track B's Databricks job/cluster health monitoring — different Protocol, different purpose) |
 
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
 
