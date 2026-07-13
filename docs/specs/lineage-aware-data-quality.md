@@ -697,13 +697,28 @@ class LineageModelNode:
 #    delete-then-MERGE shape), and brightbot calls that mutation over its existing
 #    Cognito-authed OGM HTTP path — the same way it reaches every other Neo4j write today.
 async def upsert_lineage_graph(
-    *, workspace_id: str, artifacts: LineageArtifacts, session: OGMAPISession | None = None,
+    *, workspace_id: str, graph: LineageGraph, session: OGMAPISession | None = None,
 ) -> None: ...
 # brightbot-side: calls a NEW platform-core GraphQL mutation over the existing OGM HTTP
 # path (ogm_api.py) — it does not touch Neo4j directly.
 # platform-core-side (NEW scope, not previously called out): a mutation implementing the
 # delete-then-MERGE pattern from workflow-spec.ts:299-317, targeting a new LineageNode
 # type + DEPENDS_ON relationship.
+#
+# CORRECTED pass 56 (triple-click-zoom) — this signature previously took `artifacts:
+# LineageArtifacts` (the dbt-specific type BH-1062's fetch function returns directly),
+# the SAME Port-bypass bug Invariant 19 (pass 55) fixed on the READ side of this pipeline.
+# If `upsert_lineage_graph()` only accepts `LineageArtifacts`, BH-1068's Snowflake-native
+# adapter (or a future Databricks one) — both of which produce a `LineageGraph` via their
+# own `LineageSource.fetch_lineage()` implementation, per Invariant 19 — would have NOTHING
+# to call on the write side without either overloading this function per-engine or
+# converting `LineageGraph` back into a fake `LineageArtifacts` just to satisfy the wrong
+# parameter type. FIX: this function's caller (whichever module loops fetch -> upsert per
+# model) receives a `LineageGraph` from the adapter (DbtLineageSource today, others later)
+# and passes IT, not the dbt-specific intermediate `LineageArtifacts`, into this function.
+# `LineageArtifacts` remains real and used INTERNALLY within `DbtLineageSource.fetch_lineage()`
+# (it's what `fetch_lineage_artifacts()` still returns) — it never crosses the adapter
+# boundary into code that's supposed to be engine-agnostic.
 #
 # BH-1069's (formerly informally called "BH-1063a" — now filed as its own ticket, pass 11)
 # REAL call-site shape, verified pass 11 (triple-click-zoom) — not paraphrased:
@@ -1749,7 +1764,7 @@ just that the Cypher string is syntactically well-formed.
 |---|---|---|
 | Manifest/catalog fetch + parse + DbtLineageSource adapter (BH-1062) | `brightbot` | New parser module reuses existing artifact-fetch plumbing; **CORRECTED pass 55**: also includes the `DbtLineageSource` adapter class translating `LineageArtifacts` -> the declared `LineageGraph` Port contract, previously undefined despite §2 committing to it |
 | Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
-| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) AND a single shared `OGMAPISession` across the per-model loop (Invariant 17, pass 49) |
+| Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11), a single shared `OGMAPISession` across the per-model loop (Invariant 17, pass 49), AND accepts the engine-agnostic `LineageGraph` (not `LineageArtifacts`) per Invariant 19 (pass 56) |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | **CORRECTED pass 52 — this row was stale/wrong, contradicting this same spec's own pass-4 finding.** NOT "extends BH-1046's existing alert path" — confirmed (pass 4) there is no rendered Slack/webapp alert path to extend at all; the real insertion point is a new key inside `publish_completion_notification`'s existing JSON metadata dict (`quality_check_agent.py:1663`), and the base anomaly notification itself has zero human-visible rendering until BH-1066 ships (pass 5/48). This ticket adds `downstream_tables` data with nothing to render it until BH-1066 lands — not a delivery-mechanism extension. |
 
 ## Ticket Breakdown
@@ -1763,7 +1778,7 @@ just that the Cypher string is syntactically well-formed.
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
 | BH-1066 | feat: enrich the EXISTING quality_asset_result renderer (Slack + webapp) to surface metadata.longitudinal's real anomaly_count/families fields | Needs Refinement, filed pass 5, **CORRECTED pass 48** (not a new stage, real fields only, S not M) — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
 | BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8, **CORRECTED pass 45** — reuses existing SnowflakeConnection (no new connection type) but requires a permission/latency guard: the recommended least-privilege role posture already silently fails ACCOUNT_USAGE reads in this org's real Longaeva POC deployment (`#825`) |
-| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11, **CORRECTED pass 49** — formerly informal "BH-1063a," now its own trackable ticket; per-model loop MUST share ONE OGMAPISession, not the bare default (real Cognito-login/connection-leak cost otherwise) |
+| BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph(graph: LineageGraph) | Needs Refinement, filed pass 11, **CORRECTED pass 49, pass 56** — formerly informal "BH-1063a," now its own trackable ticket; per-model loop MUST share ONE OGMAPISession (not the bare default); signature takes the Port's LineageGraph, not dbt-specific LineageArtifacts |
 | BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
 
 ## Track D: per-Project pipeline health view (proposed, genuinely new — NOT yet a committed scope)
