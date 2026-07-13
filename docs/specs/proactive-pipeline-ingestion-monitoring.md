@@ -9,7 +9,7 @@ tags: [monitoring, observability, dbt, databricks, etl, ingestion, brightsignals
 related:
   features: []
   pocs: []
-  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md"]
+  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md"]
 ---
 
 # Proactive Pipeline & Ingestion Monitoring
