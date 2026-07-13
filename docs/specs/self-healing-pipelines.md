@@ -76,20 +76,11 @@ DIFFERENT failure mode than "the tool call failed" (which would be a visible err
 "the model never tried," and nothing in this spec's Acceptance Criteria or Eval Criteria
 catches it.
 
-**Filed: BH-1092. Deliberately does NOT bypass the deep-agent loop** — the platform's own
-direction is skills/tools/agents with pseudo-deterministic pathways where it matters (a thin,
-checkable boundary at the edges) while letting the deep agent itself reason freely about
-diagnosis, fix authoring, and PR content. Rewriting the invocation mechanism to force a
-deterministic tool call (bypassing the agent's own judgment about HOW to fix the failure) would
-trade away exactly the flexibility that makes an agent useful for a problem class this
-mechanical. **Scope, kept narrow on purpose**: a thin, deterministic CHECK after the agent run
-completes — did a PR matching the expected signature actually get opened? If not, alert; don't
-stay silent. The agent still decides everything about the fix itself; this only confirms the
-outcome landed. This is a NEW, DISTINCT gap from BH-1091 — BH-1091 verifies the fix WORKED
-after a human merges it; BH-1092 verifies the PR gets OPENED at all after the agent run starts.
-Both are the same "trust the agent, verify the outcome" principle applied to different points
-in the same pipeline — neither second-guesses the agent's reasoning, both just confirm the
-real-world side effect actually happened.
+**Filed: BH-1092.** Scope: a deterministic verification step after the agent run completes —
+did a PR with the expected shape actually get opened? If not, alert, don't stay silent. This
+is a NEW, DISTINCT gap from BH-1091 — BH-1091 verifies the fix WORKED after a human merges it;
+BH-1092 verifies the PR gets OPENED at all after the agent run starts. Both are the same
+"verify, don't assume" principle applied to different points in the same pipeline.
 
 **Eval criterion for BH-1092, closing a gap found on review**: `RemediationScopeEvaluator`
 (`proactive-pipeline-ingestion-monitoring.md` §8) checks diff-SCOPING on a PR that already
