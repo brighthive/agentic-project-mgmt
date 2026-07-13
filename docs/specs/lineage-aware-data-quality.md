@@ -1004,7 +1004,20 @@ async def find_downstream_impact(
    non-deprecated driver-v5 API, per package.json:47's neo4j-driver ^5.0.0 — NOT
    session.writeTransaction, which is deprecated at this version) is the fallback ONLY if the
    upsert needs to read an intermediate result back into JS before the MERGE, which is not
-   expected here.`
+   expected here.
+
+   RE-CONFIRMED pass 44 — `executeWrite`/`writeTransaction`/`beginTransaction` usage across
+   platform-core's TypeScript `src/` is still zero (grep-confirmed again, not re-trusting the
+   pass-9 finding blindly). The only place `write_transaction` (the driver's deprecated
+   snake_case alias) is actually used in this org's codebase is two Python Lambdas —
+   `openmetadata_webhook_lambda/utils/neo4j_client.py:158,176` and
+   `neo4j_connector_lambda/db/neo4j_connector.py:77` — neither reachable from, nor precedent
+   for, the TS OGM/GraphQL write path BH-1063 touches; do not cite them as proof this repo has
+   an atomic-multi-statement pattern to copy. `neo4j_connector.py`'s
+   `_create_and_connect_data_asset_tx` (lines 23-115) IS a real 5-statement atomic write inside
+   one `write_transaction` call — but MERGE/CREATE-only, no DELETE, and in a different language
+   and deploy unit. It demonstrates the driver CAN do this, not that this repo's TS layer ever
+   has.`
 10. `THE downstream-impact traversal (BH-1064) SHALL match a LineageNode against
     AnomalyEventNode.dataset using LineageNode.relation_name — it SHALL NOT match against
     LineageNode.unique_id or LineageNode.name. CRITICAL, found pass 10: unique_id/name live
