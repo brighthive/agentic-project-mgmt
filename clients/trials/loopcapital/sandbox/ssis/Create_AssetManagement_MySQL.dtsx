@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GENERIC sample SSIS package — added deliberately alongside
+  Extract_Holdings_Nightly.dtsx (the Loop-Capital-specific one in this same
+  directory) so the sandbox has BOTH a generic and a domain-specific
+  fixture, per direction. This is the same toy package already committed
+  in brightbot as tests/fixtures/skills/create_assetmanagement_mysql.dtsx
+  (~130 lines, deliberately simple, targets MySQL via ODBC — NOT SQL
+  Server, so it does not participate in GC-15's disk/job-status queries).
+  Confirmed identical content to that brightbot fixture except for one XML-
+  escaping fix (a raw "&" inside an attribute value is invalid XML; the
+  brightbot copy already uses "&amp;" correctly — this file matches that
+  correct version, not the raw-ampersand copy a download produced).
+-->
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationDate="6/29/2026 12:00:00 PM"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorName="DataAndAIInfrastructure"
+  DTS:DTSID="{A1B2C3D4-0001-4E5F-A001-000000000001}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LastModifiedProductVersion="16.0.5063.7"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="Create_AssetManagement_MySQL"
+  DTS:PackageType="5"
+  DTS:ProtectionLevel="DontSaveSensitive"
+  DTS:VersionBuild="1"
+  DTS:VersionGUID="{A1B2C3D4-0002-4E5F-A001-000000000002}">
+
+  <DTS:Property DTS:Name="PackageFormatVersion">8</DTS:Property>
+
+  <!-- ============================================================= -->
+  <!-- CONNECTION MANAGERS                                            -->
+  <!-- ODBC to MySQL. Requires MySQL Connector/ODBC (8.x ANSI/Unicode -->
+  <!-- driver) installed on the machine that runs the package.       -->
+  <!-- Update Server / Database / Uid / Pwd below, or override via    -->
+  <!-- the project parameter / environment variable at runtime.       -->
+  <!-- ============================================================= -->
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[MySQL_AssetDB]"
+      DTS:CreationName="ODBC"
+      DTS:DTSID="{A1B2C3D4-0003-4E5F-A001-000000000003}"
+      DTS:ObjectName="MySQL_AssetDB"
+      DTS:Description="ODBC connection to the target MySQL asset database">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Driver={MySQL ODBC 8.0 Unicode Driver};Server=localhost;Port=3306;Database=asset_mgmt;Uid=etl_user;charset=utf8mb4;Option=3;" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <!-- ============================================================= -->
+  <!-- PACKAGE PARAMETERS                                             -->
+  <!-- ============================================================= -->
+  <DTS:PackageParameters>
+    <DTS:PackageParameter
+      DTS:refId="Package.Variables[$Package::TargetSchema]"
+      DTS:CreationName=""
+      DTS:DTSID="{A1B2C3D4-0004-4E5F-A001-000000000004}"
+      DTS:DataType="18"
+      DTS:Description="MySQL schema/database name for the asset table"
+      DTS:ObjectName="TargetSchema">
+      <DTS:Property DTS:Name="ParameterValue" DTS:DataType="18">asset_mgmt</DTS:Property>
+    </DTS:PackageParameter>
+  </DTS:PackageParameters>
+
+  <!-- ============================================================= -->
+  <!-- VARIABLES                                                     -->
+  <!-- ============================================================= -->
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:Namespace="User"
+      DTS:ObjectName="RowsSeeded"
+      DTS:DTSID="{A1B2C3D4-0005-4E5F-A001-000000000005}"
+      DTS:CreationName="">
+      <DTS:VariableValue DTS:DataType="3">0</DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+
+  <!-- ============================================================= -->
+  <!-- CONTROL FLOW                                                  -->
+  <!-- ============================================================= -->
+  <DTS:Executables>
+
+    <!-- Task 1: Create the asset management table if it does not exist -->
+    <DTS:Executable
+      DTS:refId="Package\SQL Create AssetManagement Table"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:DTSID="{A1B2C3D4-0010-4E5F-A001-000000000010}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SQL Create AssetManagement Table"
+      DTS:Description="Creates the asset management table in MySQL">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{A1B2C3D4-0003-4E5F-A001-000000000003}"
+          SQLTask:SqlStatementSource="CREATE TABLE IF NOT EXISTS asset_management (&#xA;  asset_id        BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,&#xA;  asset_tag       VARCHAR(64)    NOT NULL,&#xA;  asset_name      VARCHAR(255)   NOT NULL,&#xA;  asset_category  VARCHAR(64)    NOT NULL,&#xA;  manufacturer    VARCHAR(128)   NULL,&#xA;  model           VARCHAR(128)   NULL,&#xA;  serial_number   VARCHAR(128)   NULL,&#xA;  status          ENUM('In Use','In Storage','In Repair','Retired','Disposed') NOT NULL DEFAULT 'In Storage',&#xA;  location        VARCHAR(128)   NULL,&#xA;  department      VARCHAR(128)   NULL,&#xA;  assigned_to     VARCHAR(128)   NULL,&#xA;  supplier        VARCHAR(128)   NULL,&#xA;  purchase_date   DATE           NULL,&#xA;  purchase_cost   DECIMAL(12,2)  NULL,&#xA;  currency        CHAR(3)        NOT NULL DEFAULT 'USD',&#xA;  warranty_expiry DATE           NULL,&#xA;  depreciation_method ENUM('None','StraightLine','DecliningBalance') NOT NULL DEFAULT 'StraightLine',&#xA;  useful_life_months INT UNSIGNED NULL,&#xA;  notes           TEXT           NULL,&#xA;  is_active       TINYINT(1)     NOT NULL DEFAULT 1,&#xA;  created_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,&#xA;  updated_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,&#xA;  PRIMARY KEY (asset_id),&#xA;  UNIQUE KEY uq_asset_tag (asset_tag),&#xA;  KEY idx_status (status),&#xA;  KEY idx_category (asset_category),&#xA;  KEY idx_assigned_to (assigned_to),&#xA;  KEY idx_warranty_expiry (warranty_expiry)&#xA;) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+          SQLTask:IsStoredProc="False"
+          SQLTask:BypassPrepare="True" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <!-- Task 2: Optional seed of reference/sample rows -->
+    <DTS:Executable
+      DTS:refId="Package\SQL Seed Sample Assets"
+      DTS:CreationName="Microsoft.ExecuteSQLTask"
+      DTS:DTSID="{A1B2C3D4-0011-4E5F-A001-000000000011}"
+      DTS:ExecutableType="Microsoft.ExecuteSQLTask"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SQL Seed Sample Assets"
+      DTS:Description="Inserts a few sample assets (idempotent via INSERT IGNORE)">
+      <DTS:Variables />
+      <DTS:ObjectData>
+        <SQLTask:SqlTaskData
+          xmlns:SQLTask="www.microsoft.com/sqlserver/dts/tasks/sqltask"
+          SQLTask:Connection="{A1B2C3D4-0003-4E5F-A001-000000000003}"
+          SQLTask:SqlStatementSource="INSERT IGNORE INTO asset_management&#xA;  (asset_tag, asset_name, asset_category, manufacturer, model, serial_number, status, location, department, purchase_date, purchase_cost, warranty_expiry, useful_life_months)&#xA;VALUES&#xA;  ('AST-0001','Engineering Laptop','Laptop','Apple','MacBook Pro 14','C02XYZ001','In Use','Seattle HQ','Data &amp; AI Infrastructure','2025-01-15',2499.00,'2028-01-15',48),&#xA;  ('AST-0002','Conference Display','Display','LG','86UH5J-H','LG86001','In Use','Seattle HQ','Facilities','2024-08-01',3200.00,'2027-08-01',60),&#xA;  ('AST-0003','GPU Workstation','Workstation','Dell','Precision 7960','DLP7960A','In Storage','Bellevue Lab','Data &amp; AI Infrastructure','2025-03-10',8750.00,'2028-03-10',48);"
+          SQLTask:IsStoredProc="False"
+          SQLTask:BypassPrepare="True" />
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+  </DTS:Executables>
+
+  <!-- ============================================================= -->
+  <!-- PRECEDENCE CONSTRAINT: seed runs only after create succeeds   -->
+  <!-- ============================================================= -->
+  <DTS:PrecedenceConstraints>
+    <DTS:PrecedenceConstraint
+      DTS:refId="Package.PrecedenceConstraints[Create to Seed]"
+      DTS:CreationName=""
+      DTS:DTSID="{A1B2C3D4-0020-4E5F-A001-000000000020}"
+      DTS:From="Package\SQL Create AssetManagement Table"
+      DTS:To="Package\SQL Seed Sample Assets"
+      DTS:LogicalAnd="True"
+      DTS:ObjectName="Create to Seed"
+      DTS:Value="0" />
+  </DTS:PrecedenceConstraints>
+
+</DTS:Executable>

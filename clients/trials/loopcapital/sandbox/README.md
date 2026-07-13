@@ -47,12 +47,19 @@ Loop's real legacy stack is SSIS-fed, SSRS-reported (per Track A —
 [`../overview.md`](../overview.md)) — this sandbox now includes real,
 well-formed artifacts of both, not just plain SQL Server jobs:
 
-- **`ssis/Extract_Holdings_Nightly.dtsx`** — a real SSIS package (verified
-  well-formed XML) that models the client's own custodian-feed → holdings
-  extract, targeting THIS sandbox's `holdings_raw` table. Deliberately
-  includes one intentional gap (no data-type validation on `quantity`) so a
-  diagnostics skill has something real to find — the same class of drift
-  GC-16's demo scenario references.
+- **`ssis/Extract_Holdings_Nightly.dtsx`** — a real, Loop-Capital-SPECIFIC SSIS
+  package (verified well-formed XML) that models the client's own
+  custodian-feed → holdings extract, targeting THIS sandbox's `holdings_raw`
+  table. Deliberately includes one intentional gap (no data-type validation
+  on `quantity`) so a diagnostics skill has something real to find — the
+  same class of drift GC-16's demo scenario references.
+- **`ssis/Create_AssetManagement_MySQL.dtsx`** — a real but deliberately
+  GENERIC SSIS package (same content as brightbot's existing
+  `tests/fixtures/skills/create_assetmanagement_mysql.dtsx`, ~130 lines,
+  one XML-escaping fix applied), added alongside the Loop-specific package
+  above so this sandbox has both a generic and a domain-specific example.
+  Targets MySQL via ODBC, not SQL Server — it does NOT participate in
+  GC-15's disk/job-status queries, which are SQL-Server-specific.
 - **`ssrs/Holdings_Daily_Report.rdl`** — a real SSRS report (verified
   well-formed XML) querying `holdings_raw`, standing in for the morning
   holdings report GC-14's Bar references. This is the **first `.rdl` fixture
