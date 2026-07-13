@@ -1398,7 +1398,22 @@ async def find_downstream_impact(
     "flagged for a future pass." True column-level lineage would require dbt Cloud's
     separate, proprietary Column-Level Lineage feature or a third-party SQL parser (e.g.
     sqlglot) statically analyzing compiled SQL — genuinely new scope, out of this spec
-    entirely (see §5 Out of Scope).`
+    entirely (see §5 Out of Scope).
+
+    **CAVEAT flagged pass 73 for BH-1074's implementer — this invariant's scope is
+    explicitly limited to dbt's catalog.json; it does NOT extend the same limitation onto
+    Databricks by default.** Unity Catalog's `system.access.column_lineage` (cited §1 Hard
+    Limitations, pass 7) is, per general Databricks platform knowledge (unverified in-repo,
+    zero Databricks code exists to check), a GENUINE column-to-column dependency graph —
+    categorically different from dbt's metadata-only snapshot this invariant describes. If
+    BH-1074's `DatabricksLineageSource` populates only model-level fields (mirroring
+    `DbtLineageSource` for consistency), that is a DELIBERATE scoping choice matching this
+    spec's model-level traversal (BH-1064) — not a limitation Databricks itself imposes.
+    Conversely, if BH-1074 (or a later ticket) ever wants to actually USE Databricks' real
+    column-lineage data, THAT is new scope requiring its own invariant and a redesign of
+    BH-1064's traversal (currently hardcoded to model-level `LineageNode.relation_name`
+    matching, per Invariant 10) — do not silently bolt column-level data onto the existing
+    model-level `LineageGraph`/`LineageNode` shape without that explicit design work first.`
 15. `WHEN BH-1062's fetch_lineage_artifacts() fetches manifest.json/catalog.json for a
     specific run_id, THE System SHALL NOT assume the session's cached dbt Cloud
     credentials (account_id/api_token, resolved once per session by
