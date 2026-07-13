@@ -112,9 +112,15 @@ number in front of a customer or exec) has already happened.
                                   │     USAGE (Snowpipe/Tasks/│
                                   │     Streams/Dynamic       │
                                   │     Tables) — BH-1068,     │
-                                  │     CHEAPEST (reuses live  │
+                                  │     CHEAPEST connection-   │
+                                  │     wise (reuses live      │
                                   │     SnowflakeConnection,  │
-                                  │     no new connector)      │
+                                  │     no new connector) BUT  │
+                                  │     needs a permission/    │
+                                  │     latency guard — least- │
+                                  │     privilege roles fail   │
+                                  │     ACCOUNT_USAGE reads    │
+                                  │     silently (pass 45)     │
                                   │                          │
                                   │  All 3 feed the SAME       │
                                   │  LineageGraph shape →      │
@@ -163,29 +169,32 @@ repos' notification pipelines.
   ┌──────────┐                   ┌──────────┐        ┌──────────────┐    ┌──────────┐
   │ BH-1062  │                   │ BH-1069  │        │ BH-1063b     │    │ BH-1064  │
   │ Fetch +  │──────────────────▶│ call OGM │───────▶│ NEW           │───▶│ Wire      │
-  │ parse    │                   │ mutation │        │ LineageNode│    │ anomaly → │
-  │ manifest │                   │ (existing│        │ + DEPENDS_ON  │    │ graph walk│
-  │ .json /  │                   │  ogm_api │        │ + delete-then-│    │ (closes   │
-  │ catalog  │                   │  .py     │        │ MERGE mutation│    │  BH-673)  │
-  │ .json    │                   │  plumbing│        │ (2-3 files,   │    │           │
-  └──────────┘                   │  — no new│        │ NO public     │    └──────────┘
-                                  │  driver) │        │ schema touch, │
-                                  └──────────┘        │ mirrors       │
-                                                        │ AnomalyEvent- │
-                                                        │ Node OGM-only │
-                                                        │ pattern)      │
-                                                        └──────────────┘
+  │ parse    │                   │ mutation │        │ LineageNode:  │    │ anomaly → │
+  │ manifest │                   │ (existing│        │  workspaceId! │    │ graph walk│
+  │ .json /  │                   │  ogm_api │        │  uniqueId!    │    │ (closes   │
+  │ catalog  │                   │  .py     │        │  relationName │    │  BH-673)  │
+  │ .json    │                   │  plumbing│        │  dependsOn    │    │ MATCH also│
+  └──────────┘                   │  — no new│        │  + DEPENDS_ON │    │ filters   │
+                                  │  driver, │        │  + delete-then│    │ workspaceId│
+                                  │  ONE     │        │  MERGE, BOTH  │    └──────────┘
+                                  │  SHARED  │        │  match clauses│
+                                  │  session │        │  workspace-   │
+                                  │  across  │        │  scoped)      │
+                                  │  the loop│        └──────────────┘
+                                  └──────────┘
 
 "brightbot already      "brightbot calls a NEW       "platform-core owns the    "we already have
  knows how to fetch       platform-core mutation       Neo4j schema + upsert —    both halves —
  dbt Cloud artifacts —    the same way it calls        brightbot NEVER touches    longitudinal
- just never asked for     every other OGM write —      Neo4j directly for this"   monitoring fires
- manifest.json before"    no new Neo4j driver code"                               events, dbt
-                                                                                   already wrote
-                                                                                   its own lineage —
-                                                                                   this ticket is
-                                                                                   purely the
-                                                                                   connective glue"
+ just never asked for     every other OGM write —      Neo4j directly for this.   monitoring fires
+ manifest.json before"    no new Neo4j driver code,    workspaceId is NATIVE,     events, dbt
+                          ONE session shared across    not inherited via a        already wrote
+                          the per-model loop (pass 49) relationship — LineageNode its own lineage —
+                          — the default idiom would    is the FIRST node type     this ticket is
+                          re-authenticate per model"    with no relationship      purely the
+                                                         path to WorkspaceNode,    connective glue,
+                                                         so it needed its own     now with real
+                                                         scoping field (pass 50)" tenant isolation"
 ```
 
 ### Use Case / Goal
