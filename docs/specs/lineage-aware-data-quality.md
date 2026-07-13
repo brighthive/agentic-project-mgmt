@@ -967,15 +967,17 @@ async def find_downstream_impact(
 #      (a common, normal shape in any real DAG with diamond dependencies) would be RETURNED
 #      MULTIPLE TIMES — the original query would have silently produced duplicate
 #      downstream-table entries in the anomaly's enrichment metadata.
-# REMAINING GAP, flagged not silently assumed solved: dbt's `relation_name` format
-# (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) may not exactly string-match
-# `asset_details.get("snowflakeTableName")`'s format (unverified in this pass — no code path
-# in this repo currently produces or compares these two strings side by side, since this
-# bridge has never existed before). BH-1062/1064's implementer MUST confirm the two strings'
-# exact casing/quoting/part-count match on a REAL workspace with both a dbt connection and a
-# DataAssetNode for the same physical table before trusting an exact-match Cypher lookup — a
-# normalization step (strip quotes, uppercase/lowercase consistently, drop the DB part if
-# `dataset` is 2-part) may be required. Do not assume string equality without this check.
+# RESOLVED pass 46 (was flagged here as an open "REMAINING GAP" — do not re-open without new
+# evidence). dbt's `relation_name` format (`"DB"."SCHEMA"."TABLE"`, quoted, 3-part) is NOT
+# repo-confirmed to string-match `asset_details.get("snowflakeTableName")`'s format directly —
+# but this is no longer an unverified open question, because the SAME drift class (quoting,
+# casing, 2-part vs 3-part) is CONFIRMED to already occur on the `AnomalyEventNode.dataset`
+# side alone: traced end-to-end (quality_check_agent.py:362-366 -> longitudinal_node.py:348 ->
+# metric_history_store.py:181, zero normalization anywhere in that path) and cross-referenced
+# against the ALREADY-SHIPPED BH-743 fix (`_fqn_variants()`, longitudinal.py:150+), which
+# exists precisely because Neo4j's exact-match filter does not case-fold or normalize on its
+# own. See Invariant 10 for the full trace and required fix: BH-1064's traversal SHALL reuse
+# `_fqn_variants()`'s existing normalization pattern rather than assume exact-match works.
 #
 # Writes into the metadata dict BEFORE publish_completion_notification's existing
 # json.dumps(...) call (quality_check_agent.py:1663) — this ticket adds one new key, it does

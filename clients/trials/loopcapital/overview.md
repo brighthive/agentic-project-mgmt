@@ -175,8 +175,9 @@ confirmed against real code, not assumed.
 ## Engineering Artifacts
 
 - **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
-  "Start Here" section first. Interface contracts, invariants (14), Gherkin AC, eval criteria,
-  observability contract, full pass-by-pass verification log.
+  "Start Here" section first. Interface contracts, invariants (16, count re-verified pass 47 —
+  was stale at 14), Gherkin AC, eval criteria, observability contract, full pass-by-pass
+  verification log.
 - **Jira**: epics **BH-1036** (Monitoring Agents) and **BH-1037** (Ingestion Observability),
   plus BH-1038–1041 (BrightRoutines MCP/A2A, under BH-115), BH-1053/1055/1059 (infra tracking),
   BH-1060 (security follow-up).
@@ -189,10 +190,11 @@ confirmed against real code, not assumed.
   architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
   glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1070.
 - **This client folder**: merged to master via PR [#96](https://github.com/brighthive/agentic-project-mgmt/pull/96) (2026-07-12).
-- **Open follow-up PR**: [#97](https://github.com/brighthive/agentic-project-mgmt/pull/97) —
-  dual-write shape correction (BH-1054/BH-1046), on `drchinca/BH-1061/triple-click-zoom-pass-15`.
-  Opened fresh after #94/#95/#96 merged; ongoing verification passes land here until it's next
-  merged.
+- **PR #97 — merged** to master (dual-write shape correction, BH-1054/BH-1046), verified
+  pass 47 via `gh pr view 97` rather than trusting a prior pass's "open" note as still true.
+- **Open follow-up PR**: [#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) —
+  on `drchinca/BH-1061/triple-click-zoom-pass-38`. Opened fresh after #97 merged (crossed the
+  900-line split threshold); ongoing verification passes land here until it's next merged.
 
 ## Two things that must happen before 7/17, not yet done
 
