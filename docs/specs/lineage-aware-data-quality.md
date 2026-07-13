@@ -1609,7 +1609,9 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 **Added pass 14 (triple-click-zoom) — required per `spec-driven.md`'s §7 trigger: this spec
 involves a state machine (LineageNode's DEPENDS_ON edges, delete-and-recreate per manifest
 run) and a correctness-critical traversal (BH-1064's downstream-impact walk, whose match-key
-bug was the CRITICAL finding of pass 10). Both conditions trigger the §7 requirement.**
+bug was the CRITICAL finding of pass 10). Both conditions trigger the §7 requirement.
+EXTENDED pass 57: Invariant 18 (pass 50) added a THIRD independent trigger — a security/
+safety boundary (multi-tenant data isolation) — covered by Property 5 below.**
 
 ### Property 1: a LineageNode's DEPENDS_ON edges never observably reach zero mid-upsert
 
@@ -1660,6 +1662,27 @@ absent.
 
 **Validates: §3 Invariant 7, §4 Scenario "a real fetch error is never mistaken for 'no
 lineage available'"**
+
+### Property 5: no Cypher operation against LineageNode ever crosses a workspace boundary
+
+**Added pass 57 (triple-click-zoom) — Invariant 18 (pass 50) introduced LineageNode's first
+workspace-scoping mechanism in this codebase; per §7's own trigger criteria this is a
+security/safety boundary (multi-tenant data isolation, PS-13), which independently qualifies
+for a Correctness Property even setting aside the state-machine/traversal triggers already
+cited above.**
+
+*For any* two workspaces A and B where a `LineageNode` in A shares a `uniqueId` and/or
+`relationName` with a DIFFERENT `LineageNode` in B (a real possibility — dbt's `unique_id` is
+project-namespaced, not globally unique across unrelated customers, and warehouse
+`relation_name` collisions across tenants are plausible), no Cypher operation issued for
+workspace A's context (the delete-then-MERGE upsert per Invariant 9, or the downstream-impact
+traversal per Invariant 10) SHALL match, read, modify, or return any node or edge belonging
+to workspace B. Every such operation's MATCH clause SHALL filter on `workspaceId` as
+confirmed by Invariant 18 — this holds regardless of how `uniqueId`/`relationName` happen to
+collide across tenants.
+
+**Validates: §3 Invariant 18, §4 Scenario "the lineage graph never leaks across workspaces
+on a colliding identifier"**
 
 ## 8. Eval Criteria
 
