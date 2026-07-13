@@ -306,12 +306,25 @@ from scratch.
   (`typedefs.ts:873-874`), and a single workspace CAN have multiple `TransformationService`
   nodes (`WorkspaceNode.transformationServices: [TransformationServiceNode!]!`,
   `typedefs.ts:289/463` — a plural relationship). `_find_connected_dbt_service()`
-  (`credentials_tools.py:154-163`) explicitly picks the FIRST `provider == "DBT_CLOUD"`
-  service, which is fine for today's single-dbt-connection-per-workspace common case but is
-  NOT a structural guarantee — the watchdog's per-workspace throttling/cooldown reasoning
-  (same class of concern as Invariant 3's cooldown-key fix, pass 17) should key on
-  `(workspace_id, service_id)` if a workspace with 2+ dbt connections is ever a real case,
-  not assume `workspace_id` alone identifies one credential set. This is a self-throttling
+  (`credentials_tools.py:154-163`) explicitly picks the FIRST `provider == "DBT_CLOUD" AND
+  status == "CONNECTED"` service, which is fine for today's single-dbt-connection-per-
+  workspace common case but is NOT a structural guarantee.
+  **SHARPENED further, pass 43 (triple-click-zoom) — this earlier note UNDERSTATED the real
+  severity: it's not a cooldown-key/self-throttling nuance, it's a MONITORING-SCOPE GAP.**
+  Confirmed via direct trace: `_find_connected_dbt_service`'s single returned service dict
+  supplies `account_id`/`project_id` that `fetch_dbt_credentials()`
+  (`credentials_tools.py:390-684`) writes into agent state, which `list_jobs`
+  (`dbt_cloud_tools.py:564-625`, via `_get_dbt_cloud_credentials`) uses to scope its
+  `GET /api/v2/accounts/{account_id}/jobs/` call ENTIRELY to that one service. **If a
+  workspace has 2 CONNECTED dbt Cloud services (e.g. a legacy project + an active one), the
+  watchdog would silently monitor ONLY the first one found (order controlled by
+  Platform Core's GraphQL response, not by relevance) — the second project's jobs are NEVER
+  polled, with zero error, warning, or log distinguishing "only one of several" from "the
+  only one that exists."** This is the SAME structural pattern as BH-1045's
+  `warehouseServiceId`-disambiguation gap (Invariant 5, pass 42) — this spec's watchdog
+  (BH-1042/1043/1044/1054) SHALL NOT assume `workspace_id` alone identifies a complete
+  monitoring scope for ANY source type (dbt, Databricks, SQL Server) without an explicit
+  check per adapter. This is a self-throttling
   concern, not a cross-tenant one, but the granularity assumption should be explicit, not
   implicit.
 
@@ -1186,6 +1199,24 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     exists on both surfaces — see BH-1067. This mirrors the identical dead-end confirmed for
     GC-12's `longitudinal_anomaly` stage in the sibling lineage-aware-data-quality.md spec
     (BH-1065/1066).`
+16. `WHEN a watchdog adapter (dbt, Databricks, or SQL Server) resolves which connection/
+    service to poll for a workspace, THE System SHALL NOT assume workspace_id alone
+    identifies a COMPLETE monitoring scope if the workspace has multiple connections of
+    the same provider type. CRITICAL, found passes 24/42/43 (triple-click-zoom): confirmed
+    real, structural instances of this gap in TWO of the three adapters this spec defines —
+    `_find_connected_dbt_service()` (dbt, `credentials_tools.py:154-163`) picks the FIRST
+    `CONNECTED` `DBT_CLOUD` service and feeds its `account_id`/`project_id` into
+    `list_jobs()`'s entire scope, silently never polling a second connected dbt project if
+    one exists (zero error, zero warning); the SQL-Server-adjacent warehouse-resolution
+    path (`get_warehouse_config_from_secrets`, Invariant 5) has the identical structural gap
+    for `WorkspaceNode.warehouseServices` (also plural). Databricks (BH-1044, greenfield) has
+    no existing code to inherit this bug from, but MUST NOT introduce it fresh — design its
+    connection resolution with explicit multi-connection disambiguation from the start,
+    learning from dbt/SQL-Server's retrofit cost rather than repeating it. Each adapter
+    ticket (BH-1043/1044/1045) SHALL explicitly document EITHER (a) an added
+    disambiguation mechanism (e.g. a `serviceId`/`warehouseServiceId` parameter), or (b) a
+    confirmed, documented single-connection-per-workspace assumption for its target
+    deployment — never a silent "pick the first" with no acknowledgment either way.`
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
