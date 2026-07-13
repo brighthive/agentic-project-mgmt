@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 16:41 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 16:43 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -207,8 +207,8 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 
 ## 🕒 Recent activity (14 days)
 
-- **2026-07-13** · [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1077](https://brighthiveio.atlassian.net/browse/BH-1077) — Needs Refinement · Kuri Chinca
+- **2026-07-13** · [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1075](https://brighthiveio.atlassian.net/browse/BH-1075) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051) — Needs Refinement · Kuri Chinca
