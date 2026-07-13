@@ -172,7 +172,7 @@ confirmed against real code, not assumed.
   watchdog/anomaly/downstream-impact signals, rather than building a competing new tab — still
   needs a `/write-spec` + design pass before ticketing.
 
-## Track E: Agentic SQL Server Profiling & DB-Level Quality Health Checks — PROPOSED (2026-07-13)
+## Track E: Agentic SQL Server Profiling & DB-Level Quality Health Checks — SCOPED (2026-07-13)
 
 Kuri's follow-up (2026-07-13): part of the broader BrightHive SaaS vision — connect MCP
 against Microsoft SQL Server so a legacy DB can be agentically identified, scanned, and
@@ -187,10 +187,14 @@ But the profiler/quality-check layer (`profiler_task.py`, the 3 MCP quality tool
 ENTIRELY asset-ID-gated today — there is no "point it at the whole DB and profile everything"
 mode, and discovery + profiling are never chained end to end.
 
-**Full detail**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s new "Track E"
-section (added pass 81). NOT yet filed as concrete tickets — a naming/scope decision (is SQL
-Server a distinct `WarehouseType`, or a reuse of `azure_synapse`'s connector under a new
-discriminator?) needs an explicit answer before ticketing. Non-blocking for 7/17.
+**Full detail**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s "Track E"
+section (added pass 81, tickets filed pass 82). The naming/scope decision (is SQL Server a
+distinct `WarehouseType`, or a reuse of `azure_synapse`'s connector?) was RESOLVED against the
+real webapp UI convention — every warehouse provider gets its own first-class label/icon
+today, so a genuine new `sql_server` type is the correct choice, not a Synapse relabel. 3
+tickets filed under epic BH-1036: **BH-1075** (new connection type, connector code unchanged),
+**BH-1076** (discovery → per-table profiling orchestration), **BH-1077** (DB-level rollup
+report). Non-blocking for 7/17.
 
 ## Engineering Artifacts
 

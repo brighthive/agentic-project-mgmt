@@ -220,7 +220,7 @@ phases:
         outcome: "BH-115/1038-1041 BrightRoutines MCP/A2A surface — separate concern, unaffected by Track B"
         linked: [BH-1038, BH-1039, BH-1040, BH-1041]
 
-  - title: "Track E — Agentic SQL Server profiling & DB-level quality health checks (proposed, added pass 81, user-raised)"
+  - title: "Track E — Agentic SQL Server profiling & DB-level quality health checks (added pass 81, tickets filed pass 82, user-raised)"
     description: >
       Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, connect
       MCP against Microsoft SQL Server so a legacy DB can be agentically identified, scanned,
@@ -231,13 +231,16 @@ phases:
       check layer is entirely asset-ID-gated today — no "point it at a whole DB" mode exists,
       and discovery + profiling are never chained end to end. See
       docs/specs/proactive-pipeline-ingestion-monitoring.md's new "Track E" section for full
-      detail. NOT yet filed as concrete tickets — naming/scope questions (is SQL Server a
-      distinct WarehouseType, or a reuse of azure_synapse's connector?) need an explicit
-      answer first.
+      detail. Naming decision (is SQL Server a distinct WarehouseType, or a reuse of
+      azure_synapse's connector?) RESOLVED pass 82 against the real webapp UI convention —
+      a genuine new connection type, not a reuse. 3 tickets filed under epic BH-1036.
     expectations:
       - day: "Post-demo"
-        outcome: "Scope decision: new sql_server WarehouseType member vs. reusing azure_synapse's connector under a new discriminator — a naming/product decision, not yet made"
+        outcome: "BH-1075 — new sql_server WarehouseType/WarehouseServiceProvider connection type across brightbot/platform-core/webapp; connector code reuses SynapseConnection unchanged, only the enum/UI discriminator is new"
+        linked: [BH-1075]
       - day: "Post-demo"
-        outcome: "New orchestration chaining introspect_warehouse_schema (discovery) -> per-table profiling (quality_check_agent/analyze_dataset_structure) for tables with no pre-registered DataAssetNode"
+        outcome: "BH-1076 — new orchestration chaining introspect_warehouse_schema (discovery) -> per-table profiling (quality_check_agent/analyze_dataset_structure) for tables with no pre-registered DataAssetNode"
+        linked: [BH-1076]
       - day: "Post-demo"
-        outcome: "A new DB-level (not per-table) summary report shape — today's profiler output is always per-asset, never rolled up"
+        outcome: "BH-1077 — a new DB-level (not per-table) summary report shape aggregating BH-1076's per-table outputs — today's profiler output is always per-asset, never rolled up"
+        linked: [BH-1077]

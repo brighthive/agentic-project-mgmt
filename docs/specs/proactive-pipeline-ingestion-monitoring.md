@@ -1777,7 +1777,7 @@ has a corresponding test case, confirm all green. **Confirm BH-1057 and BH-1058 
 first** — a §10 test case that names a fixture which doesn't exist is not a test plan, it's a
 placeholder.
 
-## Track E: agentic SQL Server profiling & quality health checks (proposed, added pass 81 — user-raised)
+## Track E: agentic SQL Server profiling & quality health checks (added pass 81, tickets filed pass 82 — user-raised)
 
 **ADDED pass 81 (triple-click-zoom, user-raised)**: "part of this new vision of the BrightHive
 SaaS, we want to have the capacity to connect MCP against Microsoft SQL Server, so with a
@@ -1843,29 +1843,46 @@ Server specifically:
 lineage-aware-data-quality.md spec's own "Track D: proposed, genuinely new, NOT yet a
 committed scope" framing)
 
-- **New WarehouseType member**: `sql_server` (or reuse `azure_synapse`'s connector under a
-  new discriminator — needs a product decision: is "SQL Server" a distinct customer-facing
-  connection type, or an implementation detail of Synapse's own connector being reused?
-  Naming matters per this org's own naming rule — "azure_synapse" as a customer-facing label
-  for a plain on-prem/RDS SQL Server connection would be misleading).
+- **New WarehouseType member: `sql_server`, RESOLVED pass 82 — verified against the real
+  webapp UI convention, not left as an open question.** Checked `brighthive-webapp`'s actual
+  connection-type picker (`AddWarehouse.tsx:59-93`): EVERY warehouse provider today gets its
+  own first-class, separately-titled/iconed/described entry — `WAREHOUSE_DESCRIPTIONS` maps
+  `AzureSynapse` to the literal label "Connect your Azure Synapse Analytics instance," and
+  even the "coming soon" placeholders (Postgres, Databricks, BigQuery) are distinct tiles, not
+  folded into an existing provider's label. There is NO existing "generic SQL/Synapse"
+  grouping convention anywhere in this codebase to justify reusing `azure_synapse`'s label for
+  bare SQL Server — doing so would be the FIRST instance of that pattern, not a mirror of one,
+  and would directly violate this org's naming rule (a customer choosing "Azure Synapse" to
+  connect a plain on-prem/RDS SQL Server, with zero Azure involvement, is exactly the
+  "wouldn't mean the thing it does" case that rule exists to catch). DECISION: add a genuine
+  new `sql_server` WarehouseServiceProvider/WarehouseType member, its own UI tile (title
+  "SQL Server", description e.g. "Connect your SQL Server instance"), its own icon, and its
+  own field-config block mirroring Synapse's real host/port/username/password shape
+  (`AddWarehouseConfig.tsx:120-144`) — confirmed a small, well-templated addition (~4 files:
+  enum, `WAREHOUSE_DESCRIPTIONS`, icon, field config), NOT a large UI lift, since every other
+  provider already followed this exact pattern. The CONNECTOR CODE still reuses
+  `SynapseConnection`'s real pymssql/T-SQL logic unchanged (confirmed pass 41/81 — zero
+  Azure-exclusive requirements) — only the customer-facing discriminator/label is new, not
+  the underlying implementation. **Filed as BH-1075, pass 82.**
 - **A new MCP tool (or an extension of `introspect_warehouse_schema`)**: given a SQL Server
   connection, enumerate every table/schema (reusing #2's real precedent), then for each,
   invoke the SAME profiling logic `analyze_dataset_structure`/`quality_check_agent` already
   runs for registered assets — WITHOUT requiring a pre-registered `DataAssetNode` for tables
   that have never been catalogued. This is new orchestration (chaining discovery → profiling
-  per table), not new profiling logic.
+  per table), not new profiling logic. **Filed as BH-1076, pass 82.**
 - **A DB-level (not per-table) summary report** — "PROFILER against a DB level," per the
   user's own framing — aggregating per-table profile results into one health-check report for
   the whole database, a genuinely new report shape (today's profiler output is always
-  per-asset, never rolled up).
+  per-asset, never rolled up). **Filed as BH-1077, pass 82.**
 - **Explicitly OUT of scope for this track**: registering every discovered table as a
   permanent `DataAssetNode` (a separate, larger decision about catalog ingestion — this track
   is about ad-hoc/exploratory agentic profiling, not permanent cataloguing, unless a future
   pass scopes that explicitly).
 
-**Non-blocking for 7/17** — this is a genuinely new capability, scoped here for visibility per
-the standing loop instruction, not yet filed as concrete tickets. Filing tickets for this is
-the natural next step once the naming/scope questions above get an explicit answer.
+**Non-blocking for 7/17** — this is a genuinely new capability. The naming/scope question
+raised at pass 81 was resolved at pass 82 (verified against the real webapp UI convention,
+not left as an assumption), and 3 concrete tickets (BH-1075/1076/1077) are now filed under
+epic BH-1036, all `Needs Refinement`.
 
 ## Areas Involved
 
@@ -1909,6 +1926,9 @@ unless noted):
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |
 | BH-1067 | feat: renderers for 5 new watchdog notification stages (Slack + webapp) — dbt_run_stale, databricks_job_failure, databricks_cluster_unhealthy, etl_job_failure, source_disk_low | Filed pass 35 — CRITICAL for demo-visibility, blocks BH-1043/1044/1045's alerts from being human-visible (BH-1036) |
 | BH-1071 | docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current | Filed pass 32 — non-blocking for 7/17, blocked by BH-1053's real-vs-retire decision (BH-1036) |
+| BH-1075 | feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvider connection type | Filed pass 82 (Track E, user-raised pass 81) — non-blocking for 7/17. Naming decision resolved against real webapp UI convention: a genuine new connection type, not a reuse of azure_synapse's label. Connector code reuses SynapseConnection unchanged. |
+| BH-1076 | feat(quality): chain warehouse discovery -> per-table profiling for uncatalogued tables | Filed pass 82 (Track E) — non-blocking for 7/17. Both halves (introspect_warehouse_schema, per-table profiling) already exist and work independently; this is new orchestration wiring them together. |
+| BH-1077 | feat(quality): DB-level rollup report aggregating per-table profiler results | Filed pass 82 (Track E) — non-blocking for 7/17. Closes the user's own "PROFILER against a DB level" ask; today's profiler output is always per-asset, never rolled up. |
 
 ## Related
 
