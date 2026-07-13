@@ -105,7 +105,12 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
                            but nothing visible happens without this — same class of gap
                            as GC-12's own confirmed dead-end, BH-1065/1066)
 
-  BH-1048 (ingestion contract, separate from the job-status contract above)
+  BH-1048 (ingestion contract, separate from the job-status contract above — GAP FOUND
+           pass 80: this ticket has never actually defined its own signal DTO's field
+           list anywhere in this spec; PipelineHealthSignal is the ONLY concrete DTO
+           this spec specifies. BH-1049/1050/1051 below cannot be considered fully
+           specified until BH-1048 closes this — a cross-cutting blocker, not a detail
+           buried in one adapter ticket.)
       │
       ├──▶ BH-1049 (Airbyte — PUSH option confirmed cheaper: extend platform-core's
       │             airbyte_notification_webhook's existing no-op failure branch,
@@ -1782,6 +1787,9 @@ placeholder.
 | MCP read path (`get_pipeline_health`) | `brightbot` (MCP server) | New tool, mirrors `get_anomalies` |
 | SQL Server disk/job query | `brightbot` (via existing WarehousePort adapter) | New T-SQL health-check queries through existing connection — no new adapter type |
 | Airbyte source-sync watchdog (BH-1049) | `brightbot` (if Option B, poller) OR **`brighthive-platform-core`** (if Option A, extending `airbyte_notification_webhook`'s no-op failure branch) | **CORRECTED pass 13**: NOT brightbot-only as originally scoped — Option A (cheaper, reuses existing auth/connection-mapping code) lives in platform-core's existing webhook Lambda, not a new brightbot poller |
+| **Ingestion signal DTO (BH-1048) — currently UNDEFINED** | `brightbot` or `brighthive-platform-core` (TBD, depends on delivery-path decision) | **GAP FOUND, pass 80**: `PipelineHealthSignal` (BH-1042) is the ONLY concrete signal DTO this spec actually defines in code anywhere. BH-1048 owns "the ingestion signal contract" by name but has never specified its field list — BH-1049/1050/1051 cannot be considered fully specified until this exists. This is a cross-cutting blocker for all 3 ingestion adapters, not a detail buried in one ticket. |
+| Step Functions ingestion watchdog (BH-1050) | `brighthive-data-organization-cdk` (if Option A, extending the LIVE EventBridge→SNS rule) OR `brightbot` (if Option B, a new poller) | Same PUSH-vs-PULL choice structure as BH-1049; also blocked on BH-1048's DTO per pass 80 |
+| Queue/DLQ ingestion watchdog (BH-1051) | TBD (native CloudWatch Alarm, a new EventBridge rule, or extending cadenceToCron — 3 options, see Invariant 12) | Blocked on BH-1048's DTO shape (pass 80) — cannot "conform to the same shape" as sibling adapters until one is defined, and needs its own stable per-queue identifier analogous to job_id (Invariant 18) |
 
 ## Ticket Breakdown
 
