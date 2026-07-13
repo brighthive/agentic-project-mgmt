@@ -1,0 +1,30 @@
+{
+  "captured": "2026-07-13",
+  "ticket": "BH-1063",
+  "reason": "Wire SCHEDULER_SERVICE_API_KEY into brightbot-slack-server so the routine Schedule/Dismiss buttons work. The deployed staging slack-server ran with an empty key (never passed through CI), so every click failed with not_configured. Value copied from the existing platform-core secret; no AWS secret was mutated — this records the source-of-truth provenance and the GitHub-secret add.",
+  "change_kind": "github-secret-add (no AWS Secrets Manager mutation)",
+  "source_of_truth": {
+    "account": "brighthive-staging",
+    "region": "us-east-1",
+    "secret_id": "staging/platform/platform-core",
+    "arn": "arn:aws:secretsmanager:us-east-1:873769991712:secret:staging/platform/platform-core-Yr5U5f",
+    "key": "SCHEDULER_SERVICE_API_KEY",
+    "version_id_at_capture": "3b5ea6cb-2a75-4a60-95b0-e95aa0fc9a32",
+    "value_sha256_12": "fd45eeec0e66",
+    "note": "Value NOT captured — write-only discipline. The sha256 prefix lets a future audit confirm the GitHub secret still matches this source without exposing either value."
+  },
+  "targets_written": [
+    {
+      "surface": "github-actions-secret",
+      "repo": "brighthive/brightbot-slack-server",
+      "name": "SCHEDULER_SERVICE_API_KEY",
+      "set_via": "gh secret set SCHEDULER_SERVICE_API_KEY --repo brighthive/brightbot-slack-server",
+      "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> pulumi config schedulerServiceApiKey -> ECS task env",
+      "must_match": "platform-core SCHEDULER_SERVICE_API_KEY (both staging and prod) — mismatch = 401/FORBIDDEN on scheduleRoutineSuggestion"
+    }
+  ],
+  "rollback": "gh secret delete SCHEDULER_SERVICE_API_KEY --repo brighthive/brightbot-slack-server   # reverts to pre-BH-1063 state (routine buttons return not_configured again). To rotate: re-copy from staging/platform/platform-core current version.",
+  "related_prs": [
+    "brighthive/brightbot-slack-server#128 (deploy.yml wiring + not_configured copy)"
+  ]
+}
