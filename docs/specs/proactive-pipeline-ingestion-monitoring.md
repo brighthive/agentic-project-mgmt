@@ -9,7 +9,7 @@ tags: [monitoring, observability, dbt, databricks, etl, ingestion, brightsignals
 related:
   features: []
   pocs: []
-  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md"]
+  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md", "golden-cases-loopcapital.md"]
 ---
 
 # Proactive Pipeline & Ingestion Monitoring
@@ -46,6 +46,12 @@ related:
 **What this is**: a spec for making dbt/Databricks/ETL job-status and ingestion-source
 monitoring genuinely proactive (unprompted detection + alert + safe auto-remediation),
 answering a Loop Capital sales-gate commitment for a **2026-07-17 demo**.
+
+**Want the demo-bar framing instead of the platform-contract framing?** Read
+`golden-cases-loopcapital.md` (GC-14/15/16/17) — the same tickets below, translated into
+Frank-facing acceptance scenes (a broken nightly job, a legacy SQL Server with nothing
+installed on it, a recurring pipeline break) rather than DTOs and Protocols. This spec is the
+contract; that one is the proof the contract resolves something Frank actually asked for.
 
 **Two things are time-critical and NOT architecture work — do these first, in this order:**
 1. **BH-1057** (SQL Server demo fixture, ~3-5hrs, RDS Web edition, zero code changes) — the

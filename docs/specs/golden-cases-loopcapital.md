@@ -279,7 +279,7 @@ depends on. The remediation loop's tool-binding must exclude `github_merge_pull_
 agent that can open PRs against pipeline code.
 
 ### Status today
-**CRITICAL, no code.** Confirmed: `github_merge_pull_request` (`github_tools.py:503-560`) is
+**CRITICAL, no code.** Confirmed: `github_merge_pull_request` (`brightbot/agents/dbt_agent/tools/github_tools.py:503-560`) is
 still fully bound into `dbt_agent_react.py`'s live `DBT_REACT_TOOLS` list with zero exclusion
 logic anywhere in the repo. "Never auto-merge" is currently enforced ONLY by
 `dbt_react_system_prompt.py:119-125`'s system-prompt instruction — a prompt injection or a model
@@ -290,7 +290,7 @@ ticket text, just not implemented.
 
 ### Code path
 `brightbot/agents/dbt_agent/dbt_agent_react.py` (`DBT_REACT_TOOLS`, includes
-`github_merge_pull_request` today) + `brightbot/tools/github_tools.py:503-560`
+`github_merge_pull_request` today) + `brightbot/agents/dbt_agent/tools/github_tools.py:503-560`
 (`github_merge_pull_request`'s definition).
 
 ### Invariants
@@ -327,7 +327,7 @@ Scenario: even an adversarial or confused attempt to merge fails safely
 ```
 
 **What proves this, underneath**: `REMEDIATION_TOOLS` built via direct import, statically omitting
-`github_merge_pull_request` (`github_tools.py:503-560`) by construction — verifiable by a plain
+`github_merge_pull_request` (`brightbot/agents/dbt_agent/tools/github_tools.py:503-560`) by construction — verifiable by a plain
 unit test asserting the tool's absence from the bound list, no live agent run required. Today
 this is enforced ONLY by a system-prompt instruction (`dbt_react_system_prompt.py:119-125`) with
 zero code-level backstop — the gap this GC exists to close before GC-16 is ever demoed.
@@ -373,3 +373,9 @@ closing a safety gap (GC-17) that Longaeva's own GC-11 spec left as a known, un-
   not an open trial window.
 - **DATA_SHAPE / JOB_RUNTIME** — `root_cause_class` values from `self-healing-pipelines.md`/BH-1047;
   DATA_SHAPE routes into the surgical-PR loop, JOB_RUNTIME does not (out of this spec's scope).
+- **"GC-14" name collision, disambiguated**: Longaeva's ticket **BH-601** independently labels
+  its own agentic-governance/RBAC case "GC-14" (Notion-tracked, never implemented under that
+  name). That is a DIFFERENT case in a DIFFERENT client's numbering scheme, not this spec's
+  GC-14. This spec's GC-14 continues brightbot's `SPEC-GOLDEN-CASES.md` GC-1–13 numbering
+  (Longaeva's own repo-tracked cases), which never reached 14. If searching Jira for "GC-14"
+  surfaces BH-601, that ticket is unrelated to this spec.
