@@ -219,3 +219,25 @@ phases:
       - day: "Post-demo"
         outcome: "BH-115/1038-1041 BrightRoutines MCP/A2A surface — separate concern, unaffected by Track B"
         linked: [BH-1038, BH-1039, BH-1040, BH-1041]
+
+  - title: "Track E — Agentic SQL Server profiling & DB-level quality health checks (proposed, added pass 81, user-raised)"
+    description: >
+      Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, connect
+      MCP against Microsoft SQL Server so a legacy DB can be agentically identified, scanned,
+      and quality-health-checked — a PROFILER at the DB/warehouse level, not just per-table.
+      Verified: most plumbing already exists (SynapseConnection already connects to bare SQL
+      Server with zero code changes; introspect_warehouse_schema already does warehouse-level
+      table discovery with no pre-registered DataAssetNode needed) but the profiler/quality-
+      check layer is entirely asset-ID-gated today — no "point it at a whole DB" mode exists,
+      and discovery + profiling are never chained end to end. See
+      docs/specs/proactive-pipeline-ingestion-monitoring.md's new "Track E" section for full
+      detail. NOT yet filed as concrete tickets — naming/scope questions (is SQL Server a
+      distinct WarehouseType, or a reuse of azure_synapse's connector?) need an explicit
+      answer first.
+    expectations:
+      - day: "Post-demo"
+        outcome: "Scope decision: new sql_server WarehouseType member vs. reusing azure_synapse's connector under a new discriminator — a naming/product decision, not yet made"
+      - day: "Post-demo"
+        outcome: "New orchestration chaining introspect_warehouse_schema (discovery) -> per-table profiling (quality_check_agent/analyze_dataset_structure) for tables with no pre-registered DataAssetNode"
+      - day: "Post-demo"
+        outcome: "A new DB-level (not per-table) summary report shape — today's profiler output is always per-asset, never rolled up"

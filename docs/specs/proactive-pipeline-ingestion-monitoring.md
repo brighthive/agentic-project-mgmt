@@ -1777,6 +1777,96 @@ has a corresponding test case, confirm all green. **Confirm BH-1057 and BH-1058 
 first** — a §10 test case that names a fixture which doesn't exist is not a test plan, it's a
 placeholder.
 
+## Track E: agentic SQL Server profiling & quality health checks (proposed, added pass 81 — user-raised)
+
+**ADDED pass 81 (triple-click-zoom, user-raised)**: "part of this new vision of the BrightHive
+SaaS, we want to have the capacity to connect MCP against Microsoft SQL Server, so with a
+legacy DB we can agentically identify and scan and quality health check the database
+capacities — like provide PROFILER against a DB level and/or warehouse."
+
+This is a REAL, coherent extension of BH-1045's SQL-Server-with-no-MCP work — NOT a
+duplicate. BH-1045 (Track B, Point 2) is narrowly scoped to disk-space + job-status
+monitoring on a SQL Server the watchdog already knows how to connect to. This track is
+broader: agentic, warehouse-LEVEL discovery + profiling + quality health checks against a
+SQL Server database the platform has never seen before — the "point an agent at a legacy DB
+and let it explore" capability Frank's original SSIS/SSRS ask (Track A) gestured at but never
+delivered, since Track A's diagnosis is entirely local-file-upload-based (no live SQL Server
+connection exists for SSIS/SSRS specifically, per `overview.md`'s own Track A correction).
+
+### What already exists (verified pass 81, not assumed)
+
+Most of the plumbing this capability needs is ALREADY REAL, just not wired together for SQL
+Server specifically:
+
+1. **Warehouse-agnostic connection layer, confirmed reusable.** `WarehouseConnectionFactory`
+   (`brightbot/tools/warehouse_connections.py:1238-1261`) dispatches on `WarehouseType`
+   (`brightbot/utils/warehouse_types.py:19-25`, currently `Literal["redshift", "snowflake",
+   "azure_synapse", "postgres"]` — exactly 4 values, NO `sql_server`/`mssql` entry).
+   `SynapseConnection` (`warehouse_connections.py:248-424`) is CONFIRMED (pass 41, this same
+   spec) plain pymssql/T-SQL with ZERO Azure-exclusive requirements — it already connects to
+   a bare SQL Server instance with zero code changes, the SAME confirmed fact BH-1045's disk/
+   job queries already rely on.
+2. **Warehouse-LEVEL schema discovery already exists via MCP, genuinely table-agnostic.**
+   `introspect_warehouse_schema` (`brightbot/mcp/tools/dbt_introspection.py:535`, backed by
+   `introspect_warehouse_schema_data`,
+   `brightbot/agents/dbt_agent/tools/introspection_tools.py:55-107`) takes ONLY `workspace_id`
+   (+ optional database/schema filters) — resolves the connection, calls `list_tables()` —
+   full catalog discovery with NO pre-registered `DataAssetNode` required. The module's own
+   docstring confirms it is "warehouse-AGNOSTIC ... no warehouse is hardcoded." This is the
+   real precedent for "point an agent at a whole warehouse and let it explore."
+3. **Quality/profiling logic is already warehouse-dialect-aware.** `quality_tools.py`/
+   `quality_check_agent.py`'s batch-SQL validation paths already branch per warehouse dialect
+   (Synapse/Snowflake/Redshift-specific fragments exist side by side, e.g. Synapse's
+   `COUNT_BIG(*)` vs generic `COUNT(*)`) — adding a SQL Server dialect branch would follow an
+   established pattern, not invent one.
+
+### What's genuinely missing (the real gap this track closes)
+
+1. **No `sql_server`/`mssql` `WarehouseType` entry** — small gap, connector logic is already
+   generic (per #1 above), but the enum itself is closed on both `brightbot` AND
+   platform-core's mirrored `WarehouseServiceProvider` (same class of closed-enum gap already
+   confirmed for Databricks in this spec's §1 Hard Limitations).
+2. **The profiler/quality-check layer is ENTIRELY asset-ID-gated, never warehouse-level.**
+   `profiler_task.py` (`governance_agent/sub_agents/profiler_task.py:1-333`) takes
+   `data_asset_ids` — a list of PRE-REGISTERED assets, never discovers anything itself. All 3
+   MCP quality tools (`brightbot/mcp/tools/governance_quality.py:358-384`,
+   `analyze_dataset_structure`/`generate_quality_expectations`/`execute_library_quality_rules`)
+   require the caller to already know `dataset_table_name` or `data_asset_id` — none discover
+   tables. There is NO "point the profiler at the whole DB and profile everything it finds"
+   mode anywhere in this codebase today.
+3. **Discovery and profiling are NOT chained.** `introspect_warehouse_schema` (discovery) and
+   the quality/profiler tools (per-table checks) exist as two independent capabilities.
+   Nothing wires "discover every table in this SQL Server → profile/quality-check each one"
+   end to end — confirmed by direct code read, not assumed.
+
+### Proposed scope (NOT yet a committed epic — flagging for scoping, mirroring the sibling
+lineage-aware-data-quality.md spec's own "Track D: proposed, genuinely new, NOT yet a
+committed scope" framing)
+
+- **New WarehouseType member**: `sql_server` (or reuse `azure_synapse`'s connector under a
+  new discriminator — needs a product decision: is "SQL Server" a distinct customer-facing
+  connection type, or an implementation detail of Synapse's own connector being reused?
+  Naming matters per this org's own naming rule — "azure_synapse" as a customer-facing label
+  for a plain on-prem/RDS SQL Server connection would be misleading).
+- **A new MCP tool (or an extension of `introspect_warehouse_schema`)**: given a SQL Server
+  connection, enumerate every table/schema (reusing #2's real precedent), then for each,
+  invoke the SAME profiling logic `analyze_dataset_structure`/`quality_check_agent` already
+  runs for registered assets — WITHOUT requiring a pre-registered `DataAssetNode` for tables
+  that have never been catalogued. This is new orchestration (chaining discovery → profiling
+  per table), not new profiling logic.
+- **A DB-level (not per-table) summary report** — "PROFILER against a DB level," per the
+  user's own framing — aggregating per-table profile results into one health-check report for
+  the whole database, a genuinely new report shape (today's profiler output is always
+  per-asset, never rolled up).
+- **Explicitly OUT of scope for this track**: registering every discovered table as a
+  permanent `DataAssetNode` (a separate, larger decision about catalog ingestion — this track
+  is about ad-hoc/exploratory agentic profiling, not permanent cataloguing, unless a future
+  pass scopes that explicitly).
+
+**Non-blocking for 7/17** — this is a genuinely new capability, scoped here for visibility per
+the standing loop instruction, not yet filed as concrete tickets. Filing tickets for this is
+the natural next step once the naming/scope questions above get an explicit answer.
+
 ## Areas Involved
 
 | Area | Repo | Impact |

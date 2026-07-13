@@ -172,11 +172,31 @@ confirmed against real code, not assumed.
   watchdog/anomaly/downstream-impact signals, rather than building a competing new tab — still
   needs a `/write-spec` + design pass before ticketing.
 
+## Track E: Agentic SQL Server Profiling & DB-Level Quality Health Checks — PROPOSED (2026-07-13)
+
+Kuri's follow-up (2026-07-13): part of the broader BrightHive SaaS vision — connect MCP
+against Microsoft SQL Server so a legacy DB can be agentically identified, scanned, and
+quality-health-checked, a PROFILER at the DB/warehouse level, not just per-table.
+
+**Verified against real code (not assumed)**: most of the plumbing already exists.
+`SynapseConnection` already connects to a bare SQL Server instance with zero code changes
+(the same confirmed fact BH-1045's disk/job queries already rely on). `introspect_warehouse_schema`
+already does warehouse-LEVEL table discovery via MCP with no pre-registered `DataAssetNode`
+required — the real precedent for "point an agent at a whole warehouse and let it explore."
+But the profiler/quality-check layer (`profiler_task.py`, the 3 MCP quality tools) is
+ENTIRELY asset-ID-gated today — there is no "point it at the whole DB and profile everything"
+mode, and discovery + profiling are never chained end to end.
+
+**Full detail**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s new "Track E"
+section (added pass 81). NOT yet filed as concrete tickets — a naming/scope decision (is SQL
+Server a distinct `WarehouseType`, or a reuse of `azure_synapse`'s connector under a new
+discriminator?) needs an explicit answer before ticketing. Non-blocking for 7/17.
+
 ## Engineering Artifacts
 
 - **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
-  "Start Here" section first. Interface contracts, invariants (16, count re-verified pass 47 —
-  was stale at 14), Gherkin AC, eval criteria, observability contract, full pass-by-pass
+  "Start Here" section first. Interface contracts, invariants (18, count re-verified pass 81 —
+  was stale at 16), Gherkin AC, eval criteria, observability contract, full pass-by-pass
   verification log.
 - **Jira**: epics **BH-1036** (Monitoring Agents) and **BH-1037** (Ingestion Observability),
   plus BH-1038–1041 (BrightRoutines MCP/A2A, under BH-115), BH-1053/1055/1059 (infra tracking),
