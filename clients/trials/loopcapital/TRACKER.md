@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 03:53 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 14:52 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -116,7 +116,7 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | ⬜ | Post-demo | BH-1053 BrightSignals 3-way split-brain unification | [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) |
 | ⬜ | Post-demo | BH-1055 dispatcher concurrency hardening | [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) |
 | ⬜ | Post-demo | BH-1059 AgentCore/CEMAF migration tracking for the dispatcher's LangGraph Cloud dependency | [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) |
-| ⬜ | Post-demo | BH-1060 customer-PII redaction evaluation for diagnosis text | [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) |
+| ⬜ | Post-demo | BH-1060 customer-PII redaction decision for diagnosis text across ALL 4 real sinks (Slack, webapp inbox, GitHub PR body, AND CloudWatch audit logs via @audit_action — the 4th sink confirmed pass 28, not in the original 3-sink framing); scrub_text() only catches secret shapes (JWT/API-key/etc.), not PII values — non-blocking for 7/17, real gap before production customer data | [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) |
 | ⬜ | Post-demo | BH-1037/1048-1052 ingestion observability (Airbyte/Step-Functions/queue watchdogs) — not named in Frank's 3 points, build after Track B lands | [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048), [BH-1049](https://brighthiveio.atlassian.net/browse/BH-1049), [BH-1050](https://brighthiveio.atlassian.net/browse/BH-1050), [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051), [BH-1052](https://brighthiveio.atlassian.net/browse/BH-1052) |
 | ⬜ | Post-demo | BH-115/1038-1041 BrightRoutines MCP/A2A surface — separate concern, unaffected by Track B | [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038), [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039), [BH-1040](https://brighthiveio.atlassian.net/browse/BH-1040), [BH-1041](https://brighthiveio.atlassian.net/browse/BH-1041) |
 
