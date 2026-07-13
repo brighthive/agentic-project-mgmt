@@ -437,6 +437,95 @@ def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
 # walk-and-enrich code NEVER change. This is the concrete meaning of "low-effort to switch."
 ```
 
+### How one shared code path handles multiple engines, and where it sits in the rest of BrightHive
+
+**Added pass 60 (triple-click-zoom) — a fourth diagram, at a zoom level not yet drawn: how the
+multi-engine adapter registry above connects concretely to Neo4j nodes, to workspace/tenant
+scoping, and to the rest of BrightHive's monitoring/alert surfaces. Every box below cites a
+real file:line or an already-verified invariant — nothing here is aspirational.**
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│  ENGINES (as many as customers use)     one shared code path      BRIGHTHIVE SYSTEMS   │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+  dbt Cloud          Databricks         Snowflake-native      (future: Airflow,
+  ┌─────────┐        ┌─────────┐        ┌─────────┐            Fivetran, etc.)
+  │ manifest │        │ Unity    │        │ ACCOUNT_ │
+  │ .json /  │        │ Catalog  │        │ USAGE    │           Adding one of these =
+  │ catalog  │        │ system   │        │ views    │           ONE new adapter class +
+  │ .json    │        │ tables   │        │          │           ONE registry line. The
+  └────┬─────┘        └────┬─────┘        └────┬─────┘           rest of this diagram
+       │                   │                   │                 NEVER changes (§2).
+       ▼                   ▼                   ▼
+  ┌──────────────┐  ┌──────────────────┐  ┌────────────────────┐
+  │DbtLineage-   │  │DatabricksLineage- │  │SnowflakeNative-     │  ◀── each is a thin
+  │Source        │  │Source (greenfield,│  │LineageSource (needs │      TRANSLATION layer,
+  │(BH-1062,     │  │needs new          │  │a permission/latency │      not new fetch logic —
+  │REAL today)   │  │WarehouseType +    │  │guard, pass 45 —     │      each maps its OWN
+  │              │  │connector, BH-1044)│  │least-privilege roles│      engine's shape onto
+  │              │  │                   │  │silently fail        │      ONE shared shape below
+  └──────┬───────┘  └─────────┬─────────┘  │ACCOUNT_USAGE, pass 16)│
+         │                    │            └──────────┬──────────┘
+         └────────────────────┴───────────────────────┘
+                               │
+                               ▼
+                    ┌─────────────────────────┐
+                    │   LineageGraph           │  ◀── the ONE shape every engine's
+                    │   (§2, engine-agnostic)  │      adapter returns. BH-1064's
+                    │   nodes: dict[unique_id, │      traversal/enrichment code
+                    │     LineageNode]         │      only ever calls THIS — it
+                    │   source_engine: string  │      never branches on "dbt" vs
+                    │   (observability only,   │      "databricks" anywhere (§2).
+                    │    never branched on)    │
+                    └───────────┬─────────────┘
+                                 │  BH-1069: upsert_lineage_graph(graph, workspace_id)
+                                 │  — ONE shared OGMAPISession per manifest load (pass 49)
+                                 ▼
+              brightbot ──HTTP (ogm_api.py)──▶ platform-core (OGM schema, isSystemAdmin-gated)
+                                 │
+                                 ▼
+                    ┌─────────────────────────────┐
+                    │  Neo4j: LineageNode           │  ◀── BH-1063. NOTE (pass 50, real
+                    │  ┌───────────────────────┐    │      finding): this node has NO
+                    │  │ workspaceId  (NATIVE  │    │      relationship to ProjectNode/
+                    │  │   scalar — pass 50)   │    │      WorkflowSpecNode — unlike
+                    │  │ uniqueId               │    │      WorkflowStepNode, it does
+                    │  │ relationName           │    │      NOT sit inside BrightHive's
+                    │  │ hasColumnMetadata      │    │      existing Project hierarchy.
+                    │  │ dependsOn ─┐           │    │      It is scoped ONLY by the
+                    │  └────────────┼───────────┘    │      workspaceId field — every
+                    │               │ DEPENDS_ON     │      Cypher query MUST filter on
+                    │               ▼ (to another    │      it explicitly (Invariant 18).
+                    │            LineageNode,         │      A future Track D (per-Project
+                    │            SAME workspace only) │      pipeline view) would need to
+                    └─────────────┬───────────────────┘      ADD that relationship — it
+                                  │                           does not exist today.
+                                  │  AnomalyEventNode.dataset (GC-12, already shipped)
+                                  │  matches LineageNode.relationName (Invariant 10,
+                                  │  workspace-filtered per Invariant 18)
+                                  ▼
+                    ┌─────────────────────────┐
+                    │ BH-1064: downstream-walk │  ◀── writes into the SAME anomaly
+                    │ (DEPENDS_ON*1..50,       │      notification's existing JSON
+                    │  DISTINCT, bounded)      │      metadata blob — NOT a new alert
+                    └───────────┬─────────────┘      path (pass 4/48 correction).
+                                 │
+                                 ▼
+        ┌────────────────────────────────────────────────────┐
+        │  metadata["longitudinal"]["downstream_tables"] = [...]│
+        └───────────────────┬────────────────────────────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              ▼                             ▼
+     brightbot-slack-server         brighthive-webapp Notifications
+     quality_asset_result stage     quality_asset_result stage
+     renderer — BH-1066 enriches    renderer — BH-1066 enriches
+     it to surface downstream_      it to surface downstream_
+     tables (NOT a new stage —      tables (same correction —
+     confirmed pass 48)             confirmed pass 48)
+```
+
 ### BH-1062 as the dbt adapter (the FIRST implementation of LineageSource, not the design)
 
 ```
