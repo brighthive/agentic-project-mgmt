@@ -377,6 +377,52 @@ LINEAGE_SOURCE_ADAPTERS: dict[str, type[LineageSource]] = {
 def build_lineage_source(*, engine: str, config: dict) -> LineageSource:
     return LINEAGE_SOURCE_ADAPTERS[engine](config=config)
 
+# CRITICAL CORRECTION, pass 45 (triple-click-zoom) — "SnowflakeConnection already exists and
+# can run arbitrary SELECT against ACCOUNT_USAGE, no new connection type needed" is TRUE but
+# is the wrong bar; it glosses over a real, likely-blocking permission gap, verified against
+# actual repo history, not general Snowflake knowledge alone.
+#
+# `SnowflakeConnection.connect()` (warehouse_connections.py:803-806) treats `role` as OPTIONAL,
+# pulled from whatever the workspace's Secrets Manager payload happens to contain — if unset,
+# it falls back to the Snowflake user's default role, unverified. The class's own docstring
+# (warehouse_connections.py:708-711) states the INTENDED posture — "the account binds to a
+# role that should itself be SELECT-only at the grant level, defense in depth" — but nothing
+# in the code checks the bound role's actual grants. That intended least-privilege posture is
+# exactly the posture that BREAKS ACCOUNT_USAGE reads: those views require the querying role to
+# either be ACCOUNTADMIN or hold `IMPORTED PRIVILEGES` on the `SNOWFLAKE` database — a
+# privilege a "should be SELECT-only" role does NOT have by design.
+#
+# This is not hypothetical — it already happened in this org. The one real deployed instance
+# on record, brighthive-platform-core/docs/SNOWFLAKE_POC_HANDOFF.md:32, runs as
+# `LONGAEVA_POC_ROLE` (service user `BRIGHTHIVE_SERVICE`), and the SAME doc, line 64, records
+# the team's own fix for this exact failure mode: `#825` dropped
+# `raise_from_status(raise_warnings=True)` specifically because "a Snowflake scan emits
+# per-sub-query failures for optional metadata (`ACCOUNT_USAGE.*` a least-privilege role can't
+# read) even when tables ingest fine" — i.e., the fix was to SILENCE the permission failure,
+# not to grant the privilege or detect the gap. Confirmed by grep across both repos: zero hits
+# for "IMPORTED PRIVILEGES", zero for ACCOUNT_USAGE latency handling anywhere outside that one
+# doc line.
+#
+# Second, independent risk in the same query surface: ACCOUNT_USAGE views have documented
+# ingestion latency (Snowflake's own docs: up to ~45 min–3 hrs depending on the view) versus
+# real-time `INFORMATION_SCHEMA`. A freshly-created Task/Dynamic Table/Snowpipe dependency can
+# be genuinely absent from OBJECT_DEPENDENCIES for hours after creation — indistinguishable,
+# without an explicit check, from "this object truly has no dependencies." BH-1064's
+# downstream-impact traversal reading a false "no dependencies" would suppress a real alert,
+# the same false-negative risk already called out for BH-1063's atomicity gap (Invariant 9).
+#
+# Invariant 16 (new): the SnowflakeNativeLineageSource adapter (BH-1068) SHALL verify
+# `IMPORTED PRIVILEGES` (or ACCOUNTADMIN) on the bound role BEFORE relying on an empty
+# ACCOUNT_USAGE result as "no dependencies" — a permission failure and a genuine empty result
+# SHALL be distinguishable, never silently conflated. THE adapter SHALL also surface each
+# ACCOUNT_USAGE view's last-refreshed timestamp (queryable via
+# `ACCOUNT_USAGE.OBJECT_DEPENDENCIES`'s own metadata or `INFORMATION_SCHEMA.LOAD_HISTORY`-style
+# freshness checks) so a caller can tell "just polled, not yet reflected" from "confirmed no
+# dependencies." BH-1068's scope MUST include this permission-and-latency guard — it is not
+# optional cleanup, it is the difference between the adapter working and the adapter silently
+# reporting zero lineage for every real customer running least-privilege roles, which per this
+# org's own docstring is the intended, recommended posture for this exact connection.
+
 # Adding a NEW engine (Apache Airflow's own lineage API, Fivetran, etc.) later = one new
 # adapter class + one registry line — the port, BH-1063's graph-write code, and BH-1064's
 # walk-and-enrich code NEVER change. This is the concrete meaning of "low-effort to switch."
@@ -1100,6 +1146,24 @@ async def find_downstream_impact(
     confirmed in 2 of its 3 adapters) — this spec's own fetch step is a THIRD confirmed
     instance, not a hypothetical extension.`
 
+16. `WHEN BH-1068's SnowflakeNativeLineageSource adapter queries SNOWFLAKE.ACCOUNT_USAGE.*
+    views, THE System SHALL distinguish a genuine "no dependencies found" result from a
+    permission failure ("the bound role lacks IMPORTED PRIVILEGES / ACCOUNTADMIN") and from
+    a latency gap ("the view has not yet ingested this recently-created object"). CRITICAL,
+    found pass 45: `SnowflakeConnection`'s own docstring (warehouse_connections.py:708-711)
+    states the account SHOULD bind to a SELECT-only, least-privilege role — exactly the
+    posture ACCOUNT_USAGE views reject without an explicit IMPORTED PRIVILEGES grant. This
+    already happened in this org: the real deployed Longaeva POC role
+    (`LONGAEVA_POC_ROLE`, SNOWFLAKE_POC_HANDOFF.md:32) hit this precisely, and the
+    documented fix (`#825`, same doc line 64) was to SILENCE the resulting per-query
+    failures, not detect or resolve them. An adapter that treats a silenced permission
+    failure as "confirmed zero lineage" reports false negatives for every customer running
+    the recommended least-privilege posture — the majority case, not an edge case. THE
+    adapter SHALL surface a distinct, typed error/status for a permission failure (never
+    fold it into an empty result), and SHALL check each queried view's last-refresh
+    freshness before treating an empty result for a recently-created object as
+    authoritative.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1204,6 +1268,28 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
     And EITHER the fetch call is confirmed to always execute in the same session context
       that resolved this specific run_id, OR the real account_id is threaded through
       explicitly rather than read from session-cached state
+
+  Scenario: a least-privilege Snowflake role's permission failure is never read as "no dependencies"
+    Given a Snowflake connection bound to a SELECT-only, least-privilege role — the posture
+      SnowflakeConnection's own docstring recommends — which lacks IMPORTED PRIVILEGES on
+      the SNOWFLAKE database
+    When BH-1068's SnowflakeNativeLineageSource queries SNOWFLAKE.ACCOUNT_USAGE.
+      OBJECT_DEPENDENCIES for a real table with real dependencies
+    Then the query's permission failure is surfaced as a distinct, typed error/status
+    And it is NOT silently swallowed or folded into an empty "zero dependencies" result,
+      the way #825's fix (SNOWFLAKE_POC_HANDOFF.md:64) already did for this org's real
+      Longaeva POC role
+    And the adapter does not report "this table has no dependencies" when the true state is
+      "this role cannot see dependencies"
+
+  Scenario: a freshly-created Snowflake Task's dependency is never read as "does not exist"
+    Given a Snowflake Task created less than the ACCOUNT_USAGE view's documented refresh
+      latency window ago (up to ~45 min–3 hrs, view-dependent)
+    When BH-1068 queries OBJECT_DEPENDENCIES for that Task immediately after creation
+    Then an empty result is treated as "not yet reflected, latency window not elapsed" if
+      the view's own freshness/last-refresh signal indicates so
+    And BH-1064's downstream-impact traversal does NOT treat this empty result as
+      authoritative proof "nothing depends on this" while the latency window is still open
 ```
 
 ## 5. Out of Scope
@@ -1239,8 +1325,8 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
 | BH-1044 (Databricks credential-location decision) | Blocking for the Databricks half, but NOT sufficient by itself — see below | Open decision, not yet confirmed |
 | Databricks connection-type plumbing (new WarehouseType enum + connector + Unity Catalog system-schema enablement) | Blocking for the Databricks half, independent of BH-1044 | **CORRECTED pass 7**: confirmed zero Databricks code exists in brightbot or platform-core outside vendored deps — this is greenfield regardless of how BH-1044 resolves, not merely gated behind it |
 | BH-1066 (anomaly-notification renderer, Slack + webapp) | Non-blocking for BH-1064's own code; blocking for the enrichment to ever be human-visible | Filed pass 5, Needs Refinement — same class of gap as BH-1067 in the sibling proactive-pipeline-ingestion-monitoring.md spec |
-| Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — already permits arbitrary `SELECT`, including against `ACCOUNT_USAGE` views |
-| BH-1068 (Snowflake-native lineage adapter: Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Non-blocking for 7/17; cheaper than the Databricks half (gap 4) but equally unbuilt | **Filed pass 8** — user-raised, confirmed real gap, confirmed cheap relative to Databricks |
+| Existing `SnowflakeConnection` (`warehouse_connections.py:701,714,1233`) | Non-blocking for BH-1068 (Snowflake-native adapter, reused not built) | Live — permits arbitrary `SELECT` syntactically, but **CORRECTED pass 45**: its own docstring recommends a least-privilege role, and ACCOUNT_USAGE reads need IMPORTED PRIVILEGES/ACCOUNTADMIN — confirmed via SNOWFLAKE_POC_HANDOFF.md that the real Longaeva POC role already hit and silenced this exact permission gap (`#825`) |
+| BH-1068 (Snowflake-native lineage adapter: Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Non-blocking for 7/17; cheaper than the Databricks half (gap 4) but equally unbuilt | **Filed pass 8, CORRECTED pass 45**: "no new connection type" is true but understates the real gap — needs a new Invariant 16 permission/latency guard (least-privilege roles silently fail ACCOUNT_USAGE reads; views lag INFORMATION_SCHEMA by up to hours) or it will report false "zero lineage" for the recommended, common role posture |
 
 ## 7. Correctness Properties
 
@@ -1391,7 +1477,7 @@ just that the Cypher string is syntactically well-formed.
 | BH-1064 | feat: wire anomalies to walk the graph forward (closes BH-673) | Needs Refinement |
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
 | BH-1066 | feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed) | Needs Refinement, filed pass 5 — blocks BH-1064's enrichment from being human-visible, does not block BH-1064's own code |
-| BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8 — user-raised, confirmed cheaper than the Databricks adapter (reuses existing SnowflakeConnection, no new connection type) |
+| BH-1068 | feat: Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) | Needs Refinement, filed pass 8, **CORRECTED pass 45** — reuses existing SnowflakeConnection (no new connection type) but requires a permission/latency guard: the recommended least-privilege role posture already silently fails ACCOUNT_USAGE reads in this org's real Longaeva POC deployment (`#825`) |
 | BH-1069 | feat(lineage): brightbot call site for upsert_lineage_graph | Needs Refinement, filed pass 11 — formerly informal "BH-1063a," now its own trackable ticket |
 | BH-1070 | test: add missing unit/integration coverage for metric-snapshot.ts | Needs Refinement, filed pass 14 — pre-existing tech debt found while writing §10, non-blocking for this epic's own tickets |
 
