@@ -53,12 +53,14 @@ Frank-facing acceptance scenes (a broken nightly job, a legacy SQL Server with n
 installed on it, a recurring pipeline break) rather than DTOs and Protocols. This spec is the
 contract; that one is the proof the contract resolves something Frank actually asked for.
 
-**Two things are time-critical and NOT architecture work — do these first, in this order:**
-1. **BH-1057** (SQL Server demo fixture, ~3-5hrs, RDS Web edition, zero code changes) — the
-   literal Frank-committed demo scenario ("SQL server has no MCP... disk at 20%") has NO
-   staging infrastructure today. This blocks the actual 7/17 demo, not just this spec.
+**One of these is already done. The other still needs a one-time manual step:**
+1. **BH-1057** — **RESOLVED 2026-07-13.** The literal Frank-committed demo scenario ("SQL
+   server has no MCP... disk at 20%") now has a real, working fixture: a local Docker SQL
+   Server sandbox (`clients/trials/loopcapital/sandbox/`), replacing the original AWS RDS plan
+   to avoid a billable cloud resource. Built and verified end-to-end — see the sandbox's own
+   README for `./setup.sh`/`./validate.sh`.
 2. **BH-1058** (dbt failure fixture, ~1-2hrs, one-time UI setup) — needed for BH-1043's test,
-   less urgent than #1.
+   still open.
 
 **Everything else is architecture/implementation work, sequenced as**:
 `BH-1042 (contract) → {BH-1043 dbt, BH-1044 Databricks, BH-1054 watchdog} → {BH-1045 SQL
@@ -74,10 +76,11 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
 │  which appeared in the original pass-25 version                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 
-  DEMO-BLOCKING INFRA (zero code — human setup, still To Do as of pass 62):
-  BH-1057 (staging SQL Server, RDS Web edition, ~3-5hrs + GRANT VIEW SERVER STATE)
+  DEMO-BLOCKING INFRA (zero code — human setup):
+  BH-1057 — DONE 2026-07-13: local Docker SQL Server sandbox, built + verified, replaces the
+    original RDS Web edition plan (clients/trials/loopcapital/sandbox/)
   BH-1058 (dbt Cloud deliberate-failure fixture, ~XS, real RUNTIME error not compile-time)
-    — both REQUIRED before BH-1045/BH-1043's e2e cases can run against real infra
+    — still To Do; REQUIRED before BH-1043's e2e case can run against real infra
 
   BH-1042 (contract: PipelineSource Protocol, PIPELINE_SOURCE_ADAPTERS registry,
            PipelineHealthSignal DTO, get_pipeline_health MCP tool, §8 eval design)
@@ -1337,6 +1340,17 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     it is not free to assume or inherit PipelineHealthSignal's shape without saying so
     explicitly.`
 
+19. `BH-1043's dbt poller SHALL NOT emit a PipelineHealthSignal for a run that terminated with
+    dbt Cloud status 30 (Cancelled) — only status 20 (Error) or a staleness timeout SHALL
+    produce a signal. CRITICAL, found during a Loop Capital demo-readiness audit (2026-07-13):
+    `_fetch_run_status` (`dbt_cloud_tools.py:125-197`) already reads this exact status field
+    (`10 = Success, 20 = Error, 30 = Cancelled`, all three folded into one `terminal_statuses`
+    set), but nothing downstream branches on 20 vs 30 before deciding whether to alert. A
+    workspace where a human deliberately cancels a run mid-flight (a routine maintenance
+    action, not a failure) would otherwise trigger the SAME alert as a genuine error — directly
+    recreating Loop Capital's "cried wolf" trust problem this whole epic exists to close. This
+    is a status-code branch on an already-read field, not new capability.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1541,7 +1555,7 @@ Feature: Proactive pipeline & ingestion monitoring
 | Longitudinal Monitoring dispatcher/run_context pattern (GC-12, BH-670) | Blocking (pattern precedent) | Shipped + staging-verified; BH-670 confirmed fully wired 2026-07-10 (BH-768, PR #724) — closed precedent |
 | Self-Healing Pipelines surgical-PR loop (GC-11, BH-526) | Blocking (remediation consumer) | Draft spec, not yet built |
 | Existing WarehousePort BYOW connection mechanism (Snowflake/etc.) | Non-blocking (mechanism reused, not built here) | Live |
-| **BH-1057: staging BYOW SQL Server connection ITSELF (a real instance, not the mechanism)** | **BLOCKING for the 7/17 demo specifically** — no SQL Server exists to connect through the mechanism above | **RESOLVED-ACTIONABLE pass 15 — RDS Web edition, ~3-5hrs same-day, zero code changes (reuses SynapseConnection/pymssql), concrete runbook in BH-1057. Was CRITICAL/unscoped in pass 14, now well-scoped.** |
+| **BH-1057: a real SQL Server connection ITSELF (an instance, not the mechanism)** | **BLOCKING for the 7/17 demo specifically** — no SQL Server exists to connect through the mechanism above | **DONE 2026-07-13 — a local Docker sandbox (`clients/trials/loopcapital/sandbox/`), built + verified end-to-end, superseding the earlier RDS Web edition plan (avoids a billable cloud resource for a demo fixture). Zero code changes to `SynapseConnection`/pymssql either way.** |
 | BH-1058: dbt Cloud job with deliberate-failure capability | Blocking for BH-1043's §10 e2e case | **RESOLVED-ACTIONABLE pass 16, CORRECTED pass 27 — one-time human UI setup (~1-2 hrs): create a job + one env-var-toggled model, zero new brightbot code (mirrors BH-1057). CRITICAL fix pass 27: the toggle must trigger a genuine RUNTIME SQL error (e.g. `select 1/0`), NOT `raise_compiler_error` — a compile-time error has no SQL-diagnosable signature and would fail to exercise DATA_SHAPE classification, defeating this fixture's purpose.** |
 | dbt_cloud_tools.py, quality_tools.py on-demand tools | Non-blocking (reused as poll targets) | Live |
 | AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, SHARPENED pass 29 — not inferred, and now explicitly time-bounded) | LangGraph `StateGraph`/`add_node` unchanged by AgentCore's CURRENT leaf-runtime-only scope (`agentcore-deployment-migration.md`'s "Recommended Approach": only sub-agents — retrieval/analyst/governance/dbt — become AgentCore Container runtimes; the LangGraph Deep Agent SUPERVISOR remains the orchestration runtime) — safe to build on TODAY. **NOT a permanent guarantee**: CEMAF (`brightagent-v3`) is the CONFIRMED long-term supervisor replacement (`langgraph-cloud-detach.md:17,24`), using a structurally different `DAGExecutor` model, not `StateGraph`/`add_node` — this spec's watchdog capability nodes survive today's AgentCore leaf-runtime work unchanged, but would need a REAL redesign (as Goal/Result DTOs, per CEMAF's own migration notes, not a mechanical `add_node` port) once the supervisor layer itself migrates to CEMAF. Treat "unchanged by the migration" as scoped to AgentCore's current phase, not a claim about CEMAF's eventual arrival. |
@@ -1948,7 +1962,7 @@ unless noted):
 | BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 — **CORRECTED pass 25**: not pure verification if BH-1049/1050 choose Option A, since each lives in a different repo/runtime/mechanism (brightbot direct call, a Chalice Lambda's new HTTP call, an existing SNS→Slack-only path that may not reach NotificationInbox at all) | Needs Refinement (BH-1037), revised pass 25 — real conditional design work, not pure verification |
 | BH-1038–1041 | BrightRoutines MCP/A2A surface (BH-115) | Needs Refinement, unaffected by this spec — separate concern |
 | BH-1055 | infra: concurrency cap + fan-out load test for scheduled_agent_dispatcher | Needs Refinement, filed pass 11, sharpened with live AWS data pass 12-13 (BH-1036 for now; conceptually fits BH-171) |
-| BH-1057 | infra/fixture: provision staging BYOW SQL Server connection — the literal 7/17 demo scenario has zero infra today | Needs Refinement, filed pass 14 (CRITICAL), resolved-actionable with concrete runbook pass 15 (BH-1036) |
+| BH-1057 | infra/fixture: the literal 7/17 demo scenario's SQL Server target — **DONE 2026-07-13**: a local Docker sandbox, built + verified, superseding the earlier RDS plan | Needs Refinement in Jira (tracking only — the fixture itself is built), filed pass 14 (BH-1036) |
 | BH-1058 | infra/fixture: dbt Cloud job with deliberate-failure capability, for BH-1043's e2e case | Needs Refinement, filed pass 14, resolved-actionable pass 16, CORRECTED pass 27 — runbook's fixture mechanism must produce a genuine runtime SQL error, not a compile-time error (BH-1036) |
 | BH-1059 | track: scheduled_agent_dispatcher's LangGraph Cloud dependency unaddressed by AgentCore/CEMAF migration | Needs Refinement, filed pass 19, tracking placeholder (BH-453, correct epic home) |
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |

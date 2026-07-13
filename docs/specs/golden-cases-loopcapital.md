@@ -110,7 +110,8 @@ PIPELINE_SOURCE_ADAPTERS: dict[str, type[PipelineSource]] = {
 ### Invariants
 Inherits `proactive-pipeline-ingestion-monitoring.md` §3 Invariants 1 (dual-write), 3 (4-tuple
 cooldown key), 15 (renderer-required), 17 (exact `model_name`/`job_id`/`error`/`log_id` metadata
-keys) as the ones this GC's harness must assert against.
+keys), and 19 (cancelled runs never alert — added this pass) as the ones this GC's harness must
+assert against.
 
 ### Acceptance — Frank's real Monday morning
 
@@ -153,11 +154,12 @@ dual-write reaches BOTH brightbot-slack-server and brighthive-webapp Notificatio
 Webapp parity for the 4 detail fields (`model_name`/`job_id`/`error`/`log_id`) is currently UNBUILT
 (see Status today) — tracked as **BH-1087**, a real, scoped, 3-5-hour build, not an open design
 question. Until BH-1087 lands, this scenario's webapp claim is aspirational, not yet demoable;
-the Slack half is real once BH-1043/1046/1054 ship. The third
-scenario (cancelled-run suppression) is not yet specified in any invariant of the sibling spec —
-flagging as a real, currently-uncovered gap this GC's harness should assert once a
-`RUN_CANCELLED`-vs-`RUN_FAILED` distinction is added to `PipelineHealthSignal`'s contract, not
-something to claim as already proven.
+the Slack half is real once BH-1043/1046/1054 ship. **The third scenario (cancelled-run
+suppression) is now tracked, not an open gap**: added Invariant 19 to the sibling spec and a
+corresponding comment on BH-1043 — `_fetch_run_status` (`dbt_cloud_tools.py:125-197`) already
+reads dbt Cloud's real status taxonomy (`10=Success, 20=Error, 30=Cancelled`); the fix is a
+status-code branch on an already-read field, not new capability. Still unbuilt, like the rest
+of GC-14, but no longer zero-ticket.
 
 ### Validation
 Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_14_proactive_monitor_alert.py`
