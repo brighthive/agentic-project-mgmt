@@ -63,30 +63,47 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│  ADDED pass 25 (triple-click-zoom) — the full dependency graph, PUSH vs PULL   │
-│  options called out where this loop found a cheaper push-based alternative     │
+│  ADDED pass 25, REFRESHED pass 68 (triple-click-zoom) — full dependency graph, │
+│  PUSH vs PULL options + the infra/render gaps found in later passes, none of   │
+│  which appeared in the original pass-25 version                                │
 └────────────────────────────────────────────────────────────────────────────────┘
+
+  DEMO-BLOCKING INFRA (zero code — human setup, still To Do as of pass 62):
+  BH-1057 (staging SQL Server, RDS Web edition, ~3-5hrs + GRANT VIEW SERVER STATE)
+  BH-1058 (dbt Cloud deliberate-failure fixture, ~XS, real RUNTIME error not compile-time)
+    — both REQUIRED before BH-1045/BH-1043's e2e cases can run against real infra
 
   BH-1042 (contract: PipelineSource Protocol, PIPELINE_SOURCE_ADAPTERS registry,
            PipelineHealthSignal DTO, get_pipeline_health MCP tool, §8 eval design)
       │
-      ├──▶ BH-1043 (dbt watchdog — wraps EXISTING dbt_cloud_tools.py, adds backoff)
+      ├──▶ BH-1043 (dbt watchdog — wraps EXISTING dbt_cloud_tools.py, adds backoff;
+      │             needs BH-1058's fixture for its e2e case)
       ├──▶ BH-1044 (Databricks watchdog — GREENFIELD connector + credentials, mirrors
-      │             dbt's per-CONNECTION direct-boto3 secretsmanager pattern exactly)
+      │             dbt's per-CONNECTION direct-boto3 secretsmanager pattern exactly;
+      │             credential DESIGN resolved pass 24, code not yet built)
       └──▶ BH-1054 (watchdog capability node — rides EXISTING scheduled_agent_dispatcher,
                      owns the dual-write: per-member fanout + resolveSignal() derivation,
                      NOT a same-payload-twice call; cooldown keyed on (workspace_id,
-                     source_type, job_id, failure_type) — 4-tuple, not 3)
+                     source_type, job_id, failure_type) — 4-tuple, not 3; dbt_run_failure
+                     metadata MUST use exact model_name/job_id/error/log_id keys —
+                     Invariant 17, pass 64, or the ONE stage with a real renderer
+                     still renders near-blank)
              │
              ├──▶ BH-1045 (SQL Server disk/job query — existing WarehousePort/Synapse
              │             connection chain PLUS a NEW VIEW SERVER STATE grant, a real
-             │             customer-side permission action, not "zero new anything")
+             │             customer-side permission action, not "zero new anything";
+             │             needs BH-1057's fixture to demo against real infra)
              ├──▶ BH-1046 (delivery verify — dbt_run_failure ONLY, narrow scope,
-             │             does NOT duplicate BH-1067's 5-stage renderer work)
-             └──▶ BH-1047 (remediation — builds GC-11's loop for the FIRST time, since
-                           self-healing-pipelines.md is itself unbuilt; REMEDIATION_TOOLS
-                           via direct import, github_merge_pull_request omitted by
-                           construction, mirrors retrieval_agent_react.py's real pattern)
+             │             does NOT duplicate BH-1067's 5-stage renderer work; MUST
+             │             confirm the exact metadata field names above, pass 64)
+             ├──▶ BH-1047 (remediation — builds GC-11's loop for the FIRST time, since
+             │             self-healing-pipelines.md is itself unbuilt; REMEDIATION_TOOLS
+             │             via direct import, github_merge_pull_request omitted by
+             │             construction, mirrors retrieval_agent_react.py's real pattern)
+             └──▶ BH-1067 (CRITICAL, filed pass 35 — 5 of 6 new stage values have ZERO
+                           renderer on either Slack or webapp; the dual-write SUCCEEDS
+                           but nothing visible happens without this — same class of gap
+                           as GC-12's own confirmed dead-end, BH-1065/1066)
 
   BH-1048 (ingestion contract, separate from the job-status contract above)
       │
@@ -96,7 +113,10 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
       │             new brightbot poller from zero)
       ├──▶ BH-1050 (Step Functions — PUSH option confirmed cheaper: extend the LIVE
       │             data_ingestion_stack.py EventBridge rule already routing FAILED
-      │             executions to Slack via SNS, vs. a new execution-history poller)
+      │             executions to Slack via SNS, vs. a new execution-history poller;
+      │             a SEPARATE, unrelated silent-failure gap found in
+      │             dbt_validation_stack.py — flagged, deliberately NOT filed unless
+      │             a customer actually hits it, pass 22)
       └──▶ BH-1051 (queue/DLQ — THREE options, evaluate cheapest first: (a) extend
                     cadenceToCron [touches shared scheduling infra], (b) new scoped
                     EventBridge rule [also shared], (c) native CloudWatch Alarm on the
@@ -110,7 +130,9 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
                            since SNS→Slack alone doesn't touch the webapp today)
 
   Cross-cutting, non-blocking: BH-1053 (dual-write unification), BH-1055 (dispatcher
-  hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision)
+  hardening), BH-1059 (AgentCore migration tracking), BH-1060 (PII redaction decision,
+  now confirmed 4 sinks not 3 — pass 28), BH-1071 (NOTIFICATION_SYSTEM_PLAN.md stale
+  docs, blocked by BH-1053's real-vs-retire decision)
 ```
 
 **One open human decision, not resolved by this spec**: BH-1044 (Databricks) recommends
