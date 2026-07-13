@@ -157,11 +157,10 @@ before BH-1047 is built, since this changes BH-1047's contract):
    whether the human's merge worked — a new fix proposal after a failed one goes through the
    SAME human-approval gate as the first, not an autonomous retry.
 
-**New ticket needed** (not filed yet — flagging here first since it changes an existing
-ticket's contract): extend BH-1047's scope (or a dedicated follow-up) to add the `VERIFYING`
-cooldown state + the two-outcome poll logic above. This is the single most important open
-design gap in the whole Loop Capital chain as of this pass — everything else this session
-fixed was tracking/traceability; this is a genuine missing product behavior.
+**Filed: BH-1091.** Extends BH-1047's contract with the `VERIFYING` cooldown state + the
+two-outcome poll logic above. This was the single most important open design gap in the whole
+Loop Capital chain when found — everything else this session fixed was tracking/traceability;
+this is a genuine missing product behavior.
 
 ## Dependencies
 
@@ -179,7 +178,7 @@ fixed was tracking/traceability; this is a genuine missing product behavior.
 | Surgical-PR emission (reuse dbt scoped-PR path; surgical DDL only; no auto-merge) | brightbot | behavior + write-safety review |
 | Lineage/run-log read path | brightbot + platform-core | integ |
 | Trigger wiring (pipeline-failure event / anomaly) | brightbot | integ |
-| **Post-merge verification loop (`VERIFYING` cooldown state + two-outcome poll)** — new, not yet filed, see "Post-merge verification loop" above | brightbot | behavior + real-behavior (a merged fix's actual re-run result must be observed, not mocked) |
+| **Post-merge verification loop (`VERIFYING` cooldown state + two-outcome poll)** — **BH-1091**, see "Post-merge verification loop" above | brightbot | behavior + real-behavior (a merged fix's actual re-run result must be observed, not mocked) |
 | Flip GC-11 skip → live (4/4 modes → surgical PR on staging) | brightbot | full Gherkin / UAT |
 
 ## Related

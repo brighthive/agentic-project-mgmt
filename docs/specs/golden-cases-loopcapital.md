@@ -424,6 +424,14 @@ two-outcome re-detection (confirmed-fixed vs. recurred-and-escalated) — see
 is explicitly NOT an automatic retry loop; a second fix proposal after a failed one goes
 through the SAME human-approval gate as the first.
 
+**NOT demo-gating for 7/17, stated explicitly rather than left implicit**: BH-1091 is a
+production-robustness fix for what happens hours or days after a merge — the 7/17 demo window
+is far shorter than the cooldown periods this loop reasons about, so there's no realistic path
+for the demo itself to exercise "did the fix hold" within the demo's own timeframe. Mirrors the
+same explicit-not-demo-gating treatment given to the recurrence-prevention scenario above — the
+Bar for GC-16 as demoed is still "fast, reviewable fix, never auto-merged," unaffected by
+whether BH-1091 has shipped yet.
+
 ### Validation
 **Filed** (2026-07-13, brightbot PR #811): `brightbot/tests/integration/golden_cases/test_gc_16_fix_recurrence_surfacing.py`
 — `pytest.skip("BH-1047 not started; blocked on GC-17")` on the main test, plus a dedicated

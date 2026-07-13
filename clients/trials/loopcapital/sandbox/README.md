@@ -32,13 +32,15 @@ sandbox/
 │   ├── 01_create_database.sql   ← LoopCapitalAM DB + holdings_raw (Asset Management shape)
 │   └── 02_create_agent_jobs.sql ← 2 SQL Server Agent jobs: one Succeeded, one Failed
 ├── ssis/
-│   └── Extract_Holdings_Nightly.dtsx ← real SSIS package feeding holdings_raw (Track A's ask)
+│   ├── Extract_Holdings_Nightly.dtsx     ← Loop-specific SSIS package feeding holdings_raw
+│   └── Create_AssetManagement_MySQL.dtsx ← generic sample, MySQL-targeted, unrelated to GC-15
 ├── ssrs/
 │   └── Holdings_Daily_Report.rdl     ← real SSRS report reading holdings_raw (first .rdl in this org)
-├── setup.sh                ← idempotent: start container → seed → create jobs → fill disk
+├── setup.sh                ← idempotent: start container → Agent check → seed (via reset.py)
+├── reset.py                ← tear down to ground zero + reseed against a named scenario
 ├── fill_disk.sh            ← pushes the fixed-size data volume toward ~18-20% free
 ├── profile_warehouse.py    ← real profiler run against holdings_raw (row/null/cardinality stats)
-└── validate.sh             ← runs BH-1045's real query text, asserts non-empty results
+└── validate.sh             ← runs BH-1045's real query text, asserts actual content (not just non-empty)
 ```
 
 ## SSIS/SSRS artifacts
