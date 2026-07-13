@@ -880,10 +880,26 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    WarehouseConnectionFactory.create_connection() (warehouse_connections.py:1241) →
    .connection.execute_query(sql) (warehouse.py:510) runs the DMV query. Existing consumers
    of this exact pattern: sv_qc_tools.py:114, workflow_agent/tools.py:174 — follow their
-   usage, don't reinvent. **Known gap**: no dedicated SQL-Server dialect class exists today
-   (SynapseConnection is the nearest match, Azure Synapse dialect, not true SQL Server) — this
-   spec's BH-1045 must add one (or confirm Synapse's dialect is close enough for
-   sys.dm_os_volume_stats specifically) before this invariant is satisfiable end-to-end.
+   usage, don't reinvent. **RESOLVED pass 41 (triple-click-zoom) — the "known gap" below was
+   framed as an open question ("must add a class or CONFIRM Synapse's dialect is close
+   enough"); now definitively confirmed, not merely assumed.** `SynapseConnection`
+   (`warehouse_connections.py:248-309`) is, AS WRITTEN TODAY, a generic pymssql/T-SQL client
+   with ZERO Azure/Synapse-exclusive requirements: no hostname pattern validation anywhere
+   (confirmed by grep — zero checks for `.database.windows.net`/`.sql.azuresynapse.net` in
+   `WarehouseConnectionFactory.create_connection()` or the class itself), plain SQL-auth
+   `user`/`password` (no Azure-AD-only mode enforced), a generic port/TLS/tds_version
+   negotiation with fallback logic that's pure pymssql/FreeTDS compatibility handling, not
+   an Azure-only path. No Synapse-pool-specific SQL dialect assumptions exist anywhere in
+   the class or its shared helpers (`_ansi_list_tables` uses plain ANSI
+   `INFORMATION_SCHEMA` joins, no `sys.pdw_*`/`sys.dm_pdw_*`/`CREATE TABLE ... WITH
+   (DISTRIBUTION=...)` anywhere). The ONE Synapse-named constant that exists
+   (`_SYNAPSE_SYSTEM_SCHEMAS = {"information_schema", "sys"}`, `warehouse_base.py:340`) is
+   confirmed introspection-ONLY (filters `list_tables()`'s customer-facing table listing) —
+   it has ZERO reference inside `execute_query()`, which has its own independent,
+   schema-name-blind guard (keyword-prefix + no-semicolon). A direct `SELECT ... FROM
+   sys.master_files ...`/`msdb.dbo.sysjobs` query is UNAFFECTED by this constant. **NO new
+   dialect class is needed — `SynapseConnection` connects to and queries a real RDS SQL
+   Server with zero code changes, confirmed, not assumed.**
    **SECOND KNOWN GAP, found pass 12 (triple-click-zoom), CRITICAL — the "no new
    connectivity, protocol, or on-host software" claim is TRUE but INCOMPLETE, missing a
    permission grant.** Confirmed against platform-core: EVERY BYOW connection type's real
