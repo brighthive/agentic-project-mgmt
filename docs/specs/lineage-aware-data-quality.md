@@ -462,10 +462,11 @@ real file:line or an already-verified invariant — nothing here is aspirational
   │DbtLineage-   │  │DatabricksLineage- │  │SnowflakeNative-     │  ◀── each is a thin
   │Source        │  │Source (greenfield,│  │LineageSource (needs │      TRANSLATION layer,
   │(BH-1062,     │  │needs new          │  │a permission/latency │      not new fetch logic —
-  │REAL today)   │  │WarehouseType +    │  │guard, pass 45 —     │      each maps its OWN
-  │              │  │connector, BH-1044)│  │least-privilege roles│      engine's shape onto
-  │              │  │                   │  │silently fail        │      ONE shared shape below
-  └──────┬───────┘  └─────────┬─────────┘  │ACCOUNT_USAGE, pass 16)│
+  │REAL today)   │  │WarehouseType +    │  │guard — Invariant 16,│      each maps its OWN
+  │              │  │connector, BH-1044)│  │pass 45: least-      │      engine's shape onto
+  │              │  │                   │  │privilege roles      │      ONE shared shape below
+  └──────┬───────┘  └─────────┬─────────┘  │silently fail         │
+         │                    │            │ACCOUNT_USAGE)        │
          │                    │            └──────────┬──────────┘
          └────────────────────┴───────────────────────┘
                                │
