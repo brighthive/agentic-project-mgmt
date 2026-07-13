@@ -196,16 +196,22 @@ confirmed against real code, not assumed.
   on `drchinca/BH-1061/triple-click-zoom-pass-38`. Opened fresh after #97 merged (crossed the
   900-line split threshold); ongoing verification passes land here until it's next merged.
 
-## Two things that must happen before 7/17, not yet done
+## Things that must happen before 7/17, not yet done
 
-**RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
-Jira status + real code, not carried forward from an earlier pass's note:**
+**RE-VERIFIED pass 62 (2026-07-12) — all still genuinely open, checked fresh against live
+Jira status + real code, not carried forward from an earlier pass's note. Updated from "two
+things" to the real current count.**
 
 1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
-   demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs). **Not yet
-   executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead from Kuri
-   (this is a real, billable AWS resource).
-2. **BH-1047's safety fix** — the remediation loop's tool-binding must exclude
+   demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs, fully
+   detailed in BH-1057's own ticket, including the required `GRANT VIEW SERVER STATE` step).
+   **Not yet executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead
+   from Kuri (this is a real, billable AWS resource).
+2. **BH-1058** — the dbt Cloud deliberate-failure fixture BH-1043's e2e case depends on.
+   Re-checked pass 62: still `To Do`; the fix itself (a genuine runtime SQL error, not a
+   compile-time `raise_compiler_error`) is already correctly specified in the ticket, just not
+   yet executed — a one-time human dbt Cloud UI setup, ~XS effort, not code.
+3. **BH-1047's safety fix** — the remediation loop's tool-binding must exclude
    `github_merge_pull_request` at the code level. Re-confirmed pass 51: `github_merge_pull_request`
    (`github_tools.py:503-560`) is still fully bound into `dbt_agent_react.py`'s live
    `DBT_REACT_TOOLS` list with zero exclusion logic anywhere in the repo — "never auto-merge"
@@ -217,6 +223,8 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    self-healing loop itself has zero code today either (`test_gc_11_self_healing.py` is a
    literal `pytest.skip("GC-11: GAP-7")` stub) — this ticket builds new orchestration, it is
    not merely closing a gap in existing code.
+4. **Confirm Loop Capital's real dbt Cloud connection count (pass 62, new)** — see Open
+   Blocker #5 below. A small, concrete pre-demo check, not yet done.
 
 ## Open Blockers
 
