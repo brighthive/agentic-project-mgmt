@@ -467,6 +467,90 @@ GC-16.
 
 ---
 
+## Init state → injected problem → expected result, per GC (added on review — visual, not just prose)
+
+Each diagram shows the SAME three-stage shape: what the sandbox/environment looks like before
+anything happens, what gets deliberately broken (either by `reset.py --scenario X` or by a real
+human action Frank's team would take), and exactly what BrightHive is expected to produce once
+its code lands — not what it produces today (all 4 are still zero-code, per Status today above).
+
+### GC-14 — Proactive monitor/detect/alert loop
+
+```
+INIT STATE                       INJECTED PROBLEM                 EXPECTED RESULT (once built)
+──────────                       ────────────────                 ─────────────────────────────
+Nightly Asset Mgmt dbt      →    Source table changes shape   →   Within 15 min: Slack message
+job running clean, no            mid-run — a real transform        naming job/model/error in
+alerts, nobody watching           error (not a mock)                #brighthive-ops
+                                                                    AND same detail on webapp
+reset.py --scenario                                                Notifications (BH-1087)
+  baseline (no drift)
+                                  Retry fires again <1hr later  →   ONE alert for the incident,
+                                  (same failure, same job)          not one per retry (Invariant 3)
+
+                                  Human cancels a run           →   NO alert — Cancelled (status
+                                  deliberately (maintenance)         30) != Error (status 20),
+                                                                    per Invariant 19
+```
+
+### GC-15 — SQL Server disk-space monitoring with no MCP
+
+```
+INIT STATE                       INJECTED PROBLEM                 EXPECTED RESULT (once built)
+──────────                       ────────────────                 ─────────────────────────────
+sandbox/ container running, →    reset.py --scenario          →   Within 15 min: alert naming
+LoopCapitalAM at ~90% free         disk-pressure (fill_disk.sh       the SQL Server instance +
+(system DBs untouched,             pushes LoopCapitalAM's OWN        real percent_free, BEFORE
+confirmed by validate.sh)          tmpfs mount to ~18% free)         an SSIS job fails from lack
+                                                                    of disk (BH-1045)
+NO MCP/agent/BrightHive
+software installed on the                                          Frank's IT team can verify
+container — confirmed, this                                        nothing was installed to
+is the exact posture Frank                                         make this possible
+doubted was possible
+```
+
+### GC-16 — Fix-recurrence surfacing via surgical PR
+
+```
+INIT STATE                       INJECTED PROBLEM                 EXPECTED RESULT (once built)
+──────────                       ────────────────                 ─────────────────────────────
+holdings_raw seeded clean,  →    reset.py --scenario          →   GC-14's watchdog detects the
+2000 rows, quantity always        type-drift (appends a row         drift, classifies it
+a native DECIMAL                  where quantity was written        DATA_SHAPE, opens a PR with
+                                   in a way that simulates a         a plain-language diagnosis
+GC-17 (auto-merge                 NUMBER->FLOAT source drift)        — human reviews + merges,
+exclusion) already                                                  BrightAgent never does
+verified PASS — running
+this without that check                                            NOT claimed yet (future
+would be unsafe                                                     scope): the SAME drift not
+                                                                    breaking the pipeline a
+                                                                    SECOND time after the fix
+                                                                    merges — needs new
+                                                                    root_cause_class
+                                                                    sub-classification, no
+                                                                    ticket filed
+```
+
+### GC-17 — Auto-merge exclusion (safety precondition)
+
+```
+INIT STATE                       INJECTED PROBLEM                 EXPECTED RESULT (once built)
+──────────                       ────────────────                 ─────────────────────────────
+dbt_agent_react.py's         →    A misclassified signal, a    →   The merge attempt fails —
+DBT_REACT_TOOLS today INCLUDES    bad prompt, or a genuine          NOT because the model
+github_merge_pull_request —       model error causes the            declined, but because
+confirmed by direct code          remediation loop to ATTEMPT       REMEDIATION_TOOLS never
+read, zero exclusion logic        a merge                           bound the tool in the
+anywhere                                                           first place — a code-level
+                                                                    fact, verifiable by static
+No REMEDIATION_TOOLS list                                          inspection (test_gc_17_
+exists yet — this IS the                                           remediation_tools_excludes_
+gap GC-17 closes                                                   merge_by_construction)
+```
+
+---
+
 ## Per-GC harness layout (FILED — brightbot PR #811, mirrors brightbot's existing convention)
 
 ```
@@ -481,6 +565,35 @@ All 4 files now exist (brightbot PR #811, 2026-07-13) — 16 tests total (4 main
 tests + 12 documented sub-case stubs), verified to collect and skip cleanly under pytest. The
 `pytest.skip` reason strings are CI-visible tracking even with zero implementation; each stub's
 docstring names the exact assertion it will make once its blocking ticket lands.
+
+## Full traceability matrix — every piece of work, one owning ticket
+
+The point: nothing in this spec should be "just an idea" by the time a reader gets here — every
+row below either has a real Jira ticket driving it, or is explicitly marked as a documented,
+intentional gap (not an oversight). Built from this spec's own citations, cross-checked against
+live Jira, not assumed.
+
+| Piece of work | Owning ticket | Jira status (2026-07-13) | Test stub |
+|---|---|---|---|
+| `PipelineSource` Protocol, `PipelineHealthSignal` DTO, registry | BH-1042 | Needs Refinement | — (contract, not directly tested) |
+| dbt Cloud job/run poller + root-cause classifier | BH-1043 | Needs Refinement | `test_gc_14_*` sub-cases |
+| Disk/job-status query logic (SQL Server) | BH-1045 | Needs Refinement | `test_gc_15_*` sub-cases |
+| Dual-write alert path (Slack + webapp) | BH-1046 | Needs Refinement | `test_gc_14_dbt_run_failure_dual_write_real_content` |
+| Auto-remediation loop + auto-merge exclusion | BH-1047 | Needs Refinement | `test_gc_16_*`, `test_gc_17_*` |
+| Watchdog node registration on scheduled dispatcher | BH-1054 | Needs Refinement | `test_gc_14_retry_storm_suppressed_by_cooldown_key` |
+| SQL Server demo fixture | BH-1057 | Needs Refinement in Jira (tracking only) — **the fixture itself is DONE**, built + verified this session | `clients/trials/loopcapital/sandbox/` (not a pytest file — a real running environment) |
+| dbt Cloud deliberate-failure fixture | BH-1058 | To Do | (feeds BH-1043's e2e case, no separate GC stub) |
+| Renderers for 5-of-6 stage values | BH-1067 | Needs Refinement (AC added this session) | (feeds `test_gc_14_*`, no separate GC stub) |
+| `dbt_run_failure` webapp detail parity | BH-1087 | Needs Refinement (filed this session) | `test_gc_14_dbt_run_failure_dual_write_real_content` |
+| Cancelled-run suppression (Invariant 19) | BH-1043 (comment added) | folded into BH-1043 scope | `test_gc_14_cancelled_run_never_alerts` |
+| Cross-GC precondition check (GC-16 needs GC-17 PASS) | **NONE — documented gap, not a ticket** | N/A | `test_gc_16_requires_gc_17_pass_as_precondition` (stub only; harness doesn't support this yet) |
+| Recurrence-PREVENTED (not just re-detected) | **NONE — documented future scope, no ticket filed** | N/A | `test_gc_16_recurrence_actually_prevented_not_just_redetected` (`xfail(strict=False)`) |
+| Multi-connection disambiguation, 2nd real SQL Server instance | Invariant 16 (proactive-pipeline spec) — no dedicated ticket beyond BH-1045 | covered under BH-1045 | `test_gc_15_multi_connection_disambiguation_invariant_16` (needs a 2nd sandbox instance, not yet built) |
+
+**Two rows above are honest, intentional gaps, not oversights** — the cross-GC precondition
+check and the recurrence-prevention capability are both explicitly flagged elsewhere in this
+spec as out of scope for 7/17, with the reasoning already given in each GC's own section. Listing
+them here is what makes the "no ticket" claim auditable rather than just asserted.
 
 ## Relationship to Longaeva's Golden Cases
 
