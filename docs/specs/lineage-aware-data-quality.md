@@ -1634,6 +1634,22 @@ async def find_downstream_impact(
     — mirroring dbt's own real namespacing convention ("model.<project>.<name>") rather than
     reusing bare object names.`
 
+23. `WHEN BH-1074's DatabricksLineageSource adapter queries Unity Catalog's system.access.*
+    tables, THE System SHALL distinguish a genuine "no lineage found" result from a
+    permission failure ("system.access is not enabled for this workspace's Unity Catalog
+    metastore, or the connected credential lacks SELECT on it"). ADDED pass 78 — Invariant
+    16 formalized this exact guard for Snowflake (BH-1068) as a spec Invariant, but the
+    equivalent Databricks requirement had only ever lived in BH-1074's Jira Acceptance
+    Criteria, never promoted to a §3 Invariant — an asymmetry between the two sibling
+    adapters worth closing for consistency. `system.access.table_lineage`/`column_lineage`
+    are confirmed (§1 Hard Limitations, pass 7) to be DISABLED BY DEFAULT, requiring a
+    separate admin action to enable the schema and grant SELECT — structurally the SAME
+    class of admin-gated, disabled-by-default risk as Snowflake's IMPORTED PRIVILEGES gap,
+    just a different specific gate. An adapter that silently returns an empty LineageGraph
+    when system.access is unavailable would be indistinguishable from "this table genuinely
+    has no dependencies" — the same false-negative risk Invariant 16 guards against for
+    Snowflake, now formalized identically here.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
