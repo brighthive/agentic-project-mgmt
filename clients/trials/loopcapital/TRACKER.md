@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 16:23 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 16:29 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -120,6 +120,16 @@ _Real work, correctly scoped OUT of the 7/17 critical path — don't let these s
 | ⬜ | Post-demo | BH-1060 customer-PII redaction decision for diagnosis text across ALL 4 real sinks (Slack, webapp inbox, GitHub PR body, AND CloudWatch audit logs via @audit_action — the 4th sink confirmed pass 28, not in the original 3-sink framing); scrub_text() only catches secret shapes (JWT/API-key/etc.), not PII values — non-blocking for 7/17, real gap before production customer data | [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) |
 | ⬜ | Post-demo | BH-1037/1048-1052 ingestion observability (Airbyte/Step-Functions/queue watchdogs) — not named in Frank's 3 points, build after Track B lands | [BH-1048](https://brighthiveio.atlassian.net/browse/BH-1048), [BH-1049](https://brighthiveio.atlassian.net/browse/BH-1049), [BH-1050](https://brighthiveio.atlassian.net/browse/BH-1050), [BH-1051](https://brighthiveio.atlassian.net/browse/BH-1051), [BH-1052](https://brighthiveio.atlassian.net/browse/BH-1052) |
 | ⬜ | Post-demo | BH-115/1038-1041 BrightRoutines MCP/A2A surface — separate concern, unaffected by Track B | [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038), [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039), [BH-1040](https://brighthiveio.atlassian.net/browse/BH-1040), [BH-1041](https://brighthiveio.atlassian.net/browse/BH-1041) |
+
+### Track E — Agentic SQL Server profiling & DB-level quality health checks (proposed, added pass 81, user-raised) (0/0 🟢)
+
+_Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, connect MCP against Microsoft SQL Server so a legacy DB can be agentically identified, scanned, and quality-health-checked — a PROFILER at the DB/warehouse level, not just per-table. Verified: most plumbing already exists (SynapseConnection already connects to bare SQL Server with zero code changes; introspect_warehouse_schema already does warehouse-level table discovery with no pre-registered DataAssetNode needed) but the profiler/quality- check layer is entirely asset-ID-gated today — no "point it at a whole DB" mode exists, and discovery + profiling are never chained end to end. See docs/specs/proactive-pipeline-ingestion-monitoring.md's new "Track E" section for full detail. NOT yet filed as concrete tickets — naming/scope questions (is SQL Server a distinct WarehouseType, or a reuse of azure_synapse's connector?) need an explicit answer first._
+
+| | Day | Outcome | Linked |
+|---|---|---|---|
+| 🔲 | Post-demo | Scope decision: new sql_server WarehouseType member vs. reusing azure_synapse's connector under a new discriminator — a naming/product decision, not yet made | _manual_ |
+| 🔲 | Post-demo | New orchestration chaining introspect_warehouse_schema (discovery) -> per-table profiling (quality_check_agent/analyze_dataset_structure) for tables with no pre-registered DataAssetNode | _manual_ |
+| 🔲 | Post-demo | A new DB-level (not per-table) summary report shape — today's profiler output is always per-asset, never rolled up | _manual_ |
 
 
 ## 🏁 Who's done what
