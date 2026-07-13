@@ -123,9 +123,9 @@ assumption. Full detail below in [Capability Coverage](#capability-coverage-summ
 
 | Workstream | Coverage | Key Caveat |
 |---|---|---|
-| Legacy pipeline diagnostics (SSIS/SSRS/storage) | PARTIAL — already demoed 7/9, but **corrected 2026-07-12 (pass 7)**: prompt-only, no deterministic parser for either format; SSIS has 2 toy fixtures, SSRS has zero; no live SQL Server (`msdb`/`ReportServer`) connection exists | If Loop Capital asks to monitor a REAL legacy SQL Server's SSIS/SSRS catalog (not just diagnose an uploaded file), that is new, unscoped work — no such connection path exists today |
+| Legacy pipeline diagnostics (SSIS/SSRS/storage) | PARTIAL, **updated 2026-07-13**: brightbot's own diagnostics skills are still prompt-only (no deterministic parser for either format, confirmed 2026-07-12); but the demo sandbox now has a REAL `.dtsx` (`Extract_Holdings_Nightly.dtsx`) and the first real `.rdl` anywhere in this org (`Holdings_Daily_Report.rdl`), both querying a real running SQL Server — `clients/trials/loopcapital/sandbox/ssis/`, `.../ssrs/` | If Loop Capital asks to monitor a REAL PRODUCTION legacy SQL Server's SSIS/SSRS catalog (not this sandbox), that remains new, unscoped work |
 | Proactive pipeline monitoring (dbt/Databricks/ETL job-status) | IN PROGRESS | Architecture + tickets complete; BH-1043 (dbt) closest to buildable, BH-1044 (Databricks) has an open storage-model decision |
-| SQL-Server-with-no-MCP disk/job monitoring | IN PROGRESS, demo-blocking gap identified | Real technical answer exists (query via existing warehouse-connection machinery, no new protocol) — but **no staging SQL Server fixture is provisioned yet** (BH-1057, runbook ready, ~3-5hrs, not yet executed) |
+| SQL-Server-with-no-MCP disk/job monitoring | IN PROGRESS, fixture BUILT + verified | **Updated 2026-07-13**: BH-1057 is now a local Docker sandbox (not AWS RDS) — built, tested end-to-end, real disk/job queries return real data. BH-1045's own watchdog query logic is the remaining zero-code gap, not the fixture. |
 | Ingestion/source-sync proactive health | IN PROGRESS | BH-1048–1052 scoped; Airbyte/Step-Functions pollers are greenfield (no existing tool to wrap) |
 | Multi-channel surfacing (Slack + webapp) | REAL, verified against live code | Email/SES channel confirmed dead/unbuilt — Slack+webapp is the actual complete channel set today |
 | Fix-recurrence surfacing (Frank's ask #3) | PARTIAL | Self-healing surgical-PR loop (GC-11) is the mechanism; wiring is BH-1047, with a P0 safety fix required (see below) |
@@ -235,11 +235,11 @@ things" to the real current count.**
 **RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
 Jira status + real code, not carried forward from an earlier pass's note:**
 
-1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
-   demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs, fully
-   detailed in BH-1057's own ticket, including the required `GRANT VIEW SERVER STATE` step).
-   **Not yet executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead
-   from Kuri (this is a real, billable AWS resource).
+1. **BH-1057** — **RESOLVED 2026-07-13, no longer an open blocker.** Replaced the RDS plan with a
+   local Docker sandbox (`clients/trials/loopcapital/sandbox/`) — no billable AWS resource needed,
+   no go-ahead required. Built and verified end-to-end: real disk-check + job-status queries
+   return real data (18% free, one real Succeeded + one real Failed job run). Run `./setup.sh`
+   before the demo, `./validate.sh` to confirm.
 2. **BH-1058** — the dbt Cloud deliberate-failure fixture BH-1043's e2e case depends on.
    Re-checked pass 62: still `To Do`; the fix itself (a genuine runtime SQL error, not a
    compile-time `raise_compiler_error`) is already correctly specified in the ticket, just not
@@ -263,7 +263,7 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 
 | # | Blocker | Owner | Raised | Resolved |
 |---|---|---|---|---|
-| 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | — |
+| 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | **2026-07-13** — Docker sandbox built + verified, replaces AWS RDS plan |
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | — |
 | 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |

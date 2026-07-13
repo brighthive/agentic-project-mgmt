@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Loop Capital's real nightly SSIS extract, standing in for the client's
+  production package. Targets THIS sandbox's LoopCapitalAM.dbo.holdings_raw
+  (sql/01_create_database.sql) — closing the loop between the sandbox's real
+  SQL Server and a real SSIS artifact, per the client's own POC scope ask
+  ("a representation of Loop data model — Asset Management").
+  Deliberately simple (mirrors brightbot's existing toy fixtures'
+  ~100-130-line scale) — the point is a REAL .dtsx a diagnostics skill can
+  parse, not a production-scale package.
+-->
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorName="LoopCapital-AssetManagement"
+  DTS:DTSID="{A1B2C3D4-0001-4E5F-9001-000000000001}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="Extract_Holdings_Nightly"
+  DTS:PackageType="5"
+  DTS:VersionBuild="1">
+
+  <DTS:Property DTS:Name="PackageFormatVersion">8</DTS:Property>
+
+  <!-- ============================================================= -->
+  <!-- CONNECTION MANAGERS — source custodian feed + this sandbox's  -->
+  <!-- SQL Server (docker-compose.yml, LoopCapitalAM database)       -->
+  <!-- ============================================================= -->
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Src_CustodianFeed]"
+      DTS:CreationName="FLATFILE"
+      DTS:DTSID="{A1B2C3D4-0002-4E5F-9001-000000000002}"
+      DTS:ObjectName="Src_CustodianFeed">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="\\loopcap-fileserver\custodian-drops\holdings_daily.csv" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Tgt_LoopCapitalAM]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{A1B2C3D4-0003-4E5F-9001-000000000003}"
+      DTS:ObjectName="Tgt_LoopCapitalAM">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Data Source=localhost;Initial Catalog=LoopCapitalAM;Provider=SQLNCLI11;Integrated Security=SSPI;" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <!-- ============================================================= -->
+  <!-- CONTROL FLOW: extract custodian CSV -> holdings_raw            -->
+  <!-- ============================================================= -->
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\DFT Extract Holdings"
+      DTS:CreationName="Microsoft.Pipeline"
+      DTS:DTSID="{A1B2C3D4-0010-4E5F-9001-000000000010}"
+      DTS:ExecutableType="Microsoft.Pipeline"
+      DTS:ObjectName="DFT Extract Holdings"
+      DTS:Description="Reads the daily custodian holdings CSV and loads holdings_raw">
+      <DTS:ObjectData>
+        <pipeline>
+          <components>
+
+            <component
+              refId="Package\DFT Extract Holdings\Flat File Source Holdings"
+              componentClassID="Microsoft.FlatFileSource"
+              name="Flat File Source Holdings"
+              description="Reads the custodian's daily holdings drop">
+              <properties>
+                <property name="FlatFileConnectionManager">Src_CustodianFeed</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{A1B2C3D4-0002-4E5F-9001-000000000002}" />
+              </connections>
+              <outputs>
+                <output refId="Package\DFT Extract Holdings\Flat File Source Holdings.Outputs[Flat File Source Output]">
+                  <outputColumns>
+                    <outputColumn refId="portfolio_id" dataType="WSTR" length="20" />
+                    <outputColumn refId="instrument_id" dataType="WSTR" length="20" />
+                    <outputColumn refId="quantity" dataType="R8" />
+                    <outputColumn refId="as_of_date" dataType="DBDATE" />
+                  </outputColumns>
+                </output>
+              </outputs>
+            </component>
+
+            <!-- Known real gap in this package (intentional, for diagnostics
+                 skills to find): no data-type validation or error redirect on
+                 the quantity column — a source drift from an integer-shaped
+                 quantity to a decimal one (the GC-16 demo scenario) passes
+                 through silently until the destination's constraint fails. -->
+            <component
+              refId="Package\DFT Extract Holdings\OLE DB Destination Holdings"
+              componentClassID="Microsoft.OLEDBDestination"
+              name="OLE DB Destination Holdings"
+              description="Inserts extracted rows into LoopCapitalAM.dbo.holdings_raw">
+              <properties>
+                <property name="OpenRowset">dbo.holdings_raw</property>
+                <property name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{A1B2C3D4-0003-4E5F-9001-000000000003}" />
+              </connections>
+            </component>
+
+          </components>
+          <paths>
+            <path name="Source to Destination"
+              startId="Package\DFT Extract Holdings\Flat File Source Holdings"
+              endId="Package\DFT Extract Holdings\OLE DB Destination Holdings" />
+          </paths>
+        </pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+
+</DTS:Executable>

@@ -109,14 +109,14 @@ phases:
       "this is not live" reaction on 2026-07-09. Golden Case:
       docs/specs/golden-cases-loopcapital.md#GC-15.
     expectations:
-      - day: "T-5"
-        outcome: "BH-1057 SQL Server provisioned in staging (RDS Web edition — NOT Express, no SQL Server Agent otherwise)"
+      - day: "T-5 — DONE 2026-07-13"
+        outcome: "BH-1057: local Docker SQL Server sandbox built + verified (clients/trials/loopcapital/sandbox/), replaces the original AWS RDS plan. SQL Server Agent enabled via MSSQL_AGENT_ENABLED, no billable resource needed."
         linked: [BH-1057]
       - day: "T-4"
         outcome: "BH-1045 disk/job query wired through existing WarehousePort/SynapseConnection chain — zero new connectivity"
         linked: [BH-1045]
-      - day: "T-3"
-        outcome: "Demo data seeded: real filler data landing near 20% free space, real SQL Server Agent jobs (mix of pass/fail)"
+      - day: "T-3 — DONE 2026-07-13"
+        outcome: "Demo data seeded: sandbox's fill_disk.sh verified real ~18% free space, real SQL Server Agent jobs (one real Succeeded, one real Failed run) — run ./setup.sh before the demo"
         linked: [BH-1057]
       - day: "T-2"
         outcome: "Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever. Requires BH-1067's source_disk_low renderer to actually show text (detection without it is silent)."
@@ -153,7 +153,7 @@ phases:
       "this is not live" reaction.
     expectations:
       - day: "T-1 (2026-07-16)"
-        outcome: "All 3 points demoed live: watchdog detects a real dbt failure; SQL Server disk-low alert fires from a real RDS instance; a surgical PR opens and is shown NOT auto-merging"
+        outcome: "All 3 points demoed live: watchdog detects a real dbt failure; SQL Server disk-low alert fires from the real Docker sandbox; a surgical PR opens and is shown NOT auto-merging"
       - day: "T-1"
         outcome: "Demo script + talking points finalized (Suzanne/Matt)"
 

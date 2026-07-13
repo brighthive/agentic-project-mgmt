@@ -1,0 +1,46 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: loopcapital-sql-sandbox
+    platform: linux/amd64 # no native arm64 image; Rosetta/QEMU on Apple Silicon
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD before starting}
+      # SQL Server Agent is OFF by default in this image — without this,
+      # msdb.dbo.sysjobs/sysjobhistory exist but stay empty, and GC-15's
+      # job-status query returns nothing. Confirmed via research, not assumed.
+      MSSQL_AGENT_ENABLED: "true"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      # System/config volume — unbounded, holds SQL Server's own install +
+      # msdb/master. Kept separate from the fixed-size data volume below so
+      # the disk-space demo has one predictable volume to fill, not the
+      # whole SQL Server install.
+      - loopcapital-mssql-system:/var/opt/mssql
+      # Fixed-CAPACITY tmpfs mount for the actual data files. sys.dm_os_
+      # volume_stats reports THIS mount's real free space — a plain bind
+      # mount or default Docker volume has no size cap and won't show
+      # "20% free" on its own. tmpfs with a `size` option is the portable
+      # way to get a real, fixed-size volume we can deliberately fill —
+      # works identically on Docker Desktop (Mac/Windows, Linux VM
+      # under the hood) and native Linux hosts.
+      - type: tmpfs
+        target: /var/opt/mssql/data
+        tmpfs:
+          size: ${LOOPCAPITAL_DATA_VOLUME_BYTES:-2147483648} # 2GiB default
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  loopcapital-mssql-system:
+    driver: local

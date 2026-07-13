@@ -31,7 +31,7 @@ related:
 | GC | Title | Bar | Status today | Demo-gating? |
 |---|---|---|---|---|
 | GC-14 | Proactive monitor/detect/alert loop | Frank's ops team learns their nightly Asset Management dbt job broke BEFORE a portfolio manager asks why the SSRS holdings report looks wrong — via Slack + webapp, without anyone asking BrightAgent first | spec landed (BH-1042/1043/1046/1054/1087), zero code — webapp detail-parity (BH-1087) is a real, scoped 3-5hr build, not an open question | **Yes — 7/17** |
-| GC-15 | SQL Server disk-space monitoring with no MCP | BrightAgent catches Loop's legacy SQL Server running low on disk — the exact box Frank said has no MCP and no BrightHive software installed — before SSIS jobs start failing from lack of space | spec landed (BH-1045), BH-1057 fixture not provisioned, zero code | **Yes — 7/17** |
+| GC-15 | SQL Server disk-space monitoring with no MCP | BrightAgent catches Loop's legacy SQL Server running low on disk — the exact box Frank said has no MCP and no BrightHive software installed — before SSIS jobs start failing from lack of space | spec landed (BH-1045), fixture BUILT + verified working (`clients/trials/loopcapital/sandbox/`, Docker SQL Server — replaces the original AWS RDS plan), BH-1045's own disk/job-status logic still zero code | **Yes — 7/17** |
 | GC-16 | Fix-recurrence surfacing via surgical PR | when the same class of pipeline break recurs, Frank's team gets a reviewable PR with a plain-language diagnosis instead of re-diagnosing from scratch — they merge it, BrightAgent never does | spec landed (BH-1047 reuses GC-11's mechanism), zero code, **BLOCKED on GC-17** | **Yes — 7/17** |
 | GC-17 | Auto-merge exclusion (safety precondition) | there is no code path by which BrightAgent can merge its own fix into Loop's pipeline — the one failure mode that would turn "careful digital coworker" into "software that changes our data without asking," and lose the deal | **CRITICAL, no code** — confirmed `github_merge_pull_request` still bound into `dbt_agent_react.py`'s `DBT_REACT_TOOLS` (brightbot, `dbt_agent_react.py`) | Gates GC-16, not independently demoed |
 
@@ -175,11 +175,21 @@ must run against a real SQL Server instance, not a mock (per `test-behavior-real
 mocked page is exactly what triggered his "this is not live" reaction on 2026-07-09.
 
 ### Status today
-**Spec landed, zero code, fixture not provisioned.** BH-1045 (disk/job query wired through the
-existing `WarehousePort`/`SynapseConnection` chain — confirmed zero new connectivity code needed,
-per `warehouse_connections.py:248-424`) is specified but unbuilt. BH-1057 (real staging SQL Server,
-RDS Web edition) is still `To Do` in Jira — this GC cannot even be dry-run without it, since per
-`test-behavior-real.md` a mocked SQL Server does not satisfy the bar Frank explicitly doubted.
+**Fixture BUILT and verified working; BH-1045's actual query logic still zero code.**
+**Superseded the original AWS RDS plan** — BH-1057 is now a local Docker SQL Server sandbox
+(`clients/trials/loopcapital/sandbox/`), avoiding a billable cloud resource for a demo fixture.
+Confirmed real, not a mock: `SynapseConnection` cannot tell the difference between this container
+and production SQL Server. Two real Docker-specific gaps were researched and resolved (not
+assumed) — SQL Server Agent is off by default in the `mssql-server` image (`MSSQL_AGENT_ENABLED=
+true` fixes it) and `sys.dm_os_volume_stats` reports the container's REAL mounted volume, not a
+fabricated number (a fixed-size `tmpfs` mount + a filler script gets it to the real 18% free
+threshold). **Verified end-to-end, 2026-07-13, not claimed**: `./setup.sh` + `./validate.sh` both
+of BH-1045's confirmed query texts against the running container, real results both times (disk
+query returned `17.99` percent_free; job-status query returned one real Succeeded and one real
+Failed run). BH-1045 (the disk/job query logic itself, wired through `WarehousePort`/
+`SynapseConnection` — confirmed zero new connectivity code needed) is specified but still unbuilt
+as a brightbot capability — the sandbox proves the TARGET is real and reachable; BH-1045 still
+needs to write the code that queries it as part of the watchdog.
 
 ### Code path
 No code. `SynapseConnection` (`brightbot/tools/warehouse_connections.py:248-424`) is the reused
@@ -205,8 +215,9 @@ abstract one.
 
 ```gherkin
 Scenario: BrightAgent catches a disk problem on a box it was never installed on
-  Given Loop Capital's SQL Server (real staging instance, standing in for their production box)
-    has NO MCP server, agent, or BrightHive software of any kind installed on it
+  Given Loop Capital's SQL Server (this sandbox's real, running Docker container, standing in
+    for their production box) has NO MCP server, agent, or BrightHive software of any kind
+    installed on it
   And its free disk space has dropped to 18% — below the 20% threshold Frank named
   When BrightAgent's watchdog runs its next scheduled check — target: within 15 minutes of
     crossing the threshold
@@ -229,15 +240,20 @@ Scenario: Loop's DR replica for the same SQL Server doesn't get its alert swallo
 **What proves this, underneath**: `SynapseConnection` (`warehouse_connections.py:248-424`) reused
 as-is — confirmed generic pymssql/T-SQL, zero Azure-exclusive requirement — reaching a bare SQL
 Server the same way BrightHive already reaches any customer warehouse. Per `test-behavior-real.md`,
-this MUST run against BH-1057's real staging instance, not a mock — a mocked page is exactly what
-triggered Frank's "this is not live" reaction on 2026-07-09. Invariant 16 (multi-connection
-disambiguation) and Invariant 18 (stable per-connection `job_id`) are what make the second
-scenario actually hold rather than silently collapsing both instances into one alert bucket.
+this MUST run against BH-1057's real sandbox, not a mock — a mocked page is exactly what triggered
+Frank's "this is not live" reaction on 2026-07-09. **Confirmed real, not aspirational**: the
+sandbox's own `validate.sh` already runs this exact scenario's underlying query and gets a real
+non-mock result. Invariant 16 (multi-connection disambiguation) and Invariant 18 (stable
+per-connection `job_id`) are what make the second scenario actually hold rather than silently
+collapsing both instances into one alert bucket — the sandbox currently runs ONE SQL Server
+instance; the second scenario (DR replica) is not yet exercised against a real second container,
+flagging as the one part of GC-15 still resting on the invariant text alone, not a live test.
 
 ### Validation
 Not yet filed. Would live at `brightbot/tests/integration/golden_cases/test_gc_15_sql_server_disk_monitoring.py`
-— `pytest.skip("BH-1045/1057 not started; fixture not provisioned")` until BH-1057 executes and
-BH-1045 lands.
+— can now point directly at `clients/trials/loopcapital/sandbox/` for its fixture instead of
+`pytest.skip`ping on missing infrastructure; still blocked on BH-1045's actual query code landing
+in brightbot.
 
 ---
 
@@ -437,7 +453,7 @@ Should ship first among GC-14/15/16/17, both because it's cheapest and because i
 ```
 brightbot/tests/integration/golden_cases/
 ├── test_gc_14_proactive_monitor_alert.py         # SKIP — BH-1043/1046/1054/1067/1087 not started
-├── test_gc_15_sql_server_disk_monitoring.py       # SKIP — BH-1045/1057 not started
+├── test_gc_15_sql_server_disk_monitoring.py       # SKIP — BH-1045 not started (fixture is ready)
 ├── test_gc_16_fix_recurrence_surfacing.py         # SKIP — BH-1047 not started; blocked on GC-17
 └── test_gc_17_auto_merge_exclusion.py             # SKIP — BH-1047 not started; cheapest to unblock
 ```
