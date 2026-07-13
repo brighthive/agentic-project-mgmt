@@ -522,6 +522,60 @@ async def fetch_lineage_artifacts(
 # Reuses _fetch_artifact() (dbt_cloud_tools.py:256-280) with artifact_path="manifest.json"
 # and artifact_path="catalog.json" — no new HTTP/auth code, just new artifact-name arguments
 # PLUS the step-discovery + error-disambiguation logic above, which IS new code.
+
+# CRITICAL GAP FOUND, pass 55 (triple-click-zoom) — the Port/Adapter contract declared in §2
+# was NEVER actually wired to this function; verified by grepping this spec for every
+# `LineageGraph`/`DbtLineageSource` occurrence — neither is ever produced, consumed, or even
+# referenced again outside §2's abstract Protocol definition and the platform-level diagram.
+# `fetch_lineage_artifacts()` has a DIFFERENT name, DIFFERENT parameters (`job_id`/`run_id`
+# explicit, not a generic `run_context: dict`), and a DIFFERENT return type (`LineageArtifacts`,
+# not `LineageGraph`) than what `LineageSource.fetch_lineage()` declares. This is exactly the
+# drift `docs/CLAUDE.md`'s own house rule warns against ("a spec drifted into vendor-hardcoded
+# naming before a second engine was even due") — except here it drifted the OTHER direction:
+# the port stayed abstract while the real implementation quietly diverged from it, so adding
+# a second adapter (Databricks, Snowflake-native) today would have NO real contract to
+# conform to; each would invent its own shape independently, defeating the whole point of
+# defining the port first.
+#
+# FIX: `DbtLineageSource` (referenced in the §2 registry, never defined) is the missing
+# adapter class — a thin translation layer, not new fetch logic:
+class DbtLineageSource:
+    """Adapter implementing LineageSource for dbt Cloud. Unpacks the engine-agnostic
+    run_context into dbt's own job_id/run_id, delegates to fetch_lineage_artifacts()
+    (the real fetch+parse logic), and translates LineageArtifacts -> LineageGraph so
+    BH-1064's traversal never has to know dbt-specific shapes exist."""
+
+    async def fetch_lineage(
+        self, *, workspace_id: str, run_context: dict,
+    ) -> LineageGraph:
+        artifacts = await fetch_lineage_artifacts(
+            workspace_id=workspace_id,
+            job_id=run_context["job_id"],
+            run_id=run_context["run_id"],
+        )
+        return LineageGraph(
+            nodes={
+                uid: LineageNode(
+                    unique_id=m.unique_id, name=m.name, depends_on=m.depends_on,
+                    columns=m.columns, relation_name=m.relation_name,
+                )
+                for uid, m in artifacts.models.items()
+            },
+            has_column_metadata=artifacts.has_column_metadata,
+            fetch_error=artifacts.fetch_error,
+            source_engine=DBT,
+        )
+# `run_context["job_id"]`/`["run_id"]` are dbt-specific KEYS inside the generic dict — every
+# adapter defines its OWN required keys for run_context (Databricks might need
+# {"job_id", "run_id"} too, or something entirely different like {"pipeline_id"}); this is
+# the seam that keeps BH-1064's traversal engine-agnostic while each adapter stays free to
+# need whatever identifiers its own source system requires. BH-1069's caller (which invokes
+# the fetch step per model in a manifest loop, per Invariant 17) should be updated to
+# construct `DbtLineageSource().fetch_lineage(...)` — or, if the extra translation layer is
+# judged unnecessary overhead for a single-adapter MVP, this spec should say so EXPLICITLY
+# and drop the unused Port/LineageGraph types from §2 rather than leave them as
+# never-implemented aspirational scaffolding. Pick one; do not ship both a declared contract
+# and a real implementation that silently ignores it.
 #
 # CRITICAL, pass 44 (triple-click-zoom) — this function INHERITS the same
 # multi-connection monitoring-scope gap already confirmed in the sibling
@@ -1301,6 +1355,26 @@ async def find_downstream_impact(
     nit — LineageNode would otherwise be the first node type in this codebase with zero
     workspace-scoping mechanism of any kind.`
 
+19. `BH-1062's dbt fetch/parse logic SHALL be reachable ONLY through a DbtLineageSource
+    adapter implementing the LineageSource Protocol (§2) — no caller SHALL invoke
+    fetch_lineage_artifacts() directly, bypassing the port. CRITICAL, found pass 55: earlier
+    drafts of this spec declared LineageSource/LineageGraph as the engine-agnostic contract
+    (per docs/CLAUDE.md's Ports & Adapters rule, cited at the top of §2) but never actually
+    connected BH-1062's real fetch function to it — fetch_lineage_artifacts() has a different
+    name, different parameters (job_id/run_id explicit vs a generic run_context dict), and a
+    different return type (LineageArtifacts vs LineageGraph) than the declared port. Verified
+    by grep: LineageGraph/DbtLineageSource are referenced ONLY in §2's abstract definition and
+    the platform-level diagram — never produced or consumed anywhere in the actual
+    BH-1062/1063/1064 implementation described later in this spec. Left unfixed, adding the
+    SECOND adapter (Databricks or Snowflake-native, both already planned per §2's registry)
+    would have no real contract to conform to — each would invent its own shape independently,
+    defeating Ports & Adapters' entire purpose. THE System SHALL either (a) implement
+    DbtLineageSource as the translation adapter (unpack run_context into job_id/run_id,
+    delegate to fetch_lineage_artifacts(), translate LineageArtifacts to LineageGraph), or
+    (b) if the extra indirection is judged unnecessary for a single-adapter MVP, explicitly
+    drop the unused LineageSource/LineageGraph Port types from §2 rather than leave them as
+    aspirational scaffolding nothing implements.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1463,6 +1537,18 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       its edges
     And both operations' Cypher MATCH clauses filter on workspaceId, not merely on
       uniqueId/relationName alone
+
+  Scenario: a second lineage adapter has a real port to conform to, not a shape to invent
+    Given the LineageSource Protocol declared in §2 (fetch_lineage(workspace_id, run_context)
+      -> LineageGraph)
+    And BH-1062's real fetch/parse logic (fetch_lineage_artifacts, returning LineageArtifacts)
+    When DbtLineageSource is implemented as the adapter bridging the two
+    Then BH-1064's traversal calls ONLY LineageSource.fetch_lineage() and LineageGraph — it
+      never references fetch_lineage_artifacts, LineageArtifacts, or any dbt-specific name
+    And adding BH-1068's SnowflakeNativeLineageSource or a future DatabricksLineageSource
+      means implementing the SAME Protocol against the SAME LineageGraph return type — not
+      inventing a new shape, because a real, exercised adapter already proved the contract
+      works
 ```
 
 ## 5. Out of Scope
@@ -1661,7 +1747,7 @@ just that the Cypher string is syntactically well-formed.
 
 | Area | Repo | Impact |
 |---|---|---|
-| Manifest/catalog fetch + parse (BH-1062) | `brightbot` | New parser module, reuses existing artifact-fetch plumbing |
+| Manifest/catalog fetch + parse + DbtLineageSource adapter (BH-1062) | `brightbot` | New parser module reuses existing artifact-fetch plumbing; **CORRECTED pass 55**: also includes the `DbtLineageSource` adapter class translating `LineageArtifacts` -> the declared `LineageGraph` Port contract, previously undefined despite §2 committing to it |
 | Lineage graph schema + upsert mutation (BH-1063b) | **`brighthive-platform-core`** — corrected, was miscast as brightbot-only | **CONFIRMED pass 9, CORRECTED pass 34**: 2-3 files, zero public-schema touch — `src/graphql/ogm/typedefs.ts` (new `LineageNode` OGM type) + `src/graphql/service/neo4j/lineage-graph.ts` (hand-written delete-then-MERGE as ONE multi-statement Cypher string, one `session.run()` call, per `workflow-spec.ts:557-581`'s proven GENERAL PRINCIPLE — not `session.writeTransaction`, deprecated at this repo's `neo4j-driver ^5.0.0` — but the SPECIFIC combined DELETE+UNWIND+MERGE query shape has no literal template anywhere in this repo, write it fresh) + optionally `src/common/types.ts`. Mirrors `AnomalyEventNode`/`MetricSnapshotNode`'s OGM-only pattern (BH-668), a cheaper precedent than `WorkflowStepNode`'s public-mutation shape (`workflow-spec.ts:299-317`) — platform-core runs the OGM schema on a physically separate, `isSystemAdmin`-gated API Gateway endpoint from the public/webapp schema, confirmed via `ogm-server.ts:78-108` |
 | Lineage graph call site (BH-1069, formerly informal "BH-1063a") | `brightbot` | Calls the new platform-core mutation over the EXISTING `ogm_api.py` HTTP path — no new Neo4j driver code, plus the new GraphQL-`"errors"`-key check (Invariant 11) AND a single shared `OGMAPISession` across the per-model loop (Invariant 17, pass 49) |
 | Anomaly-alert enrichment (BH-1064) | `brightbot` (governance_agent) | **CORRECTED pass 52 — this row was stale/wrong, contradicting this same spec's own pass-4 finding.** NOT "extends BH-1046's existing alert path" — confirmed (pass 4) there is no rendered Slack/webapp alert path to extend at all; the real insertion point is a new key inside `publish_completion_notification`'s existing JSON metadata dict (`quality_check_agent.py:1663`), and the base anomaly notification itself has zero human-visible rendering until BH-1066 ships (pass 5/48). This ticket adds `downstream_tables` data with nothing to render it until BH-1066 lands — not a delivery-mechanism extension. |
@@ -1671,7 +1757,7 @@ just that the Cypher string is syntactically well-formed.
 | Ticket | Summary | Status |
 |---|---|---|
 | BH-1061 | Epic: Lineage-Aware Data Quality | Needs Refinement |
-| BH-1062 | feat: fetch + parse manifest.json/catalog.json | Needs Refinement |
+| BH-1062 | feat: fetch + parse manifest.json/catalog.json + DbtLineageSource adapter | Needs Refinement, **CORRECTED pass 55** — scope now includes wiring the fetch function to the declared LineageSource Port (§2), not just the fetch/parse logic in isolation |
 | BH-1063 | feat: load parsed DAG into Neo4j as queryable lineage graph | Needs Refinement |
 | BH-1064 | feat: wire anomalies to walk the graph forward (closes BH-673) | Needs Refinement |
 | BH-1065 | verify: does anything render anomaly JSON into visible Slack/webapp text today? | **Done, pass 5 — answer confirmed NO**, see BH-1066 |
