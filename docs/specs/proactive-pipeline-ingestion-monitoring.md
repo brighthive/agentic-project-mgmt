@@ -980,6 +980,23 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    **Guard-compliance**: same conclusion as the disk-check query — starts with `WITH`
    (allowed), no semicolons, no keyword/schema-prefix blocklist, no multi-line check. This
    query sails through `execute_query()`'s guard cleanly, same as the disk-check query.
+   **CONFIRMED pass 40 (triple-click-zoom), permission requirement resolved with precision
+   — this query needs NO new grant at all, not merely "a lower bar" than the disk-check
+   query.** `sysjobs`/`sysjobhistory` are ordinary `dbo`-schema user tables in `msdb` — they
+   carry NO special permission class, unlike `sys.dm_os_volume_stats`, which is gated by
+   the server-level `VIEW SERVER STATE` permission checked in SQL Server's own engine code,
+   not by schema/table grants. Object- or schema-level `SELECT` (`GRANT SELECT ON
+   SCHEMA::dbo TO [user]` inside `msdb`) is fully sufficient — NO msdb role membership
+   (`SQLAgentUserRole`/`SQLAgentReaderRole`/`SQLAgentOperatorRole`) is involved; those roles
+   exist to gate the Agent stored procedures/GUI/filtered views (`sp_help_job`,
+   `sysjobs_view`), not the base tables this query reads directly. A principal with plain
+   `SELECT` sees EVERY job/row regardless of ownership — broader visibility than even
+   `SQLAgentReaderRole`'s filtered interface provides. **Net effect: the standard BYOW
+   provisioning flow's EXISTING schema-level `GRANT SELECT` (already granted for every
+   connection type today, confirmed in an earlier pass) already covers this query in full
+   — zero new provisioning step, not "a lower bar."** Invariant 5's permission-grant
+   requirement is scoped EXCLUSIVELY to the disk-check query — this job-status query needs
+   nothing new at all.
 6. `WHILE BrightSignals' 3-way split-brain (BH-1053, see §6) is unresolved as a UNIFIED write
    path, THE System's watchdog SHALL perform the explicit dual-write in Invariant 1 itself —
    it SHALL NOT wait for BH-1053 to add a fourth ad-hoc path.`
