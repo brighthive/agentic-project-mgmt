@@ -7,7 +7,7 @@ created: "2026-07-12"
 generates: "tickets"
 tags: [lineage, data-quality, longitudinal-monitoring, dbt, databricks, gold, diamond, brightbot, neo4j]
 related:
-  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "proactive-pipeline-ingestion-monitoring.md"]
+  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "proactive-pipeline-ingestion-monitoring.md", "golden-cases-loopcapital.md"]
 ---
 
 # Lineage-Aware Data Quality
@@ -2276,3 +2276,7 @@ user-facing name at all — flag this explicitly rather than assume a new brand 
   is tracked as BH-1067
 - `clients/trials/loopcapital/overview.md` — this capability is scoped into Loop Capital's
   plan as an honest post-demo workstream, not a 7/17 deliverable
+- `golden-cases-loopcapital.md` — this spec's watchdog/anomaly mechanism is a dependency for
+  none of GC-14–17 (those are all 7/17-gated, this spec is explicitly post-demo), but shares
+  the same BrightSignals alert path (BH-1046) and the same renderer-gap class (BH-1067) GC-14
+  depends on — a fix to one likely informs the other

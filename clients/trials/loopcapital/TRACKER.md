@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-13 17:06 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-13 19:46 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -39,9 +39,9 @@ _Delivered for the 2026-07-09 demo. Fully shipped per BH-860 epic (14 tickets, a
 | ⬜ | Done | Storage optimization skill | [BH-863](https://brighthiveio.atlassian.net/browse/BH-863) |
 | ⬜ | Done | Synthetic SSIS fixture + staging validation | [BH-869](https://brighthiveio.atlassian.net/browse/BH-869), [BH-866](https://brighthiveio.atlassian.net/browse/BH-866) |
 
-### Track B, Point 1 — Proactive monitor/detect/alert loop (0/6 🟢)
+### Track B, Point 1 — Proactive monitor/detect/alert loop (GC-14) (0/6 🟢)
 
-_Suzanne's demo commitment #1: "the engineering agent and how it proactively monitors, detects and resolves issues with the ability to alert the user on what it finds." This is the watchdog capability node — the actual missing-proactivity primitive this whole spec was built to close._
+_Suzanne's demo commitment #1: "the engineering agent and how it proactively monitors, detects and resolves issues with the ability to alert the user on what it finds." This is the watchdog capability node — the actual missing-proactivity primitive this whole spec was built to close. Golden Case: docs/specs/golden-cases-loopcapital.md#GC-14 (Frank's ops team learns their nightly Asset Management dbt job broke before a portfolio manager asks why the SSRS holdings report looks wrong)._
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
@@ -52,27 +52,27 @@ _Suzanne's demo commitment #1: "the engineering agent and how it proactively mon
 | ⬜ | T-3 | CRITICAL, filed pass 35: BH-1067 renderers for 5 of 6 new stage values — dual-write alone is not enough; dbt_run_stale/databricks_job_failure/databricks_cluster_unhealthy/etl_job_failure/source_disk_low have zero visible text on either surface without this, identical to GC-12's confirmed dead-end (BH-1065/1066) | [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) |
 | ⬜ | T-2 | End-to-end dry run: real dbt Cloud failure (BH-1058 fixture) → detected unprompted → alerted on both surfaces | [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) |
 
-### Track B, Point 2 — SQL Server with no MCP (disk-space monitoring) (0/4 🟢)
+### Track B, Point 2 — SQL Server with no MCP (disk-space monitoring) (GC-15) (0/4 🟢)
 
-_Suzanne's demo commitment #2, Frank's literal named example: "how MCP will connect to the SQL server when the server does not have an MCP... monitoring the disk space and alerting when it's at 20% capacity left." Direct rebuttal to Frank's stated disbelief that this is technically possible — must be demoed against REAL infrastructure per test-behavior-real.md, not a mock, since a mocked page is exactly what triggered his "this is not live" reaction on 2026-07-09._
+_Suzanne's demo commitment #2, Frank's literal named example: "how MCP will connect to the SQL server when the server does not have an MCP... monitoring the disk space and alerting when it's at 20% capacity left." Direct rebuttal to Frank's stated disbelief that this is technically possible — must be demoed against REAL infrastructure per test-behavior-real.md, not a mock, since a mocked page is exactly what triggered his "this is not live" reaction on 2026-07-09. Golden Case: docs/specs/golden-cases-loopcapital.md#GC-15._
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| ⬜ | T-5 | BH-1057 SQL Server provisioned in staging (RDS Web edition — NOT Express, no SQL Server Agent otherwise) | [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) |
+| ⬜ | T-5 — DONE 2026-07-13 | BH-1057: local Docker SQL Server sandbox built + verified (clients/trials/loopcapital/sandbox/), replaces the original AWS RDS plan. SQL Server Agent enabled via MSSQL_AGENT_ENABLED, no billable resource needed. | [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) |
 | ⬜ | T-4 | BH-1045 disk/job query wired through existing WarehousePort/SynapseConnection chain — zero new connectivity | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) |
-| ⬜ | T-3 | Demo data seeded: real filler data landing near 20% free space, real SQL Server Agent jobs (mix of pass/fail) | [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) |
+| ⬜ | T-3 — DONE 2026-07-13 | Demo data seeded: sandbox's fill_disk.sh verified real ~18% free space, real SQL Server Agent jobs (one real Succeeded, one real Failed run) — run ./setup.sh before the demo | [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) |
 | ⬜ | T-2 | Dry run: watchdog polls real SQL Server, detects low disk, alerts — no MCP on the SQL Server side, ever. Requires BH-1067's source_disk_low renderer to actually show text (detection without it is silent). | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045), [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054), [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) |
 
-### Track B, Point 3 — Fix-recurrence surfacing (0/4 🟢)
+### Track B, Point 3 — Fix-recurrence surfacing (GC-16, gated on GC-17) (0/4 🟢)
 
-_Suzanne's demo commitment #3: "the ability to build skills that help surface the fixes the agent applied when they are not abided by so we can avoid the recurrence of the same kind of issue." Mechanism: self-healing-pipelines.md's surgical-PR loop (GC-11), wired to this spec's watchdog signals — with a CRITICAL safety fix required first (see below)._
+_Suzanne's demo commitment #3: "the ability to build skills that help surface the fixes the agent applied when they are not abided by so we can avoid the recurrence of the same kind of issue." Mechanism: self-healing-pipelines.md's surgical-PR loop (GC-11), wired to this spec's watchdog signals — with a CRITICAL safety fix required first (see below). Golden Cases: docs/specs/golden-cases-loopcapital.md#GC-16 (the demo scene — a recurring pipeline break gets a reviewable PR, never an auto-merge) and #GC-17 (the safety precondition GC-16 cannot demo without — GC-17 is its own gating case, not a sub-step of GC-16, and is the cheapest of the four to make live since it needs no infrastructure)._
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| ⬜ | T-5 | CRITICAL: BH-1047's code-level exclusion of github_merge_pull_request from the remediation loop's tool list — 'never auto-merge' was previously prompt-only, zero code enforcement | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) |
+| ⬜ | T-5 | GC-17 (safety precondition, cheapest to unblock — pure static test, no infra dependency): BH-1047's code-level exclusion of github_merge_pull_request from the remediation loop's tool list — 'never auto-merge' was previously prompt-only, zero code enforcement | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) |
 | ⬜ | T-4 | root_cause_class classifier wired (DATA_SHAPE vs JOB_RUNTIME) — routes correctly, never fabricates a fix | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) |
 | ⬜ | T-3 | DATA_SHAPE signal routes into GC-11's existing surgical-PR loop, human-approval-gated | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) |
-| ⬜ | T-2 | Demo dry run: a detected failure surfaces a surgical PR with a plain-language diagnosis, requires human approval, never auto-merges | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) |
+| ⬜ | T-2 | GC-16 demo dry run: a detected failure surfaces a surgical PR with a plain-language diagnosis, requires human approval, never auto-merges — requires GC-17 to have already passed | [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) |
 
 ### T-1 — Full dress rehearsal (0/0 🟢)
 
@@ -80,7 +80,7 @@ _Run the entire demo script end-to-end against real staging infrastructure, exac
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| 🔲 | T-1 (2026-07-16) | All 3 points demoed live: watchdog detects a real dbt failure; SQL Server disk-low alert fires from a real RDS instance; a surgical PR opens and is shown NOT auto-merging | _manual_ |
+| 🔲 | T-1 (2026-07-16) | All 3 points demoed live: watchdog detects a real dbt failure; SQL Server disk-low alert fires from the real Docker sandbox; a surgical PR opens and is shown NOT auto-merging | _manual_ |
 | 🔲 | T-1 | Demo script + talking points finalized (Suzanne/Matt) | _manual_ |
 
 ### T-0 — Demo day (0/0 🟢)
@@ -98,8 +98,8 @@ _New capability, scoped 2026-07-12 after Kuri's example: a pipeline can run with
 
 | | Day | Outcome | Linked |
 |---|---|---|---|
-| ⬜ | Post-demo | BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing) | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) |
-| 🟡 | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph. CORRECTED pass 50: that mirror is incomplete for tenancy — LineageNode needs its own native workspaceId field, since its dependsOn relationship (unlike AnomalyEventNode's dataAsset) never chains to WorkspaceNode. | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
+| 🟡 | Post-demo | BH-1062 — fetch + parse dbt manifest.json/catalog.json (reuses existing artifact-fetch plumbing) | [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) |
+| ⬜ | Post-demo | BH-1063 (platform-core, 2-3 files confirmed pass 6 — no public schema touch, mirrors AnomalyEventNode's cheaper OGM-only pattern) — load parsed DAG into Neo4j as a queryable lineage graph. CORRECTED pass 50: that mirror is incomplete for tenancy — LineageNode needs its own native workspaceId field, since its dependsOn relationship (unlike AnomalyEventNode's dataAsset) never chains to WorkspaceNode. | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) |
 | ⬜ | Post-demo | BH-1064 — wire anomaly events to walk the graph forward, closing the already-deferred BH-673 bridge. Traversal MUST match on LineageNode.relationName (never uniqueId/name, pass 10), reuse the org's existing _fqn_variants() normalization for real format drift (pass 46), AND filter on workspaceId (pass 50) — three real correctness/isolation requirements, not one. | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) |
 | ⬜ | Post-demo | BH-1066 — CONFIRMED pass 5: GC-12 anomaly notifications have zero rendering in Slack/webapp today, independent of this epic's own changes. BH-1064's enrichment has nothing to enrich that a human sees until this ships. | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) |
 | ⬜ | Post-demo | BH-1068 — Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE) — cheaper than the Databricks half connection-wise, reuses the existing SnowflakeConnection. CORRECTED pass 45: needs a permission/latency guard too — the recommended least-privilege role posture silently fails ACCOUNT_USAGE reads (already happened once in this org's real Longaeva POC role, #825), so this is not free just because the connection is reused. | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) |
@@ -141,20 +141,19 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 
 | Owner | ✅ Done | 🔵 In flight | 🟡 Queued | Last shipped |
 |---|---|---|---|---|
-| **Kuri Chinca** | 1 | 2 | 36 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
+| **Kuri Chinca** | 1 | 2 | 37 | [BH-1065](https://brighthiveio.atlassian.net/browse/BH-1065) verify: does anything render anomaly… |
 
 ## 📊 Summary
 
-- **1/39** tickets done · 0 in progress · 38 to do
-- PRs: 8 merged · 1 ready for review · 2 draft
+- **1/40** tickets done · 0 in progress · 39 to do
+- PRs: 10 merged · 2 ready for review · 0 draft
 
 ## 📋 Tickets by status
 
-### 🟡 To Do (36)
+### 🟡 To Do (37)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
-| [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Monitoring Agents — proactive pipeline discovery &amp; health (dbt,… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#96](https://github.com/brighthive/agentic-project-mgmt/pull/96)<br>[🟢 Merged agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
 | [BH-1037](https://brighthiveio.atlassian.net/browse/BH-1037) | Ingestion Observability — source syncs, batch, and event-processing… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
 | [BH-1038](https://brighthiveio.atlassian.net/browse/BH-1038) | spec(routines): MCP/A2A surface for routine suggestions — list/schedu… | Kuri Chinca | — |
 | [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039) | feat(mcp): expose routineSuggestionsForWorkspace + schedule/dismiss… | Kuri Chinca | — |
@@ -174,11 +173,12 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | [BH-1053](https://brighthiveio.atlassian.net/browse/BH-1053) | decision+fix(notifications): EventBridge dispatcher (Path A) is… | Kuri Chinca | — |
 | [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) | feat(monitoring): watchdog poller — the actual missing proactivity… | Kuri Chinca | — |
 | [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) | infra(dispatcher): add concurrency cap + fan-out load test to… | Kuri Chinca | — |
-| [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) | URGENT: provision staging BYOW SQL Server connection — 7/17 demo… | Kuri Chinca | — |
+| [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) | provision the Loop Capital SQL Server sandbox (Docker, local) —… | Kuri Chinca | — |
 | [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) | provision a dbt Cloud job that can be deliberately triggered to… | Kuri Chinca | — |
 | [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) | track: scheduled_agent_dispatcher's LangGraph Cloud dependency is… | Kuri Chinca | — |
 | [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) | security: evaluate customer PII/data-value redaction for diagnosis… | Kuri Chinca | — |
-| [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#100](https://github.com/brighthive/agentic-project-mgmt/pull/100) |
+| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#101](https://github.com/brighthive/agentic-project-mgmt/pull/101)<br>[🔵 Review agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🟢 Merged agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
+| [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#102](https://github.com/brighthive/agentic-project-mgmt/pull/102) |
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(lineage): wire longitudinal-monitoring anomalies to walk the… | Kuri Chinca | — |
 | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) | feat: render longitudinal anomaly notifications in Slack + webapp… | Kuri Chinca | — |
 | [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | — |
@@ -190,13 +190,14 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | [BH-1075](https://brighthiveio.atlassian.net/browse/BH-1075) | feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvide… | Kuri Chinca | — |
 | [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) | feat(quality): chain warehouse discovery -> per-table profiling for… | Kuri Chinca | — |
 | [BH-1077](https://brighthiveio.atlassian.net/browse/BH-1077) | feat(quality): DB-level rollup report aggregating per-table… | Kuri Chinca | — |
+| [BH-1087](https://brighthiveio.atlassian.net/browse/BH-1087) | feat(monitoring): dbt_run_failure webapp detail parity — platform-cor… | Kuri Chinca | — |
 
 ### 🔵 In Review (2)
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
-| [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#101](https://github.com/brighthive/agentic-project-mgmt/pull/101)<br>[🔵 Review agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🟢 Merged agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
-| [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | [🟡 Draft agentic-project-mgmt#102](https://github.com/brighthive/agentic-project-mgmt/pull/102) |
+| [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Monitoring Agents — proactive pipeline discovery &amp; health (dbt,… | Kuri Chinca | [🔵 Review agentic-project-mgmt#103](https://github.com/brighthive/agentic-project-mgmt/pull/103)<br>[🟢 Merged agentic-project-mgmt#96](https://github.com/brighthive/agentic-project-mgmt/pull/96)<br>[🟢 Merged agentic-project-mgmt#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) |
+| [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) | feat(dbt-lineage): fetch + parse manifest.json/catalog.json,… | Kuri Chinca | [🔵 Review agentic-project-mgmt#104](https://github.com/brighthive/agentic-project-mgmt/pull/104)<br>[🟢 Merged agentic-project-mgmt#100](https://github.com/brighthive/agentic-project-mgmt/pull/100) |
 
 ### ✅ Done (1)
 
@@ -207,6 +208,12 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 
 ## 🕒 Recent activity (14 days)
 
+- **2026-07-13** · [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) — To Do · Kuri Chinca
+- **2026-07-13** · [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) — To Do · Kuri Chinca
+- **2026-07-13** · [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) — Needs Refinement · Kuri Chinca
+- **2026-07-13** · [BH-1087](https://brighthiveio.atlassian.net/browse/BH-1087) — Needs Refinement · Kuri Chinca
+- **2026-07-13** · [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) — Needs Refinement · Kuri Chinca
+- **2026-07-13** · [BH-1046](https://brighthiveio.atlassian.net/browse/BH-1046) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1077](https://brighthiveio.atlassian.net/browse/BH-1077) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1075](https://brighthiveio.atlassian.net/browse/BH-1075) — Needs Refinement · Kuri Chinca
@@ -216,19 +223,13 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 - **2026-07-13** · [BH-1074](https://brighthiveio.atlassian.net/browse/BH-1074) — Needs Refinement · Kuri Chinca
 - **2026-07-13** · [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1046](https://brighthiveio.atlassian.net/browse/BH-1046) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1042](https://brighthiveio.atlassian.net/browse/BH-1042) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1043](https://brighthiveio.atlassian.net/browse/BH-1043) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) — Needs Refinement · Kuri Chinca
 - **2026-07-12** · [BH-1062](https://brighthiveio.atlassian.net/browse/BH-1062) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) — Needs Refinement · Kuri Chinca
-- **2026-07-12** · [BH-1057](https://brighthiveio.atlassian.net/browse/BH-1057) — To Do · Kuri Chinca
-- **2026-07-12** · [BH-1039](https://brighthiveio.atlassian.net/browse/BH-1039) — Needs Refinement · Kuri Chinca
 
-_(+19 older updates not shown.)_
+_(+20 older updates not shown.)_
 
 ## 📝 Daily Notes
 

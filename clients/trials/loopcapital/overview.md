@@ -123,9 +123,9 @@ assumption. Full detail below in [Capability Coverage](#capability-coverage-summ
 
 | Workstream | Coverage | Key Caveat |
 |---|---|---|
-| Legacy pipeline diagnostics (SSIS/SSRS/storage) | PARTIAL — already demoed 7/9, but **corrected 2026-07-12 (pass 7)**: prompt-only, no deterministic parser for either format; SSIS has 2 toy fixtures, SSRS has zero; no live SQL Server (`msdb`/`ReportServer`) connection exists | If Loop Capital asks to monitor a REAL legacy SQL Server's SSIS/SSRS catalog (not just diagnose an uploaded file), that is new, unscoped work — no such connection path exists today |
+| Legacy pipeline diagnostics (SSIS/SSRS/storage) | PARTIAL, **updated 2026-07-13**: brightbot's own diagnostics skills are still prompt-only (no deterministic parser for either format, confirmed 2026-07-12); but the demo sandbox now has a REAL `.dtsx` (`Extract_Holdings_Nightly.dtsx`) and the first real `.rdl` anywhere in this org (`Holdings_Daily_Report.rdl`), both querying a real running SQL Server — `clients/trials/loopcapital/sandbox/ssis/`, `.../ssrs/` | If Loop Capital asks to monitor a REAL PRODUCTION legacy SQL Server's SSIS/SSRS catalog (not this sandbox), that remains new, unscoped work |
 | Proactive pipeline monitoring (dbt/Databricks/ETL job-status) | IN PROGRESS | Architecture + tickets complete; BH-1043 (dbt) closest to buildable, BH-1044 (Databricks) has an open storage-model decision |
-| SQL-Server-with-no-MCP disk/job monitoring | IN PROGRESS, demo-blocking gap identified | Real technical answer exists (query via existing warehouse-connection machinery, no new protocol) — but **no staging SQL Server fixture is provisioned yet** (BH-1057, runbook ready, ~3-5hrs, not yet executed) |
+| SQL-Server-with-no-MCP disk/job monitoring | IN PROGRESS, fixture BUILT + verified | **Updated 2026-07-13**: BH-1057 is now a local Docker sandbox (not AWS RDS) — built, tested end-to-end, real disk/job queries return real data. BH-1045's own watchdog query logic is the remaining zero-code gap, not the fixture. |
 | Ingestion/source-sync proactive health | IN PROGRESS | BH-1048–1052 scoped; Airbyte/Step-Functions pollers are greenfield (no existing tool to wrap) |
 | Multi-channel surfacing (Slack + webapp) | REAL, verified against live code | Email/SES channel confirmed dead/unbuilt — Slack+webapp is the actual complete channel set today |
 | Fix-recurrence surfacing (Frank's ask #3) | PARTIAL | Self-healing surgical-PR loop (GC-11) is the mechanism; wiring is BH-1047, with a P0 safety fix required (see below) |
@@ -139,7 +139,7 @@ ZERO errors on the pipeline; but that value change is producing wrong numbers on
 gold/diamond data products." Verified this is a real, unaddressed gap — longitudinal
 monitoring (GC-12) can catch the null spike itself if configured, but nothing today traces
 which downstream Gold/Diamond tables it poisons. Full spec:
-`../../docs/specs/lineage-aware-data-quality.md`.
+`../../../docs/specs/lineage-aware-data-quality.md`.
 
 **Key framing, not a gap to hide from Frank**: BrightHive doesn't rebuild lineage — dbt and
 Databricks already compute their own. BrightHive's differentiator is being the glue that
@@ -164,7 +164,7 @@ legacy-fallback branch, a tab/route access-gate mismatch letting Collaborators r
 Admin-hidden page, no accessibility attributes, zero component tests, and more) — all
 confirmed against real code, not assumed.
 
-**Re-scoped as two pieces** (full detail in `../../docs/specs/lineage-aware-data-quality.md`'s
+**Re-scoped as two pieces** (full detail in `../../../docs/specs/lineage-aware-data-quality.md`'s
 "Track D" section):
 - **D1**: fix the 7 confirmed defects in the EXISTING `WorkflowSpecPage` — closer to a
   bug/tech-debt backlog than new-feature work, could be ticketed now.
@@ -187,7 +187,7 @@ But the profiler/quality-check layer (`profiler_task.py`, the 3 MCP quality tool
 ENTIRELY asset-ID-gated today — there is no "point it at the whole DB and profile everything"
 mode, and discovery + profiling are never chained end to end.
 
-**Full detail**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s "Track E"
+**Full detail**: `../../../docs/specs/proactive-pipeline-ingestion-monitoring.md`'s "Track E"
 section (added pass 81, tickets filed pass 82). The naming/scope decision (is SQL Server a
 distinct `WarehouseType`, or a reuse of `azure_synapse`'s connector?) was RESOLVED against the
 real webapp UI convention — every warehouse provider gets its own first-class label/icon
@@ -198,7 +198,13 @@ report). Non-blocking for 7/17.
 
 ## Engineering Artifacts
 
-- **Handover spec**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
+- **Golden Cases (GC-14–17)**: `../../../docs/specs/golden-cases-loopcapital.md` — the first Golden
+  Cases ever scoped to Loop Capital (continuing brightbot's Longaeva GC-1–13 numbering). Maps
+  Suzanne's 3 demo points 1:1 to GC-14 (proactive alert), GC-15 (SQL-Server-no-MCP), GC-16
+  (fix-recurrence PR), plus GC-17 (the auto-merge-exclusion safety gate GC-16 depends on).
+  Acceptance criteria are written as Frank's real scenes (a broken nightly Asset Management job,
+  a legacy SQL Server with nothing installed on it), not platform-feature Gherkin alone.
+- **Handover spec**: `../../../docs/specs/proactive-pipeline-ingestion-monitoring.md` — read its
   "Start Here" section first. Interface contracts, invariants (18, count re-verified pass 81 —
   was stale at 16), Gherkin AC, eval criteria, observability contract, full pass-by-pass
   verification log.
@@ -207,9 +213,9 @@ report). Non-blocking for 7/17.
   BH-1060 (security follow-up).
 - **Verification memory**: `~/.claude/projects/-Users-bado-iccha-brighthive/memory/project_loop_capital_pass_index.md` — one-line index into 34+ detailed pass files.
 - **Full demo plan**: `poc.yaml` (scope/ownership/demo-relative phases: T-5 → T-0) → renders `TRACKER.md` (live ticket/PR status, regenerate with `make poc-tracker-no-slack CLIENT=loopcapital`). Plan is organized by Suzanne's 3 committed demo points, not calendar days — see `poc.yaml`'s phase titles.
-- **Handover spec, Track B**: `../../docs/specs/proactive-pipeline-ingestion-monitoring.md`
+- **Handover spec, Track B**: `../../../docs/specs/proactive-pipeline-ingestion-monitoring.md`
   — **merged to master** via PR [#94](https://github.com/brighthive/agentic-project-mgmt/pull/94) (2026-07-12).
-- **Track C spec**: `../../docs/specs/lineage-aware-data-quality.md` — **merged to master**
+- **Track C spec**: `../../../docs/specs/lineage-aware-data-quality.md` — **merged to master**
   via PR [#95](https://github.com/brighthive/agentic-project-mgmt/pull/95) (2026-07-12). ASCII
   architecture diagrams of the current-state gap (3 disconnected islands) and the proposed
   glue-layer design, plus interface contracts/invariants/Gherkin AC for BH-1062–1070.
@@ -229,11 +235,11 @@ things" to the real current count.**
 **RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
 Jira status + real code, not carried forward from an earlier pass's note:**
 
-1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
-   demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs, fully
-   detailed in BH-1057's own ticket, including the required `GRANT VIEW SERVER STATE` step).
-   **Not yet executed** — confirmed Jira status is still `To Do`. Needs a deliberate go-ahead
-   from Kuri (this is a real, billable AWS resource).
+1. **BH-1057** — **RESOLVED 2026-07-13, no longer an open blocker.** Replaced the RDS plan with a
+   local Docker sandbox (`clients/trials/loopcapital/sandbox/`) — no billable AWS resource needed,
+   no go-ahead required. Built and verified end-to-end: real disk-check + job-status queries
+   return real data (18% free, one real Succeeded + one real Failed job run). Run `./setup.sh`
+   before the demo, `./validate.sh` to confirm.
 2. **BH-1058** — the dbt Cloud deliberate-failure fixture BH-1043's e2e case depends on.
    Re-checked pass 62: still `To Do`; the fix itself (a genuine runtime SQL error, not a
    compile-time `raise_compiler_error`) is already correctly specified in the ticket, just not
@@ -257,7 +263,7 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 
 | # | Blocker | Owner | Raised | Resolved |
 |---|---|---|---|---|
-| 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | — |
+| 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | **2026-07-13** — Docker sandbox built + verified, replaces AWS RDS plan |
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | — |
 | 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |

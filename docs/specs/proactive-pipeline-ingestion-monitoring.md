@@ -9,7 +9,7 @@ tags: [monitoring, observability, dbt, databricks, etl, ingestion, brightsignals
 related:
   features: []
   pocs: []
-  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md"]
+  specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md", "golden-cases-loopcapital.md"]
 ---
 
 # Proactive Pipeline & Ingestion Monitoring
@@ -47,12 +47,20 @@ related:
 monitoring genuinely proactive (unprompted detection + alert + safe auto-remediation),
 answering a Loop Capital sales-gate commitment for a **2026-07-17 demo**.
 
-**Two things are time-critical and NOT architecture work — do these first, in this order:**
-1. **BH-1057** (SQL Server demo fixture, ~3-5hrs, RDS Web edition, zero code changes) — the
-   literal Frank-committed demo scenario ("SQL server has no MCP... disk at 20%") has NO
-   staging infrastructure today. This blocks the actual 7/17 demo, not just this spec.
+**Want the demo-bar framing instead of the platform-contract framing?** Read
+`golden-cases-loopcapital.md` (GC-14/15/16/17) — the same tickets below, translated into
+Frank-facing acceptance scenes (a broken nightly job, a legacy SQL Server with nothing
+installed on it, a recurring pipeline break) rather than DTOs and Protocols. This spec is the
+contract; that one is the proof the contract resolves something Frank actually asked for.
+
+**One of these is already done. The other still needs a one-time manual step:**
+1. **BH-1057** — **RESOLVED 2026-07-13.** The literal Frank-committed demo scenario ("SQL
+   server has no MCP... disk at 20%") now has a real, working fixture: a local Docker SQL
+   Server sandbox (`clients/trials/loopcapital/sandbox/`), replacing the original AWS RDS plan
+   to avoid a billable cloud resource. Built and verified end-to-end — see the sandbox's own
+   README for `./setup.sh`/`./validate.sh`.
 2. **BH-1058** (dbt failure fixture, ~1-2hrs, one-time UI setup) — needed for BH-1043's test,
-   less urgent than #1.
+   still open.
 
 **Everything else is architecture/implementation work, sequenced as**:
 `BH-1042 (contract) → {BH-1043 dbt, BH-1044 Databricks, BH-1054 watchdog} → {BH-1045 SQL
@@ -68,10 +76,11 @@ BH-1053 (BrightSignals unification) and BH-1055 (dispatcher hardening) are real 
 │  which appeared in the original pass-25 version                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 
-  DEMO-BLOCKING INFRA (zero code — human setup, still To Do as of pass 62):
-  BH-1057 (staging SQL Server, RDS Web edition, ~3-5hrs + GRANT VIEW SERVER STATE)
+  DEMO-BLOCKING INFRA (zero code — human setup):
+  BH-1057 — DONE 2026-07-13: local Docker SQL Server sandbox, built + verified, replaces the
+    original RDS Web edition plan (clients/trials/loopcapital/sandbox/)
   BH-1058 (dbt Cloud deliberate-failure fixture, ~XS, real RUNTIME error not compile-time)
-    — both REQUIRED before BH-1045/BH-1043's e2e cases can run against real infra
+    — still To Do; REQUIRED before BH-1043's e2e case can run against real infra
 
   BH-1042 (contract: PipelineSource Protocol, PIPELINE_SOURCE_ADAPTERS registry,
            PipelineHealthSignal DTO, get_pipeline_health MCP tool, §8 eval design)
@@ -951,7 +960,20 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    (`(workspace_id, source_type, job_id, failure_type)`, a 4-tuple, not 3), or (b) the
    storage partition the lookup queries against — mirroring BrightRoutines' actual pattern,
    not just its comparison idiom. BH-1054's implementer MUST pick one explicitly; do not
-   ship a 3-tuple key against unpartitioned storage.`
+   ship a 3-tuple key against unpartitioned storage.
+
+   **GAP FOUND on review, closed by BH-1091 — this cooldown key as specified has no notion of
+   "a fix was merged for this signature."** A merged-but-wrong fix for `self-healing-
+   pipelines.md`'s surgical-PR loop (GC-16) would leave the SAME `(workspace_id, source_type,
+   job_id, failure_type)` recurring, and this invariant as written would SILENTLY SUPPRESS the
+   re-alert for the full cooldown window — the opposite of the trust this epic exists to
+   build. BH-1091 adds a `VERIFYING` state to this key (set when a remediation PR merges,
+   shortening the next poll interval for THAT signature and changing what "suppress" means:
+   confirmed-fixed → a success notification, recurred → an immediate escalation bypassing
+   normal cooldown). This invariant's "SHALL NOT re-emit a duplicate alert" only holds for the
+   NORMAL case (no merge happened); BH-1091's design note in `self-healing-pipelines.md`
+   is the authoritative source once it ships — this invariant will need a corresponding
+   revision at that point, not just an addendum.`
 4. `IF a signal's root_cause_class is DATA_SHAPE but has no matching mode in
    self-healing-pipelines.md's 4-mode taxonomy, THEN THE System SHALL fall back to
    alert-only — it SHALL NOT guess a fix.`
@@ -1331,6 +1353,17 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
     it is not free to assume or inherit PipelineHealthSignal's shape without saying so
     explicitly.`
 
+19. `BH-1043's dbt poller SHALL NOT emit a PipelineHealthSignal for a run that terminated with
+    dbt Cloud status 30 (Cancelled) — only status 20 (Error) or a staleness timeout SHALL
+    produce a signal. CRITICAL, found during a Loop Capital demo-readiness audit (2026-07-13):
+    `_fetch_run_status` (`dbt_cloud_tools.py:125-197`) already reads this exact status field
+    (`10 = Success, 20 = Error, 30 = Cancelled`, all three folded into one `terminal_statuses`
+    set), but nothing downstream branches on 20 vs 30 before deciding whether to alert. A
+    workspace where a human deliberately cancels a run mid-flight (a routine maintenance
+    action, not a failure) would otherwise trigger the SAME alert as a genuine error — directly
+    recreating Loop Capital's "cried wolf" trust problem this whole epic exists to close. This
+    is a status-code branch on an already-read field, not new capability.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1535,7 +1568,7 @@ Feature: Proactive pipeline & ingestion monitoring
 | Longitudinal Monitoring dispatcher/run_context pattern (GC-12, BH-670) | Blocking (pattern precedent) | Shipped + staging-verified; BH-670 confirmed fully wired 2026-07-10 (BH-768, PR #724) — closed precedent |
 | Self-Healing Pipelines surgical-PR loop (GC-11, BH-526) | Blocking (remediation consumer) | Draft spec, not yet built |
 | Existing WarehousePort BYOW connection mechanism (Snowflake/etc.) | Non-blocking (mechanism reused, not built here) | Live |
-| **BH-1057: staging BYOW SQL Server connection ITSELF (a real instance, not the mechanism)** | **BLOCKING for the 7/17 demo specifically** — no SQL Server exists to connect through the mechanism above | **RESOLVED-ACTIONABLE pass 15 — RDS Web edition, ~3-5hrs same-day, zero code changes (reuses SynapseConnection/pymssql), concrete runbook in BH-1057. Was CRITICAL/unscoped in pass 14, now well-scoped.** |
+| **BH-1057: a real SQL Server connection ITSELF (an instance, not the mechanism)** | **BLOCKING for the 7/17 demo specifically** — no SQL Server exists to connect through the mechanism above | **DONE 2026-07-13 — a local Docker sandbox (`clients/trials/loopcapital/sandbox/`), built + verified end-to-end, superseding the earlier RDS Web edition plan (avoids a billable cloud resource for a demo fixture). Zero code changes to `SynapseConnection`/pymssql either way.** |
 | BH-1058: dbt Cloud job with deliberate-failure capability | Blocking for BH-1043's §10 e2e case | **RESOLVED-ACTIONABLE pass 16, CORRECTED pass 27 — one-time human UI setup (~1-2 hrs): create a job + one env-var-toggled model, zero new brightbot code (mirrors BH-1057). CRITICAL fix pass 27: the toggle must trigger a genuine RUNTIME SQL error (e.g. `select 1/0`), NOT `raise_compiler_error` — a compile-time error has no SQL-diagnosable signature and would fail to exercise DATA_SHAPE classification, defeating this fixture's purpose.** |
 | dbt_cloud_tools.py, quality_tools.py on-demand tools | Non-blocking (reused as poll targets) | Live |
 | AgentCore migration (BH-453) — watchdog node's HOST graph structure | Non-blocking (verified pass 19, SHARPENED pass 29 — not inferred, and now explicitly time-bounded) | LangGraph `StateGraph`/`add_node` unchanged by AgentCore's CURRENT leaf-runtime-only scope (`agentcore-deployment-migration.md`'s "Recommended Approach": only sub-agents — retrieval/analyst/governance/dbt — become AgentCore Container runtimes; the LangGraph Deep Agent SUPERVISOR remains the orchestration runtime) — safe to build on TODAY. **NOT a permanent guarantee**: CEMAF (`brightagent-v3`) is the CONFIRMED long-term supervisor replacement (`langgraph-cloud-detach.md:17,24`), using a structurally different `DAGExecutor` model, not `StateGraph`/`add_node` — this spec's watchdog capability nodes survive today's AgentCore leaf-runtime work unchanged, but would need a REAL redesign (as Goal/Result DTOs, per CEMAF's own migration notes, not a mechanical `add_node` port) once the supervisor layer itself migrates to CEMAF. Treat "unchanged by the migration" as scoped to AgentCore's current phase, not a claim about CEMAF's eventual arrival. |
@@ -1751,7 +1784,7 @@ convention in this codebase.
 
 | Repo | Suite | What to add |
 |---|---|---|
-| `brightbot` | `brightbot/tests/` + `brightbot/brightbot/evals/` (L0/L1/L2) | L0: one case per §2 MCP tool contract entry, PLUS the required `capabilities.py` catalog row for `get_pipeline_health` and its addition to the live-tool enumeration tests (`test_permissions.py`, `test_tool_invariants.py`/`test_mcp_live_tools.py`-style lists) — these are CI-pinned and fail closed if skipped (verified pass 6). **CRITICAL, added pass 26: `get_pipeline_health` MUST pass the EXISTING repo-wide `test_no_principal_fields_in_tool_args` test (`test_tool_invariants.py`) — this is not optional/new, it's an existing gate the tool must not violate.** L1: routing case confirming watchdog capability node is reachable via the existing dispatcher (not a new entry point). L2: one case per §3 invariant (1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 — **pass 65 correction: the original list stopped at 14, missing three invariants added in later passes**) + FailureClassificationEvaluator gated at 0.9 + RootCauseClassEvaluator gated at 0.95 precision on DATA_SHAPE. Invariant 15 case: assert a dual-write for each of the 5 currently-unrendered stage values (`dbt_run_stale`/`databricks_job_failure`/`databricks_cluster_unhealthy`/`etl_job_failure`/`source_disk_low`) is caught by an explicit renderer-existence check (fails until BH-1067 ships), not left as a silent visual gap. Invariant 16 case: construct a workspace fixture with 2 connected services of the same provider type and assert the adapter either polls both or raises/logs a documented single-connection assumption — never silently polls only the first. **Invariant 17 case, CRITICAL (added pass 64/65): construct a real `dbt_run_failure` event, feed it through `renderDbtFailureDetails` with metadata keyed EXACTLY `model_name`/`job_id`/`error`/`log_id`, and assert the rendered text contains all 4 values — then construct a SECOND case with differently-named keys (e.g. `jobId`/`errorMessage`) and assert the renderer's output is detectably incomplete (a regression test that would have caught BH-1054 shipping the wrong field names silently).** Invariant 10/11 cases must mock a 429 response from dbt_cloud_tools.py's HTTP calls (which today has zero backoff handling, confirmed by code read — this is new behavior, not existing coverage) and assert per-workspace isolation (Property 5). Invariant 12 case (BH-1051 only): assert the deployed schedule expression is NOT one of cadenceToCron()'s hardcoded DAILY..QUARTERLY 08:00 values. Invariant 13 case: feed a fixture diagnosis string containing a fake credential shape (e.g. a `postgres://user:pass@host` connection string) through the diagnosis pipeline and assert `scrub_text()` redacted it before any sink write (Property 7). **Invariant 7 case, CRITICAL (verified pass 24): enumerate the remediation loop's bound tools at construction time and assert `github_merge_pull_request` is absent — this is a code-level assertion, not a prompt-content check, and this specific test MUST exist before BH-1047 is considered done (Property 2).** **Invariant 14 case, CRITICAL (verified pass 26): construct two fake principals for Workspace A and B, call `get_pipeline_health` as each, assert A never sees B's signals and vice versa — this test MUST exist before BH-1042 is considered done (Property 8).** |
+| `brightbot` | `brightbot/tests/` + `brightbot/brightbot/evals/` (L0/L1/L2) | L0: one case per §2 MCP tool contract entry, PLUS the required `capabilities.py` catalog row for `get_pipeline_health` and its addition to the live-tool enumeration tests (`test_permissions.py`, `test_tool_invariants.py`/`test_mcp_live_tools.py`-style lists) — these are CI-pinned and fail closed if skipped (verified pass 6). **CRITICAL, added pass 26: `get_pipeline_health` MUST pass the EXISTING repo-wide `test_no_principal_fields_in_tool_args` test (`test_tool_invariants.py`) — this is not optional/new, it's an existing gate the tool must not violate.** L1: routing case confirming watchdog capability node is reachable via the existing dispatcher (not a new entry point). L2: one case per §3 invariant (1, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 — **pass 65 correction: the original list stopped at 14; this pass adds 18/19, both added later in this same session (18: stable per-connection job_id; 19: dbt Cloud Cancelled runs never alert)**). Invariant 19 case: construct a dbt Cloud run history with `status=30` (Cancelled) and assert NO `PipelineHealthSignal` is emitted for it — then construct a `status=20` (Error) case on the same job and assert one IS emitted, proving the branch discriminates correctly (validates Property 1's cooldown-key guarantee only fires on genuine failures, and closes GC-14's cancelled-run demo scenario, docs/specs/golden-cases-loopcapital.md). + FailureClassificationEvaluator gated at 0.9 + RootCauseClassEvaluator gated at 0.95 precision on DATA_SHAPE. Invariant 15 case: assert a dual-write for each of the 5 currently-unrendered stage values (`dbt_run_stale`/`databricks_job_failure`/`databricks_cluster_unhealthy`/`etl_job_failure`/`source_disk_low`) is caught by an explicit renderer-existence check (fails until BH-1067 ships), not left as a silent visual gap. Invariant 16 case: construct a workspace fixture with 2 connected services of the same provider type and assert the adapter either polls both or raises/logs a documented single-connection assumption — never silently polls only the first. **Invariant 17 case, CRITICAL (added pass 64/65): construct a real `dbt_run_failure` event, feed it through `renderDbtFailureDetails` with metadata keyed EXACTLY `model_name`/`job_id`/`error`/`log_id`, and assert the rendered text contains all 4 values — then construct a SECOND case with differently-named keys (e.g. `jobId`/`errorMessage`) and assert the renderer's output is detectably incomplete (a regression test that would have caught BH-1054 shipping the wrong field names silently).** Invariant 10/11 cases must mock a 429 response from dbt_cloud_tools.py's HTTP calls (which today has zero backoff handling, confirmed by code read — this is new behavior, not existing coverage) and assert per-workspace isolation (Property 5). Invariant 12 case (BH-1051 only): assert the deployed schedule expression is NOT one of cadenceToCron()'s hardcoded DAILY..QUARTERLY 08:00 values. Invariant 13 case: feed a fixture diagnosis string containing a fake credential shape (e.g. a `postgres://user:pass@host` connection string) through the diagnosis pipeline and assert `scrub_text()` redacted it before any sink write (Property 7). **Invariant 7 case, CRITICAL (verified pass 24): enumerate the remediation loop's bound tools at construction time and assert `github_merge_pull_request` is absent — this is a code-level assertion, not a prompt-content check, and this specific test MUST exist before BH-1047 is considered done (Property 2).** **Invariant 14 case, CRITICAL (verified pass 26): construct two fake principals for Workspace A and B, call `get_pipeline_health` as each, assert A never sees B's signals and vice versa — this test MUST exist before BH-1042 is considered done (Property 8).** |
 | `brighthive-platform-core` | `brighthive-platform-core/tests/` | Two tests confirming a watchdog-emitted event round-trips through BOTH the old `NOTIFICATIONS_TABLE` (Slack-visible) and `NotificationInbox` (webapp-visible) with zero new delivery code — one test per table, plus one negative test asserting `watchdog.dualwrite.partial_total` fires if either write is mocked to fail (validates Invariant 1 + 6, Property 4). |
 | `brighthive-e2e` | `brighthive-e2e/e2e/` | One feature test: real dbt Cloud sandbox job failure → real staging watchdog poll → real Slack/in-app alert, end-to-end (§4 happy path). One error-path test: SQL Server disk-low scenario against a real staging BYOW SQL Server connection (§4 "SQL Server disk monitoring" scenario) — this is the literal demo scenario and must be proven against a real backend per `test-behavior-real.md`, not mocked. |
 
@@ -1759,23 +1792,22 @@ convention in this codebase.
 it is the direct rebuttal to Frank's stated disbelief and must be demonstrated against a real
 connected SQL Server, not a construct/mock.
 
-**CRITICAL, verified 2026-07-10 (pass 14) — both real-behavior fixtures this table assumes
-DO NOT EXIST TODAY, and neither was previously tracked as a known gap:**
-- **No staging BYOW SQL Server connection exists anywhere** (confirmed by direct search —
-  `e2e/fixtures/ground_truth.py` has zero SQL Server entries, zero `sql-server` infra-gap
-  tracking slug existed before this pass). The literal 7/17 demo commitment (Suzanne's line
-  item #2, disk-monitoring at 20% remaining) currently has NO real infrastructure to run
-  against. **BH-1057 filed, urgent** — provisioning this is now the single most
-  demo-time-critical open item across all 14 verification passes.
+**UPDATED 2026-07-13 — one of the two real-behavior fixtures this table originally flagged as
+missing is now resolved; the other remains open:**
+- **BH-1057 (SQL Server fixture) is DONE.** A local Docker SQL Server sandbox
+  (`clients/trials/loopcapital/sandbox/`) was built and verified end-to-end this session —
+  replaces the AWS RDS plan originally referenced here (pass 14, since found stale in this
+  same section by a completeness audit). The literal 7/17 demo commitment (Suzanne's line
+  item #2) now has a real, running fixture to test against. `./validate.sh` in the sandbox
+  runs the same disk-check/job-status queries this e2e case needs.
 - **No dbt Cloud job exists that can be deliberately triggered to fail** (the one real project,
-  395091, is treated as healthy/read-only). **BH-1058 filed** — less time-critical than
-  BH-1057 since dbt job-status monitoring isn't Frank's literal named example, but still
-  required for BH-1043's §10 case to be executable as written.
+  395091, is treated as healthy/read-only). **BH-1058 still open** — required for BH-1043's
+  §10 case to be executable as written.
 
 Before opening the implementation PR: run all suites above, confirm every new §2/§3/§4/§8 entry
-has a corresponding test case, confirm all green. **Confirm BH-1057 and BH-1058 are resolved
-first** — a §10 test case that names a fixture which doesn't exist is not a test plan, it's a
-placeholder.
+has a corresponding test case, confirm all green. **Confirm BH-1058 is resolved** (BH-1057
+already is) — a §10 test case that names a fixture which doesn't exist is not a test plan, it's
+a placeholder.
 
 ## Track E: agentic SQL Server profiling & quality health checks (added pass 81, tickets filed pass 82 — user-raised)
 
@@ -1942,7 +1974,7 @@ unless noted):
 | BH-1052 | feat: unify all 3 ingestion watchdogs into the same dual-write/dedup as BH-1054 — **CORRECTED pass 25**: not pure verification if BH-1049/1050 choose Option A, since each lives in a different repo/runtime/mechanism (brightbot direct call, a Chalice Lambda's new HTTP call, an existing SNS→Slack-only path that may not reach NotificationInbox at all) | Needs Refinement (BH-1037), revised pass 25 — real conditional design work, not pure verification |
 | BH-1038–1041 | BrightRoutines MCP/A2A surface (BH-115) | Needs Refinement, unaffected by this spec — separate concern |
 | BH-1055 | infra: concurrency cap + fan-out load test for scheduled_agent_dispatcher | Needs Refinement, filed pass 11, sharpened with live AWS data pass 12-13 (BH-1036 for now; conceptually fits BH-171) |
-| BH-1057 | infra/fixture: provision staging BYOW SQL Server connection — the literal 7/17 demo scenario has zero infra today | Needs Refinement, filed pass 14 (CRITICAL), resolved-actionable with concrete runbook pass 15 (BH-1036) |
+| BH-1057 | infra/fixture: the literal 7/17 demo scenario's SQL Server target — **DONE 2026-07-13**: a local Docker sandbox, built + verified, superseding the earlier RDS plan | Needs Refinement in Jira (tracking only — the fixture itself is built), filed pass 14 (BH-1036) |
 | BH-1058 | infra/fixture: dbt Cloud job with deliberate-failure capability, for BH-1043's e2e case | Needs Refinement, filed pass 14, resolved-actionable pass 16, CORRECTED pass 27 — runbook's fixture mechanism must produce a genuine runtime SQL error, not a compile-time error (BH-1036) |
 | BH-1059 | track: scheduled_agent_dispatcher's LangGraph Cloud dependency unaddressed by AgentCore/CEMAF migration | Needs Refinement, filed pass 19, tracking placeholder (BH-453, correct epic home) |
 | BH-1060 | security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only) | Needs Refinement, filed pass 23, non-blocking for 7/17, decision-before-production (BH-1036) |
