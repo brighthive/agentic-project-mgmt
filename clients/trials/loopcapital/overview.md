@@ -226,6 +226,9 @@ report). Non-blocking for 7/17.
 Jira status + real code, not carried forward from an earlier pass's note. Updated from "two
 things" to the real current count.**
 
+**RE-VERIFIED pass 51 (2026-07-12) — both still genuinely open, checked fresh against live
+Jira status + real code, not carried forward from an earlier pass's note:**
+
 1. **BH-1057** — provision a real staging SQL Server (RDS Web edition) so the disk-monitoring
    demo runs against real infrastructure, not a mock. Runbook is complete (~3-5 hrs, fully
    detailed in BH-1057's own ticket, including the required `GRANT VIEW SERVER STATE` step).
