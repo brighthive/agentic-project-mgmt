@@ -330,6 +330,25 @@ class LineageGraph:
                                        # all. The old name has_column_lineage was a real,
                                        # unverified false claim about what this artifact
                                        # provides.
+                                       #
+                                       # GAP FOUND, pass 74 (triple-click-zoom) — this field is
+                                       # REQUIRED (non-Optional bool) on every LineageGraph, but
+                                       # this spec only ever discusses what value BH-1062
+                                       # (dbt) sets. BH-1068 (SnowflakeNativeLineageSource) and
+                                       # BH-1074 (DatabricksLineageSource) have NO specified
+                                       # value anywhere. Both engines have a real, cheap
+                                       # column-EXISTENCE source available — Snowflake's
+                                       # `ACCOUNT_USAGE.COLUMNS` view, Databricks'
+                                       # `information_schema.columns` — genuinely analogous to
+                                       # dbt's catalog.json column metadata (existence/type,
+                                       # never dependency). Each adapter SHALL set
+                                       # has_column_metadata=True and populate
+                                       # LineageModelNode.columns from ITS OWN engine's
+                                       # column-existence source if queried, or explicitly
+                                       # document why it does not (e.g. deferred to keep the
+                                       # first cut cheap) — it SHALL NOT silently default to
+                                       # False as if no such source exists for that engine,
+                                       # which would be false for both Snowflake and Databricks.
     fetch_error: str | None
     source_engine: str               # "dbt" | "databricks" | future engines — for observability only,
                                       # never branched on by downstream consumers (BH-1063/1064)
@@ -1504,6 +1523,23 @@ async def find_downstream_impact(
     for a single-source MVP, explicitly drop the unused LineageSource/LineageGraph types from
     §2 rather than leave them as aspirational scaffolding nothing implements.`
 
+20. `EVERY LineageSource adapter SHALL set LineageGraph.has_column_metadata based on ITS OWN
+    engine's real column-existence capability — it SHALL NOT default to False as if no
+    column-existence source exists for that engine, when one does. CRITICAL, found pass 74:
+    this spec thoroughly specifies has_column_metadata's VALUE and MEANING for dbt (BH-1062,
+    via catalog.json — Invariant 14) but never once specifies what BH-1068
+    (SnowflakeNativeLineageSource) or BH-1074 (DatabricksLineageSource) should set here,
+    despite it being a required (non-Optional) field on every LineageGraph. Both engines have
+    a real, cheap column-existence source available and genuinely analogous to dbt's
+    catalog.json column metadata (existence/type only, never dependency) —
+    `ACCOUNT_USAGE.COLUMNS` for Snowflake, `information_schema.columns` for Databricks.
+    Leaving this unspecified risks each adapter either inventing its own inconsistent
+    convention, or silently defaulting to False (falsely implying no column data is available
+    when it genuinely is, for both engines). Invariant 14's dbt-specific "never column
+    DEPENDENCY, only existence" contract applies identically here — this invariant governs
+    only WHETHER each adapter populates the existence data at all, not what kind of data it
+    is once populated.`
+
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
@@ -1643,6 +1679,16 @@ Feature: Lineage-aware data quality — glue dbt's own lineage to anomaly detect
       the view's own freshness/last-refresh signal indicates so
     And BH-1064's downstream-impact traversal does NOT treat this empty result as
       authoritative proof "nothing depends on this" while the latency window is still open
+
+  Scenario: a non-dbt lineage source does not falsely claim it has no column data
+    Given BH-1068's SnowflakeNativeLineageSource queries ACCOUNT_USAGE.COLUMNS for a real
+      table, OR BH-1074's DatabricksLineageSource queries information_schema.columns
+    When either adapter builds its LineageGraph
+    Then has_column_metadata is set to True and LineageModelNode.columns is populated from
+      that engine's real column-existence data — it is NOT silently left False as if no
+      such source existed for that engine
+    And this column-existence data is still never treated as column-DEPENDENCY lineage
+      (Invariant 14's contract applies identically to every engine, not just dbt)
 
   Scenario: upserting a full manifest's worth of models never re-authenticates per model
     Given a real dbt manifest.json with hundreds of models
