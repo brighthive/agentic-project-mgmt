@@ -471,6 +471,41 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     **All 3 of Loop Capital's demo-point signals now render real detail on the inbox** —
     GC-14 (dbt), GC-15's disk-low, GC-15's job-failure — none fall through to the generic
     formatter anymore.
+22. **CRITICAL — GC-14's dbt watchdog was completely non-functional in production, found +
+    fixed, 2026-07-15 (brightbot PR #848, brighthive-platform-core PR #1057, both merged +
+    promoted staging)**: proved by direct run, not speculation — a scheduled watchdog
+    principal has `token=None` by design (`_principal_for_workspace`'s own comment:
+    "scheduled runs have no user JWT"), but `fetch_dbt_credentials` hard-required a real
+    bearer token to call Platform Core's authenticated `workspace` GraphQL query. With
+    `token=None`, the watchdog silently returned zero signals and logged "no connected dbt
+    Cloud service" — even for a workspace that genuinely has one connected. Fixed
+    composably, not with bespoke auth: extended platform-core's EXISTING `x-service-key`
+    gate (the same pattern `executeWorkflowAsOwner`/`notificationRecipients` already use)
+    with one new read-only query, `getTransformationServicesForScheduledWatchdog`; brightbot
+    falls back to it when `token` is absent. **Verified end-to-end against staging's real
+    data, zero mocks**: resolves OneTen's real connected dbt Cloud TransformationService
+    (`f0d1f30c-…`, "Longaeva POC dbt") with zero user token, real Secrets Manager
+    credentials, real GitHub repo. Also caught + fixed a build-breaking mistake mid-pass: the
+    first schema edit landed in `schema.graphql`, which is a GENERATED artifact
+    (`emit-schema-sdl.ts` writes it FROM `typedefs.ts`) — a real local-server boot caught
+    this ("defined in resolvers, but not in schema") before it could ship. Corrected by
+    extracting a new `watchdog-typedefs.ts` module (typedefs.ts is already at the 1300-line
+    limit) and wiring it into all 3 real assembly points (`server.ts`, `servers/utils.ts`,
+    `emit-schema-sdl.ts`).
+23. **GC-16 wiring gap found + fixed, 2026-07-15 (brightbot PR #850, merged + promoted
+    staging)**: `remediation_agent_graph` (GC-16's surgical-PR loop) had ZERO callers outside
+    its own tests — confirmed by grep across the whole codebase. GC-14 (watchdog detection)
+    and GC-16 (remediation) were two completely disconnected LangGraph assistants; a real
+    dbt failure could be detected and alerted on forever without ever triggering a fix
+    attempt. This directly contradicted the spec's own invariant ("DATA_SHAPE root cause
+    routes to the existing surgical-PR loop"). Fixed by adding an `attempt_remediation` node
+    to the watchdog graph that invokes the SAME compiled `remediation_agent_graph` in-process
+    (mirrors `analyst_ask.py`'s pattern for `deep_agent_graph` — both graphs run in the same
+    brightbot process, no LangGraph SDK round-trip needed). GC-17's auto-merge exclusion is
+    re-checked at this exact runtime call site — the one place remediation can be triggered
+    autonomously — not just trusted from an earlier test run. 4 new tests + 6 existing
+    assertions updated; 312/312 golden-case + governance + dbt_agent tests pass, 0 failed.
+    **The demo's full "detect → fix" narrative for GC-14→GC-16 is now real, not manual-only.**
 
 ## Open Blockers
 
