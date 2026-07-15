@@ -337,6 +337,19 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     its own documented trigger phrase. Both pass on real Bedrock (`BH_RUN_LIVE_EVALS=1`):
     "is anything broken in my pipelines right now?" → `check_pipeline_health_tool`; "scan my
     warehouse and tell me if any tables look unhealthy" → `scan_warehouse_tables_tool`.
+13. **T-1 combined dry run, 2026-07-15**: `make poc-tracker-no-slack CLIENT=loopcapital`
+    regenerated TRACKER.md from live Jira — checkbox status ("🟡 in progress") for BH-1045/
+    1047/1054/1067 is honest, not stale (Jira's own `statusCategory` maps "Staging QC" to
+    "In Progress" — the tracker's rendering is correct, matches the real state: code merged,
+    live-workspace validation still blocked on Open Blocker #5). Ran the closest thing to
+    TRACKER.md's own "T-1 — Full dress rehearsal" bar without a live workspace: fresh
+    sandbox rebuild, then ALL THREE demo points' proof in one combined pytest invocation —
+    `RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/
+    tests/integration/test_skills_execution.py -k "gc_14 or gc_15 or gc_16 or gc_17 or
+    governance"` — **17 passed, 0 failed, 5 honestly-skipped**. Point 1 (dbt watchdog logic),
+    Point 2 (SQL Server disk-low against the real Docker sandbox), Point 3 (surgical PR via
+    the real remediation graph), GC-17's safety gate, and live-Bedrock proactive-monitoring
+    intent routing — all together, one command, all green.
 
 ## Open Blockers
 
