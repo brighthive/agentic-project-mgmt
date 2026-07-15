@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-15 17:12 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-15 19:58 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -146,7 +146,7 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 ## 📊 Summary
 
 - **2/42** tickets done · 6 in progress · 34 to do
-- PRs: 34 merged · 1 ready for review · 0 draft
+- PRs: 50 merged · 1 ready for review · 0 draft
 
 ## 📋 Tickets by status
 
@@ -171,12 +171,12 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | [BH-1055](https://brighthiveio.atlassian.net/browse/BH-1055) | infra(dispatcher): add concurrency cap + fan-out load test to… | Kuri Chinca | — |
 | [BH-1058](https://brighthiveio.atlassian.net/browse/BH-1058) | provision a dbt Cloud job that can be deliberately triggered to… | Kuri Chinca | — |
 | [BH-1059](https://brighthiveio.atlassian.net/browse/BH-1059) | track: scheduled_agent_dispatcher's LangGraph Cloud dependency is… | Kuri Chinca | — |
-| [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) | security: evaluate customer PII/data-value redaction for diagnosis… | Kuri Chinca | — |
+| [BH-1060](https://brighthiveio.atlassian.net/browse/BH-1060) | security: evaluate customer PII/data-value redaction for diagnosis… | Kuri Chinca | [🟢 Merged brightbot#846](https://github.com/brighthive/brightbot/pull/846) |
 | [BH-1061](https://brighthiveio.atlassian.net/browse/BH-1061) | Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#101](https://github.com/brighthive/agentic-project-mgmt/pull/101)<br>[🔵 Review agentic-project-mgmt#99](https://github.com/brighthive/agentic-project-mgmt/pull/99)<br>[🟢 Merged agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98) |
-| [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#102](https://github.com/brighthive/agentic-project-mgmt/pull/102) |
+| [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#102](https://github.com/brighthive/agentic-project-mgmt/pull/102)<br>[🟢 Merged brightbot-slack-server#128](https://github.com/brighthive/brightbot-slack-server/pull/128) |
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(lineage): wire longitudinal-monitoring anomalies to walk the… | Kuri Chinca | — |
 | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) | feat: render longitudinal anomaly notifications in Slack + webapp… | Kuri Chinca | — |
-| [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | [🟢 Merged brightbot#833](https://github.com/brighthive/brightbot/pull/833)<br>[🟢 Merged brightbot#830](https://github.com/brighthive/brightbot/pull/830)<br>[🟢 Merged brighthive-platform-core#1050](https://github.com/brighthive/brighthive-platform-core/pull/1050) |
+| [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | [🟢 Merged brightbot#833](https://github.com/brighthive/brightbot/pull/833)<br>[🟢 Merged brightbot#830](https://github.com/brighthive/brightbot/pull/830)<br>[🟢 Merged brightbot-slack-server#143](https://github.com/brighthive/brightbot-slack-server/pull/143) |
 | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) | feat(lineage): Snowflake-native lineage adapter (Snowpipe/Tasks/Strea… | Kuri Chinca | — |
 | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) | feat(lineage): brightbot call site for upsert_lineage_graph (BH-1063a) | Kuri Chinca | — |
 | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) | test: add missing unit/integration test coverage for metric-snapshot.… | Kuri Chinca | — |
@@ -192,10 +192,10 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 
 | Key | Summary | Assignee | PR |
 |---|---|---|---|
-| [BH-1043](https://brighthiveio.atlassian.net/browse/BH-1043) | feat(monitoring): dbt job/run health poller — detect failed/stale… | Kuri Chinca | [🟢 Merged brightbot#833](https://github.com/brighthive/brightbot/pull/833)<br>[🟢 Merged brightbot#825](https://github.com/brighthive/brightbot/pull/825)<br>[🔵 Review brightbot#821](https://github.com/brighthive/brightbot/pull/821) |
+| [BH-1043](https://brighthiveio.atlassian.net/browse/BH-1043) | feat(monitoring): dbt job/run health poller — detect failed/stale… | Kuri Chinca | [🟢 Merged brightbot#848](https://github.com/brighthive/brightbot/pull/848)<br>[🟢 Merged brightbot#833](https://github.com/brighthive/brightbot/pull/833)<br>[🟢 Merged brightbot#825](https://github.com/brighthive/brightbot/pull/825) |
 | [BH-1045](https://brighthiveio.atlassian.net/browse/BH-1045) | feat(monitoring): generic ETL pipeline adapter port + registry entry | Kuri Chinca | [🟢 Merged agentic-project-mgmt#98](https://github.com/brighthive/agentic-project-mgmt/pull/98)<br>[🟢 Merged brightbot#826](https://github.com/brighthive/brightbot/pull/826)<br>[🔵 Review brightbot#821](https://github.com/brighthive/brightbot/pull/821) |
 | [BH-1046](https://brighthiveio.atlassian.net/browse/BH-1046) | feat(monitoring): proactive alert path — detected issue → Slack/inbox… | Kuri Chinca | — |
-| [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) | feat(monitoring): auto-remediation loop for known fix patterns… | Kuri Chinca | [🟢 Merged brightbot#829](https://github.com/brighthive/brightbot/pull/829)<br>[🟢 Merged brightbot#813](https://github.com/brighthive/brightbot/pull/813)<br>[🟢 Merged brightbot#811](https://github.com/brighthive/brightbot/pull/811) |
+| [BH-1047](https://brighthiveio.atlassian.net/browse/BH-1047) | feat(monitoring): auto-remediation loop for known fix patterns… | Kuri Chinca | [🟢 Merged brightbot#854](https://github.com/brighthive/brightbot/pull/854)<br>[🟢 Merged brightbot#852](https://github.com/brighthive/brightbot/pull/852)<br>[🟢 Merged brightbot#850](https://github.com/brighthive/brightbot/pull/850) |
 | [BH-1054](https://brighthiveio.atlassian.net/browse/BH-1054) | feat(monitoring): watchdog poller — the actual missing proactivity… | Kuri Chinca | [🟢 Merged brightbot#842](https://github.com/brighthive/brightbot/pull/842)<br>[🟢 Merged brightbot#840](https://github.com/brighthive/brightbot/pull/840)<br>[🟢 Merged brightbot#835](https://github.com/brighthive/brightbot/pull/835) |
 | [BH-1076](https://brighthiveio.atlassian.net/browse/BH-1076) | feat(quality): chain warehouse discovery -> per-table profiling for… | Kuri Chinca | [🟢 Merged brightbot#844](https://github.com/brighthive/brightbot/pull/844)<br>[🟢 Merged brightbot#830](https://github.com/brighthive/brightbot/pull/830)<br>[🟢 Merged brightbot#824](https://github.com/brighthive/brightbot/pull/824) |
 

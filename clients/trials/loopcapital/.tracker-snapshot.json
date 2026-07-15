@@ -30,8 +30,23 @@
     "brightbot#840": "MERGED",
     "brightbot#842": "MERGED",
     "brightbot#844": "MERGED",
+    "brightbot#846": "MERGED",
+    "brightbot#848": "MERGED",
+    "brightbot#850": "MERGED",
+    "brightbot#852": "MERGED",
+    "brightbot#854": "MERGED",
+    "brightbot-slack-server#128": "MERGED",
+    "brightbot-slack-server#135": "MERGED",
+    "brightbot-slack-server#136": "MERGED",
+    "brightbot-slack-server#141": "MERGED",
+    "brightbot-slack-server#143": "MERGED",
+    "brighthive-e2e#45": "MERGED",
+    "brighthive-e2e#46": "MERGED",
     "brighthive-platform-core#1047": "MERGED",
-    "brighthive-platform-core#1050": "MERGED"
+    "brighthive-platform-core#1050": "MERGED",
+    "brighthive-platform-core#1055": "MERGED",
+    "brighthive-platform-core#1057": "MERGED",
+    "brighthive-webapp#1300": "MERGED"
   },
   "ticket_statuses": {
     "BH-1036": "Needs Refinement",
@@ -77,5 +92,5 @@
     "BH-1091": "Needs Refinement",
     "BH-1092": "Needs Refinement"
   },
-  "timestamp": "2026-07-15T17:12:57+00:00"
+  "timestamp": "2026-07-15T19:58:22+00:00"
 }
