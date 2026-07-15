@@ -432,6 +432,27 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     names) survives untouched. 279/279 governance+dbt_agent unit tests pass, no
     regressions. Merged develop (#846) and promoted staging (#847). All 4 repos reconfirmed
     fully synced.
+20. **Cross-repo e2e coverage added for the first time, 2026-07-15
+    (brighthive-e2e PR #45, merged to master)**: confirmed `brighthive-e2e` had ZERO Loop
+    Capital coverage — grep across the whole repo for "loopcapital"/"GC-1[4-7]" returned
+    nothing. The `SSO` blocker the standing directive references turned out to be
+    incorrect — `aws sts get-caller-identity --profile brighthive-staging` succeeded via
+    access keys, so a real local core WAS bootable against staging's live Neo4j/DynamoDB
+    data plane per `RUN_LOCAL_AGAINST_STAGING.md`. Booted `brighthive-platform-core`
+    locally (Redis + staging Neo4j creds + a locally-generated `NOTIFICATIONS_API_KEY` +
+    the real staging `brighthive-notification-inbox-stg` DynamoDB table), then wrote a real
+    GraphQL round-trip test for BH-1067's two watchdog formatters: deliver
+    `source_disk_low`/`etl_job_failure` via `notificationRecipients` (the exact call
+    `brightbot-slack-server`'s poller makes), read back via the `notifications` query,
+    assert the dedicated title/subtitle/detail render — not `formatGenericDisplay`'s
+    fallback. This is the first test in the whole repo proving the formatters work through
+    the REAL mutation+query wire, not just the isolated unit tests — closes a real gap a
+    unit test structurally cannot: GraphQL schema validation, `resolveSignal()`'s registry
+    dispatch, and DynamoDB storage all had zero round-trip coverage before this. Both tests
+    pass (`2 passed in 7.29s`), self-purging. New spec `SPEC-E2E-NOTIFICATIONS-WATCHDOG-
+    PAYLOAD.md` added; `TRACKER.md` regenerated (42 specs / 315 ACs, 100% bound). Local core
+    + Redis torn down after; both `brighthive-e2e` and `brighthive-platform-core` restored
+    to the branches they were on before this pass (pre-existing in-flight work, untouched).
 
 ## Open Blockers
 
