@@ -133,14 +133,24 @@ feature never fires for the common case of a normal few-second chat turn.
   `interruptible()` wraps LangGraph's `interrupt()`; the webapp's `get_state` response surfaces
   `interrupts: [...]`, rendered by `useAgentInterrupt.ts`. A paused run can sit for hours/days —
   the checkpoint is the persistence layer.
-- **Notification delivery is fully built and reusable as-is.** `writeNotificationSignal()`
-  (`brighthive-platform-core/src/graphql/service/aws/notification-signal.ts:51`) accepts
-  `visibility` (`"workspace"` default | `"user"`) and `audienceUserIds: string[]`
-  (line 18, 38) — confirmed live and exercised end-to-end by `scheduler-bridge.ts:52-81`'s
-  `publishWorkflowScheduleNotification()`. Once this stage is published with
-  `visibility: "user"`, the existing `brightbot-slack-server` poller and platform-core's Inbox
-  fan-out (`notification-preference.ts`'s `signalPassesPreferenceFilter`) deliver it with **zero
-  new channel code** — same mechanism BH-1088's personal-scope Slack DMs already use.
+- **Notification delivery — mostly reusable, one real gap found post-launch (2026-07-16).**
+  `writeNotificationSignal()` (`brighthive-platform-core/src/graphql/service/aws/
+  notification-signal.ts:51`) accepts `visibility` (`"workspace"` default | `"user"`) and
+  `audienceUserIds: string[]` (line 18, 38), and platform-core's Inbox fan-out
+  (`notification-preference.ts`'s `signalPassesPreferenceFilter`) genuinely does honor both
+  fields with zero new code — that half of "reusable as-is" was correct. **What was wrong**:
+  `brightbot-slack-server`'s `SlackChannel.deliver()` (`src/notifications/channels/slack.ts`)
+  never reads `visibility`/`audience_user_ids` at all — it matches events purely against
+  pre-declared `Subscription` rows (`event_filter`/`asset_filter`/`severity_filter`), which
+  nothing in this feature ever created. Every real chat-notify event published correctly but
+  produced zero Slack messages, silently (`match_count: 0`, no error). Fixed by having
+  brightbot's webhook receiver auto-provision a `PERSONAL`/`SLACK_DM` subscription for both
+  stages on a user's first opt-in, via the same `createNotificationSubscription` mutation +
+  `x-service-key`/`actingUserId` dual-auth path `scheduled_agents_routes.py`'s scheduler
+  provisioning already uses (see §2.2). "Same mechanism BH-1088's personal-scope Slack DMs
+  already use" was never actually true for a *new* stage with no subscription UI of its own —
+  BH-1088's precedent (a scheduled run's owner) works because *something* creates that
+  subscription; this spec never specified what would for chat sessions.
 
 ### Hard Limitations
 
@@ -209,7 +219,16 @@ Behavior:
   3. Skip if the thread is muted (§3 Invariant 5). (A presence/"actively watched" skip was built
      and shipped here, then removed 2026-07-15 — see Invariant 2's strikethrough note in §3.)
   4. Claim (see §3 Invariant 4) — skip if already claimed for this run_id.
-  5. Call platform-core's publishNotification:
+  5. Ensure the user has a PERSONAL/SLACK_DM subscription for both chat_run_complete and
+     chat_run_interrupt (added 2026-07-16 — see the Context note above and §6 Dependencies).
+     First opt-in only, gated by a small idempotent DynamoDB row
+     (BrightbotChatNotifySubscriptionsProvisioned); calls platform-core's
+     createNotificationSubscription with the x-service-key + actingUserId dual-auth path
+     (scheduled_agents_routes.py's scheduler provisioning uses the same mutation, but omits
+     actingUserId and has therefore been silently failing on every call — do not copy that).
+     Best-effort: a failure here (most commonly no linked Slack identity) never blocks the
+     publish in step 6 — Inbox delivery is unaffected either way.
+  6. Call platform-core's publishNotification:
        stage: "chat_run_interrupt" (status=="interrupted") | "chat_run_complete" (otherwise)
        status: "info" (interrupt) | "success"/"failed" (complete, mapped from LangGraph's status)
        visibility: "user"
@@ -339,7 +358,7 @@ Feature: Notify me on this chat session
 | Per-thread mute suppression store (brightbot) | Blocking (new, small scope) | **Resolved (BH-1101)** — a TTL'd DynamoDB key-value table, no new database |
 | `writeNotificationSignal` / `publishNotification` (`visibility: "user"` path) | Non-blocking (reused) | Ready — proven by BH-1088 + `scheduler-bridge.ts` |
 | Thread/run metadata `user_id` field | Non-blocking (reused) | Ready — already threaded by `useAgentStream.ts` |
-| brightbot-slack-server delivery pipeline (poller, `SlackChannel.deliver()`) | Non-blocking (reused) | Ready — same path BH-1088 fixed this session |
+| brightbot-slack-server delivery pipeline (poller, `SlackChannel.deliver()`) | Non-blocking, but genuinely new work | **Resolved (2026-07-16)** — `deliver()` matches Subscription rows, not `visibility`/`audienceUserIds`; nothing auto-created a row for the two new stages. Fixed by auto-provisioning one on first opt-in (§2.2 step 5), not by changing `deliver()` itself. |
 
 ## 9. Observability Contract
 
