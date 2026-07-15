@@ -416,6 +416,22 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     dress-rehearsal result. Confirms this session's fixes (dual-write trace, subscription
     over-broadcast fix, teammate's inbox fix) introduced zero regressions across all 4
     demo points. Sandbox torn down after (`docker compose down -v`).
+19. **Real credential-scrubbing gap found + fixed, 2026-07-15 (brightbot PR #846/#847,
+    merged develop + staging)**: re-read the spec's own Gherkin scenario "diagnosis text is
+    scrubbed before reaching any of 4 sinks" (Slack, NotificationInbox, GitHub PR body,
+    audit log) and grepped for `scrub_text` across the whole pipeline-watchdog path — zero
+    hits. Confirmed the audit-log sink already redacts via `@audit_action`'s
+    `emit_action_audit -> _truncate(_redact=True)`, but `_publish_signals` posts to
+    `publishNotification` via raw `httpx`, never wrapped in that decorator — the one sink
+    the spec's own requirement never reached. SQL Server's raw `failure_message` and dbt's
+    error text flow straight into `diagnosis`/`metadata` and out to all 3 non-audit sinks
+    unscrubbed. Fixed by calling `scrub_text()` at signal-collection time in
+    `_poll_all_adapters` (`pipeline_watchdog_task.py`) — the single choke point every source
+    (dbt, SQL Server) and every downstream sink shares. Added a regression test proving an
+    embedded AWS key, JWT, and inline password get redacted while ordinary text (e.g. job
+    names) survives untouched. 279/279 governance+dbt_agent unit tests pass, no
+    regressions. Merged develop (#846) and promoted staging (#847). All 4 repos reconfirmed
+    fully synced.
 
 ## Open Blockers
 
