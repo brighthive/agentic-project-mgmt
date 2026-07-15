@@ -350,6 +350,19 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     Point 2 (SQL Server disk-low against the real Docker sandbox), Point 3 (surgical PR via
     the real remediation graph), GC-17's safety gate, and live-Bedrock proactive-monitoring
     intent routing — all together, one command, all green.
+14. **THIRD surface's parity gap found + fixed, 2026-07-15 (brighthive-platform-core PR
+    #1050/#1051, merged develop + staging)**: checking `resolveSignal()`'s source registry
+    (the per-user NotificationInbox delivery path — `notificationRecipients ->
+    resolveSignal -> stored displayJson/detailJson`) found `source_disk_low`/
+    `etl_job_failure` had NO entry — falling through to `formatGenericDisplay`. A real
+    notification lands (never a stub/throw, per the registry's own design), but with no
+    diagnostic detail. Slack (`brightbot-slack-server`) and the webapp's SSE toast
+    (`Navbar.tsx`) both got this exact fix earlier this session; this THIRD surface — the
+    per-user inbox itself, `brighthive-platform-core`, a repo not otherwise touched this
+    session — had never been checked. Added real formatters reading the exact metadata keys
+    `sql_server_pipeline_source.py` writes, mirroring the existing
+    `notifications-workflow-suggestion-display.test.ts` test pattern. 37/37 unit tests pass.
+    Merged to develop and staging.
 
 ## Open Blockers
 
