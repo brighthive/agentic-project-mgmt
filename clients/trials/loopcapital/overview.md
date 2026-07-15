@@ -125,10 +125,10 @@ assumption. Full detail below in [Capability Coverage](#capability-coverage-summ
 |---|---|---|
 | Legacy pipeline diagnostics (SSIS/SSRS/storage) | PARTIAL, **updated 2026-07-13**: brightbot's own diagnostics skills are still prompt-only (no deterministic parser for either format, confirmed 2026-07-12); but the demo sandbox now has a REAL `.dtsx` (`Extract_Holdings_Nightly.dtsx`) and the first real `.rdl` anywhere in this org (`Holdings_Daily_Report.rdl`), both querying a real running SQL Server — `clients/trials/loopcapital/sandbox/ssis/`, `.../ssrs/` | If Loop Capital asks to monitor a REAL PRODUCTION legacy SQL Server's SSIS/SSRS catalog (not this sandbox), that remains new, unscoped work |
 | Proactive pipeline monitoring (dbt/Databricks/ETL job-status) | **Updated 2026-07-15**: dbt (BH-1043) and SQL Server (BH-1045) adapters + the scheduled watchdog (BH-1054) are merged to develop; both `check_pipeline_health_tool` and `scan_warehouse_tables_tool` now also reachable directly from the governance chat agent, not just the scheduler/MCP. Databricks (BH-1044) still has an open storage-model decision | BH-1044 (Databricks) remains the only adapter not started |
-| SQL-Server-with-no-MCP disk/job monitoring | **Updated 2026-07-15**: shipped + enriched. BH-1045's disk-check + job-status queries are merged; alerts now carry the largest offending file (disk-low) and the failed step name + raw error text (job failure) — not just "disk low"/"job failed". Slack renderer parity shipped in the same pass (brightbot PR #830, brightbot-slack-server PR #135, both draft/CI-green pending review). | Remaining gap is operational, not code: Loop Capital has no provisioned real workspace yet (see Open Blocker #5) — the 7/17 demo runs against the local Docker sandbox, not a live customer SQL Server |
+| SQL-Server-with-no-MCP disk/job monitoring | **Updated 2026-07-15**: shipped + enriched, merged to `develop` AND `staging`. BH-1045's disk-check + job-status queries; alerts carry the largest offending file (disk-low) and the failed step name + raw error text (job failure). Verified against the REAL local Docker sandbox end-to-end (5 real-behavior tests, zero AWS SSO dependency): correct percent_free, real job pass/fail mix, enrichment fields, and `check_pipeline_health_tool`'s chat surface all reach the live backend. Slack renderer parity merged (brightbot PR #830, brightbot-slack-server PR #135). Cooldown/retry-storm suppression (Invariant 3) also merged (#835) — a real gap found and closed the same pass. | Remaining gap is operational, not code: Loop Capital has no provisioned real workspace yet (see Open Blocker #5) — the 7/17 demo runs against the local Docker sandbox, not a live customer SQL Server |
 | Ingestion/source-sync proactive health | IN PROGRESS | BH-1048–1052 scoped; Airbyte/Step-Functions pollers are greenfield (no existing tool to wrap) |
 | Multi-channel surfacing (Slack + webapp) | REAL, verified against live code | Email/SES channel confirmed dead/unbuilt — Slack+webapp is the actual complete channel set today |
-| Fix-recurrence surfacing (Frank's ask #3) | **Updated 2026-07-15**: BH-1047's safety gate (`REMEDIATION_TOOLS` excluding `github_merge_pull_request`) is merged. The GC-16 remediation loop (classifier + scoped agent) is in draft PR #829, CI-green, awaiting review — mechanism built, not yet merged | Post-merge fix-verification (BH-1091) intentionally deferred to human-in-the-loop per explicit product decision — reviewer merges the PR, no automated re-run/verify step |
+| Fix-recurrence surfacing (Frank's ask #3) | **Updated 2026-07-15**: BH-1047's safety gate (`REMEDIATION_TOOLS` excluding `github_merge_pull_request`) is merged. The GC-16 remediation loop (classifier + scoped agent) is **merged** (PR #829), on `develop` + `staging`. GC-17's adversarial sub-case (`github_merge_pull_request` absent from the real ToolNode execution-time lookup, not just the static tool list) also landed (#833). | Post-merge fix-verification (BH-1091) intentionally deferred to human-in-the-loop per explicit product decision — reviewer merges the PR, no automated re-run/verify step |
 | BrightRoutines exposed via MCP/A2A | SCOPED, not built | BH-1038–1041; separate concern from monitoring, unaffected by the above |
 | Lineage-aware data quality (Track C — silent-corruption detection) | SCOPED, genuinely new, NOT for 7/17 | BH-1061–1064; the "zero pipeline errors, wrong Gold numbers" gap — BrightHive glues dbt/Databricks' own lineage to before/after monitoring, doesn't rebuild lineage. Honest post-demo framing, see Track C below |
 
@@ -247,9 +247,13 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 3. **BH-1047's safety fix — RESOLVED**: `REMEDIATION_TOOLS` (`dbt_agent_react.py`) now
    built via direct import, explicitly omitting `github_merge_pull_request` by name — a
    code-level gate, not just the system-prompt instruction. Merged via brightbot PR #813.
-   The GC-16 remediation loop itself (classifier + scoped agent) is built on
-   `drchinca/BH-1047/gc16-surgical-pr-remediation`, PR **#829** (draft, CI-green,
-   `mergeStateStatus: BLOCKED` only on the standard required-review gate — no conflicts).
+   The GC-16 remediation loop itself (classifier + scoped agent) is **merged** via PR #829
+   (2026-07-15) — both to `develop` and promoted to `staging`. GC-17's own adversarial
+   sub-case (proving `github_merge_pull_request` is absent from the tool-binding layer's
+   real execution-time lookup, not just the static tool list) also landed the same pass, PR
+   #833. GC-14/15/16/17 are all real code on staging now, verified against the local Docker
+   sandbox with zero AWS SSO dependency (see "New gap found" below for what that
+   verification pass surfaced).
 4. **Confirm Loop Capital's real dbt Cloud connection count — STILL BLOCKED, verified
    2026-07-15**: searched `dynamo-vault/cli/secrets search "loop"/"loopcapital"` against
    STAGE (108 workspaces) and PROD (506 workspaces) — **zero match in either account.**
@@ -260,6 +264,14 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    not a real Loop Capital tenant — confirm this is the intended demo setup before 7/17,
    since BH-1043's dbt watchdog and BH-1045's SQL Server watchdog both require a real
    `workspace_id` to poll against.
+5. **New gap found 2026-07-15, real-sandbox verification pass**: cooldown/retry-storm
+   suppression (Invariant 3 — "same job failing again within a cooldown window produces
+   exactly ONE alert, not one per retry") has **zero code anywhere**. Grepped
+   `pipeline_watchdog_task.py` and both adapters (`dbt_pipeline_source.py`,
+   `sql_server_pipeline_source.py`) — `job_id` is correctly stable (Invariant 3's
+   precondition), but no dedup/suppression logic exists. Real demo risk: a flapping job or
+   a disk-check that stays below threshold across multiple watchdog cycles would spam
+   Frank's Slack with duplicate alerts every poll. No ticket filed yet.
 
 ## Open Blockers
 
@@ -267,9 +279,10 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 |---|---|---|---|---|
 | 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | **2026-07-13** — Docker sandbox built + verified, replaces AWS RDS plan |
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
-| 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | **2026-07-15** — `REMEDIATION_TOOLS` merged (brightbot PR #813); GC-16 remediation loop itself in PR #829 (draft, CI-green) |
+| 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | **2026-07-15** — `REMEDIATION_TOOLS` merged (brightbot PR #813); GC-16 remediation loop itself merged (PR #829), on `develop` + `staging` |
 | 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |
 | 5 | **Escalated 2026-07-15**: not just "confirm connection count" anymore — `dynamo-vault search "loop"/"loopcapital"` returns **zero workspaces in STAGE or PROD**. Loop Capital has no provisioned real workspace at all. 7/17's demo must run against a synthetic/sandbox workspace — confirm that's the plan, since BH-1043/BH-1045's watchdogs both need a real `workspace_id` to poll. | Kuri | 2026-07-12 | — |
+| 6 | Cooldown/retry-storm suppression (Invariant 3) had zero code — confirmed by grep, not assumed. Real risk of duplicate Slack alerts on a flapping job or persistent low-disk condition. | Kuri | 2026-07-15 | **2026-07-15** — `pipeline_alert_cooldown.py` built (4-tuple key, DynamoDB + in-memory adapters), wired into `_publish_signals`, merged (brightbot PR #835), on `develop` + `staging` |
 
 ## Decision
 
