@@ -403,6 +403,19 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     drift. All 4 repos (`brightbot`, `brighthive-webapp`, `brighthive-platform-core`,
     `brightbot-slack-server`) confirmed fully synced (develop == staging, zero commits
     ahead) as of this pass.
+18. **GC-17 safety gate re-verified + full-suite regression re-run, 2026-07-15**: read
+    `test_gc_17_auto_merge_exclusion.py` in full — the code-level backstop is solid
+    (`REMEDIATION_TOOLS` built by direct import, excludes `github_merge_pull_request` by
+    construction; a third test introspects the REAL compiled agent's bound tool dict, not
+    just the expected list, so drift between the two can't silently pass). 3/3 pass, no
+    changes needed. Rebuilt the sandbox fresh, re-triggered disk pressure (18.02% free,
+    confirmed live) and the job-status mix, and re-ran the full combined suite —
+    `RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/
+    tests/integration/test_skills_execution.py -k "gc_14 or gc_15 or gc_16 or gc_17 or
+    governance"` — **17 passed, 0 failed, 5 honestly-skipped**, identical to the prior
+    dress-rehearsal result. Confirms this session's fixes (dual-write trace, subscription
+    over-broadcast fix, teammate's inbox fix) introduced zero regressions across all 4
+    demo points. Sandbox torn down after (`docker compose down -v`).
 
 ## Open Blockers
 
