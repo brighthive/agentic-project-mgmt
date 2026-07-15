@@ -1,6 +1,6 @@
 # Loopcapital — Live Tracker
 
-_Last refreshed **2026-07-15 16:10 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
+_Last refreshed **2026-07-15 17:12 UTC** by `make loopcapital-tracker`. Auto sections are overwritten — manual sections (🚨 Blockers, 🎯 This Week, 📝 Daily Notes, ❓ Open Questions) are preserved._
 
 > **Trial dates**: Demo 1: 2026-07-09 (done) — Demo 2 / decision gate: 2026-07-17 · **Epic**: [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036)
 
@@ -146,7 +146,7 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 ## 📊 Summary
 
 - **2/42** tickets done · 6 in progress · 34 to do
-- PRs: 33 merged · 1 ready for review · 0 draft
+- PRs: 34 merged · 1 ready for review · 0 draft
 
 ## 📋 Tickets by status
 
@@ -176,7 +176,7 @@ _Kuri's follow-up ask (2026-07-13): part of the broader BrightHive SaaS vision, 
 | [BH-1063](https://brighthiveio.atlassian.net/browse/BH-1063) | feat(lineage): load parsed dbt/Databricks DAG into Neo4j as… | Kuri Chinca | [🟢 Merged agentic-project-mgmt#102](https://github.com/brighthive/agentic-project-mgmt/pull/102) |
 | [BH-1064](https://brighthiveio.atlassian.net/browse/BH-1064) | feat(lineage): wire longitudinal-monitoring anomalies to walk the… | Kuri Chinca | — |
 | [BH-1066](https://brighthiveio.atlassian.net/browse/BH-1066) | feat: render longitudinal anomaly notifications in Slack + webapp… | Kuri Chinca | — |
-| [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | [🟢 Merged brightbot#833](https://github.com/brighthive/brightbot/pull/833)<br>[🟢 Merged brightbot#830](https://github.com/brighthive/brightbot/pull/830) |
+| [BH-1067](https://brighthiveio.atlassian.net/browse/BH-1067) | feat: renderers for 5 new watchdog notification stages (Slack +… | Kuri Chinca | [🟢 Merged brightbot#833](https://github.com/brighthive/brightbot/pull/833)<br>[🟢 Merged brightbot#830](https://github.com/brighthive/brightbot/pull/830)<br>[🟢 Merged brighthive-platform-core#1050](https://github.com/brighthive/brighthive-platform-core/pull/1050) |
 | [BH-1068](https://brighthiveio.atlassian.net/browse/BH-1068) | feat(lineage): Snowflake-native lineage adapter (Snowpipe/Tasks/Strea… | Kuri Chinca | — |
 | [BH-1069](https://brighthiveio.atlassian.net/browse/BH-1069) | feat(lineage): brightbot call site for upsert_lineage_graph (BH-1063a) | Kuri Chinca | — |
 | [BH-1070](https://brighthiveio.atlassian.net/browse/BH-1070) | test: add missing unit/integration test coverage for metric-snapshot.… | Kuri Chinca | — |

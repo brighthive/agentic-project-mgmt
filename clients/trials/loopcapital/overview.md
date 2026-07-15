@@ -377,6 +377,32 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     carries the real enrichment metadata. This closes the loop the prior 3 surface-parity
     fixes (Slack formatter, webapp SSE toast, webapp inbox display) depended on but had
     never traced end-to-end.
+16. **Real over-broadcast subscription bug found + fixed, 2026-07-15
+    (brightbot-slack-server PR #143/#144, merged develop + staging)**: while writing a test
+    to PROVE `SubscriptionStore.findMatching` correctly delivers GC-15's no-asset watchdog
+    signals (`source_disk_low`/`etl_job_failure` never carry `asset_id` — SQL Server is a
+    BYOW connection, never a catalogued `DataAssetNode`), the test asserting an
+    asset-SCOPED subscription should NOT match a no-asset signal **failed against the real
+    code** (`expected [...] to have a length of +0 but got 1`). Root cause:
+    `if (sub.asset_filter !== "*" && assetId && sub.asset_filter !== assetId) return false`
+    — the `assetId &&` guard silently skipped the whole check whenever a signal had no
+    asset, so an asset-specific subscription ("alert me about asset X only") incorrectly
+    matched EVERY no-asset signal in the workspace. This is a real, previously-undetected
+    over-broadcast bug affecting the whole notification system, not just Loop Capital's two
+    new stages — found via real-behavior test-writing per `test-behavior-real.md`, not
+    static review. Fixed by dropping the `assetId &&` short-circuit; verified against the
+    full 629-test suite (no regressions). Merged to develop (#143) and promoted to staging
+    (#144).
+17. **Third-party fix from teammate promoted to staging, 2026-07-15
+    (brighthive-platform-core PR #1054)**: Harbour (Nano-233) merged #1052 to develop — an
+    AI-only quality run (no configured rules, all counts 0, status "passed") was silently
+    filtered out of the notification inbox because `qualityStageFilter`'s count-gated
+    conditions (`failedCount/droppedCount/passedCount > 0`) never fired for a metric-free
+    run. Same notification pipeline GC-14/GC-15 depend on — promoted develop→staging
+    immediately per the standing "--admin all to staging" directive rather than letting it
+    drift. All 4 repos (`brightbot`, `brighthive-webapp`, `brighthive-platform-core`,
+    `brightbot-slack-server`) confirmed fully synced (develop == staging, zero commits
+    ahead) as of this pass.
 
 ## Open Blockers
 
