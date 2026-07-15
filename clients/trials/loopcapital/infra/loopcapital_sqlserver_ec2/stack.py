@@ -18,6 +18,7 @@ from pathlib import Path
 
 from aws_cdk import CfnOutput, Duration, Stack, Tags
 from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_secretsmanager as secretsmanager
 from constructs import Construct
 
 _SANDBOX_DIR = Path(__file__).resolve().parents[2] / "sandbox"
@@ -38,24 +39,42 @@ class LoopCapitalSqlServerStack(Stack):
             description="Loop Capital demo SQL Server — inbound 1433 only",
             allow_all_outbound=True,
         )
-        # TODO(before deploy): replace with platform-core's actual known
-        # source (its egress IP/CIDR, or a bastion/VPN range) — confirmed
-        # this needs verification, not assumed, before opening 1433 to it.
-        # Left as a placeholder as a deliberate blocker: this stack must
-        # not be deployed with an open CIDR.
+        # DELIBERATE EXCEPTION to aws-reusable.md's "no security group open to
+        # 0.0.0.0/0" rule — confirmed and explicitly approved for this one
+        # resource, not defaulted to. Reason: brightbot (the watchdog caller)
+        # deploys on LangGraph Cloud, a managed SaaS with no published static
+        # egress IP range — there is no real CIDR to scope this to. The
+        # compensating control is the SA credential (a real, non-default
+        # password, see user_data below) plus the resource's own short
+        # lifetime (Tags: TemporaryUntil, meant to be torn down right after
+        # the 7/17 demo). This is demo-grade posture, explicitly NOT
+        # production security — do not reuse this pattern for a real client
+        # workspace's warehouse connection.
         security_group.add_ingress_rule(
-            # Deliberately non-functional (loopback, unreachable from any
-            # real source) so a `cdk deploy` with this placeholder still
-            # left in place denies 1433 to everyone rather than silently
-            # opening it wide. Replace with platform-core's real known
-            # source CIDR before deploying against a live demo.
-            peer=ec2.Peer.ipv4("127.0.0.1/32"),
+            peer=ec2.Peer.any_ipv4(),
             connection=ec2.Port.tcp(1433),
-            description="PLACEHOLDER — CONFIRM platform-core's real source CIDR before deploy, see README.md",
+            description="Loop Capital demo SQL Server — open by necessity (LangGraph Cloud has no static egress CIDR); SA password is the real control, see stack.py",
         )
 
         instance_role = ec2.InstanceType.of(
             ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM
+        )
+
+        # Real, per-deploy generated SA credential — never a literal in
+        # source. This is the actual control the open security group above
+        # relies on, so it cannot itself be a hardcoded/shared/committed
+        # value (the local sandbox's throwaway "LoopCapital-Demo1!" is fine
+        # for a Docker container only reachable on localhost; it is NOT
+        # fine for a publicly-reachable instance).
+        sa_secret = secretsmanager.Secret(
+            self,
+            "SqlServerSaSecret",
+            description="Loop Capital demo SQL Server SA password — generated, never in source",
+            generate_secret_string=secretsmanager.SecretStringGenerator(
+                exclude_punctuation=False,
+                exclude_characters="\"'\\/@ ",
+                password_length=32,
+            ),
         )
 
         user_data = ec2.UserData.for_linux()
@@ -63,9 +82,12 @@ class LoopCapitalSqlServerStack(Stack):
             "set -euo pipefail",
             "dnf install -y docker",
             "systemctl enable --now docker",
-            # Fixed filler size mirrors sandbox/fill_disk.sh — 1663MiB filler
-            # on a 2048MiB tmpfs volume for LoopCapitalAM's own data files,
-            # so sys.dm_os_volume_stats reports the same ~18% free the local
+            f"SA_PASSWORD=$(aws secretsmanager get-secret-value --secret-id {sa_secret.secret_arn} "
+            f"--region {self.region} --query SecretString --output text)",
+            # Fixed filler size mirrors sandbox/fill_disk.sh — 2048MiB tmpfs
+            # volume for LoopCapitalAM's own data files, so
+            # sys.dm_os_volume_stats reports real, non-default free space
+            # (matching the same ~18% free the local sandbox demonstrates).
             "mkdir -p /srv/loopcapital/data",
             "mount -t tmpfs -o size=2048m tmpfs /srv/loopcapital/data",
             "docker network create loopcapital-net || true",
@@ -73,7 +95,7 @@ class LoopCapitalSqlServerStack(Stack):
                 "docker run -d --name loopcapital-sql-sandbox "
                 "--network loopcapital-net -p 1433:1433 "
                 "-e ACCEPT_EULA=Y "
-                "-e MSSQL_SA_PASSWORD='LoopCapital-Demo1!' "
+                '-e MSSQL_SA_PASSWORD="$SA_PASSWORD" '
                 "-e MSSQL_AGENT_ENABLED=true "
                 "-e MSSQL_PID=Developer "
                 "-v /srv/loopcapital/data:/var/opt/mssql/loopcapital_data "
@@ -99,6 +121,7 @@ class LoopCapitalSqlServerStack(Stack):
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             associate_public_ip_address=True,
         )
+        sa_secret.grant_read(instance.role)
         Tags.of(instance).add("Project", "loopcapital-demo")
         Tags.of(instance).add("TemporaryUntil", "2026-07-18")
 
@@ -107,4 +130,10 @@ class LoopCapitalSqlServerStack(Stack):
             "SqlServerPublicIp",
             value=instance.instance_public_ip,
             description="Real SQL Server endpoint for the Loop Capital demo — wire into createWarehouseServiceAsAdmin (provider=AZURE_SYNAPSE)",
+        )
+        CfnOutput(
+            self,
+            "SqlServerSaSecretArn",
+            value=sa_secret.secret_arn,
+            description="Secrets Manager ARN for the real SA password — fetch via `aws secretsmanager get-secret-value`, never printed in logs/PR text",
         )
