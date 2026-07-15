@@ -265,13 +265,26 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    since BH-1043's dbt watchdog and BH-1045's SQL Server watchdog both require a real
    `workspace_id` to poll against.
 5. **Cooldown/retry-storm suppression — RESOLVED same day (see Open Blocker #6)**.
-6. **RE-VERIFIED 2026-07-15, final pass**: fresh sandbox stand-up (`setup.sh` + `fill_disk.sh`),
-   full teardown-then-rebuild, then `RUN_LIVE_SQLSERVER=1 pytest tests/integration/golden_cases/
+6. **CodeRabbit code-review pass, 2026-07-15 — 8 real bugs found and fixed** (brightbot PR
+   #840, merged to develop + staging): a cooldown-store outage previously suppressed EVERY
+   alert that cycle instead of failing open; one broken pipeline adapter aborted the whole
+   chat health-check instead of isolating per adapter; disk-low enrichment picked the largest
+   file across the whole database instead of the specific low volume; job-failure detail
+   correlation was keyed by job_id alone with no run correlation — and the FIRST fix attempt
+   for that (keying on `instance_id`) was itself wrong, caught by a strengthened test:
+   verified directly against the real sandbox that `instance_id` increments per history row,
+   not per run — re-keyed on `(job_id, run_date, run_time)`, the value msdb actually shares.
+   Also tightened 3 overly-broad root-cause-classifier regexes that could misclassify a
+   generic dbt compile error into a wrong-cause remediation PR, and added error handling to
+   the remediation subagent that previously had none. 4 golden-case tests were also
+   strengthened to prove real behavior instead of passing on import/registry checks alone.
+7. **RE-VERIFIED 2026-07-15, final pass — after the CodeRabbit fixes**: fresh sandbox
+   teardown-then-rebuild, then `RUN_LIVE_SQLSERVER=1 pytest tests/integration/golden_cases/
    -k "gc_14 or gc_15 or gc_16 or gc_17"` against current `develop` HEAD — **13 passed, 0
    failed, 4 honestly-skipped** (BH-1087 webapp parity, BH-1058 dbt Cloud fixture, multi-
    connection disambiguation — all real, tracked, non-blocking). Full `governance_agent`/
-   `dbt_agent` unit suites: 262/262. GC-14/15/16/17's engineering-buildable scope is
-   **complete on `develop` AND `staging`**. Everything left open (below) is operational or
+   `dbt_agent` unit suites: 278/278. GC-14/15/16/17's engineering-buildable scope is
+   **complete AND code-reviewed on `develop` AND `staging`**. Everything left open (below) is operational or
    business, not code.
 
 ## Open Blockers
