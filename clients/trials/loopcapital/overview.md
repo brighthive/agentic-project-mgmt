@@ -576,6 +576,27 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     a real, usable, staging-provisioned workspace and a real login. **What it does NOT close**:
     no real Loop Capital SQL Server (BYOW) connection is wired into it yet — that's the next
     concrete step, not "done."
+29. **Real SQL Server EC2 CDK stack written, NOT deployed, 2026-07-15 (agentic-project-mgmt
+    PR #108, draft)**: user's explicit ask — a real EC2 running Microsoft SQL Server, not a
+    local Docker sandbox. First checked `brighthive-admin`'s actual provisioning model: EVERY
+    workspace gets its own dedicated new AWS account (7 CDK stacks, Cognito, Neo4j entity,
+    welcome email — the real paying-client onboarding factory). Stopped short of running that
+    unilaterally — flagged it as a materially bigger, harder-to-reverse organizational action
+    than the ask, even with prior go-ahead, because neither of us knew its true size when that
+    go-ahead was given. Scoped down to what was actually confirmed: one isolated, easy-to-
+    tear-down EC2 instance in the EXISTING shared STAGE account, running the SAME
+    `mcr.microsoft.com/mssql/server:2022` image the local sandbox already uses.
+    `clients/trials/loopcapital/infra/` — new standalone CDK app (Python, matching the org's
+    IaC pattern), `cdk synth`/`cdk diff` both run clean against REAL staging
+    (`vpc-0aeee7c16439b5d79`, account `873769991712`) — 4 new resources, no drift. **Not
+    deployed** — two things deliberately left as blocking TODOs, not silently assumed done:
+    (1) the security group's ingress CIDR is a dead-end placeholder (`127.0.0.1/32`, never
+    `0.0.0.0/0`) pending platform-core's real known source; (2) SQL seeding via
+    `sandbox/sql/*.sql` is stubbed (`SEED_PENDING` marker), not yet wired as a CDK asset.
+    Opened as a **draft** PR deliberately — `cdk deploy` creates real, billable AWS
+    infrastructure and needs its own explicit sign-off before it runs, separate from this
+    review. **This is the honest current state**: infra is written and reviewable, nothing
+    billable has been created yet.
 
 ## Open Blockers
 
