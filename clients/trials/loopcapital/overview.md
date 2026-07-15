@@ -529,6 +529,28 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     catch it. Added a regression test proving SQL Server signals never populate
     `published_dbt_failures`, the exact gate `attempt_remediation` checks. 314/314 tests
     pass. All 4 repos reconfirmed fully synced.
+26. **Tracker scope fixed + Jira brought current, 2026-07-15**: `poc.yaml`'s `repos:` list was
+    missing `brightbot-slack-server`, `brighthive-webapp`, and `brighthive-e2e` — all 3 had
+    substantial work land this session but were invisible to `make poc-tracker-no-slack`.
+    Fixed; linked PR references went 48→57 once all 6 repos were scanned. Posted accurate,
+    PR-linked status comments to BH-1043, BH-1047, and BH-1067 in Jira — flagged that
+    BH-1067 conflates a shipped 60% (Loop Capital's 3 real stages: dbt_run_failure,
+    etl_job_failure, source_disk_low — all fully done across Slack + webapp + inbox +
+    e2e) with a genuinely-blocked 40% (3 Databricks/staleness stages with no connector or
+    detection-side signal source yet), recommended re-scoping.
+27. **Final full dress rehearsal, 2026-07-15 — 18/18 passed, 0 failed**: fresh sandbox
+    rebuild, disk pressure + job-status mix re-verified real, then
+    `RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/
+    tests/integration/test_skills_execution.py -k "gc_14 or gc_15 or gc_16 or gc_17 or
+    governance"` — 18 passed (up from 17 two cycles ago — the new watchdog→remediation
+    e2e test now included), 0 failed, 5 honestly-skipped (live dbt Cloud/GitHub sandbox
+    cases). Every demo point, the safety gate, and the new auto-trigger wiring all pass
+    together in one real run. Sandbox torn down after. **Loop Capital's POC engineering
+    surface is demo-ready for 2026-07-17** — code, tests, staging promotion, cross-repo
+    e2e coverage, and Jira status all consistent with reality. Remaining open items
+    (multi-connection disambiguation, live workspace validation, Databricks stages) are
+    all correctly documented, non-code, or explicitly out of scope — not gaps in what
+    shipped.
 
 ## Open Blockers
 
