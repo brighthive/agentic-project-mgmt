@@ -518,6 +518,17 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     watchdog-detected schema-drift failure gets classified correctly and drafts a real PR,
     with only the LLM/GitHub network boundary mocked. 313/313 golden-case + governance +
     dbt_agent tests pass (up from 312). All 4 repos reconfirmed fully synced.
+25. **Remediation-boundary safety test added, 2026-07-15 (brightbot PR #854/#855, merged +
+    promoted staging)**: verified GC-15's two SQL Server stages (`etl_job_failure`,
+    `source_disk_low`) are correctly `RootCauseClass.JOB_RUNTIME` at the source (confirmed by
+    code read of both `dbt_pipeline_source.py` and `sql_server_pipeline_source.py`), matching
+    the spec's own invariant ("Surgical PRs remain exclusive to DATA_SHAPE signals"). This
+    boundary was structurally correct in code but had NO test pinning it at the watchdog
+    level — a future regression could silently start feeding unclassifiable job-runtime
+    errors into the remediation loop's LLM call on every SQL Server failure with nothing to
+    catch it. Added a regression test proving SQL Server signals never populate
+    `published_dbt_failures`, the exact gate `attempt_remediation` checks. 314/314 tests
+    pass. All 4 repos reconfirmed fully synced.
 
 ## Open Blockers
 
