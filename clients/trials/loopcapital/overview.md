@@ -264,14 +264,15 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    not a real Loop Capital tenant — confirm this is the intended demo setup before 7/17,
    since BH-1043's dbt watchdog and BH-1045's SQL Server watchdog both require a real
    `workspace_id` to poll against.
-5. **New gap found 2026-07-15, real-sandbox verification pass**: cooldown/retry-storm
-   suppression (Invariant 3 — "same job failing again within a cooldown window produces
-   exactly ONE alert, not one per retry") has **zero code anywhere**. Grepped
-   `pipeline_watchdog_task.py` and both adapters (`dbt_pipeline_source.py`,
-   `sql_server_pipeline_source.py`) — `job_id` is correctly stable (Invariant 3's
-   precondition), but no dedup/suppression logic exists. Real demo risk: a flapping job or
-   a disk-check that stays below threshold across multiple watchdog cycles would spam
-   Frank's Slack with duplicate alerts every poll. No ticket filed yet.
+5. **Cooldown/retry-storm suppression — RESOLVED same day (see Open Blocker #6)**.
+6. **RE-VERIFIED 2026-07-15, final pass**: fresh sandbox stand-up (`setup.sh` + `fill_disk.sh`),
+   full teardown-then-rebuild, then `RUN_LIVE_SQLSERVER=1 pytest tests/integration/golden_cases/
+   -k "gc_14 or gc_15 or gc_16 or gc_17"` against current `develop` HEAD — **13 passed, 0
+   failed, 4 honestly-skipped** (BH-1087 webapp parity, BH-1058 dbt Cloud fixture, multi-
+   connection disambiguation — all real, tracked, non-blocking). Full `governance_agent`/
+   `dbt_agent` unit suites: 262/262. GC-14/15/16/17's engineering-buildable scope is
+   **complete on `develop` AND `staging`**. Everything left open (below) is operational or
+   business, not code.
 
 ## Open Blockers
 
