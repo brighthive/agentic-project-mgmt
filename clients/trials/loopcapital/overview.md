@@ -315,6 +315,18 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     PII redaction / stale docs — untouched by this session's scope). Full epic status is now
     honest: 9 tickets in Staging QC/Done reflecting real merged+verified work, 10 correctly
     still open reflecting real remaining gaps.
+11. **Second correlation bug found + fixed, 2026-07-15 (brightbot PR #842, merged develop +
+    staging)**: extended real-sandbox e2e testing caught a real bug in the PRIOR pass's own
+    fix — `(job_id, run_date, run_time)` correlation for job-failure detail was ALSO wrong,
+    verified directly against the sandbox that a step-level row and its own job's outcome
+    row can log `run_time` a full second apart. Corrected by moving the "most recent failed
+    step" dedup into the SQL query itself (`ROW_NUMBER()`, partitioned by `job_id`) — no
+    cross-row timestamp matching needed. Also added 2 new tests driving the REAL compiled
+    `remediation_agent_graph` end-to-end (both unclassifiable and DATA_SHAPE-classified
+    paths), closing the "node unit-tested" vs "graph wiring proven" gap for GC-16 without
+    needing a live dbt Cloud + GitHub sandbox. Re-verified 3x in a row for stability, not a
+    lucky pass — 15/15 real-behavior tests, 278/278 unit tests, both green on develop AND
+    staging.
 
 ## Open Blockers
 
