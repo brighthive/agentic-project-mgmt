@@ -286,6 +286,21 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    `dbt_agent` unit suites: 278/278. GC-14/15/16/17's engineering-buildable scope is
    **complete AND code-reviewed on `develop` AND `staging`**. Everything left open (below) is operational or
    business, not code.
+8. **RE-VERIFIED 2026-07-15, webapp-parity pass**: BH-1067's webapp half
+   (`etl_job_failure`/`source_disk_low` renderer parity, previously Slack-only) merged and
+   promoted — brighthive-webapp PRs #1300/#1302. Multi-channel surfacing for GC-15 is now
+   REAL on both Slack and webapp. Re-ran the full 3-repo test sweep after the merge: 13/13
+   real-behavior tests (brightbot), 278/278 unit (brightbot), 12/12 (brightbot-slack-server),
+   60/60 (brighthive-webapp) — all green.
+9. **Jira hygiene pass, 2026-07-15**: found BH-1043/1045/1047/1054/1057's Jira status stale
+   against merged reality (showing "To Do"/"Needs Refinement" despite code merged+verified
+   weeks of real-sandbox testing ago). Added evidence comments to each and transitioned:
+   BH-1057 → Done (the sandbox itself needs no staging QC — it's a local dev artifact);
+   BH-1043/1045/1047/1054 → Staging QC (code is genuinely merged+promoted, but real
+   customer-workspace validation is blocked on Open Blocker #5 — no provisioned workspace —
+   so "Staging QC" is the honest state, not "Done"). BH-1067 commented with a split
+   recommendation (etl_job_failure/source_disk_low done; dbt_run_stale + both Databricks
+   stages genuinely have no producer yet).
 
 ## Open Blockers
 
