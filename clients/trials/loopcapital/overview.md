@@ -301,6 +301,20 @@ Jira status + real code, not carried forward from an earlier pass's note:**
    so "Staging QC" is the honest state, not "Done"). BH-1067 commented with a split
    recommendation (etl_job_failure/source_disk_low done; dbt_run_stale + both Databricks
    stages genuinely have no producer yet).
+10. **Follow-up Jira pass, 2026-07-15**: found + fixed 2 more stale tickets the same way —
+    BH-1046 (proactive alert path) verified field-name-for-field-name against
+    dbt_pipeline_source.py's real metadata keys, transitioned to Staging QC. BH-1076
+    (warehouse discovery→profiling) verified against warehouse_scan.py + 7/7 passing unit
+    tests, transitioned to Staging QC. **Left correctly open, confirmed genuinely unbuilt by
+    direct code check**: BH-1042 (spec — §8 eval-design decisions not made), BH-1044
+    (Databricks, zero connector code), BH-1075 (no new `sql_server` WarehouseType — demo
+    uses the existing `azure_synapse` type as an interim path, which BH-1075's own ticket
+    text explicitly allows), BH-1077 (DB-level rollup report, zero code), BH-1091/1092
+    (post-merge verification loop — explicitly deferred to human-in-the-loop per an earlier
+    product decision this session, not a gap), BH-1087/1060/1071 (dbt webapp parity /
+    PII redaction / stale docs — untouched by this session's scope). Full epic status is now
+    honest: 9 tickets in Staging QC/Done reflecting real merged+verified work, 10 correctly
+    still open reflecting real remaining gaps.
 
 ## Open Blockers
 
