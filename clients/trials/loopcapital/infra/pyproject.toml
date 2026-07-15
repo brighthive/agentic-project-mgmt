@@ -1,0 +1,12 @@
+[project]
+name = "loopcapital-sqlserver-ec2"
+version = "1.0.0"
+description = "Standalone CDK app: one EC2 instance running real SQL Server for the Loop Capital demo (BH-1036)."
+requires-python = ">=3.11"
+dependencies = [
+    "aws-cdk-lib>=2.160.0,<3.0.0",
+    "constructs>=10.0.0,<11.0.0",
+]
+
+[tool.setuptools]
+packages = ["loopcapital_sqlserver_ec2"]
