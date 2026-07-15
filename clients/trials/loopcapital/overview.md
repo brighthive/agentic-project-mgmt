@@ -9,7 +9,7 @@ trial_end: ""
 decision_date: "2026-07-17"
 jira_epic: "BH-1036"
 notion_page: ""
-workspace_id: ""
+workspace_id: "e3fc0917-03a6-4ac6-aad4-ac265329bfb9" # synthetic demo workspace, staging, created 2026-07-15 — NOT a real Loop Capital workspace
 aws_account: ""
 status: "active"
 tags: [legacy-analyst, ssis, ssrs, proactive-monitoring, mcp-a2a]
@@ -551,6 +551,31 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     (multi-connection disambiguation, live workspace validation, Databricks stages) are
     all correctly documented, non-code, or explicitly out of scope — not gaps in what
     shipped.
+28. **Correction + real progress on Open Blocker #5, 2026-07-15**: entry 27's "demo-ready"
+    framing was called out, correctly — a sandbox I built passing tests is NOT the same claim
+    as "Loop Capital's demo is ready," and there was no live Loop Capital workspace behind any
+    of that verification. Re-checked Blocker #5 directly: still zero workspaces matching
+    "loop"/"loopcapital" in STAGE or PROD. Tried the real GraphQL `createWorkspace` mutation —
+    found it exists as a full resolver (~700 lines, complete org/admin-group/policy tree) but
+    was NEVER wired into `type Mutation` (confirmed: `Cannot query field "createWorkspace"`).
+    Fixing the wiring (brighthive-platform-core PR #1060, merged develop + staging) surfaced 2
+    MORE real bugs in the same dead code, both confirmed by direct run against real staging
+    data: (1) `OrganizationNode.domain` is required+unique with no input surface on
+    `CreateWorkspaceInput` — derived from the owner's email domain; (2) the owning member's
+    workspace-role edge is created `PENDING` by design (the normal invite flow) but nothing in
+    this path ever flips it `ACTIVE`, so `@authorized`'s `findWorkspaceRoleByUserId` (filters
+    `edge:{active:ACTIVE}`) never found the owner — they were 403'd on their OWN workspace.
+    Added `activateUserAsAdmin` (SystemAdmin-only, mirrors `confirmUser`'s own update exactly)
+    for the demo identity's Cognito password already having been force-set with no confirm-flow
+    challenge session left. **Verified against the REAL deployed staging API** (not local):
+    workspace `e3fc0917-03a6-4ac6-aad4-ac265329bfb9` ("Loop Capital") exists, real member login
+    succeeds, real authorized `workspace` query succeeds — the actual production authorization
+    path, not a bypass. New unit tests (`workspace-lifecycle.test.ts`, 4/4 pass); 33/33 across
+    all previously-verified suites, zero regressions (48 pre-existing unrelated failures
+    confirmed identical to clean develop). **What this actually closes**: Loop Capital now has
+    a real, usable, staging-provisioned workspace and a real login. **What it does NOT close**:
+    no real Loop Capital SQL Server (BYOW) connection is wired into it yet — that's the next
+    concrete step, not "done."
 
 ## Open Blockers
 
@@ -560,7 +585,7 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | **2026-07-15** — `REMEDIATION_TOOLS` merged (brightbot PR #813); GC-16 remediation loop itself merged (PR #829), on `develop` + `staging` |
 | 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |
-| 5 | **Escalated 2026-07-15**: not just "confirm connection count" anymore — `dynamo-vault search "loop"/"loopcapital"` returns **zero workspaces in STAGE or PROD**. Loop Capital has no provisioned real workspace at all. 7/17's demo must run against a synthetic/sandbox workspace — confirm that's the plan, since BH-1043/BH-1045's watchdogs both need a real `workspace_id` to poll. | Kuri | 2026-07-12 | — |
+| 5 | **Escalated 2026-07-15**: not just "confirm connection count" anymore — `dynamo-vault search "loop"/"loopcapital"` returns **zero workspaces in STAGE or PROD**. Loop Capital has no provisioned real workspace at all. 7/17's demo must run against a synthetic/sandbox workspace — confirm that's the plan, since BH-1043/BH-1045's watchdogs both need a real `workspace_id` to poll. | Kuri | 2026-07-12 | **2026-07-15** — a synthetic "Loop Capital" workspace (`e3fc0917-03a6-4ac6-aad4-ac265329bfb9`) now exists in REAL staging, created via `createWorkspace` (found + fixed: the mutation existed but was never wired into the schema — see overview entry below). Real member login + real authorized workspace query both confirmed against the live deployed staging API, not a local server. Still not a real Loop Capital SQL Server connection — that's the next real step (wire a BYOW MySQL/SQL Server connection into this workspace) — but the workspace itself is no longer the blocker. |
 | 6 | Cooldown/retry-storm suppression (Invariant 3) had zero code — confirmed by grep, not assumed. Real risk of duplicate Slack alerts on a flapping job or persistent low-disk condition. | Kuri | 2026-07-15 | **2026-07-15** — `pipeline_alert_cooldown.py` built (4-tuple key, DynamoDB + in-memory adapters), wired into `_publish_signals`, merged (brightbot PR #835), on `develop` + `staging` |
 
 ## Decision
