@@ -453,6 +453,24 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     PAYLOAD.md` added; `TRACKER.md` regenerated (42 specs / 315 ACs, 100% bound). Local core
     + Redis torn down after; both `brighthive-e2e` and `brighthive-platform-core` restored
     to the branches they were on before this pass (pre-existing in-flight work, untouched).
+21. **GC-14's own inbox-detail gap found + fixed, 2026-07-15 (brighthive-platform-core PR
+    #1055/#1056, brighthive-e2e PR #46, all merged/promoted)**: while extending e2e coverage
+    to GC-14 (the FIRST of Suzanne's 3 demo points), found `dbt_run_failure`'s
+    `resolveSignal()` registry entry was category-only (`{category: "dbt"}`) — no
+    `display`/`detail` — so it fell through to `formatGenericDisplay` with none of the rich
+    `model_name`/`job_id`/`error`/`log_id` detail `brightbot-slack-server`'s Slack formatter
+    already reads from the same signal metadata. Exactly the same class of gap already
+    fixed for GC-15's two SQL Server stages last cycle — missed there because GC-14
+    predates that fix pass and was never separately re-checked. Added
+    `formatDbtRunFailureDisplay` + `buildDbtRunFailureDetail`, mirroring the GC-15 pattern
+    exactly. New unit test (`notifications-dbt-run-failure-display.test.ts`, 37/37
+    notifications suite passes) + a real GraphQL round-trip e2e test
+    (`test_notifications_dbt_run_failure_payload.py`, `1 passed in 6.55s` against a local
+    core on staging's real data plane, self-purging). Merged develop (#1055), promoted
+    staging (#1056), e2e merged to master (#46). All 4 repos reconfirmed fully synced.
+    **All 3 of Loop Capital's demo-point signals now render real detail on the inbox** —
+    GC-14 (dbt), GC-15's disk-low, GC-15's job-failure — none fall through to the generic
+    formatter anymore.
 
 ## Open Blockers
 
