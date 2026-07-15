@@ -16,9 +16,16 @@ STAGE account (`873769991712`), scoped only to this demo.
 - One `t3.medium` EC2 instance (Amazon Linux 2023, Docker installed via
   user-data) running the real SQL Server container on boot, seeded with
   the same synthetic Loop Capital data `../sandbox/setup.sh` builds locally.
-- A dedicated security group allowing inbound `1433` ONLY from platform-core's
-  known egress IP ranges (not `0.0.0.0/0`) — TODO: confirm platform-core's
-  real egress CIDR before deploy, currently a placeholder.
+- A dedicated security group allowing inbound `1433` from **anywhere**
+  (`0.0.0.0/0`) — a deliberate, confirmed exception to the org's normal
+  "no security group open to the internet" rule. Reason: `brightbot` (the
+  watchdog caller) deploys on LangGraph Cloud, a managed SaaS with no
+  published static egress IP range — there is no real CIDR to scope this
+  to. The compensating control is a real, Secrets-Manager-generated SA
+  password (32 chars, never in source, fetched at boot via a scoped IAM
+  policy) plus this resource's short lifetime. **This is demo-grade
+  posture, explicitly not production security — do not reuse this pattern
+  for a real client workspace's warehouse connection.**
 - Tags: `Project=loopcapital-demo`, `Owner=drchinca`, `TemporaryUntil=2026-07-18`
   (one day after the 7/17 demo) — for easy identification + teardown.
 
@@ -53,3 +60,9 @@ provisioning real, billable AWS infrastructure requires an explicit,
 separate confirmation from whoever owns AWS spend decisions, not an
 agent's own judgment call mid-session. See `../overview.md` Open Blocker #5
 for the decision trail.
+
+`cdk synth`/`cdk diff` both run clean against real staging
+(`vpc-0aeee7c16439b5d79`, account `873769991712`) — confirmed by direct
+run, not assumed. One remaining TODO before deploy: the SQL seeding step
+(`../sandbox/sql/*.sql` via S3 asset + `sqlcmd` in user-data) is stubbed
+with a `SEED_PENDING` marker, not yet wired.
