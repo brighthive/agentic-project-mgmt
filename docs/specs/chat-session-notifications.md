@@ -206,8 +206,8 @@ Behavior:
   1. Skip if run.metadata.notify_user_id is absent (run was never opted in).
   2. Skip if status != "interrupted" and (run_ended_at - run_started_at) < DURATION_FLOOR_SECONDS
      (default 20) — the floor does not apply to "interrupted".
-  3. Skip if a presence signal shows the thread was actively being watched at trigger time
-     (see Gap 4 — new mechanism, not yet designed in this pass).
+  3. Skip if the thread is muted (§3 Invariant 5). (A presence/"actively watched" skip was built
+     and shipped here, then removed 2026-07-15 — see Invariant 2's strikethrough note in §3.)
   4. Claim (see §3 Invariant 4) — skip if already claimed for this run_id.
   5. Call platform-core's publishNotification:
        stage: "chat_run_interrupt" (status=="interrupted") | "chat_run_complete" (otherwise)
@@ -250,14 +250,17 @@ Delivered notification (Slack block + inbox card): "Mute this session" action
 1. A notification for `chat_run_complete`/`chat_run_interrupt` is only ever addressed
    `visibility: "user"` with `audienceUserIds: [notify_user_id]` — never `"workspace"` broadcast.
    This is a personal action on a personal session; no other workspace member should see it.
-2. WHEN the thread's stream is confirmed actively connected at trigger time, THE System SHALL NOT
-   publish the notification at all — **scoped down from the original draft** ("suppress Slack only,
-   keep the inbox entry"): `publishNotification`/`writeNotificationSignal` fans out to Slack AND
-   the in-app inbox from a single call (confirmed — `notification-preference.ts`'s `signalPassesPreferenceFilter`
-   fan-out and the Slack poller both read the same written signal); splitting "Slack no, inbox yes"
-   would require a new field on `PublishNotificationInput` that does not exist today. Suppressing
-   the entire publish is the honest, buildable version of this invariant for v1 — revisit if the
-   inbox-while-present behavior turns out to matter in practice.
+2. ~~WHEN the thread's stream is confirmed actively connected at trigger time, THE System SHALL NOT
+   publish the notification at all~~ — **removed post-launch (2026-07-15)**. A presence-heartbeat
+   gate was built and shipped exactly as originally scoped (suppressing the whole publish, not
+   just Slack, per the note struck through above), but real usage showed it actively worked
+   against the point of opting in: a user who opts in, sends a message, and simply keeps the tab
+   open (the common case) would never get notified even though they explicitly asked to be. The
+   opt-in itself (an explicit per-message action) is a stronger signal of intent than tab-open
+   state is a signal of attention — so notification now fires unconditionally once opted in,
+   regardless of whether the thread is being watched. `useChatNotifyPresence.ts`, the
+   `/heartbeat` endpoint, and `_is_thread_being_watched()` were removed from brightbot and the
+   webapp; there is no replacement mechanism.
 3. WHEN elapsed time since `notify_armed_at` is below `DURATION_FLOOR_SECONDS`, THE System SHALL
    NOT fire a completion notification — this floor does NOT apply to interrupts (an interrupt is
    always actionable immediately, per user decision in this session's design discussion).
@@ -285,12 +288,10 @@ Feature: Notify me on this chat session
       audienceUserIds=[the opted-in user]
     And the user receives a Slack DM and an in-app inbox card
 
-  Scenario: User is actively watching when the run finishes
-    Given a user opts in to "Notify me" on an open BrightAgent thread
-    And the user's stream IS currently connected at completion time
-    When the run reaches a terminal state
-    Then no Slack DM is sent
-    And the in-app inbox MAY still record the event
+  Scenario: User is actively watching when the run finishes (removed 2026-07-15)
+    # No longer suppressed — opting in now always notifies past the duration floor,
+    # regardless of tab/stream state. Kept here as a record of the original design;
+    # see Invariant 2's strikethrough note in §3 for why it was removed.
 
   Scenario: Run finishes too quickly to matter
     Given a user opts in to "Notify me"
@@ -333,29 +334,30 @@ Feature: Notify me on this chat session
 
 | Dependency | Type | Status |
 |------------|------|--------|
-| LangGraph Platform per-run webhook | Blocking | **Resolved (BH-1100)** — confirmed present in `langgraph_api==0.8.7` (brightbot's installed version); fires for every terminal status and for `"interrupted"`; no polling needed |
-| Presence-check / active-stream signal | Blocking | Not started — needs a new heartbeat mechanism from the webapp (see Hard Limitations) — still open after BH-1100 |
-| Per-thread mute suppression store (brightbot) | Blocking (new, small scope) | Not started — needed because opt-in is per-run, not persisted (§2.4); a simple TTL'd key-value entry, no new database |
+| LangGraph Platform per-run webhook | Blocking | **Resolved (BH-1100)** — confirmed present in `langgraph_api==0.8.7` (brightbot's installed version); fires for every terminal status and for `"interrupted"`; no polling needed. **Note (2026-07-15)**: the deployed managed runtime (`langgraph_api_version 0.11.0`) silently never dispatches a *relative/loopback* webhook URL even with `url.disable_loopback: false` set — confirmed via direct staging test (absolute URL delivers, identical relative URL never arrives). The webapp now sends an absolute URL built from its own LangGraph base URL. |
+| Presence-check / active-stream signal | ~~Blocking~~ | **Built (BH-1102), then removed (2026-07-15)** — see Invariant 2's strikethrough note in §3. Not a dependency anymore; nothing replaces it. |
+| Per-thread mute suppression store (brightbot) | Blocking (new, small scope) | **Resolved (BH-1101)** — a TTL'd DynamoDB key-value table, no new database |
 | `writeNotificationSignal` / `publishNotification` (`visibility: "user"` path) | Non-blocking (reused) | Ready — proven by BH-1088 + `scheduler-bridge.ts` |
 | Thread/run metadata `user_id` field | Non-blocking (reused) | Ready — already threaded by `useAgentStream.ts` |
 | brightbot-slack-server delivery pipeline (poller, `SlackChannel.deliver()`) | Non-blocking (reused) | Ready — same path BH-1088 fixed this session |
 
 ## 9. Observability Contract
 
-- **Log events** (brightbot, new hook): `chat_notify.armed`, `chat_notify.skipped_watching`,
+- **Log events** (brightbot, new hook): `chat_notify.armed`,
   `chat_notify.skipped_duration_floor`, `chat_notify.claimed`, `chat_notify.publish_success`,
   `chat_notify.publish_error` — bracketed-tag style matching `[SchedulerBridge]`'s existing
-  convention in `scheduler-bridge.ts`.
+  convention in `scheduler-bridge.ts`. (`chat_notify.skipped_watching` existed briefly for the
+  presence gate; removed with it on 2026-07-15.)
 - **Span**: none new required — this is a lightweight webhook/poll handler, not an LLM/tool node.
-- **Metrics**: a count of `chat_notify.skipped_watching` vs `chat_notify.publish_success` is the
-  single most useful signal for tuning the duration floor and validating the presence check isn't
-  over-suppressing — worth a dashboard once live, not a blocking requirement for v1.
+- **Metrics**: a count of `chat_notify.skipped_duration_floor` vs `chat_notify.publish_success` is
+  the single most useful signal for tuning the duration floor — worth a dashboard once live, not a
+  blocking requirement for v1.
 
 ## 10. Test Coverage Update
 
 | Repo | Suite | What to add |
 |---|---|---|
-| `brightbot` | `tests/unit/` (new `test_chat_session_notify.py`) + `tests/integration/` | One test per §4 scenario touching the new hook: duration floor, presence-check skip, interrupt-always-fires, idempotent claim (Property-equivalent to `scheduleNotifiedAt`'s dedup test if one exists for it) |
+| `brightbot` | `tests/unit/http_routes/test_chat_session_notify_routes.py` | One test per §4 scenario touching the hook: duration floor, mute skip, interrupt-always-fires, idempotent claim (Property-equivalent to `scheduleNotifiedAt`'s dedup test if one exists for it). Presence-check tests existed here through BH-1102, removed with the mechanism on 2026-07-15. |
 | `brighthive-platform-core` | `tests/unit/` | Regression-only — confirm `publishNotification` accepts the two new stage strings with `visibility: "user"` (no resolver change expected, since `stage` is already a free-text field) |
 | `brighthive-webapp` | `tests/e2e` (Playwright) | One spec: opt-in toggle sets thread metadata; mute action from a rendered inbox card clears it |
 | `brighthive-e2e` | `e2e/e2e/` | One end-to-end: real chat thread, real opt-in, simulate/wait for a real terminal run past the duration floor, assert Slack DM + inbox delivery against staging (mirrors BH-1000's scheduled-workflow chain test) |
@@ -370,7 +372,7 @@ webhook payload shape does not satisfy this.
 |------|------|--------|
 | BrightBot | `brightbot` | New `/manage/chat-sessions/webhook/run-complete` receiver (confirmed mechanism, BH-1100); new mute-suppression store; new `chat_run_complete`/`chat_run_interrupt` stage constants |
 | Platform Core | `brighthive-platform-core` | No resolver change — `publishNotification`'s `stage` field already accepts arbitrary strings |
-| Web App | `brighthive-webapp` | New opt-in toggle/offer in chat header (sets `webhook`/`metadata.notify_user_id` on the next `runs/stream` call, §2.1); new `BackendStage` entries + `STAGE_LABELS`; presence heartbeat (new) |
+| Web App | `brighthive-webapp` | New opt-in toggle/offer in chat header (sets `webhook`/`metadata.notify_user_id` on the next `runs/stream` call, §2.1, as an absolute URL — see §6); new `BackendStage` entries + `STAGE_LABELS`; presence heartbeat (built BH-1102, removed 2026-07-15 — see §3 Invariant 2) |
 | Slack Server | `brightbot-slack-server` | No new delivery code — existing poller/`SlackChannel.deliver()` handles the new stage automatically once published; only a new Block Kit "Mute this session" action button (mirrors BH-887's action-button pattern) calling brightbot's mute store |
 
 ## Ticket Breakdown
