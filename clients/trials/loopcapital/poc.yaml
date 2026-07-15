@@ -33,6 +33,9 @@ scope:
 
 repos:
   - brighthive/brightbot
+  - brighthive/brightbot-slack-server
+  - brighthive/brighthive-webapp
+  - brighthive/brighthive-e2e
   - brighthive/brighthive-platform-core
   - brighthive/agentic-project-mgmt
 
