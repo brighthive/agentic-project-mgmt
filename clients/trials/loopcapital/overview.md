@@ -327,6 +327,16 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     needing a live dbt Cloud + GitHub sandbox. Re-verified 3x in a row for stability, not a
     lucky pass — 15/15 real-behavior tests, 278/278 unit tests, both green on develop AND
     staging.
+12. **Live-eval coverage added, 2026-07-15 (brightbot PR #844/#845, merged develop +
+    staging)**: `check_pipeline_health_tool`/`scan_warehouse_tables_tool` (BH-1054/1076,
+    surfaced to the governance chat agent this session) had only unit-mocked coverage —
+    never proven against a real model call. The same class of gap already caught one real
+    regression this session (a tool competing with, rather than serving, the `ssis-
+    diagnostics` skill). Added 2 new live-eval tests mirroring `test_analyst_reads_ssis_
+    skill`'s exact pattern — real Bedrock call, asserts the model calls the specific tool for
+    its own documented trigger phrase. Both pass on real Bedrock (`BH_RUN_LIVE_EVALS=1`):
+    "is anything broken in my pipelines right now?" → `check_pipeline_health_tool`; "scan my
+    warehouse and tell me if any tables look unhealthy" → `scan_warehouse_tables_tool`.
 
 ## Open Blockers
 
