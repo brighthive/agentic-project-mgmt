@@ -506,6 +506,18 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     autonomously — not just trusted from an earlier test run. 4 new tests + 6 existing
     assertions updated; 312/312 golden-case + governance + dbt_agent tests pass, 0 failed.
     **The demo's full "detect → fix" narrative for GC-14→GC-16 is now real, not manual-only.**
+24. **End-to-end proof of the watchdog→remediation wiring added, 2026-07-15 (brightbot PR
+    #852/#853, merged + promoted staging)**: last cycle's `attempt_remediation` node was unit
+    tested in isolation, but nothing proved the FULL pipeline — a watchdog-detected failure
+    reaching remediation and producing a real PR — through both real compiled graphs
+    together. Found this gap by re-running the existing GC-14 full-graph test and noticing
+    it now silently exercises `attempt_remediation` with zero assertions about it. Added that
+    assertion, plus a new GC-16 test (`test_gc_16_watchdog_detection_actually_triggers_this_
+    graph`) driving the REAL `pipeline_watchdog_task_graph` (poll → publish →
+    attempt_remediation) end-to-end into the REAL `remediation_agent_graph` — proves a
+    watchdog-detected schema-drift failure gets classified correctly and drafts a real PR,
+    with only the LLM/GitHub network boundary mocked. 313/313 golden-case + governance +
+    dbt_agent tests pass (up from 312). All 4 repos reconfirmed fully synced.
 
 ## Open Blockers
 
