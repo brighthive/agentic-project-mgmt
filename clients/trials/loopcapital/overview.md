@@ -363,6 +363,20 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     `sql_server_pipeline_source.py` writes, mirroring the existing
     `notifications-workflow-suggestion-display.test.ts` test pattern. 37/37 unit tests pass.
     Merged to develop and staging.
+15. **Real dual-write architecture traced end-to-end, 2026-07-15**: mapped the actual
+    production path across all 4 repos by direct code read, not assumption —
+    `publishNotification` (called by brightbot) writes `NOTIFICATIONS_TABLE` ONLY.
+    `brightbot-slack-server`'s `NotificationPoller` is the real mechanism that scans that
+    table, delivers to Slack, AND calls `platform-core`'s `notificationRecipients` (which
+    writes `NotificationInbox` + pushes the SSE toast `Navbar.tsx` reads). `platform-core`'s
+    `notificationRecipients` was NEVER called directly from brightbot's Python — confirmed
+    by grep across the whole codebase. The poller's own code comment ("no stage filter — all
+    stages push via SSE") was accurate but unproven for the two new watchdog stages
+    specifically — added 2 new tests (brightbot-slack-server PR #141/#142, merged develop +
+    staging) asserting the exact GraphQL request body sent to `notificationRecipients`
+    carries the real enrichment metadata. This closes the loop the prior 3 surface-parity
+    fixes (Slack formatter, webapp SSE toast, webapp inbox display) depended on but had
+    never traced end-to-end.
 
 ## Open Blockers
 
