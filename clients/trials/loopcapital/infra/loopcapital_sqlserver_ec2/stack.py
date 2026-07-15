@@ -18,6 +18,7 @@ from pathlib import Path
 
 from aws_cdk import CfnOutput, Duration, Stack, Tags
 from aws_cdk import aws_ec2 as ec2
+from aws_cdk import aws_s3_assets as s3_assets
 from aws_cdk import aws_secretsmanager as secretsmanager
 from constructs import Construct
 
@@ -60,6 +61,15 @@ class LoopCapitalSqlServerStack(Stack):
             ec2.InstanceClass.T3, ec2.InstanceSize.MEDIUM
         )
 
+        # The real setup/reseed logic (reset.py's scenario seeding, fill_disk.sh's
+        # disk-pressure fixture) lives in ../sandbox/ and is non-trivial — porting
+        # its logic into user-data would duplicate it, drifting the two out of
+        # sync. Upload the WHOLE sandbox directory as a CDK asset (CDK stages it
+        # to S3 automatically; no manual bucket, no git credentials on the
+        # instance — this repo is private) and run the actual setup.sh/reset.py
+        # on boot, the same scripts already proven against the local sandbox.
+        sandbox_asset = s3_assets.Asset(self, "SandboxAsset", path=str(_SANDBOX_DIR))
+
         # Real, per-deploy generated SA credential — never a literal in
         # source. This is the actual control the open security group above
         # relies on, so it cannot itself be a hardcoded/shared/committed
@@ -80,34 +90,36 @@ class LoopCapitalSqlServerStack(Stack):
         user_data = ec2.UserData.for_linux()
         user_data.add_commands(
             "set -euo pipefail",
-            "dnf install -y docker",
+            "dnf install -y docker unzip python3",
             "systemctl enable --now docker",
+            # docker compose v2 plugin — Amazon Linux 2023's `docker` package
+            # doesn't bundle it; setup.sh's `docker compose up -d` needs it.
+            "mkdir -p /usr/local/lib/docker/cli-plugins",
+            (
+                "curl -SL "
+                "https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 "
+                "-o /usr/local/lib/docker/cli-plugins/docker-compose"
+            ),
+            "chmod +x /usr/local/lib/docker/cli-plugins/docker-compose",
             f"SA_PASSWORD=$(aws secretsmanager get-secret-value --secret-id {sa_secret.secret_arn} "
             f"--region {self.region} --query SecretString --output text)",
-            # Fixed filler size mirrors sandbox/fill_disk.sh — 2048MiB tmpfs
-            # volume for LoopCapitalAM's own data files, so
-            # sys.dm_os_volume_stats reports real, non-default free space
-            # (matching the same ~18% free the local sandbox demonstrates).
-            "mkdir -p /srv/loopcapital/data",
-            "mount -t tmpfs -o size=2048m tmpfs /srv/loopcapital/data",
-            "docker network create loopcapital-net || true",
-            (
-                "docker run -d --name loopcapital-sql-sandbox "
-                "--network loopcapital-net -p 1433:1433 "
-                "-e ACCEPT_EULA=Y "
-                '-e MSSQL_SA_PASSWORD="$SA_PASSWORD" '
-                "-e MSSQL_AGENT_ENABLED=true "
-                "-e MSSQL_PID=Developer "
-                "-v /srv/loopcapital/data:/var/opt/mssql/loopcapital_data "
-                "--restart unless-stopped "
-                "mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04"
-            ),
-            # TODO(before deploy): fetch sandbox/sql/*.sql from S3 (upload
-            # them as a CDK asset) and run via sqlcmd once the container is
-            # healthy — left undone here since asset upload needs the real
-            # deploy account confirmed first. Placeholder marker below so
-            # this is visibly incomplete, not silently assumed done.
-            "echo 'TODO: seed sandbox/sql/*.sql — see infra/README.md Status section' > /srv/loopcapital/SEED_PENDING",
+            "export MSSQL_SA_PASSWORD=\"$SA_PASSWORD\"",
+            # The real sandbox directory, uploaded as a CDK asset (S3-staged
+            # automatically, no manual bucket, no git credentials needed on
+            # the instance — this repo is private) — same docker-compose.yml
+            # (tmpfs data-volume sizing, healthcheck, MSSQL_AGENT_ENABLED)
+            # and reset.py/fill_disk.sh already proven against the local
+            # sandbox, not a reimplementation that could drift from it.
+            "mkdir -p /srv/loopcapital",
+            f"aws s3 cp {sandbox_asset.s3_object_url} /srv/loopcapital/sandbox.zip --region {self.region}",
+            "cd /srv/loopcapital && unzip -q sandbox.zip -d sandbox && cd sandbox",
+            "chmod +x setup.sh fill_disk.sh validate.sh reset.py",
+            "./setup.sh",
+            # setup.sh already seeds the 'baseline' scenario; re-run with
+            # 'disk-pressure' (delegates to fill_disk.sh internally, per
+            # reset.py's own docstring) so the instance boots demo-ready
+            # for GC-15, not just schema-only.
+            "./reset.py --scenario disk-pressure",
         )
 
         instance = ec2.Instance(
@@ -122,6 +134,7 @@ class LoopCapitalSqlServerStack(Stack):
             associate_public_ip_address=True,
         )
         sa_secret.grant_read(instance.role)
+        sandbox_asset.grant_read(instance.role)
         Tags.of(instance).add("Project", "loopcapital-demo")
         Tags.of(instance).add("TemporaryUntil", "2026-07-18")
 
