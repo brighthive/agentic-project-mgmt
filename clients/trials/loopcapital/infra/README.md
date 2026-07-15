@@ -13,9 +13,13 @@ STAGE account (`873769991712`), scoped only to this demo.
 
 ## What this creates
 
-- One `t3.medium` EC2 instance (Amazon Linux 2023, Docker installed via
-  user-data) running the real SQL Server container on boot, seeded with
-  the same synthetic Loop Capital data `../sandbox/setup.sh` builds locally.
+- One `t3.medium` EC2 instance (Amazon Linux 2023, Docker + compose plugin
+  installed via user-data) running the real SQL Server container on boot,
+  seeded via the ACTUAL `../sandbox/setup.sh` + `reset.py --scenario
+  disk-pressure` scripts (uploaded as a CDK asset, auto-staged to S3 — no
+  manual bucket, no git credentials needed since this repo is private) —
+  not a reimplementation, the same scripts already proven against the
+  local Docker sandbox.
 - A dedicated security group allowing inbound `1433` from **anywhere**
   (`0.0.0.0/0`) — a deliberate, confirmed exception to the org's normal
   "no security group open to the internet" rule. Reason: `brightbot` (the
@@ -63,6 +67,6 @@ for the decision trail.
 
 `cdk synth`/`cdk diff` both run clean against real staging
 (`vpc-0aeee7c16439b5d79`, account `873769991712`) — confirmed by direct
-run, not assumed. One remaining TODO before deploy: the SQL seeding step
-(`../sandbox/sql/*.sql` via S3 asset + `sqlcmd` in user-data) is stubbed
-with a `SEED_PENDING` marker, not yet wired.
+run, not assumed. The stack is now fully wired end-to-end (security,
+credentials, seeding) — the only remaining step is the explicit `cdk
+deploy` sign-off itself.
