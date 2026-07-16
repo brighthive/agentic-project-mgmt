@@ -127,11 +127,19 @@ exists, not just a prompt-only skill.
   gaps (no error-row redirect, no staging step); the `.rdl` parser correctly finds
   `Holdings_Daily_Report.rdl`'s `CAST(GETDATE() AS DATE)` function-on-filtered-column
   anti-pattern (`test_ssis_ssrs_diagnostics_real_fixtures.py`, 2 passed)
-  - **Also proven at the full chat level**, live on staging: ask the analyst to diagnose an
-    SSIS package and it delegates correctly and returns a real skill-shaped diagnosis
-    (`test_analyst_applies_ssis_skill`, passed against the deployed `deep_agent`)
+  - **Also proven at the full chat level, against Loop Capital's own real identity and its own
+    real artifact** (not just the generic OneTen test), live on staging: ask the analyst to
+    diagnose `Extract_Holdings_Nightly.dtsx` in the Loop Capital workspace and it delegates
+    correctly and returns a real skill-shaped diagnosis
+    (`test_loopcapital_analyst_diagnoses_its_own_real_ssis_package`, passed 3x)
 - Output is a structured JSON diagnosis + dbt-migration suggestion — a real recommendation, not
   a screenshot
+
+**Timing note**: this specific skill (full package read + reasoning) took 2m47s–9m+ across
+live test runs — noticeably slower than most other chat answers in this doc. If demoing this
+live, either kick it off early and talk through something else while it runs, or set the
+expectation up front ("this one takes a few minutes — it's actually reading and reasoning
+over the whole package, not a canned answer").
 
 **Demo script**: ask the agent to diagnose `Extract_Holdings_Nightly.dtsx` (or the SSRS
 report) and it should name the real missing error-redirect / staging-step gap, or the real
@@ -201,4 +209,11 @@ cd clients/trials/loopcapital/sandbox && MSSQL_SA_PASSWORD=<pw> ./setup.sh
 cd ../../../../brightbot && MSSQL_SA_PASSWORD=<pw> RUN_LIVE_SQLSERVER=1 \
   pytest tests/integration/golden_cases/test_warehouse_scan_real_sandbox.py -v
 # tear down after: cd clients/trials/loopcapital/sandbox && MSSQL_SA_PASSWORD=<pw> docker compose down -v
+```
+
+**Optional, only if demoing SSIS diagnostics live against Loop Capital's own identity**
+(slow — budget 3-9 minutes):
+```bash
+cd brighthive-e2e && BH_LANGGRAPH_URL="https://brightagent-staging-760d8832084555d487edeb54e9969675.us.langgraph.app" \
+  .venv/bin/python -m pytest e2e/features/edges/test_loopcapital_ssis_diagnostics.py -v --env=staging --writes -s
 ```
