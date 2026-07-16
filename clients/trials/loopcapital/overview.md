@@ -746,6 +746,25 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     with the same null-name shape (all inactive/never-confirmed invites) — the `getCurrentUser`
     hardening protects all of them too, not just Loop Capital's identity.
 
+36. **Branch-drift closed across all 3 core repos; one more untested-but-merged fix found and
+    covered, 2026-07-16 (same pass, continued).** Found `develop` ahead of `staging` on
+    brightbot by one commit — BH-1102 (`notify_enabled` never round-tripped on thread state,
+    same silent-drop shape as the `session_info`-does/`notify_enabled`-doesn't bug another
+    engineer had already fixed on `develop`). Promoted via `chore(release)` PR #867 to
+    `staging`, watched the LangGraph Cloud rebuild through `QUEUED`→`BUILDING`→`DEPLOYING`→
+    `DEPLOYED` (~16 min) before treating it as live. Also found `staging` ahead of `develop` on
+    `brighthive-platform-core` by one commit — BH-1113 (this pass's own `currentUser` fix)
+    existed only on `staging` since it was merged there directly; cherry-picked to `develop`
+    too (PR #1071) so a future promotion can't silently revert it. **Re-ran the full regression
+    surface after both landed**: Loop Capital webapp e2e (3/3 clean), GC-14/15/16/17 +
+    governance sweep (11 passed, 0 failed) — all still green. Confirmed via `git diff
+    origin/staging origin/develop` on all 3 repos (brightbot, platform-core, webapp): zero
+    content diff, fully in sync. **BH-1102 had zero test coverage** despite being a real,
+    already-merged fix — wrote a real-behavior e2e (`brighthive-e2e` PR #53, merged) that sets
+    `notify_enabled` via the real deployed LangGraph Cloud `POST/GET /threads/{id}/state` API
+    (no mock) and confirms it round-trips, including a true on→off→on toggle sequence. Ran live
+    against the freshly-deployed revision: both tests passed.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
