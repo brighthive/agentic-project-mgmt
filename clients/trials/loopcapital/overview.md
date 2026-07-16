@@ -814,6 +814,20 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     dbt-mcp lineage) — since the honest scope of BH-1114 is combining those two, not building
     new profiling/lineage primitives from scratch. `demo.md` updated to cite the ticket.
 
+40. **SSIS diagnostics extended to Loop Capital's own real identity + artifact, latency
+    variance discovered and documented, 2026-07-16.** Prior SSIS/SSRS proof (entry 38) covered
+    the parser (real fixtures) and the general chat capability (generic OneTen workspace,
+    synthetic fixture). Closed the remaining gap: a new e2e test seeds Loop Capital's real
+    `Extract_Holdings_Nightly.dtsx` into Loop Capital's own real workspace, drives a real chat
+    run as `loopcapital.demo@brighthive.io`, and asserts the analyst delegates and produces a
+    real diagnosis (`brighthive-e2e` PR #54, merged). Ran it 3x live against staging: passed at
+    167s and 285s, one run genuinely exceeded 430s — cross-checked against the general
+    (non-Loop-Capital) test's own timing (207s on one run) to confirm this is real, generic
+    model-latency variance for this specific skill (full package read + reasoning), not a
+    Loop-Capital-specific slowdown. Documented the timing expectation directly in `demo.md`
+    (budget 3-9 min if demoing this live; either kick it off early or set the expectation up
+    front) rather than silently hoping it lands fast during the actual demo.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
