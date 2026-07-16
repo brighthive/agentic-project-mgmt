@@ -258,6 +258,15 @@ combines. Three real pieces, now genuinely wired together (BH-1114):
   bronze/silver/gold. Tested against Loop Capital's own real model pair
   (`raw.holdings_raw` → `stg_holdings_nightly`) — 13 unit tests passing, real fixture, not an
   invented naming scheme.
+- **Generalized to any asset, not just dbt models, with mandatory citation + real audit.**
+  Every node now carries a `LineageProvenance` (real adapter name + real source reference +
+  timestamp) — omitting it is a hard construction-time error, not a silent gap. A second real
+  adapter, `build_graph_from_filesystem_assets`, covers configs (YAML/JSON), pivot/Excel
+  exports, and unstructured documents alongside warehouse tables. Every graph build emits a
+  real audit log line via BH-695's existing audit infra — proven with a real logging-capture
+  test, not just a decorator. Still not wired: composing a graph finding into GC-16's real PR
+  path is documented as the correct next step, not yet built or tested end-to-end. 28 unit
+  tests passing.
 
 **What this genuinely unlocks**: "which gold-tier marts are at risk because this bronze source
 has a quality problem" is now a real, answerable graph query — `graph.downstream_of(bronze_id,

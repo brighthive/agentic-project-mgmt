@@ -958,6 +958,33 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     proving it prevents the *next* occurrence is separate, unproven work), not fully closed as
     an earlier framing of §1 implied.
 
+47. **Generalized `lineage_graph.py` into a tool-agnostic citation + audit graph, per the
+    user's explicit 3-part governance ask, 2026-07-16 (same pass, continued).** The ask,
+    decomposed: (1) autonomous/low-HITL graph construction from real discovery — already true
+    of entry 45's dbt adapter; (2) mandatory citation of source + real audit of every step,
+    framed around lineage & governance; (3) pre/ELT/post-ELT changes flow through real GitHub
+    PRs for versioned, historical solutions. Built (2) and the tool-agnostic half of (1)
+    directly: every `LineageNode` now carries a mandatory `LineageProvenance`
+    (`source_adapter`, `source_ref`, `resolved_at_unix`) — a `TypeError` at construction if
+    omitted, not a silent gap — and both adapters are `@audit_action`-wrapped using BH-695's
+    real, existing audit infra (proven with a real `logging.Handler` capture test, not decorator
+    presence alone: 2 new tests assert a real JSON audit line lands with the correct
+    `tool_name`/`action_class`/`status`). Added a second real adapter,
+    `build_graph_from_filesystem_assets`, plus `AssetKind` (`TABLE`/`VIEW`/`CONFIG`/
+    `PIVOT_FILE`/`UNSTRUCTURED_DOCUMENT`/`UNKNOWN`) and `classify_asset_kind()` — covering the
+    literal list in the user's ask ("unstructured structured tables warehouses configs pivot
+    files yamls"), not just dbt models. Test count: 13 → 28 passing.
+    **Item (3) is intentionally NOT a new PR mechanism** — the module docstring documents
+    composing a lineage-graph finding (e.g. "this BRONZE source's drift threatens that GOLD
+    mart" via `downstream_of(..., tier=PipelineTier.GOLD)`) into GC-16's existing, safety-gated
+    `remediation_agent.py`'s `draft_or_alert`, rather than duplicating GitHub-write plumbing.
+    **Honest gap, not yet closed**: no code or test wires an actual lineage-graph finding into
+    `draft_or_alert` end-to-end — item (3) is a documented composition point, not a proven
+    integration. Merged to both `staging` (brightbot PR #875) and `develop` (PR #876,
+    admin-merged past the same confirmed-unrelated `Install uv` action-fetch 404 CI flake as
+    entry 45 — reproduced identically, unit tests disabled in that workflow so it could not be
+    a real regression).
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
