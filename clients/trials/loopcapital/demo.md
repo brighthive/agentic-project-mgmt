@@ -163,8 +163,11 @@ Being upfront here protects the demo. If Frank asks about any of these, the hone
   jobs continuously."
 - **Bronze/silver/gold medallion-aware quality gating.** No code enforces or reports on a
   bronze→silver→gold data-quality lifecycle anywhere in brightbot or platform-core. The one
-  hit for "gold" in platform-core is a comment example, not logic. This is honestly scoped as
-  future work (BH-1061–1064: lineage-aware data quality), not built.
+  hit for "gold" in platform-core is a comment example, not logic. Filed as **BH-1114** (under
+  the BH-1061 lineage-aware-quality epic) with explicit dependencies on two capabilities this
+  same POC already shipped and proved real — BH-1076 (whole-warehouse profiler) and BH-1111
+  (real dbt lineage) — so the honest answer to Frank is "the two building blocks for this are
+  already live; the tier-aware orchestration on top is scoped, not built yet."
 
 ---
 

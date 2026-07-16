@@ -807,6 +807,13 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     `demo.md` updated to move diagnosis into the real-capabilities section while keeping the
     PR-suggestion gap and the "on-demand, not a standing watch" caveat explicit.
 
+39. **Bronze/silver/gold quality gating filed as BH-1114, 2026-07-16.** The one remaining
+    demo.md non-claim without a tracked ticket. Filed under the BH-1061 lineage-aware-quality
+    epic with explicit dependencies on the two real capabilities this POC already shipped and
+    proved live this pass — BH-1076 (whole-warehouse discover→profile scan) and BH-1111 (real
+    dbt-mcp lineage) — since the honest scope of BH-1114 is combining those two, not building
+    new profiling/lineage primitives from scratch. `demo.md` updated to cite the ticket.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
