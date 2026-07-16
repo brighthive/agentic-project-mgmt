@@ -40,7 +40,7 @@ real external GitHub PR as proof it isn't a mock.
 |---|---|---|
 | GC-14 | Watchdog detects a broken nightly dbt job **before** anyone asks BrightAgent — alert reaches Slack | `pipeline_watchdog_task.py`; `test_gc_14_proactive_monitor_alert.py` (3 passed) |
 | GC-15 | Same proactive detection for a SQL Server source with **no MCP connector** — disk pressure + job pass/fail, BYOW pattern | `sql_server_pipeline_source.py`; live sandbox tests (5 real-behavior, zero mock) |
-| GC-16 | Real root-cause diagnosis → real dbt fix drafted → **real GitHub PR opened** | `remediation_agent.py`; proof PR: `brighthive/loopcapital-dbt-demo#1` (merged 2026-07-16) — open this PR live if asked "did it really do this" |
+| GC-16 | Real root-cause diagnosis → real dbt fix drafted → **real GitHub PR opened** | `remediation_agent.py`; proof PR: `brighthive-dbt/loopcapital-dbt-demo#1` (merged 2026-07-16) — open this PR live if asked "did it really do this" |
 | GC-17 | Safety gate: the agent **never** auto-merges its own fix — a human always merges | `test_gc_17_auto_merge_exclusion.py` proves `github_merge_pull_request` is never bound to the remediation agent's tool set |
 
 **Demo script**: show the Slack alert → show the agent's diagnosis in chat → open PR #1 in
@@ -218,7 +218,9 @@ cd brighthive-e2e && BH_LANGGRAPH_URL="https://brightagent-staging-760d883208455
   .venv/bin/python -m pytest e2e/features/data/test_dbt_mcp_lineage.py -v --env=staging -s
 
 # 4. Have PR #1 open in a tab, ready to show (state: MERGED)
-open "https://github.com/brighthive/loopcapital-dbt-demo/pull/1"
+# NOTE: repo was moved to brighthive-dbt org on 2026-07-16 while fixing get_lineage's
+# GitHub App authorization (see overview.md entry 42) — use this URL, not the old brighthive/ one.
+open "https://github.com/brighthive-dbt/loopcapital-dbt-demo/pull/1"
 
 # 5. Confirm SSIS/SSRS diagnostics find the real, planted gaps in Loop Capital's own fixtures
 cd brightbot && .venv/bin/python -m pytest \
