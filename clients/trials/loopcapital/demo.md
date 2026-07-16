@@ -105,8 +105,18 @@ Real and shipped (pre-existing BrightHive capability, not built for this trial s
 - Webapp surface: `SuggestedRoutinesSection`, `ScheduledRoutineRow`, `RoutineSuggestionCard`
 - Slack surface: `routine-suggestion-action`, Block Kit formatter, classify pipeline
 
-**Demo script**: show a suggested/scheduled routine in the webapp, then the equivalent Slack
-card — same routine, two surfaces. Good for the "proactive, not just reactive" narrative.
+**Loop Capital's own workspace has zero routines today** — confirmed live: both
+`routineSuggestionsForWorkspace` and `scheduledRoutinesForWorkspace` return empty for
+workspace `e3fc0917-03a6-4ac6-aad4-ac265329bfb9`. This is expected, not a bug — BrightRoutines'
+detector surfaces suggestions from real observed usage patterns over time, and Loop Capital's
+workspace is a fresh synthetic demo environment with no organic activity history yet. The OneTen
+ground-truth workspace has a real one ("Generate weekly earnings report", status `OFFERED`) —
+confirmed live the same way.
+
+**Demo script**: show the real OneTen routine in the webapp (or ask BrightHive's own team
+account, not Loop Capital's), then the equivalent Slack card — same routine, two surfaces.
+Frame it as "this is what emerges after the agent has watched your team's real work for a
+while" — do NOT open Loop Capital's own workspace expecting to find one; there isn't one yet.
 
 **What NOT to claim here**: MCP/A2A exposure of BrightRoutines (letting an external agent
 trigger a routine) is scoped (BH-1038–1041) but not built. If asked "can another system
