@@ -828,6 +828,20 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     (budget 3-9 min if demoing this live; either kick it off early or set the expectation up
     front) rather than silently hoping it lands fast during the actual demo.
 
+41. **BrightRoutines checked specifically against Loop Capital's own workspace — real
+    capability, empty result, corrected in demo.md, 2026-07-16.** Every prior BrightRoutines
+    verification this trial used the generic OneTen workspace; never checked Loop Capital's
+    own. Queried both `routineSuggestionsForWorkspace` and `scheduledRoutinesForWorkspace`
+    directly against `e3fc0917-03a6-4ac6-aad4-ac265329bfb9` as the real Loop Capital demo
+    identity: both succeed (real auth, real schema, zero errors) and return `[]`. Confirmed
+    this is a workspace-history fact, not a broken feature, by running the identical query
+    against OneTen's workspace and finding a real offered routine ("Generate weekly earnings
+    report"). Added `brighthive-e2e` PR #55 (merged) asserting both facts together so a future
+    zero-result on Loop Capital's workspace is never mistaken for a regression. `demo.md`
+    corrected: BrightRoutines' demo script now points at the OneTen workspace (or a real team
+    account) for a live click-through, with Loop Capital's own empty state stated explicitly
+    rather than left implied-but-untested.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
