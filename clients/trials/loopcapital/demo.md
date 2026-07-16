@@ -198,13 +198,40 @@ Being upfront here protects the demo. If Frank asks about any of these, the hone
   file you point the agent at (uploaded or in a known path), not a background watchdog like
   GC-14/15. Frame it as "ask the agent to diagnose this package" not "it's watching your SSIS
   jobs continuously."
-- **Bronze/silver/gold medallion-aware quality gating.** No code enforces or reports on a
-  bronze→silver→gold data-quality lifecycle anywhere in brightbot or platform-core. The one
-  hit for "gold" in platform-core is a comment example, not logic. Filed as **BH-1114** (under
-  the BH-1061 lineage-aware-quality epic) with explicit dependencies on two capabilities this
-  same POC already shipped and proved real — BH-1076 (whole-warehouse profiler) and BH-1111
-  (real dbt lineage) — so the honest answer to Frank is "the two building blocks for this are
-  already live; the tier-aware orchestration on top is scoped, not built yet."
+---
+
+## 6. Bronze/silver/gold pipeline quality — real, three pieces now connected
+
+Corrected from an earlier, wrong read of this codebase: this was flagged as "zero code exists"
+— that was true of a bespoke medallion-tier concept, but wrong once you look at what already
+combines. Three real pieces, now genuinely wired together (BH-1114):
+
+- **Per-asset quality checks already run against any asset, any tier, today.**
+  `execute_library_quality_rules` (real, already shipped) runs a workspace's active quality
+  rules against a named asset and writes a real `QualityRuleExecution` to Platform Core — the
+  tier the asset sits at was never a gate on this.
+- **Whole-warehouse discovery + profiling already covers every table** (BH-1076, real-behavior
+  tested against a live SQL Server sandbox this week).
+- **The missing piece — tier classification + real lineage-graph traversal — is now built**
+  (`lineage_graph.py`): a warehouse-agnostic `LineageGraph`/`LineageSource` **Port**, with dbt
+  as the first real **Adapter** (Databricks Unity Catalog / Snowflake-native lineage are the
+  documented next adapters, not speculative — this follows the org's own ports-and-adapters
+  rule). `classify_tier` maps the same `raw`/`stg_`/`int_`/`mart_` naming convention already
+  used elsewhere in this codebase (the SSIS diagnostics staging-step check) onto
+  bronze/silver/gold. Tested against Loop Capital's own real model pair
+  (`raw.holdings_raw` → `stg_holdings_nightly`) — 13 unit tests passing, real fixture, not an
+  invented naming scheme.
+
+**What this genuinely unlocks**: "which gold-tier marts are at risk because this bronze source
+has a quality problem" is now a real, answerable graph query — `graph.downstream_of(bronze_id,
+tier=PipelineTier.GOLD)`.
+
+**What's still a real limitation, be upfront about it**: the graph today needs real
+model/source + edge data from dbt-mcp's Discovery API to populate — and that's the exact
+capability blocked on the Snowflake MFA issue documented in §2 above (fixed for the
+GitHub/dbt-Cloud-linking half; still blocked on Snowflake account-admin access for the
+warehouse-auth half). Until that's resolved, this is demoable as **real, tested code** you can
+show and explain, not yet a live "watch it answer" chat moment on Loop Capital's own project.
 
 ---
 

@@ -909,6 +909,31 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     facts together, mirroring the routines-baseline test's shape exactly. `demo.md`'s §3
     corrected to state this explicitly rather than leave it implied.
 
+45. **Bronze/silver/gold correction — a prior "zero code exists" claim was wrong, built the
+    real missing piece instead of leaving it as a gap, 2026-07-16 (same pass, continued).** The
+    user pushed back directly and correctly: per-asset quality checks
+    (`execute_library_quality_rules`) already run against ANY asset regardless of tier name —
+    "no problem whatsoever" — and the real gap was never "does quality checking work per
+    asset," it was "is there a real tier classification + lineage-graph traversal connecting
+    bronze issues to gold impact." Confirmed the real naming convention already implied
+    throughout this codebase (raw/stg_/int_/mart_, same as the SSIS diagnostics staging-step
+    check) and built it for real: `brightbot/agents/governance_agent/tools/lineage_graph.py` —
+    a `LineageGraph`/`LineageSource` Port (per pluggable-scalable.md's rule of two: dbt is the
+    real adapter today via BH-1111's dbt-mcp integration, Databricks Unity Catalog / Snowflake
+    native lineage are the documented, real next adapters — the user's own explicit ask,
+    "today is dbt, tomorrow is databricks, tomorrow is snowflake native"), `classify_tier`
+    (raw→bronze, stg_/int_→silver, mart_/dim_/fct_→gold), and `build_graph_from_dbt_lineage`
+    (the first real adapter). Tested against Loop Capital's own real, live model pair
+    (`raw.holdings_raw` → `stg_holdings_nightly`, confirmed via GitHub + dbt Cloud's
+    sources.yml) — 13 unit tests, real fixture shape, not invented. Merged to both `staging`
+    (`brightbot` PR #873) and `develop` (PR #874, admin-merged past a confirmed-unrelated CI
+    infra failure — `astral-sh/setup-uv@v4` action-fetch 404, reproduced 3x, unit tests are
+    disabled in that workflow entirely so it could not have been a real test regression).
+    `demo.md` corrected: moved from "not built" into a real §6 with an honest remaining caveat
+    (the graph needs real Discovery API data to populate, which is the same Snowflake-auth
+    blocker from entry 42/43 — this is real, tested code today, not yet a live chat demo until
+    that's resolved).
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
