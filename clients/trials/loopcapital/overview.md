@@ -934,6 +934,30 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     blocker from entry 42/43 — this is real, tested code today, not yet a live chat demo until
     that's resolved).
 
+46. **Found and proved a real third skill (Storage Optimization), corrected demo.md's
+    framing to match the client's own real planning doc + Suzanne's real email, 2026-07-16
+    (same pass, continued).** The user shared the real POC-scope planning notes and Suzanne's
+    actual message to Frank — this named the real, exact scope: a "Legacy Analyst Analyzer
+    Agent" with THREE skills (SSIS, SSRS, Storage Optimization), and Suzanne's 3 concrete
+    commitments for the 7/17 demo (proactive monitor/detect/alert; SQL-Server-no-MCP disk
+    monitoring; surfacing applied fixes to avoid recurrence). Cross-checked `demo.md` against
+    both documents directly. Found a real, previously-unverified capability:
+    `brightbot/skills/system/storage-optimization/SKILL.md` — never audited before this pass.
+    Verified it live against OneTen's real, connected Snowflake warehouse: 8 real
+    `execute_sql_query_tool` calls against real `information_schema` metadata (21 real tables,
+    214 real columns), correct top-storage-consumer findings, and — independently — the SAME
+    real bronze/silver/gold tier labels this pass's `lineage_graph.py` (entry 45) formalizes,
+    confirming that naming convention is genuinely load-bearing across two independently-built
+    capabilities, not a one-off. One real, self-corrected model error surfaced too (a wrong
+    Snowflake column name, `IS_PRIMARY_KEY`) — not a code bug, the model recovered via an
+    alternate query path. Added real-behavior e2e coverage (`brighthive-e2e` PR #59, merged).
+    `demo.md`'s §5 renamed to "the Legacy Analyst Analyzer Agent" framing (matching the
+    client's own language) with all 3 skills, and §1 now explicitly maps to Suzanne's 3 real
+    commitments — including an honest correction that commitment #3's "avoid recurrence" half
+    is a documented, real, still-open gap (the agent correctly re-diagnoses each occurrence;
+    proving it prevents the *next* occurrence is separate, unproven work), not fully closed as
+    an earlier framing of §1 implied.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
