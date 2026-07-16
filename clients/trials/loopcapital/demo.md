@@ -48,6 +48,17 @@ GitHub to prove it's a real PR, not a screenshot — it shows `MERGED`, by a hum
 itself the proof of the safety gate: the agent drafted and opened it, a person reviewed and
 merged it, the agent never merges its own work.
 
+**Maps directly to Suzanne's 3 commitments to Frank for this demo**: (1) GC-14/16/17 = "proactively
+monitors, detects and resolves issues, alerts the user"; (2) GC-15 = "MCP connects to a SQL
+Server with no MCP installed, alerts at 20% disk"; (3) GC-16's diagnosis surfacing = "surface
+the fixes the agent applied." **Be precise on #3**: what's proven is the agent surfaces *why*
+it fixed something (plain-language diagnosis in the PR). What's honestly still open,
+documented as a real gap (`test_gc_16_recurrence_actually_prevented_not_just_redetected`), is
+proof that the *same class* of issue is actually prevented from recurring — vs. being
+correctly re-diagnosed each time it happens. If asked "does this stop it from happening again,"
+the honest answer is "it correctly diagnoses and fixes each occurrence today; proving it
+prevents the *next* occurrence is the next real step."
+
 **Re-verify same day**:
 ```bash
 cd brightbot
@@ -143,7 +154,7 @@ trigger this," the honest answer is "that's on the roadmap, not built yet."
 
 ---
 
-## 5. SSIS/SSRS diagnostics — real, deterministic, proven against Loop Capital's own artifacts
+## 5. The "Legacy Analyst Analyzer Agent" — SSIS, SSRS, and Storage Optimization
 
 Corrected from an earlier, wrong read of this codebase: real deterministic XML parsing
 exists, not just a prompt-only skill.
@@ -179,6 +190,32 @@ guess.
 a continuous background watch like GC-14/15 — and there is no path from the diagnosis to an
 opened GitHub PR (the analyst agent has no GitHub write tools bound, unlike GC-16's dbt
 remediation). See the explicit non-claims below.
+
+### 5c. Storage Optimization — the third skill, verified live against a real Snowflake warehouse
+
+The client's own POC scope names this as the third skill of the "Legacy Analyst Analyzer
+Agent" alongside SSIS and SSRS. Real and proven, verified live 2026-07-16 against OneTen's
+real, connected Snowflake warehouse (not a sandbox):
+
+- Asked the analyst live: "find cold or oversized tables and estimate savings" — it ran **8
+  real `execute_sql_query_tool` calls** against Snowflake's real `information_schema`
+  metadata (not fabricated numbers): 21 real tables, 214 real columns inventoried
+- Correctly identified real top storage consumers by byte size (`STG_HOLDINGS_SNAPSHOT`,
+  `INT_ENRICHED_HOLDINGS`, `MART_DAILY_PORTFOLIO_EXPOSURE`) and correctly labeled each by its
+  real bronze/silver/gold tier from the naming convention — independent confirmation of the
+  same tier classification `lineage_graph.py` (§6) formalizes
+- Correctly flagged 2 real empty tables and reported "no clustering keys applied" as a real
+  optimization opportunity — grounded in the actual catalog metadata, not a generic-sounding
+  answer
+- One query attempt used a wrong Snowflake column name (`IS_PRIMARY_KEY`) and failed with a
+  real SQL compilation error — the agent self-corrected via an alternate query path and still
+  produced the full real analysis. Worth knowing about if it happens live: it's the model
+  guessing a column name, not a broken tool, and it recovers on its own.
+
+**Demo script**: ask the agent to find storage optimization opportunities in the connected
+warehouse — expect a real, multi-query analysis citing actual table names, byte sizes, and row
+counts, landing on real, specific recommendations (not "consider reviewing your storage
+costs").
 
 ---
 
