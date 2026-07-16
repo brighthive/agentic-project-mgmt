@@ -720,6 +720,32 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     recorded as a MEDIUM finding (tool choice is model-directed) rather than a false test
     failure.
 
+35. **Everything from entry 34 merged + deployed to real staging, plus 2 more real bugs found
+    verifying it, 2026-07-16 (same pass, continued).** `brighthive-platform-core` PR #1070
+    (BH-1113) merged to `staging` and deployed via `v2.9.0.85-pre-release` (full CDK deploy
+    watched to completion). `brighthive-e2e` PR #51 (BH-1111 lineage coverage) merged clean.
+    Also promoted 3 webapp features that were merged to `develop` but never reached `staging`
+    (BH-1107 SQL Server warehouse form, BH-1108 remediation-diagnosis card, BH-1109 Teams
+    channel) via a clean `develop`→`staging` merge + `v2.9.0.36-pre-release` Amplify deploy —
+    a real gap: these were documented as "shipped" in earlier entries but Loop Capital's demo
+    runs against `staging`, which didn't have them yet. **Verifying all of this live surfaced
+    2 more real bugs**: (1) a genuinely flaky e2e assertion in
+    `test_loopcapital_brightagent_chat_renders` — its setup-marker polling loop can `break`
+    with zero wait elapsed on a warm session, then check for chat affordances before the SPA's
+    chat component finishes mounting; false-failed 3 consecutive real runs even though a manual
+    browser check in the same pass confirmed the real chat textarea + real session history were
+    already rendering. Fixed by polling the affordance check too (`brighthive-e2e` PR #52,
+    merged) — 4/4 clean runs after. (2) `test_gc_14_proactive_monitor_alert` (brightbot) broke
+    the moment BH-1110's second real httpx call (`updateTransformationRunStatus`, merged this
+    session) landed alongside the original `publishNotification` call — the test's fake client
+    records every call, and the old assertion assumed exactly one. Fixed by filtering by
+    operation and asserting the new call's real content (`brightbot` PR #865 → `staging`,
+    cherry-picked as PR #866 → `develop`, both merged) — full GC-14/15/16/17 + governance sweep
+    re-run clean after: 11 passed, 0 failed. **Bonus finding, not a Loop-Capital-specific bug**:
+    while diagnosing BH-1113, a direct OGM query found 13 OTHER pre-existing staging UserNodes
+    with the same null-name shape (all inactive/never-confirmed invites) — the `getCurrentUser`
+    hardening protects all of them too, not just Loop Capital's identity.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
