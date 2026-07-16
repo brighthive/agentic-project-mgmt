@@ -93,24 +93,28 @@ sequenceDiagram
     participant PlatformCore as brighthive-platform-core
     participant SlackServer as brightbot-slack-server
 
-    User->>Webapp: Opts in ("Notify me") on a long-running turn
-    Note over Webapp: Opt-in is per-run, not persisted to thread metadata (see §1 spike correction)
+    User->>Webapp: Clicks the bell ("Notify me") on a thread
+    Webapp->>LangGraph: POST /threads/{id}/state { values: { notify_enabled: true } } — persisted per-thread (see §2.1, corrected 2026-07-16)
+    User->>Webapp: Sends a message (any message, while the toggle is on)
     Webapp->>LangGraph: POST /threads/{id}/runs/stream with webhook=<brightbot-url>, notify_user_id in run metadata
     Note over LangGraph: Run continues executing after tab closes (existing behavior)
     LangGraph->>Brightbot: POST webhook — fires on EVERY terminal run (confirmed: worker.py returns WorkerResult unconditionally for success/error/interrupted)
-    Brightbot->>Brightbot: duration >= floor (skip for interrupts)? claim not already fired for run_id?
-    Brightbot->>PlatformCore: publishNotification(stage: chat_run_complete | chat_run_interrupt, visibility: "user", audienceUserIds: [notify_user_id])
-    PlatformCore->>SlackServer: (existing poller picks up the event — no new delivery code)
-    SlackServer->>User: Slack DM: "Your BrightAgent session finished" + mute action
+    Brightbot->>Brightbot: duration >= floor (skip for interrupts)? claim not already fired for run_id? generate AI summary of the run
+    Brightbot->>PlatformCore: publishNotification(stage: chat_run_complete | chat_run_interrupt, visibility: "user", audienceUserIds: [notify_user_id], metadata: {summary, elapsed_seconds})
+    PlatformCore->>SlackServer: (existing poller picks up the event)
+    Note over SlackServer: deliver() gates on visibility:"user" BEFORE Subscription matching (fixed 2026-07-16 — a workspace-scope subscription previously could match and broadcast a personal event to a shared channel)
+    SlackServer->>User: Slack DM: "Your BrightAgent run finished" + AI summary + duration + thread link + mute action
     PlatformCore->>User: In-app inbox card (existing Inbox fan-out)
 ```
 
 ### Use Case / Goal
 
-A user kicks off a slow BrightAgent turn, opts in to "notify me," and closes the tab. When the run
-finishes (or pauses waiting on their input via an interrupt), they get a Slack DM / inbox card —
-*only if* they weren't already watching live, and only past a minimum duration floor, so the
-feature never fires for the common case of a normal few-second chat turn.
+A user turns on "notify me" for a BrightAgent thread and closes the tab (or keeps working
+elsewhere). When a run in that thread finishes (or pauses waiting on their input via an
+interrupt), they get a Slack DM / inbox card with a short AI-generated summary of what happened —
+regardless of whether they were watching live (the original "only notify if not watching" gate
+was built and then removed, see Invariant 2) — and only past a minimum duration floor for
+completions, so the feature never fires for the common case of a normal few-second chat turn.
 
 ### How It Works Today
 
@@ -133,22 +137,32 @@ feature never fires for the common case of a normal few-second chat turn.
   `interruptible()` wraps LangGraph's `interrupt()`; the webapp's `get_state` response surfaces
   `interrupts: [...]`, rendered by `useAgentInterrupt.ts`. A paused run can sit for hours/days —
   the checkpoint is the persistence layer.
-- **Notification delivery — mostly reusable, one real gap found post-launch (2026-07-16).**
-  `writeNotificationSignal()` (`brighthive-platform-core/src/graphql/service/aws/
-  notification-signal.ts:51`) accepts `visibility` (`"workspace"` default | `"user"`) and
-  `audienceUserIds: string[]` (line 18, 38), and platform-core's Inbox fan-out
+- **Notification delivery — mostly reusable, TWO real gaps found post-launch (2026-07-16), in
+  opposite directions.** `writeNotificationSignal()` (`brighthive-platform-core/src/graphql/
+  service/aws/notification-signal.ts:51`) accepts `visibility` (`"workspace"` default | `"user"`)
+  and `audienceUserIds: string[]` (line 18, 38), and platform-core's Inbox fan-out
   (`notification-preference.ts`'s `signalPassesPreferenceFilter`) genuinely does honor both
-  fields with zero new code — that half of "reusable as-is" was correct. **What was wrong**:
-  `brightbot-slack-server`'s `SlackChannel.deliver()` (`src/notifications/channels/slack.ts`)
-  never reads `visibility`/`audience_user_ids` at all — it matches events purely against
-  pre-declared `Subscription` rows (`event_filter`/`asset_filter`/`severity_filter`), which
-  nothing in this feature ever created. Every real chat-notify event published correctly but
-  produced zero Slack messages, silently (`match_count: 0`, no error). Fixed by having
-  brightbot's webhook receiver auto-provision a `PERSONAL`/`SLACK_DM` subscription for both
-  stages on a user's first opt-in, via the same `createNotificationSubscription` mutation +
-  `x-service-key`/`actingUserId` dual-auth path `scheduled_agents_routes.py`'s scheduler
-  provisioning already uses (see §2.2). "Same mechanism BH-1088's personal-scope Slack DMs
-  already use" was never actually true for a *new* stage with no subscription UI of its own —
+  fields with zero new code — that half of "reusable as-is" was correct.
+  **Gap #1 (under-delivery)**: `brightbot-slack-server`'s `SlackChannel.deliver()`
+  (`src/notifications/channels/slack.ts`) never read `visibility`/`audience_user_ids` at all — it
+  matched events purely against pre-declared `Subscription` rows
+  (`event_filter`/`asset_filter`/`severity_filter`), which nothing in this feature ever created.
+  Every real chat-notify event published correctly but produced zero Slack messages, silently
+  (`match_count: 0`, no error). Fixed by having brightbot's webhook receiver auto-provision a
+  `PERSONAL`/`SLACK_DM` subscription for both stages on a user's first opt-in, via the same
+  `createNotificationSubscription` mutation + `x-service-key`/`actingUserId` dual-auth path
+  `scheduled_agents_routes.py`'s scheduler provisioning already uses (see §2.2).
+  **Gap #2 (over-delivery, found on UAT)**: fixing Gap #1 by making `SlackChannel.deliver()`
+  match against Subscription rows exposed the flip side of the SAME missing check — an event
+  published with the correct `visibility: "user"` could ALSO match an unrelated *workspace-scope*
+  subscription (`event_filter: "*"`, or one scoped to `chat_run_complete` specifically), because
+  `deliver()` still only checked stage/asset/severity, never visibility, when deciding which rows
+  to deliver to. A user's private chat session was broadcast to a shared channel. Fixed for real
+  this time by gating `deliver()` on `event.visibility === "user"` BEFORE Subscription matching
+  runs at all (§3 Invariant 9) — a personal event now structurally cannot reach a workspace-scope
+  row, rather than merely being unlikely to in today's subscription set. "Same mechanism BH-1088's
+  personal-scope Slack DMs already use" was never actually true for a *new* stage with no
+  subscription UI of its own —
   BH-1088's precedent (a scheduled run's owner) works because *something* creates that
   subscription; this spec never specified what would for chat sessions.
 
@@ -185,19 +199,32 @@ feature never fires for the common case of a normal few-second chat turn.
 
 ## 2. Interface Contract (MDE)
 
-### 2.1 Webapp run creation — opt-in via the run's own `webhook` + `metadata` fields
+### 2.1 Webapp — persisted per-thread toggle, read at send time
 
 ```
+Persisted setting (NEW 2026-07-16 — corrects the original "per-run, not persisted" design):
+  POST /threads/{threadId}/state   { values: { notify_enabled: boolean } }
+    Written by AgentHeader's bell click. Requires notify_enabled to be a declared field on
+    brightbot's BBState (brightbot/workflows/states.py) — LangGraph's update_state silently
+    drops any key not in the graph's own state schema before it reaches a channel, which is
+    why this round-trip did not work until BBState declared the field (same bug class as
+    §2.2's payload-shape fix: a 200 response with no actual effect).
+  GET /threads/{threadId}/get_state → values.notify_enabled
+    Read back on every thread load (useAgentLifecycle.ts / useLoadThread.ts) to hydrate the
+    bell's on/off state — survives refresh, tied to the thread, not the browser tab/session.
+
 POST /threads/{threadId}/runs/stream   (existing LangGraph call, brighthive-webapp/src/BrightAgent/hooks/useAgentStream.ts:437)
-  New fields, set ONLY when the user opts in for this run:
+  New fields, set on EVERY send while the persisted toggle is on (not just the run that
+  toggled it — see Invariant 7):
     webhook: "<BRIGHTBOT_BASE_URL>/manage/chat-sessions/webhook/run-complete"
     metadata.notify_user_id: string      # BrightHive user id — same value already
                                           # threaded as metadata.user_id elsewhere
 ```
 
-No thread-level PATCH, no new persistence — the opt-in is a per-run parameter on the exact call
-the webapp already makes to start a run. LangGraph carries `webhook` and `metadata` through to the
-`WorkerResult` and includes them in the POST described in §2.2.
+LangGraph carries `webhook` and `metadata` through to the `WorkerResult` and includes them in the
+POST described in §2.2. The persisted toggle and the per-run webhook fields are two different
+mechanisms: the toggle is UI state that survives a refresh; the webhook/metadata fields are what
+actually opts a specific run in, read fresh from the toggle at send time.
 
 ### 2.2 brightbot — new webhook receiver (confirmed mechanism, per BH-1100 spike)
 
@@ -233,13 +260,23 @@ Behavior:
      (scheduled_agents_routes.py's scheduler provisioning uses the same mutation, but omits
      actingUserId and has therefore been silently failing on every call — do not copy that).
      Best-effort: a failure here (most commonly no linked Slack identity) never blocks the
-     publish in step 6 — Inbox delivery is unaffected either way.
-  6. Call platform-core's publishNotification:
+     publish in step 7 — Inbox delivery is unaffected either way.
+  6. Generate a 1-2 sentence AI summary of the run (NEW 2026-07-16) — `_summarize_run()` calls
+     `end_proc_model` (the same cheap Haiku-tier Bedrock model `generate_thread_title` already
+     uses for thread titling — brightbot/agents/super_agent/models.py), reading the last human/AI
+     message from the webhook payload's `values.messages` (plain dicts at this boundary, the same
+     shape `GET /threads/{id}/state` returns — NOT LangChain message objects). Best-effort: any
+     failure (empty messages, model timeout/error) returns `None` and is logged, never raised —
+     the notification still publishes with the summary field simply omitted.
+  7. Call platform-core's publishNotification:
        stage: "chat_run_interrupt" (status=="interrupted") | "chat_run_complete" (otherwise)
        status: "info" (interrupt) | "success"/"failed" (complete, mapped from LangGraph's status)
        visibility: "user"
        audienceUserIds: [notify_user_id]
-       metadata: { thread_id, run_id, thread_title }
+       metadata: { thread_id, run_id, thread_title,
+                   elapsed_seconds?: number,   # completion only — omitted on interrupt and on
+                                                # a malformed/missing timestamp, never null
+                   summary?: string }          # omitted (not null) when step 6 returns None
 ```
 
 ### 2.3 brighthive-platform-core — new stage constants only
@@ -256,18 +293,34 @@ places that need real enum-like additions):
 ### 2.4 brighthive-webapp — opt-in UI + mute action
 
 ```
-Chat header (per open thread): toggle/offer "Notify me when this finishes"
-  On:  the NEXT runs/stream call for this thread includes webhook + metadata.notify_user_id (§2.1)
-  Off: the NEXT runs/stream call omits both — no request needed, opt-in is per-run, not persisted
+Chat header (per open thread): a bell IconButton, persisted per-thread (§2.1 — corrects the
+original "per-run, not persisted" design; see BH-1102 follow-up):
+  Click:   flips the Zustand store flag immediately (instant UI feedback), then persists via
+           POST /threads/{threadId}/state { values: { notify_enabled: !current } }. On failure,
+           rolls back the optimistic flip and toasts an error (mirrors
+           ThreadSessionSettingsDialog's session_info save pattern).
+  On load: hydrated from values.notify_enabled via GET .../get_state, AFTER fetchNewThread (which
+           itself resets the flag to false as part of its own thread-switch reset — hydration
+           must come after, or it is silently stomped back to false).
+  While on: EVERY send in this thread includes webhook + metadata.notify_user_id (§2.1) — not
+           just the run that toggled it. Stays on until clicked off again, survives refresh.
+  Thread switch: resets to off synchronously, then the new thread's real persisted value loads
+           moments later once get_state resolves — never leaks one thread's setting into another.
 
 Delivered notification (Slack block + inbox card): "Mute this session" action
-  → Since there is no persisted per-thread opt-in flag to clear (§2.1's correction — the opt-in is
-    per-run, not a thread-level setting), "mute" here means: brightbot records a per-thread
-    suppression (a lightweight store, keyed by thread_id, TTL'd) that the webhook receiver (§2.2)
-    checks before publishing — NOT a webapp-side metadata PATCH. This is the one place the spike
-    correction adds new brightbot-side state (a mute list), rather than removing state as it did
-    for the opt-in itself. Callable from the Slack action handler
-    (mirrors BH-887's routine-suggestion action-button pattern, see slack-routine-suggestion-scheduling.md).
+  → Distinct from the toggle above — this is a one-way kill switch, not a way to turn the toggle
+    back off from Slack. brightbot records a per-thread suppression (a lightweight store, keyed
+    by thread_id, TTL'd) that the webhook receiver (§2.2) checks before publishing — NOT a webapp
+    metadata PATCH, and NOT a write to notify_enabled. A muted thread still shows the bell as "on"
+    in the webapp; muting only suppresses delivery, it does not flip the persisted toggle.
+    Callable from the Slack action handler (mirrors BH-887's routine-suggestion action-button
+    pattern, see slack-routine-suggestion-scheduling.md).
+
+Delivered notification body (Slack): a 1-2 sentence AI-generated summary of the run (§2.2 step 6)
+  as the primary line, falling back to a generic per-stage sentence when the summary is absent;
+  duration on completion only ("Took 2m 30s."); a deep link back to the thread
+  (`<BH_WEBAPP_URL>/workspace/{workspaceId}/brightagent/{threadId}|Open this conversation>`).
+  Previously the message was header + footer + the mute button only, no body text, no link.
 ```
 
 ## 3. Invariants (DbC)
@@ -275,6 +328,15 @@ Delivered notification (Slack block + inbox card): "Mute this session" action
 1. A notification for `chat_run_complete`/`chat_run_interrupt` is only ever addressed
    `visibility: "user"` with `audienceUserIds: [notify_user_id]` — never `"workspace"` broadcast.
    This is a personal action on a personal session; no other workspace member should see it.
+   **Real bug found on UAT (2026-07-16)**: publishing with the right `visibility` was necessary
+   but not sufficient — `brightbot-slack-server`'s `SlackChannel.deliver()` ignored the field
+   entirely and matched purely on stage/asset/severity against pre-declared Subscription rows,
+   so an ordinary workspace-scope subscription (`event_filter: "*"`, or one scoped to this exact
+   stage — e.g. a shared channel alerting on every `chat_run_complete`) matched a personal event
+   and broadcast one user's private chat session to that channel. Fixed by gating `deliver()` on
+   `visibility === "user"` BEFORE Subscription matching: such an event now only ever reaches a
+   `scope: "personal"` subscription whose `owner_user_id` is in `audience_user_ids` — never a
+   `scope: "workspace"` row, regardless of what its filters would otherwise match. See Invariant 9.
 2. ~~WHEN the thread's stream is confirmed actively connected at trigger time, THE System SHALL NOT
    publish the notification at all~~ — **removed post-launch (2026-07-15)**. A presence-heartbeat
    gate was built and shipped exactly as originally scoped (suppressing the whole publish, not
@@ -298,6 +360,21 @@ Delivered notification (Slack block + inbox card): "Mute this session" action
    e.g. `publishWorkflowScheduleNotification`'s try/catch-and-log).
 6. The completion/interrupt message copy MUST be visually and textually distinct (different verb,
    different icon) so a user cannot mistake "I'm blocked waiting on you" for "I'm done."
+7. The "Notify me" toggle is a real persisted per-thread setting (`values.notify_enabled`), not a
+   one-shot per-message flag — corrects the original design (§2.1/§2.4). It survives a page
+   refresh and applies to every future send in that thread until explicitly toggled off, not just
+   the message that turned it on. Switching threads resets the UI to off until the new thread's
+   real persisted value loads — never leaks one thread's setting into another.
+8. "Mute this session" (the Slack action) and the persisted toggle are independent — muting
+   suppresses delivery server-side without changing `notify_enabled`; the webapp bell still shows
+   as on after a mute. There is no action that flips `notify_enabled` from outside the webapp.
+9. `SlackChannel.deliver()` MUST check `event.visibility` before matching against Subscription
+   rows, not just `event.stage`/`asset_id`/severity — a `visibility: "user"` event is filtered to
+   `scope: "personal"` subscriptions whose `owner_user_id` is in `audience_user_ids` ONLY;
+   `scope: "workspace"` rows never match a personal event, no matter how broad their
+   `event_filter`. This is the delivery-side enforcement of Invariant 1's addressing rule — the
+   two are not the same guarantee: publishing with the correct `visibility` (Invariant 1) does
+   nothing on its own if the delivery channel doesn't also honor it (this invariant).
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -338,8 +415,16 @@ Feature: Notify me on this chat session
   Scenario: User mutes from the delivered Slack message
     Given a user received a chat_run_complete Slack DM with a "Mute this session" action
     When they click "Mute this session"
-    Then the thread's notify_on_complete is set to false
-    And no further notifications fire for that thread until re-opted-in
+    Then brightbot records a per-thread suppression (mute), independent of notify_enabled
+    And no further notifications fire for that thread until unmuted
+    And the webapp's bell still shows as on — muting suppresses delivery, not the persisted toggle
+
+  Scenario: User toggles "Notify me" on, refreshes the page
+    Given a user clicks the bell on for an open BrightAgent thread
+    When they refresh the page
+    Then the bell still shows as on (values.notify_enabled round-tripped via POST/GET .../state)
+    And the next message sent in that thread still carries webhook + metadata.notify_user_id,
+      with no need to re-click the bell
 ```
 
 ## 5. Out of Scope
@@ -348,8 +433,10 @@ Feature: Notify me on this chat session
   a sibling trigger calling the same downstream mutation, not a shared code path.
 - A new subscription scope, channel type, or delivery adapter — Slack DM + in-app inbox via the
   existing `visibility: "user"` mechanism is sufficient; no Teams/email/webhook work here.
-- A durable, cross-session notification *preference* (the webapp's Preferences tab is still
-  PREVIEW/mock, per BH-1088's audit) — this is a per-thread, ephemeral opt-in, not a saved setting.
+- A global, cross-thread notification *preference* (the webapp's Preferences tab is still
+  PREVIEW/mock, per BH-1088's audit) — the toggle added 2026-07-16 IS a real persisted setting
+  (§2.1/§2.4, Invariant 7), but it is scoped per-thread (`values.notify_enabled` on that thread's
+  graph state), not a workspace- or account-wide default that pre-populates on every new thread.
 - Notifying on intermediate progress within a run (e.g. "25% done") — only true terminal states and
   interrupts.
 - Multi-user threads / shared sessions — `notify_user_id` assumes one requesting user per thread,
@@ -382,10 +469,12 @@ Feature: Notify me on this chat session
 
 | Repo | Suite | What to add |
 |---|---|---|
-| `brightbot` | `tests/unit/http_routes/test_chat_session_notify_routes.py` | One test per §4 scenario touching the hook: duration floor, mute skip, interrupt-always-fires, idempotent claim (Property-equivalent to `scheduleNotifiedAt`'s dedup test if one exists for it). Presence-check tests existed here through BH-1102, removed with the mechanism on 2026-07-15. |
+| `brightbot` | `tests/unit/http_routes/test_chat_session_notify_routes.py` | One test per §4 scenario touching the hook: duration floor, mute skip, interrupt-always-fires, idempotent claim (Property-equivalent to `scheduleNotifiedAt`'s dedup test if one exists for it). Presence-check tests existed here through BH-1102, removed with the mechanism on 2026-07-15. **Added 2026-07-16**: `elapsed_seconds` present on completion / absent on interrupt; `_summarize_run` dict-shape parsing, model-failure fallback, and its threading through `_publish_chat_notification`'s metadata (10 new tests, `TestSummarizeRun` class + webhook-level publish assertions) — all pass, plus the pre-existing 110. |
 | `brighthive-platform-core` | `tests/unit/` | Regression-only — confirm `publishNotification` accepts the two new stage strings with `visibility: "user"` (no resolver change expected, since `stage` is already a free-text field) |
-| `brighthive-webapp` | `tests/e2e` (Playwright) | One spec: opt-in toggle sets thread metadata; mute action from a rendered inbox card clears it |
-| `brighthive-e2e` | `e2e/e2e/` | One end-to-end: real chat thread, real opt-in, simulate/wait for a real terminal run past the duration floor, assert Slack DM + inbox delivery against staging (mirrors BH-1000's scheduled-workflow chain test) |
+| `brighthive-webapp` | `tests/e2e` (Playwright) | One spec: bell toggle persists via `POST/GET /threads/{id}/state` and survives a refresh; mute action from a rendered inbox card suppresses delivery without touching the toggle. Not yet written — Part 1's verification so far is manual (live staging click-through, confirmed via `POST .../state → 200` and a subsequent `GET .../get_state` round-trip once brightbot's `notify_enabled` schema fix deploys). |
+| `brightbot-slack-server` | `tests/notifications/formatter-chat-notify-link.test.ts` | **Added 2026-07-16** — 9 tests: summary line rendered when present, generic fallback per stage when absent, duration shown on completion only (never on interrupt even if `elapsed_seconds` is somehow present), thread link present/absent (missing `thread_id` or unset `BH_WEBAPP_URL`), mrkdwn-escaping of an LLM-generated summary (BH-922). All pass, plus the pre-existing 638-test suite (`npx vitest run`). |
+| `brightbot-slack-server` | `tests/notifications/channels-slack-dm-targeting.test.ts` | **Added 2026-07-16 (UAT fix)** — 5 tests for §3 Invariant 9: a `visibility:"user"` event never reaches a workspace-scope subscription (even a broadcast `event_filter:"*"` one); it DOES reach the addressed user's own personal subscription; it never reaches a DIFFERENT user's personal subscription; when both a workspace row and the addressee's personal row match, only the personal one is delivered to; a `workspace`-visibility event is unaffected (still matches both scopes as before). All pass, plus the full 643-test suite. |
+| `brighthive-e2e` | `e2e/features/agents/test_chat_session_notify_chain.py` | Exists (BH-1105) but its `_worker_webhook_payload()` still builds the OLD disproven nested `{"run": {...}}` shape — needs correcting to the flat shape §2.2 documents, or every assertion in that file is testing the wrong contract. Flagged, not yet fixed as of 2026-07-16. |
 
 **Real-behavior requirement**: the `brighthive-e2e` row must hit real staging services (LangGraph
 run, platform-core mutation, brightbot-slack-server poller) — a construct-only test asserting the
@@ -395,10 +484,10 @@ webhook payload shape does not satisfy this.
 
 | Area | Repo | Impact |
 |------|------|--------|
-| BrightBot | `brightbot` | New `/manage/chat-sessions/webhook/run-complete` receiver (confirmed mechanism, BH-1100); new mute-suppression store; new `chat_run_complete`/`chat_run_interrupt` stage constants |
+| BrightBot | `brightbot` | New `/manage/chat-sessions/webhook/run-complete` receiver (confirmed mechanism, BH-1100); new mute-suppression store; new `chat_run_complete`/`chat_run_interrupt` stage constants; `notify_enabled` added to `BBState` (2026-07-16, required for §2.1's persisted toggle to round-trip at all); `elapsed_seconds`/AI-generated `summary` added to the publish metadata (2026-07-16) |
 | Platform Core | `brighthive-platform-core` | No resolver change — `publishNotification`'s `stage` field already accepts arbitrary strings |
-| Web App | `brighthive-webapp` | New opt-in toggle/offer in chat header (sets `webhook`/`metadata.notify_user_id` on the next `runs/stream` call, §2.1, as an absolute URL — see §6); new `BackendStage` entries + `STAGE_LABELS`; presence heartbeat (built BH-1102, removed 2026-07-15 — see §3 Invariant 2) |
-| Slack Server | `brightbot-slack-server` | No new delivery code — existing poller/`SlackChannel.deliver()` handles the new stage automatically once published; only a new Block Kit "Mute this session" action button (mirrors BH-887's action-button pattern) calling brightbot's mute store |
+| Web App | `brighthive-webapp` | Bell toggle in chat header, now a persisted per-thread setting (§2.1/§2.4, corrected 2026-07-16 from the original per-run-only design) — writes `values.notify_enabled` via `POST .../state`, reads it back on thread load; every send while on sets `webhook`/`metadata.notify_user_id` on `runs/stream` (as an absolute URL — see §6); new `BackendStage` entries + `STAGE_LABELS`; presence heartbeat (built BH-1102, removed 2026-07-15 — see §3 Invariant 2) |
+| Slack Server | `brightbot-slack-server` | New `renderChatNotifyDetails()` (2026-07-16) — previously NO delivery-side rendering existed for these two stages beyond the header/footer (fell through `renderDetails()`'s `default: return []`); now renders the AI-generated summary (or a generic fallback), completion-only duration, and a deep link to the thread. Existing Block Kit "Mute this session" action button (mirrors BH-887's action-button pattern) calling brightbot's mute store is unchanged. |
 
 ## Ticket Breakdown
 
