@@ -765,6 +765,25 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     (no mock) and confirms it round-trips, including a true on→off→on toggle sequence. Ran live
     against the freshly-deployed revision: both tests passed.
 
+37. **`demo.md` written for the same-day afternoon demo, plus the whole-warehouse profiler
+    upgraded from unit-mocked to real-behavior proven, 2026-07-16 (same pass, continued).**
+    Ran a fresh, skeptical evidence audit (not trusting prior doc claims) across every
+    capability the client's ask named. Wrote `clients/trials/loopcapital/demo.md` — a
+    same-day, evidence-only demo script covering GC-14–17, engineering agent capacities, real
+    dbt lineage, longitudinal drift, and BrightRoutines, with an explicit "do NOT claim these
+    live" section (SSIS/SSRS live monitoring, bronze/silver/gold quality gating — genuinely no
+    code exists for either). The audit flagged the whole-warehouse profiler
+    (`scan_warehouse_tables_direct`, BH-1076) as real and chat-wired but only unit-mock tested
+    — closed that gap: started the real sandbox SQL Server, wrote 3 real-behavior tests
+    (discovery+profiling, the `max_tables` truncation contract, per-table error isolation),
+    all 3 passed against the live backend first try (`brightbot` PR #868 → `staging`, cherry-
+    picked as PR #869 → `develop`, both merged). Moved the profiler from demo.md's "do not
+    claim live" list into the real-capacities section on the strength of that proof. Ran the
+    full pre-demo checklist myself before calling `demo.md` done — Loop Capital webapp e2e
+    (3/3), GC-14–17 + governance sweep (11 passed), dbt-mcp lineage e2e (live tool call
+    confirmed) — all green as of this write-up. Sandbox torn down after (`docker compose down
+    -v`), no lingering billable/local state.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |

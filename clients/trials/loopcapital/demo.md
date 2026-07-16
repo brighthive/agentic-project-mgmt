@@ -64,6 +64,12 @@ Real, chat-reachable capabilities — not aspirational:
 - **SQL generation + dbt model creation** from a plain-English ask (`convert_sql_to_dbt`, `generate_dbt_source_and_staging`)
 - **Real dbt DAG lineage** via dbt-mcp (`get_lineage`, `get_model_parents`/`get_model_children`) — enabled on staging as of this week (BH-1111), proven against Loop Capital's own dbt Cloud project: ask "what are the upstream dependencies of `stg_holdings_nightly`" and the agent correctly answers `source('raw', 'holdings_raw')`
 - **Warehouse/pipeline health checks** via `check_pipeline_health_tool` / `scan_warehouse_tables_tool`
+- **Whole-warehouse discover→profile scan** (`scan_warehouse_tables_direct`, BH-1076) — "scan
+  the whole database" is real, chat-reachable, and now proven with real-behavior tests against
+  a live SQL Server sandbox (3 passing: real discovery, real profiling, real per-table error
+  isolation) — not just unit-mocked. Caveat: this is per-table profiling chained across the
+  catalog, not a single "database health score" — describe it as "point it at a database and
+  it profiles every table it finds," not "one-click whole-DB report."
 - **GitHub PR authorship** for fixes (see GC-16 above) — real branch, commit, and PR creation, not just a diff preview
 
 **Demo script**: ask the agent the dbt-lineage question live in chat; it should name the real
@@ -118,11 +124,6 @@ Being upfront here protects the demo. If Frank asks about any of these, the hone
   no PR-generation path from an SSIS/SSRS diagnosis. What exists is a **prompt-only skill**
   that can discuss an uploaded sample file — not a monitored, live capability. Do not demo
   this as "BrightAgent watches your SSIS packages."
-- **Whole-database proactive profiling.** The profiler (`scan_warehouse_tables_tool`,
-  `governance_quality.py`) is real but **asset-ID-gated** — it profiles the specific
-  table/asset you point it at, not "point it at the whole database and it profiles
-  everything." Discovery→profiling orchestration (BH-1076) exists with passing unit tests but
-  isn't the full auto-rollup story yet.
 - **Bronze/silver/gold medallion-aware quality gating.** No code enforces or reports on a
   bronze→silver→gold data-quality lifecycle anywhere in brightbot or platform-core. The one
   hit for "gold" in platform-core is a comment example, not logic. This is honestly scoped as
@@ -149,3 +150,11 @@ open "https://github.com/brighthive/loopcapital-dbt-demo/pull/1"
 ```
 
 If anything above fails, stop and fix it before the demo — do not demo against a red check.
+
+**Optional, only if demoing the whole-warehouse scanner live** (heavier — needs the sandbox up):
+```bash
+cd clients/trials/loopcapital/sandbox && MSSQL_SA_PASSWORD=<pw> ./setup.sh
+cd ../../../../brightbot && MSSQL_SA_PASSWORD=<pw> RUN_LIVE_SQLSERVER=1 \
+  pytest tests/integration/golden_cases/test_warehouse_scan_real_sandbox.py -v
+# tear down after: cd clients/trials/loopcapital/sandbox && MSSQL_SA_PASSWORD=<pw> docker compose down -v
+```
