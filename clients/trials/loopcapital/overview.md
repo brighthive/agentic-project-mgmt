@@ -884,6 +884,19 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     genuinely fixed and documented, and the exact one remaining step (Snowflake key-pair auth
     for this service account) is precisely scoped for whoever has that access.
 
+43. **Fixed a self-inflicted dead link + extended SQL Server warehouse coverage to Loop
+    Capital's own identity, 2026-07-16 (same pass, continued).** The prior pass's GitHub org
+    transfer (entry 42, fixing get_lineage's auth gap) broke `demo.md`'s own GC-16 proof-PR
+    link — it still pointed at `brighthive/loopcapital-dbt-demo`, now 404ing after the move.
+    Found and fixed both references (the GC-14–17 table + the pre-demo checklist's `open`
+    command), confirmed the corrected `brighthive-dbt/...` URL resolves to the real merged PR
+    via `gh api` (`agentic-project-mgmt` PR #112, merged). Separately, confirmed
+    `test_sql_server_warehouse_provider.py` (BH-1107) only ever ran against the generic
+    ground-truth workspace, never Loop Capital's own — extended with a Loop-Capital-specific
+    e2e test driving the same `createWarehouseService` mutation as the real demo identity on
+    its own workspace (`brighthive-e2e` PR #56, merged): passes clean, `SQL_SERVER` clears both
+    enum validation and the `@authorized WORKSPACE_ADMIN` gate for that identity.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
