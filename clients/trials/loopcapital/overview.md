@@ -612,6 +612,34 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     credentials, seeding — nothing left but the explicit `cdk deploy` sign-off itself**,
     which remains a separate decision for whoever owns AWS spend, not mine to make
     unilaterally.
+31. **GC-16's last honest gap closed for real, 2026-07-16 (brightbot PR #858/#859, merged +
+    promoted staging)** — the user asked to continue specifically on the 3 things Frank
+    cares about; this closed the one piece that had been correctly left `pytest.skip`'d
+    across every prior pass ("the classifier/safety-gate/wiring are proven for real, but the
+    LLM/GitHub call itself is mocked in every test"). Provisioned a dedicated, ISOLATED
+    stack per the user's explicit "use another dbt so we don't mix" instruction — zero
+    overlap with Longaeva's or OneTen's real setups: a new dbt Cloud project ("Loop Capital
+    Demo", account 26133), a new Snowflake database+role+warehouse
+    (`LOOPCAPITAL_DEMO`/`_ROLE`/`_WH`, key-pair auth, separate from `LONGAEVA_POC_ROLE`), and
+    a new GitHub repo (`brighthive/loopcapital-dbt-demo`) with a deliberate schema-drift bug.
+    **Every step of this proof used the real system, not a mock**: a real `dbt run` against
+    real Snowflake produced the real compiler error `invalid identifier
+    'SETTLEMENT_CURRENCY'`; that real error, through the real classifier, correctly
+    classified as `schema_drift`; the real compiled `remediation_agent_graph` (real Bedrock
+    LLM, real credentials resolved against the real Loop Capital workspace's real
+    `TransformationService`) opened a real PR
+    ([loopcapital-dbt-demo#1](https://github.com/brighthive/loopcapital-dbt-demo/pull/1)) — a
+    correct, minimal one-line fix with a plain-language diagnosis, reviewed automatically by
+    CodeRabbit + Cursor Bugbot like any real engineering PR. Confirmed via GitHub API the
+    agent never auto-merged it (`mergedAt: null`) — **GC-17 held in a live scenario, not just
+    a unit test**. Checked out the PR branch and re-ran `dbt run` against the same real
+    Snowflake — the fix genuinely works (`PASS=1 ERROR=0`) — before a human (this session)
+    explicitly merged it. Recorded as evidence in the golden-case test's skip-reason
+    docstring rather than made a repeatable CI step (each run would open a new real,
+    timestamped PR against a live repo). **All 3 of Frank's demo points — proactive
+    detection (GC-14), the no-MCP SQL Server connection (GC-15), and surfacing the fix
+    without auto-merging (GC-16/GC-17) — are now each proven against a real backend, not a
+    mock, at least once.** All 4 core repos reconfirmed fully synced.
 
 ## Open Blockers
 
