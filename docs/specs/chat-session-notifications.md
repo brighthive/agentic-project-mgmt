@@ -208,12 +208,18 @@ POST /manage/chat-sessions/webhook/run-complete   (NEW)
   (success | error | timeout | rollback) AND for interrupted (worker.py:418, returned in the same
   WorkerResult as any other status per worker.py:507-514).
 
-  Request body (as sent by call_webhook, langgraph_api/webhook.py:180-192):
-    { run: {...}, status: "success"|"error"|"interrupted"|"timeout"|"rollback",
+  Request body — CORRECTED 2026-07-16 against a real captured payload (the original spec text
+  here, and brightbot's original implementation, both wrongly assumed a nested "run" key —
+  call_webhook() actually does `{**result["run"], "status": ..., ...}`, a SPREAD at the top
+  level, per langgraph_api/webhook.py:180-192):
+    { run_id, thread_id, assistant_id, metadata: { notify_user_id, workspace_id, Title?, ... },
+      kwargs: { input, config, metadata: <LangGraph-internal config metadata, NOT the same dict —
+      has no notify_user_id> }, status: "success"|"error"|"interrupted"|"timeout"|"rollback",
       run_started_at, run_ended_at, values: <checkpoint state>, error?: {...} }
 
 Behavior:
-  1. Skip if run.metadata.notify_user_id is absent (run was never opted in).
+  1. Skip if metadata.notify_user_id is absent (run was never opted in) — read metadata
+     straight off the top level (payload["metadata"]), never payload["kwargs"]["metadata"].
   2. Skip if status != "interrupted" and (run_ended_at - run_started_at) < DURATION_FLOOR_SECONDS
      (default 20) — the floor does not apply to "interrupted".
   3. Skip if the thread is muted (§3 Invariant 5). (A presence/"actively watched" skip was built
@@ -353,7 +359,7 @@ Feature: Notify me on this chat session
 
 | Dependency | Type | Status |
 |------------|------|--------|
-| LangGraph Platform per-run webhook | Blocking | **Resolved (BH-1100)** — confirmed present in `langgraph_api==0.8.7` (brightbot's installed version); fires for every terminal status and for `"interrupted"`; no polling needed. **Note (2026-07-15)**: the deployed managed runtime (`langgraph_api_version 0.11.0`) silently never dispatches a *relative/loopback* webhook URL even with `url.disable_loopback: false` set — confirmed via direct staging test (absolute URL delivers, identical relative URL never arrives). The webapp now sends an absolute URL built from its own LangGraph base URL. |
+| LangGraph Platform per-run webhook | Blocking | **Resolved (BH-1100)** — confirmed present in `langgraph_api==0.8.7` (brightbot's installed version); fires for every terminal status and for `"interrupted"`; no polling needed. ~~Note (2026-07-15): the deployed managed runtime silently never dispatches a relative/loopback webhook URL, confirmed via direct staging test.~~ **Retracted (2026-07-16)**: that "confirmation" was a false positive. The real cause of every failed test that day was §2.2's payload-shape bug below — `chat_notify_webhook()` read `payload.get("run")` (always `None`; the real payload spreads `run_id`/`thread_id`/`metadata` at the top level) and therefore treated every arriving webhook as `not_opted_in`, indistinguishable from "never arrived" from outside. Once that bug was fixed, a webhook pointed straight at brightbot's own URL delivered correctly — proven with two independent real chat runs. The webapp's absolute-URL change (still in place, harmless) was not the fix and was not reverted, since it works fine and touching it again is pure risk for no benefit. |
 | Presence-check / active-stream signal | ~~Blocking~~ | **Built (BH-1102), then removed (2026-07-15)** — see Invariant 2's strikethrough note in §3. Not a dependency anymore; nothing replaces it. |
 | Per-thread mute suppression store (brightbot) | Blocking (new, small scope) | **Resolved (BH-1101)** — a TTL'd DynamoDB key-value table, no new database |
 | `writeNotificationSignal` / `publishNotification` (`visibility: "user"` path) | Non-blocking (reused) | Ready — proven by BH-1088 + `scheduler-bridge.ts` |
