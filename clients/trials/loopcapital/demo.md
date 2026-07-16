@@ -102,9 +102,17 @@ capability Loop Capital also benefits from):
 - Test coverage: `test_longitudinal_detect.py`, `test_longitudinal_graph_wiring.py`,
   `test_gc_12_longitudinal_live.py` (live variant)
 
+**Loop Capital's own workspace has zero data assets** — confirmed live: `workspace.dataAssets`
+returns `[]`. Longitudinal drift needs historical metric snapshots to compare against, which
+requires a real, catalogued data asset first; there's nothing to click through on Loop
+Capital's own workspace yet, same underlying reason as BrightRoutines' empty state above (a
+fresh synthetic demo workspace, no organic history).
+
 **Demo script**: reference this as "the same proactive engine also watches for values and
-schemas quietly drifting over time, not just hard failures" — don't over-index on a live
-click-through unless asked; this is best framed as an architectural point.
+schemas quietly drifting over time, not just hard failures" — don't attempt a live
+click-through on Loop Capital's own workspace (there's nothing there yet); this is best framed
+as an architectural point, or demoed on the OneTen/sandbox workspace if a live example is asked
+for.
 
 ---
 

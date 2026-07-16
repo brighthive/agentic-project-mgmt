@@ -897,6 +897,18 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     its own workspace (`brighthive-e2e` PR #56, merged): passes clean, `SQL_SERVER` clears both
     enum validation and the `@authorized WORKSPACE_ADMIN` gate for that identity.
 
+44. **Longitudinal drift monitoring checked against Loop Capital's own workspace — same
+    empty-but-real pattern as BrightRoutines, 2026-07-16 (same pass, continued).** Queried
+    `workspace.dataAssets` directly as the real Loop Capital demo identity: zero data assets
+    catalogued. Longitudinal drift needs a catalogued asset with historical metric snapshots
+    to compare against — there is nothing to click through on this workspace yet, for the same
+    underlying reason as BrightRoutines' empty state (entry 41): a fresh synthetic demo
+    workspace with no organic history. Confirmed the underlying capability is real by running
+    the identical query against the OneTen ground-truth workspace and finding its known asset
+    (`MART_DAILY_PORTFOLIO_EXPOSURE`). Added `brighthive-e2e` PR #57 (merged) asserting both
+    facts together, mirroring the routines-baseline test's shape exactly. `demo.md`'s §3
+    corrected to state this explicitly rather than leave it implied.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
