@@ -697,6 +697,29 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     parsing + new write path + traversal query + viewer) to Medium (a DAG viewer UI is the
     only real remaining piece — the backend capability is done and proven live).
 
+34. **Real e2e coverage added for the live `get_lineage` capability + a real chat-blocking bug
+    found and fixed along the way, 2026-07-16.** Wrote a real-behavior e2e test
+    (`brighthive-e2e` PR #51, draft) that streams a real `deep_agent` chat run as the Loop
+    Capital demo identity and asserts `get_lineage` is invokable + returns real dependency
+    data — deliberately a different surface from `test_dbt_lifecycle.py`'s existing MCP
+    protocol-server gap finding (that test correctly still reports `get_lineage` absent there;
+    `brightbot/mcp/server.py` never wires `dbt_mcp_loader` regardless of `DBT_MCP_ENABLED`).
+    While standing this up, found the Loop Capital demo identity's login had regressed to a
+    401 on every LangGraph call: `currentUser` was throwing on a `null` `firstName`/`lastName`
+    on its `UserNode` (created by `createWorkspace`, which has no name input surface at all),
+    masked by the resolver's catch-all as a generic `FORBIDDEN`. This was blocking ALL chat
+    for the identity — the webapp was stuck on "Loading your workspace...", zero chat input.
+    Fixed in `brighthive-platform-core` PR #1070 (BH-1113, draft): `createWorkspace` now
+    defaults the owner's name fields, `getCurrentUser` hardened against `null` on any
+    pre-existing UserNode. **Backfilled the live identity via `updateUserDetails`** — a
+    self-service mutation the demo identity calls on itself, no SystemAdmin action needed.
+    Re-verified against real staging after both fixes: `currentUser` resolves, a real
+    LangGraph `/threads` create with that identity's token succeeds (was 401 before). Ran the
+    new e2e test live: `get_lineage` was invoked and returned real data for one lineage
+    phrasing; a second phrasing had the model choose `explore_dbt_project` instead — correctly
+    recorded as a MEDIUM finding (tool choice is model-directed) rather than a false test
+    failure.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
