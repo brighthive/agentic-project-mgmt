@@ -784,6 +784,29 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     confirmed) — all green as of this write-up. Sandbox torn down after (`docker compose down
     -v`), no lingering billable/local state.
 
+38. **Correction: SSIS/SSRS diagnostics is real, not prompt-only — a prior audit in this same
+    pass was wrong, 2026-07-16.** The user's demo ask named "SSIS/SSRS diagnostics + PR
+    suggestions" as a capability to feature. An earlier fresh-audit subagent this pass
+    concluded zero deterministic parser code existed for SSIS/SSRS — direct code inspection
+    found that was wrong: `analyze_dtsx_package`/`analyze_rdl_report`
+    (`brightbot/agents/analyst_agent/tools/pipeline_diagnostics_tools.py`, BH-823, merged
+    PR #823) use real `ElementTree` parsing, wired onto the analyst agent's chat tools, with
+    existing (synthetic-fixture) unit tests. Closed the real remaining gap — never validated
+    against Loop Capital's own real sandbox artifacts — by adding
+    `test_ssis_ssrs_diagnostics_real_fixtures.py`: the `.dtsx` parser correctly finds
+    `Extract_Holdings_Nightly.dtsx`'s two deliberately planted gaps (no error-row redirect, no
+    staging step); the `.rdl` parser correctly finds `Holdings_Daily_Report.rdl`'s
+    `CAST(GETDATE() AS DATE)` function-on-filtered-column anti-pattern. Both passed against the
+    real files on the first run (`brightbot` PR #870 → `staging`, cherry-picked as PR #871 →
+    `develop`, both merged). Also ran the existing (previously never re-verified this pass)
+    full chat-level e2e — `test_analyst_applies_ssis_skill` — live against staging with
+    `--writes`: passed, confirming the supervisor→analyst delegation and skill application
+    work end-to-end today, not just at the parser-unit level. **What is still genuinely not
+    built, confirmed by grep**: zero GitHub write tools bound to the analyst agent — there is
+    no path from an SSIS/SSRS diagnosis to an opened PR, unlike GC-16's dbt remediation.
+    `demo.md` updated to move diagnosis into the real-capabilities section while keeping the
+    PR-suggestion gap and the "on-demand, not a standing watch" caveat explicit.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |

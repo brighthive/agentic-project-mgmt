@@ -114,16 +114,53 @@ trigger this," the honest answer is "that's on the roadmap, not built yet."
 
 ---
 
+## 5. SSIS/SSRS diagnostics — real, deterministic, proven against Loop Capital's own artifacts
+
+Corrected from an earlier, wrong read of this codebase: real deterministic XML parsing
+exists, not just a prompt-only skill.
+
+- `analyze_dtsx_package` / `analyze_rdl_report` (`pipeline_diagnostics_tools.py`, BH-823) use
+  real `ElementTree` parsing — not the model eyeballing raw XML — to find grounded structural
+  facts, wired onto the analyst agent's chat tools
+- **Proven against Loop Capital's own real sandbox artifacts** (not synthetic toy XML): the
+  `.dtsx` parser correctly finds `Extract_Holdings_Nightly.dtsx`'s two deliberately planted
+  gaps (no error-row redirect, no staging step); the `.rdl` parser correctly finds
+  `Holdings_Daily_Report.rdl`'s `CAST(GETDATE() AS DATE)` function-on-filtered-column
+  anti-pattern (`test_ssis_ssrs_diagnostics_real_fixtures.py`, 2 passed)
+  - **Also proven at the full chat level**, live on staging: ask the analyst to diagnose an
+    SSIS package and it delegates correctly and returns a real skill-shaped diagnosis
+    (`test_analyst_applies_ssis_skill`, passed against the deployed `deep_agent`)
+- Output is a structured JSON diagnosis + dbt-migration suggestion — a real recommendation, not
+  a screenshot
+
+**Demo script**: ask the agent to diagnose `Extract_Holdings_Nightly.dtsx` (or the SSRS
+report) and it should name the real missing error-redirect / staging-step gap, or the real
+function-on-filter issue — grounded in the actual file structure, not a generic-sounding
+guess.
+
+**What NOT to claim here**: this is on-demand diagnosis of a file you point the agent at, not
+a continuous background watch like GC-14/15 — and there is no path from the diagnosis to an
+opened GitHub PR (the analyst agent has no GitHub write tools bound, unlike GC-16's dbt
+remediation). See the explicit non-claims below.
+
+---
+
 ## What is explicitly NOT ready — do not claim these live
 
 Being upfront here protects the demo. If Frank asks about any of these, the honest answer is
 "real engineering work, scoped, not yet built" — not a workaround or a screenshot.
 
-- **SSIS/SSRS live diagnostics.** There is no live SQL Server connection reading `msdb`/
-  `ReportServer` catalog metadata, no `.dtsx`/`.rdl` parser code anywhere in the codebase, and
-  no PR-generation path from an SSIS/SSRS diagnosis. What exists is a **prompt-only skill**
-  that can discuss an uploaded sample file — not a monitored, live capability. Do not demo
-  this as "BrightAgent watches your SSIS packages."
+- **SSIS/SSRS → automatic PR suggestion.** Diagnosis itself IS real (see section 5 below) —
+  what's genuinely not built is a path from that diagnosis into an opened GitHub PR the way
+  GC-16's dbt remediation works. The analyst agent has zero GitHub write tools bound. If asked
+  "can it open a PR to fix my SSIS package," the honest answer is "it can diagnose and suggest
+  the dbt migration path today; auto-opening the PR from that suggestion isn't wired yet." Do
+  not imply this is a one-click PR flow like GC-16.
+- **SSIS/SSRS as a monitored, standing watch.** There is no live SQL Server connection reading
+  `msdb`/`ReportServer` catalog metadata on an ongoing basis — this is on-demand diagnosis of a
+  file you point the agent at (uploaded or in a known path), not a background watchdog like
+  GC-14/15. Frame it as "ask the agent to diagnose this package" not "it's watching your SSIS
+  jobs continuously."
 - **Bronze/silver/gold medallion-aware quality gating.** No code enforces or reports on a
   bronze→silver→gold data-quality lifecycle anywhere in brightbot or platform-core. The one
   hit for "gold" in platform-core is a comment example, not logic. This is honestly scoped as
@@ -147,6 +184,10 @@ cd brighthive-e2e && BH_LANGGRAPH_URL="https://brightagent-staging-760d883208455
 
 # 4. Have PR #1 open in a tab, ready to show (state: MERGED)
 open "https://github.com/brighthive/loopcapital-dbt-demo/pull/1"
+
+# 5. Confirm SSIS/SSRS diagnostics find the real, planted gaps in Loop Capital's own fixtures
+cd brightbot && .venv/bin/python -m pytest \
+  tests/integration/golden_cases/test_ssis_ssrs_diagnostics_real_fixtures.py -v
 ```
 
 If anything above fails, stop and fix it before the demo — do not demo against a red check.
