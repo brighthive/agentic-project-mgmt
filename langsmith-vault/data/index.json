@@ -475,9 +475,9 @@
       "env_var_names": [],
       "graph_aliases": {},
       "host": "https://api.host.langchain.com",
-      "latest_revision_id": "89ccca0c-a1d9-41b1-b85d-85817c46872a",
+      "latest_revision_id": "f537e8d9-a131-41a0-a190-af581bac94ce",
       "name": "brightagent-staging",
-      "secret_count": 77,
+      "secret_count": 80,
       "secret_names": [
         "ANTHROPIC_API_KEY",
         "AWS_ACCESS_KEY_ID",
@@ -495,6 +495,7 @@
         "BH_USERNAME",
         "BRIGHTBOT_URL",
         "BRIGHTROUTINES_TABLE_NAME",
+        "CHAT_NOTIFY_MUTE_SECRET",
         "CLOUDFLARE_ACCOUNT_ID",
         "CLOUDFLARE_AUTH_TOKEN",
         "DBT_MCP_ENABLED",
@@ -524,6 +525,8 @@
         "JUPYTER_MCP_API_KEY",
         "JUPYTER_MCP_SERVER_URL",
         "JUPYTER_TOKEN",
+        "LANGGRAPH_WEBHOOKS",
+        "LG_WEBHOOK_CHAT_NOTIFY_SECRET",
         "LONGITUDINAL_MONITORING_ENABLED",
         "MCP_OPENMETADATA_ENABLED",
         "MCP_OPENMETADATA_OFFICIAL_ENABLED",
@@ -557,8 +560,8 @@
         "WEBHOOK_SECRET",
         "WHITELISTED_LANGSMITH_API_KEYS"
       ],
-      "snapshot_at": "2026-07-04T19:11:33+00:00"
+      "snapshot_at": "2026-07-16T15:02:42+00:00"
     }
   ],
-  "generated_at": "2026-07-04T19:11:33+00:00"
+  "generated_at": "2026-07-16T15:02:42+00:00"
 }
