@@ -641,6 +641,62 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     without auto-merging (GC-16/GC-17) — are now each proven against a real backend, not a
     mock, at least once.** All 4 core repos reconfirmed fully synced.
 
+32. **All 4 tickets opened for the "beyond demo" follow-through shipped + deployed +
+    e2e-verified, 2026-07-16 (BH-1107/1108/1109/1110)**:
+    - **BH-1110**: `updateTransformationRunStatus` mutation (platform-core) persists real
+      watchdog/remediation run outcomes to `TransformationNode` — previously the
+      diagnosis/PR-link lived only in ephemeral LangGraph state per run. Caught + fixed a real
+      bug along the way: the OGM `Transformation` class silently dropped the field on read
+      even after it was written (confirmed by a real query returning `undefined` before the
+      fix, real data after).
+    - **BH-1108**: `remediationDiagnosis` surfaced in the webapp's existing
+      `ProjectObservabilityPage` (`AgentPRs.tsx`) — extended the real component instead of
+      building a duplicate new tab, after research showed one already existed.
+    - **BH-1109**: Microsoft Teams added as a real notification channel — the delivery
+      adapter already existed (`lambdas/notification_dispatcher/delivery.py`); the gap was
+      purely the GraphQL enum + resolver mapping. Real create→read→delete round trip proven
+      against staging, with a real bug caught+fixed in the e2e test itself (`cleanup_registry`
+      draining against an already-closed function-scoped client — was silently leaking real
+      subscriptions on staging every run).
+    - **BH-1107**: SQL Server added as a real, selectable warehouse provider (webapp form +
+      platform-core enum/OMD mapping + brightbot secret-type alias). Closed the
+      `warehouseServiceId` disambiguation TODO already documented in
+      `sql_server_pipeline_source.py`'s own docstring for multi-connection workspaces.
+    - Every one of these shipped through the full real pipeline: PR → CI green → merge →
+      develop→staging promotion → real deploy confirmed (`check_deployment_freshness.py` /
+      Amplify build logs) → new e2e test passing against **live** staging, not local, with
+      zero residual test state confirmed after every write-based test.
+    - **Self-caught correction along the way**: filed BH-1112 assuming a Secrets-Manager
+      write-through path was missing for warehouse connections; direct re-verification of my
+      own claim found it already existed and worked (`upsertWarehouseServiceConfig` already
+      calls `storeWarehouseConfig`). Canceled BH-1112 with the correction documented rather
+      than building unneeded work.
+
+33. **Real dbt lineage capability found dormant and turned on — better than what BH-1111
+    proposed building, 2026-07-16.** BH-1111 (dbt model dependency lineage — "way better than
+    dbt Cloud at surfacing relevant things") was about to be scoped as new regex-based
+    `ref()`/`source()` parsing + a new graph write path. Direct code research first (per an
+    explicit "check truly, we have the dbt MCP" steer) found brightbot already has a complete,
+    dormant integration with the official `dbt-labs/dbt-mcp` server
+    (`dbt_mcp_loader.py`/`dbt_mcp_config.py`) exposing `get_lineage`/`get_model_parents`/
+    `get_model_children`/`get_all_models` — real DAG data via dbt Cloud's Discovery API, gated
+    behind a single `DBT_MCP_ENABLED` deployment env var that was never set on staging.
+    Per-workspace dbt credentials were already wired through the same `dbt_initialise` path
+    GC-16's proof used, and Loop Capital's workspace already has a real, `CONNECTED`
+    dbt Cloud `TransformationService`. **Followed the org's LangSmith-mutation protocol
+    exactly**: pre-change snapshot committed, explicit named confirmation obtained at 3
+    separate decision points (enabling the flag; confirming no new secret was needed; final
+    go-ahead), a read-modify-write PATCH preserving the full 80-entry secrets array (never a
+    partial write — the exact failure mode of the 2026-06-18 incident), post-change snapshot
+    committed. **Verified live, not just configured**: a real thread + run against the
+    deployed `deep_agent` assistant, authenticated as `loopcapital.demo@brighthive.io`, asked
+    for dbt lineage — the agent correctly returned the real model `stg_holdings_nightly`, its
+    real `source('raw', 'holdings_raw')` dependency, and even correctly referenced the real
+    `settlement_ccy`/`settlement_currency` schema-drift fixture from entry 31's GC-16 proof.
+    Zero hallucination, zero mock. BH-1111 corrected in Jira: downgraded from Large (manifest
+    parsing + new write path + traversal query + viewer) to Medium (a DAG viewer UI is the
+    only real remaining piece — the backend capability is done and proven live).
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
@@ -648,7 +704,7 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 | 1 | BH-1057 SQL Server fixture not provisioned | Kuri | 2026-07-10 | **2026-07-13** — Docker sandbox built + verified, replaces AWS RDS plan |
 | 2 | BH-1044 Databricks storage-model decision (brightbot-only secret vs. platform-core schema change) — recommendation made, not confirmed. **CORRECTED 2026-07-12 (pass 7)**: this decision alone does NOT unblock Databricks work — confirmed zero Databricks connection code exists anywhere in brightbot/platform-core (both repos' warehouse-type enums are closed to redshift/snowflake/azure_synapse/postgres); a new connector + enum members + Unity Catalog system-schema enablement are ALSO required, independent of where credentials live | Kuri | 2026-07-10 | — |
 | 3 | BH-1047 code-level auto-merge exclusion not yet built | Kuri | 2026-07-10 | **2026-07-15** — `REMEDIATION_TOOLS` merged (brightbot PR #813); GC-16 remediation loop itself merged (PR #829), on `develop` + `staging` |
-| 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | — |
+| 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | **2026-07-16** — `poc-scope-from-client.md` itself already records "fully shipped, verified against BH-860 epic + 14 tickets, all Done" (Track A). Confirmed BH-860 + BH-861–875 exist and are Done. This was a stale open-blocker row, not real remaining work — closing it out. |
 | 5 | **Escalated 2026-07-15**: not just "confirm connection count" anymore — `dynamo-vault search "loop"/"loopcapital"` returns **zero workspaces in STAGE or PROD**. Loop Capital has no provisioned real workspace at all. 7/17's demo must run against a synthetic/sandbox workspace — confirm that's the plan, since BH-1043/BH-1045's watchdogs both need a real `workspace_id` to poll. | Kuri | 2026-07-12 | **2026-07-15** — a synthetic "Loop Capital" workspace (`e3fc0917-03a6-4ac6-aad4-ac265329bfb9`) now exists in REAL staging, created via `createWorkspace` (found + fixed: the mutation existed but was never wired into the schema — see overview entry below). Real member login + real authorized workspace query both confirmed against the live deployed staging API, not a local server. Still not a real Loop Capital SQL Server connection — that's the next real step (wire a BYOW MySQL/SQL Server connection into this workspace) — but the workspace itself is no longer the blocker. |
 | 6 | Cooldown/retry-storm suppression (Invariant 3) had zero code — confirmed by grep, not assumed. Real risk of duplicate Slack alerts on a flapping job or persistent low-disk condition. | Kuri | 2026-07-15 | **2026-07-15** — `pipeline_alert_cooldown.py` built (4-tuple key, DynamoDB + in-memory adapters), wired into `_publish_signals`, merged (brightbot PR #835), on `develop` + `staging` |
 
