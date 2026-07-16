@@ -72,10 +72,21 @@ Real, chat-reachable capabilities — not aspirational:
   it profiles every table it finds," not "one-click whole-DB report."
 - **GitHub PR authorship** for fixes (see GC-16 above) — real branch, commit, and PR creation, not just a diff preview
 
-**Demo script**: ask the agent the dbt-lineage question live in chat; it should name the real
-model and real source. If it instead chooses a grep-based tool for a differently-worded
-question, that's a known, harmless variance — the capability is real either way, just don't
-over-script the exact phrasing.
+**Do NOT script this as a live "watch it happen" moment — a real root cause was found and is
+partially fixed, not just a phrasing quirk.** Forcing a direct `get_lineage` call on
+2026-07-16 reproduced a real error: `1 validation error for get_lineageArguments\nunique_id\n
+Field required` — the tool needs a fully-qualified `unique_id`, not a bare model name, and our
+prompt never told the model that. Traced further and fixed 2 of 3 real infra bugs blocking
+this (GitHub App authorization + a dbt Cloud repository↔project linking bug — full writeup:
+`platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`). The parse step now
+genuinely succeeds (found the real model + source), but the full run still fails on Snowflake
+demanding MFA enrollment for the service account — a real, unresolved blocker needing
+Snowflake account-admin access, not something fixable today. **Demo script**: describe this
+narratively ("we found and are actively fixing the exact reason this doesn't work yet — the
+underlying capability and its dbt Cloud connection are real, this is a live open engineering
+item, not vaporware") rather than asking the live question. If asked directly whether it works,
+the honest answer is "not yet — here's exactly what's blocking it and why," which is a stronger
+answer than a vague "it's real but variable."
 
 ---
 
@@ -199,7 +210,10 @@ cd brighthive-e2e && .venv/bin/python -m pytest e2e/features/edges/test_loopcapi
 cd brightbot && RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/ \
   -k "gc_14 or gc_15 or gc_16 or gc_17 or governance"
 
-# 3. Confirm dbt-mcp lineage is still live (real chat call)
+# 3. Confirm dbt-mcp lineage is STILL LIVE (not just still invokable — this test only
+#    checks the tool got called; a SKIP here is common (~6/6 seen on 2026-07-16 morning)
+#    and does NOT mean the capability is broken — see the note in section 2 above.
+#    Do not treat a skip as a red flag; do not treat a bare PASS as proof it worked either.
 cd brighthive-e2e && BH_LANGGRAPH_URL="https://brightagent-staging-760d8832084555d487edeb54e9969675.us.langgraph.app" \
   .venv/bin/python -m pytest e2e/features/data/test_dbt_mcp_lineage.py -v --env=staging -s
 

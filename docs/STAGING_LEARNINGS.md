@@ -187,3 +187,25 @@ workspace-named team) makes that customer's catalog go empty on deploy.**
 
 Architecture detail + cloud-resource map: `platform-saas-ai-context/docs/architecture/SNOWFLAKE_OMD_INGESTION.md`
 → "Service ownership signal & ID mapping". Decision: ADR-011 in that repo's `docs/decisions/decisions.md`.
+
+## dbt Cloud GitHub linking + Discovery API — 3 independent failure points (2026-07-16)
+
+Found while debugging why `get_lineage`/`get_all_models` (BH-1111's real dbt DAG tools)
+returned empty/errored for Loop Capital's dbt Cloud project, even though the project, GitHub
+repo, and BrightHive database records all looked correctly connected:
+
+1. **GitHub App installations are repository-scoped, not org-scoped** — creating a repo in an
+   org the App is "installed on" doesn't mean the App can act on it; the repo must be added to
+   the App's selected-repos whitelist via GitHub's own Configure UI (org-admin only, no REST
+   API shortcut).
+2. **dbt Cloud's `POST .../repositories/` doesn't wire the connection onto the project** — a
+   second `POST .../projects/{id}/` with `repository_id` set is required, or the project's
+   `repository` field stays `null` forever despite the repository object existing.
+3. **Discovery API tools need a successful run, not just a correct repo link** — zero runs ever
+   (or only failed runs) means `get_lineage`/`get_all_models` return `{"result": []}` with no
+   error, even after #1 and #2 are fixed.
+
+Full diagnostic checklist + a still-open Snowflake MFA blocker (this project's dbt Cloud
+credential is `auth_type: "password"`, despite being originally set up for key-pair auth, and a
+Snowflake account MFA policy now rejects it):
+`platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`

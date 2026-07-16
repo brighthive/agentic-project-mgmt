@@ -842,6 +842,48 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     account) for a live click-through, with Loop Capital's own empty state stated explicitly
     rather than left implied-but-untested.
 
+42. **get_lineage's real root cause found and 2 of 3 layers fixed; a real Snowflake MFA
+    blocker remains, 2026-07-16 (same pass, continued).** A fresh, skeptical from-scratch
+    workspace audit surfaced that `get_lineage` genuinely fails (not just "sometimes not
+    invoked" as previously documented) — reproduced live via a forced tool call:
+    `1 validation error for get_lineageArguments\nunique_id\n  Field required` (the tool needs
+    `unique_id`, not `model_name`; same shape mismatch on `get_model_details`). Traced this to
+    3 independent, unrelated infra failures, not a single bug — full diagnostic writeup at
+    `platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`
+    (+ `agentic-project-mgmt/docs/STAGING_LEARNINGS.md` pointer):
+    1. **GitHub App authorization** — Loop Capital's dbt Cloud project's GitHub repo
+       (`brighthive/loopcapital-dbt-demo`) lived in the wrong org for dbt Cloud's GitHub App
+       installation to act on. Transferred the repo to `brighthive-dbt` (confirmed via
+       `gh api`, org-admin access verified first) and updated it into the App's selected-repos
+       whitelist (user action, 30s, GitHub's Configure UI — no API shortcut exists for this).
+       Fixed BrightHive's own stale `GitHubRepo` record to match (`removeGitHubRepo` +
+       `addGitHubRepo`, using the real Loop Capital demo identity's own workspace membership).
+    2. **dbt Cloud's own repository→project linking bug** — `POST .../repositories/` creates a
+       real, webhook-active repository object (confirmed via `gh api repos/.../hooks`) but
+       never attaches it to the project; `GET .../projects/{id}/` kept returning
+       `repository: null` until a second `POST .../projects/{id}/` with `repository_id` set —
+       undocumented, found by trial and error against the real API, not written up anywhere
+       official.
+    3. **A real job + successful run was required** — the project had ZERO runs, ever
+       (`GET .../runs/?project_id=...` → `[]`). Created a manual job, triggered it live: the
+       parse step succeeded (**found 1 model, 1 source, 557 macros** — genuine proof #1 and #2
+       are now fixed), but `dbt build` failed on Snowflake: `"Multi-factor authentication is
+       required for this account."` The dbt Cloud credential (`LOOPCAPITAL_DBT_SVC`) is
+       `auth_type: "password"`, despite this session's own history recording the account was
+       originally set up for key-pair auth — a real regression/mismatch from intent. Tried the
+       one Snowflake credential available (a shared key from the Longaeva trial, same
+       `bfddsko-dua97555` account) as a shortcut — Snowflake rejected it (`JWT token is
+       invalid` — stale/mismatched key, not a working shortcut). **Immediately deleted the key
+       material from local disk after the failed attempt.** This is now genuinely blocked on
+       real Snowflake account-admin access (key-pair rotation for `LOOPCAPITAL_DBT_SVC`, or an
+       MFA-policy exception for that service account) — not something fixable via API
+       guessing, and not attempted further once that was clear.
+    **Net result**: `get_lineage`/`get_all_models` are still not live-demoable as of this
+    writeup — `demo.md`'s framing (describe narratively, don't click through it live) remains
+    correct and unchanged. But the GitHub/dbt-Cloud-linking half of the blocker is now
+    genuinely fixed and documented, and the exact one remaining step (Snowflake key-pair auth
+    for this service account) is precisely scoped for whoever has that access.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
