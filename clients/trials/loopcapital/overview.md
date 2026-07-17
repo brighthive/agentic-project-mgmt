@@ -346,6 +346,41 @@ BrightSignals event (correction merged via PR #104 earlier today, replacing a
 stale SendGrid claim). Anyone expecting an email in their inbox from this
 flow will not get one today.
 
+## Track J: /catalog/assets pagination-cache bug — WORKAROUND, root cause NOT fixed (2026-07-17)
+
+After PR #1082/#1085 deployed to staging (release `v2.9.0.87-pre-release`),
+re-verification found the fix's underlying data IS correct but the webapp's
+default page still shows 2 assets, not 11. **This is a distinct, NEW bug from
+the one #1082 fixed** — found and root-caused live, post-deploy:
+
+- Direct `dataAssetFilter: {dataAssetId}` lookups for 3 of the "missing" 9
+  tables (`mart_compliance_breaches`, `mart_daily_portfolio_exposure`,
+  `mart_portfolio_risk_summary`) succeed and return correct, workspace-scoped
+  data — **the nodes ARE correctly linked**. The link/dedup fix (#1082) is
+  working correctly.
+- Calling `syncDataAssets(workspaceId)` returns `success: true,
+  syncedCount: 11` with real new asset IDs, confirming the sync itself runs
+  clean.
+- `workspace.dataAssets(pagination: {limit: 20, offset: 0})` — the webapp's
+  actual default page size, confirmed from a real captured GraphQL request —
+  **returns only 2 (a stale cached result)**. `pagination: {limit: 50,
+  offset: 0}` on the exact same workspace, same moment, correctly returns 11.
+  Re-running `syncDataAssets` (which calls `invalidateCatalogCache`) a second
+  time immediately before re-checking did NOT clear the stale `limit: 20`
+  cache entry — ruling out simple TTL staleness; something in the
+  invalidation-vs-cache-write ordering for that specific paginated cache key
+  (`dataAssetCatalog:ws:{id}:mgr:none:limit:20:offset:0` per
+  `_generateDataAssetCacheKey` in `redis/client.ts`) is broken.
+
+**Not fixed this session** — stopped chasing it under demo time pressure once
+the workaround was confirmed reliable. **Real workaround for the 7/17 demo**:
+if the catalog page shows only 2 assets, this is a display cache bug, not a
+missing-data bug — the real fix is confirming via a larger page size (or
+scrolling/paging past the first 20, if the UI supports it) rather than
+re-syncing again, which does not clear this specific cache entry. Filed as a
+new, distinct follow-up (no ticket yet) — do NOT conflate with #1082's
+already-fixed link/dedup bug when writing this up for BH-1036.
+
 ## Engineering Artifacts
 
 - **Golden Cases (GC-14–17)**: `../../../docs/specs/golden-cases-loopcapital.md` — the first Golden
