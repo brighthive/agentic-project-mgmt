@@ -244,6 +244,51 @@ into `services.knowledge_base` in `workspace_secret_store/e3fc0917-...`
 and `services.openmetadata` verified unchanged in the same secret after the
 write). `query_knowledge_base` is now live for the Loop Capital demo.
 
+## Track G: Per-Golden-Case Projects — DONE (2026-07-17)
+
+4 real `ProjectNode`s created in the live Loop Capital workspace (`e3fc0917-...`,
+STAGE) via the real `createProject`/`updateProject` GraphQL mutations — one per
+golden case, matching GC-14/15/16/17's real names/descriptions from
+`docs/specs/golden-cases-loopcapital.md`. Verified live at
+`https://staging.brighthive.io/workspace/e3fc0917-.../project`:
+
+| Project | ID |
+|---|---|
+| GC-14 — Proactive Monitor/Detect/Alert Loop | `ede3783c-b39b-4dfa-9cdd-ebf239ada5ea` |
+| GC-15 — SQL Server Disk-Space Monitoring (No MCP) | `8d3e7b3f-ae34-4c20-999f-20802259cf40` |
+| GC-16 — Fix-Recurrence Surfacing via Surgical PR | `90e40f73-8ec3-4e15-b356-b3b0b8b2d70a` |
+| GC-17 — Auto-Merge Exclusion (Safety Precondition) | `f7929e39-9d90-408e-8c45-3d72d732e23a` |
+
+**Self-inflicted duplicate, caught and fixed same session**: re-running the
+creation script (meant only as a read-only verification) created a second
+full set of 4, then a third partial set — 12 total at the worst point. Cleaned
+back down to exactly 4 (one per name) via `deleteProject`, re-verified live.
+Noting this because it's the exact same failure class as the data-asset
+duplicate below — a mutation with no natural idempotency key, called more
+than once. All DRAFT status; not yet populated with goals/materials.
+
+## Track H: /catalog/assets real-data investigation — IN PROGRESS (2026-07-17)
+
+Live e2e run (`test_loopcapital_longitudinal_baseline.py`) surfaced that Loop
+Capital's workspace now has data assets — but only 2, both named `holdings_raw`
+with different IDs (a duplicate), against 11 real tables seeded in SQL Server.
+Root cause under investigation by a dispatched agent (branch
+`drchinca/BH-1036/data-asset-workspace-link-fix` in brighthive-platform-core):
+likely `syncDataAssetsFromOpenMetadata`'s `workspaces.connect` silently failing
+for 9/11 nodes, plus no upsert-by-OMD-table-id dedup on the 1 that got created
+twice. `data-asset.ts` is 3700 lines (over the 1300-line file-size cap) so the
+fix requires extracting the sync logic to a new module, not just patching in
+place — this is why an earlier attempt at this exact fix (same session) never
+landed.
+
+Separately, opening the `holdings_raw` Asset Details page live shows **no
+profiler results, no preview, no Semantic View** — the catalog entry exists but
+none of the downstream pipeline (OMD profiler, preview generation, semantic
+view authoring) has run against it. A second agent is mapping exactly where
+profiler-triggering code lives (or confirming it's a scoped-but-unbuilt gap)
+before any fix is attempted here — do not assume a trigger mechanism exists
+without checking.
+
 ## Engineering Artifacts
 
 - **Golden Cases (GC-14–17)**: `../../../docs/specs/golden-cases-loopcapital.md` — the first Golden
