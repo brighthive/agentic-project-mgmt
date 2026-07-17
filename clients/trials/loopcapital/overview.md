@@ -1020,6 +1020,25 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     produce a real, showable PR link. `demo.md`'s "NOT ready" section and §5 updated to state
     this precisely: real and tested, no live PR link to show yet.
 
+50. **Live-proved the SSIS remediation PR path end-to-end, same day, same bar as GC-16's own
+    live proof (2026-07-16).** Minted a real Loop Capital staging token, ran the real compiled
+    `ssis_remediation_agent_graph` in-process against Loop Capital's real workspace and real
+    connected dbt Cloud/GitHub service (`fetch_dbt_credentials` resolved cleanly — this path
+    touches zero Snowflake, so the account's MFA blocker never applies to it). Fed it the real
+    parsed diagnosis from `Extract_Holdings_Nightly.dtsx`. The real Bedrock LLM read the real
+    repo, committed 5 real dbt files (staging model, quarantine model, fact table, schema
+    tests, `dbt_project.yml`) scoped exactly to the two planted findings, and opened a real PR:
+    [`brighthive-dbt/loopcapital-dbt-demo#2`](https://github.com/brighthive-dbt/loopcapital-dbt-demo/pull/2).
+    Confirmed via GitHub API immediately after: `mergedAt: null`, `state: open` — GC-17's
+    exclusion held live, not just in a unit test. Recorded as a permanently-skipped test
+    (mirroring GC-16's own `test_gc_16_surgical_pr_plain_language_diagnosis` pattern) in
+    `test_ssis_remediation_agent.py`; merged to both `staging` (brightbot PR #881) and
+    `develop` (PR #882). `demo.md`'s non-claims section and pre-demo checklist updated with the
+    real PR #2 link. **This closes both remaining PR-drafting gaps from this session's most
+    recent user ask** (lineage-graph-to-PR wired in entries 47-48, SSIS/SSRS-to-PR wired and
+    now live-proven here) — the only capability in `demo.md` still gated on Snowflake access is
+    the `get_lineage`/lineage-graph chat path itself (§2/§6), unchanged.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
