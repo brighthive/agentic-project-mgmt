@@ -113,17 +113,48 @@ capability Loop Capital also benefits from):
 - Test coverage: `test_longitudinal_detect.py`, `test_longitudinal_graph_wiring.py`,
   `test_gc_12_longitudinal_live.py` (live variant)
 
-**Loop Capital's own workspace has zero data assets** — confirmed live: `workspace.dataAssets`
-returns `[]`. Longitudinal drift needs historical metric snapshots to compare against, which
-requires a real, catalogued data asset first; there's nothing to click through on Loop
-Capital's own workspace yet, same underlying reason as BrightRoutines' empty state above (a
-fresh synthetic demo workspace, no organic history).
+**UPDATE 2026-07-17 — this section's "zero data assets" claim is now stale, corrected below.**
+**Loop Capital's own workspace now has 2 real `DataAsset` records** — confirmed live via the
+real GraphQL API (`workspace.dataAssets` → `resultCount: 2`, both named `holdings_raw`,
+`createdAt` 2026-07-17T05:26:05Z and 05:26:40Z, 35s apart) and independently via the chat-
+reachable `discover_data_assets` MCP tool against Loop Capital's own identity (passing live).
+**Root cause of the earlier "zero" reading**: earlier debugging wrote records via a direct
+OGM/bolt connection to `bolt+ssc://3.84.120.127:7687` (the documented `neo4j-proxy` EC2) —
+that proxy does **not** forward to the real Neo4j the GraphQL Lambda reads from
+(`DB_URI=bolt://172.31.2.22:7687`, the private `staging-platform-neo4j-db-v5` instance); it
+has its own local Neo4j state. Those writes never reached the database the webapp/API actually
+query, which is why `workspace.dataAssets` legitimately returned `[]` at the time this section
+was first written. The 2 records now present were created through the real `syncDataAssets`
+GraphQL mutation (which correctly routes through the Lambda to the real instance), not through
+that proxy path.
+
+**Known rough edge, be upfront about it**: there are 2 records both named `holdings_raw`
+(duplicate, not two distinct tables) — an artifact of running the sync twice while diagnosing
+the proxy issue, not a clean single-asset catalog. If demoing a data-assets click-through live,
+either de-duplicate first or narrate honestly ("there are two entries here from re-syncing
+during setup — real duplicate, not two tables") rather than presenting it as a clean state.
+
+Longitudinal drift itself still needs historical metric **snapshots** to compare against (not
+just a catalogued asset) — a fresh `DataAsset` with no snapshot history yet will still show an
+empty anomaly list. **Confirmed live 2026-07-17**: `get_anomalies` against Loop Capital's real
+`holdings_raw` FQN now returns cleanly (`status="ok"`, empty anomaly list, zero errors) — the
+tool itself works end-to-end for real against LC's tenant; there's just no drift history yet to
+surface, exactly as expected for a fresh asset.
+
+**Separately found and fixed the same day**: this same verification pass caught the OGM Lambda
+(`Staging-BPC-BrighthiveCor-StagingBrighthiveOgmLamb-7rq4VUX9bI9E`) missing its
+`DB_URI`/`DB_USERNAME`/`DB_PASSWORD`/`JWKS_ENDPOINT` env vars entirely after a same-day
+redeploy — every `/ogm` call was 502ing, which would have silently broken `get_anomalies` (and
+anything else routed through OGM) live during the demo. Restored from the known-working values
+on the sibling public GraphQL Lambda. Root cause of *why* the vars were missing (a bad
+CDK/deploy step, a manual console edit, something else) is still open — this has reportedly
+happened before, so it's worth a real infra audit, not just re-fixing it the next time it
+recurs.
 
 **Demo script**: reference this as "the same proactive engine also watches for values and
-schemas quietly drifting over time, not just hard failures" — don't attempt a live
-click-through on Loop Capital's own workspace (there's nothing there yet); this is best framed
-as an architectural point, or demoed on the OneTen/sandbox workspace if a live example is asked
-for.
+schemas quietly drifting over time, not just hard failures." A live click-through on Loop
+Capital's own workspace will show a clean, empty result (tool works, no drift history yet) —
+that's an honest, demoable answer, not a broken path.
 
 ---
 
