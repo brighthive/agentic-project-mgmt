@@ -375,9 +375,20 @@ Delivered notification body (Slack): a 1-2 sentence AI-generated summary of the 
    refresh and applies to every future send in that thread until explicitly toggled off, not just
    the message that turned it on. Switching threads resets the UI to off until the new thread's
    real persisted value loads — never leaks one thread's setting into another.
-8. "Mute this session" (the Slack action) and the persisted toggle are independent — muting
-   suppresses delivery server-side without changing `notify_enabled`; the webapp bell still shows
-   as on after a mute. There is no action that flips `notify_enabled` from outside the webapp.
+8. "Mute this session" (the Slack action) also syncs `notify_enabled` to `false` on the thread's
+   graph state (CORRECTED 2026-07-17 — originally the two were independent: muting suppressed
+   delivery server-side without changing `notify_enabled`, so the webapp bell kept showing "on"
+   after a mute, a real trust gap found live — the user had no way to know from the webapp that
+   notifications had actually stopped). `mute_thread()` now calls `client.threads.update_state(
+   thread_id, values={"notify_enabled": False})` via `langgraph_sdk`'s `get_client()` (same
+   in-container client `http/app.py`'s own `update_state` calls use) immediately after writing the
+   DynamoDB mute row. Best-effort: a failure here never blocks the mute row write — the DynamoDB
+   row is the authoritative suppression checked by `chat_notify_webhook`; the state sync is a
+   UI-truthfulness layer on top of it, matching this file's existing "never block on a side
+   effect" convention (e.g. subscription auto-provisioning). Known limitation: this only takes
+   effect the next time the webapp loads/refreshes that thread — a tab already open on the thread
+   when the mute happens won't see the bell flip live without a page reload, since there's no
+   push mechanism from brightbot to an open browser tab for this field.
 9. `SlackChannel.deliver()` MUST check `event.visibility` before matching against Subscription
    rows, not just `event.stage`/`asset_id`/severity — a `visibility: "user"` event is filtered to
    `scope: "personal"` subscriptions whose `owner_user_id` is in `audience_user_ids` ONLY;
@@ -425,9 +436,10 @@ Feature: Notify me on this chat session
   Scenario: User mutes from the delivered Slack message
     Given a user received a chat_run_complete Slack DM with a "Mute this session" action
     When they click "Mute this session"
-    Then brightbot records a per-thread suppression (mute), independent of notify_enabled
+    Then brightbot records a per-thread suppression (mute)
     And no further notifications fire for that thread until unmuted
-    And the webapp's bell still shows as on — muting suppresses delivery, not the persisted toggle
+    And notify_enabled is synced to false on the thread's graph state (Invariant 8, 2026-07-17)
+    And the next time the webapp loads that thread, the bell shows as off — reflecting reality
 
   Scenario: User toggles "Notify me" on, refreshes the page
     Given a user clicks the bell on for an open BrightAgent thread
