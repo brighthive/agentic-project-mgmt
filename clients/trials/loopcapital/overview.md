@@ -985,6 +985,23 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     entry 45 — reproduced identically, unit tests disabled in that workflow so it could not be
     a real regression).
 
+48. **Closed entry 47's honest gap — a lineage-graph finding now actually triggers GC-16's real
+    PR path, proven end-to-end, 2026-07-16/17 (same pass, continued).** Added
+    `describe_gold_blast_radius` (real diagnosis text, `None` if no real downstream GOLD
+    dependent — no fabricated urgency) and `raise_finding_for_remediation`
+    (`CONSTRUCTIVE`-audited, invokes the SAME compiled `remediation_agent_graph` GC-14's
+    watchdog already uses, in-process — no second GitHub-write mechanism). New golden-case
+    test `test_gc_16_lineage_graph_finding_actually_triggers_this_graph` mirrors the existing
+    watchdog-trigger proof, reaching the real classified/drafting branch (not a stub) with a
+    real GOLD-tier mart name (`mart_daily_portfolio_exposure`, the same real tier label from
+    entry 46's storage-optimization finding). Test count: 28 → 41 (unit + golden-case),
+    332 passed with zero regressions across `governance_agent`/`dbt_agent` unit suites, 12
+    golden cases passing (up from 11). Merged to both `staging` (brightbot PR #877) and
+    `develop` (PR #878, both clean CI, no admin-override flake this time). Re-verified the full
+    Loop Capital webapp e2e suite (3 passed) and SSIS/SSRS real-fixture diagnostics (2 passed)
+    live on staging after the merge — no regression from this or the prior pass's changes.
+    `demo.md` §6 updated to state the wiring is real, not just documented.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |

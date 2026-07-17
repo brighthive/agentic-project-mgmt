@@ -264,13 +264,18 @@ combines. Three real pieces, now genuinely wired together (BH-1114):
   adapter, `build_graph_from_filesystem_assets`, covers configs (YAML/JSON), pivot/Excel
   exports, and unstructured documents alongside warehouse tables. Every graph build emits a
   real audit log line via BH-695's existing audit infra — proven with a real logging-capture
-  test, not just a decorator. Still not wired: composing a graph finding into GC-16's real PR
-  path is documented as the correct next step, not yet built or tested end-to-end. 28 unit
-  tests passing.
+  test, not just a decorator.
+- **A graph finding now actually opens a real GitHub PR — the composition is wired, not just
+  documented.** `raise_finding_for_remediation` + `describe_gold_blast_radius` feed a real
+  "this bronze source's drift threatens that gold mart" finding into the SAME compiled
+  remediation graph GC-14's watchdog already uses — no second PR mechanism. A new golden-case
+  test (`test_gc_16_lineage_graph_finding_actually_triggers_this_graph`) proves it reaches the
+  real classified/drafting branch end-to-end. 41 unit + golden-case tests passing.
 
 **What this genuinely unlocks**: "which gold-tier marts are at risk because this bronze source
 has a quality problem" is now a real, answerable graph query — `graph.downstream_of(bronze_id,
-tier=PipelineTier.GOLD)`.
+tier=PipelineTier.GOLD)` — AND, if the drift's phrasing classifies into a known DATA_SHAPE mode,
+a real reviewable PR the same way GC-16 already works for a dbt-detected failure.
 
 **What's still a real limitation, be upfront about it**: the graph today needs real
 model/source + edge data from dbt-mcp's Discovery API to populate — and that's the exact
