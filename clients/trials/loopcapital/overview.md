@@ -227,16 +227,22 @@ async extraction). See `platform-saas-ai-context/docs/architecture/AI_ARCHITECTU
 Automation / Titan embeddings / pgvector) actually does — written up during this
 same correction, since the distinction wasn't previously documented anywhere.
 
-**Content already generated** (uncommitted, `sandbox/knowledge_base/`): 3 PDFs
-(`PORT-001-GROWTH_Investment_Mandate`, `Compliance_Policy_Concentration_Limits`,
-`Client_Onboarding_Summary`) + 3 CSVs (`holdings_snapshot_export`,
-`compliance_breach_register_export`, `security_master_reference_export`),
-generated from the real seeded SQL Server data (Track E's medallion schema), not
-invented fixtures.
+**Content**: 3 PDFs (`PORT-001-GROWTH_Investment_Mandate`,
+`Compliance_Policy_Concentration_Limits`, `Client_Onboarding_Summary`) + 3 CSVs
+(`holdings_snapshot_export`, `compliance_breach_register_export`,
+`security_master_reference_export`), generated from the real seeded SQL Server
+data (Track E's medallion schema), not invented fixtures. Committed at
+`sandbox/knowledge_base/`.
 
-**Status**: CDK stack in progress. Writing `knowledge_base_id`/role ARN into
-`workspace_secret_store/e3fc0917-03a6-4ac6-aad4-ac265329bfb9` requires a separate,
-named secrets-touch confirmation per the global secrets rule before it happens.
+**Status**: **DONE, live in STAGE (2026-07-17)**. `LoopCapitalKnowledgeBaseDemo`
+stack deployed (KB `6W18NMI5FR`, data source `HQHWEUW3V4`, S3 bucket
+`loopcapital-kb-docs-873769991712`). All 6 docs uploaded and ingested —
+`StartIngestionJob` reported `COMPLETE`, 6/6 documents indexed, 0 failed.
+`knowledge_base_id` / `knowledge_base_arn` / `brightagent_kb_role_arn` written
+into `services.knowledge_base` in `workspace_secret_store/e3fc0917-...`
+(named confirmation obtained first, per the global secrets rule; `warehouses`
+and `services.openmetadata` verified unchanged in the same secret after the
+write). `query_knowledge_base` is now live for the Loop Capital demo.
 
 ## Engineering Artifacts
 
