@@ -1002,6 +1002,24 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     live on staging after the merge — no regression from this or the prior pass's changes.
     `demo.md` §6 updated to state the wiring is real, not just documented.
 
+49. **Closed the SSIS/SSRS → automatic-PR gap explicitly flagged in demo.md's "NOT ready"
+    section, 2026-07-17 (BH-1114).** The analyst agent's real, deterministic diagnosis
+    (`analyze_dtsx_package`/`analyze_rdl_report`, BH-823) previously had zero path to an
+    opened GitHub PR — the agent had no GitHub write tools bound at all. Built
+    `ssis_remediation_agent.py`, mirroring GC-16's `remediation_agent.py` exactly: reuses
+    `dbt_initialise` for credentials and `REMEDIATION_TOOLS` wholesale for GitHub writes (GC-17's
+    `github_merge_pull_request` exclusion holds unconditionally — no second tool list to
+    audit), gated by a new `has_actionable_finding()` check so a clean diagnosis alerts-only
+    rather than drafting a guessed fix. 14 new unit tests, exercised against Loop Capital's own
+    real planted-gap fixtures (`Extract_Holdings_Nightly.dtsx`'s missing error-redirect,
+    `Holdings_Daily_Report.rdl`'s function-on-filtered-column), including a full-compiled-graph
+    end-to-end proof mirroring GC-16's own. Merged to both `staging` (brightbot PR #879) and
+    `develop` (PR #880), both clean CI. **Honest limit, not glossed over**: proven at the graph
+    level with the LLM/GitHub call mocked at the network boundary — the same maturity GC-16's
+    dbt path had before its own live PR #1 — not yet run against a live GitHub sandbox to
+    produce a real, showable PR link. `demo.md`'s "NOT ready" section and §5 updated to state
+    this precisely: real and tested, no live PR link to show yet.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |

@@ -187,9 +187,9 @@ function-on-filter issue — grounded in the actual file structure, not a generi
 guess.
 
 **What NOT to claim here**: this is on-demand diagnosis of a file you point the agent at, not
-a continuous background watch like GC-14/15 — and there is no path from the diagnosis to an
-opened GitHub PR (the analyst agent has no GitHub write tools bound, unlike GC-16's dbt
-remediation). See the explicit non-claims below.
+a continuous background watch like GC-14/15. The diagnosis-to-PR path is now real and tested
+(`ssis_remediation_agent.py`, BH-1114) but not yet proven against a live GitHub sandbox — see
+the updated non-claims section below for the precise line to hold.
 
 ### 5c. Storage Optimization — the third skill, verified live against a real Snowflake warehouse
 
@@ -224,12 +224,19 @@ costs").
 Being upfront here protects the demo. If Frank asks about any of these, the honest answer is
 "real engineering work, scoped, not yet built" — not a workaround or a screenshot.
 
-- **SSIS/SSRS → automatic PR suggestion.** Diagnosis itself IS real (see section 5 below) —
-  what's genuinely not built is a path from that diagnosis into an opened GitHub PR the way
-  GC-16's dbt remediation works. The analyst agent has zero GitHub write tools bound. If asked
-  "can it open a PR to fix my SSIS package," the honest answer is "it can diagnose and suggest
-  the dbt migration path today; auto-opening the PR from that suggestion isn't wired yet." Do
-  not imply this is a one-click PR flow like GC-16.
+- **SSIS/SSRS → automatic PR suggestion — CLOSED (2026-07-17, BH-1114).** Diagnosis itself IS
+  real (see section 5 below), and it now has a real path into an opened GitHub PR:
+  `ssis_remediation_agent.py` mirrors GC-16's dbt remediation loop exactly — same
+  `REMEDIATION_TOOLS` GitHub tool list (GC-17's `github_merge_pull_request` exclusion holds
+  unconditionally), same "real finding, never a guessed fix" gate. Proven with 14 unit +
+  full-compiled-graph tests against Loop Capital's own real planted-gap fixtures. **What's
+  still open**: this is proven at the graph level with the LLM/GitHub call mocked at the
+  network boundary (the same maturity GC-16's dbt path had before its own live PR #1) — not
+  yet exercised against a live GitHub sandbox to produce a real, human-visible PR. If asked
+  "can it open a PR to fix my SSIS package," the honest answer is "yes, the wiring is real and
+  tested — we haven't yet run it against a live repo to show you the actual PR link the way we
+  can for GC-16." Do not claim a live PR link exists for this path; GC-16's PR #1 is still the
+  only one that does.
 - **SSIS/SSRS as a monitored, standing watch.** There is no live SQL Server connection reading
   `msdb`/`ReportServer` catalog metadata on an ongoing basis — this is on-demand diagnosis of a
   file you point the agent at (uploaded or in a known path), not a background watchdog like
