@@ -25,7 +25,7 @@ tags: ["demo"]
 ## Environment
 
 - **Workspace**: `e3fc0917-03a6-4ac6-aad4-ac265329bfb9` ("Loop Capital"), real staging
-- **Login**: `loopcapital.demo@brighthive.io` — Cognito credentials in `staging/loopcapital-demo/login-user` (Secrets Manager)
+- **Login**: `loopcapital.demo@brighthive.io` — Cognito credentials in `staging/loopcapital-demo/login-user` (Secrets Manager). **⚠️ As of 2026-07-17 the real Cognito password does NOT match this secret** — it was changed to `TempPass123!` by a dispatched agent mid-session without authorization, then left as-is per explicit instruction rather than reset. Confirm which password is actually live before the demo; reset to the documented value first if unsure.
 - **Webapp**: `https://staging.brighthive.io/workspace/e3fc0917-03a6-4ac6-aad4-ac265329bfb9/brightagent`
 - **Re-verify live right before the demo**: `cd brighthive-e2e && .venv/bin/python -m pytest e2e/features/edges/test_loopcapital_webapp.py -v --env=staging -s`
 
@@ -73,7 +73,7 @@ RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/ 
 Real, chat-reachable capabilities — not aspirational:
 
 - **SQL generation + dbt model creation** from a plain-English ask (`convert_sql_to_dbt`, `generate_dbt_source_and_staging`)
-- **Real dbt DAG lineage** via dbt-mcp (`get_lineage`, `get_model_parents`/`get_model_children`) — enabled on staging as of this week (BH-1111), proven against Loop Capital's own dbt Cloud project: ask "what are the upstream dependencies of `stg_holdings_nightly`" and the agent correctly answers `source('raw', 'holdings_raw')`
+- **Real dbt DAG lineage** via dbt-mcp (`get_lineage`, `get_model_parents`/`get_model_children`) — enabled on staging as of this week (BH-1111). **Still not reliably correct as of 2026-07-17 afternoon — see the note below, do not claim this line as demoable.**
 - **Warehouse/pipeline health checks** via `check_pipeline_health_tool` / `scan_warehouse_tables_tool`
 - **Whole-warehouse discover→profile scan** (`scan_warehouse_tables_direct`, BH-1076) — "scan
   the whole database" is real, chat-reachable, and now proven with real-behavior tests against
@@ -89,15 +89,22 @@ partially fixed, not just a phrasing quirk.** Forcing a direct `get_lineage` cal
 Field required` — the tool needs a fully-qualified `unique_id`, not a bare model name, and our
 prompt never told the model that. Traced further and fixed 2 of 3 real infra bugs blocking
 this (GitHub App authorization + a dbt Cloud repository↔project linking bug — full writeup:
-`platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`). The parse step now
-genuinely succeeds (found the real model + source), but the full run still fails on Snowflake
-demanding MFA enrollment for the service account — a real, unresolved blocker needing
-Snowflake account-admin access, not something fixable today. **Demo script**: describe this
-narratively ("we found and are actively fixing the exact reason this doesn't work yet — the
-underlying capability and its dbt Cloud connection are real, this is a live open engineering
-item, not vaporware") rather than asking the live question. If asked directly whether it works,
-the honest answer is "not yet — here's exactly what's blocking it and why," which is a stronger
-answer than a vague "it's real but variable."
+`platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`).
+
+**UPDATE 2026-07-17 (afternoon)**: fixed the `unique_id` argument bug directly —
+`brightbot/agents/dbt_agent/prompts/dbt_react_system_prompt.py` now tells the agent to resolve
+`unique_id` via `get_all_models()` first, never guess it (`brightbot#887`, merged and promoted
+to staging). **Live re-tested after deploy**: the crash is gone (no more validation error), but
+`get_lineage` now returns an empty result (`result_head='[] []'`) instead of the real
+dependency — the argument-shape bug is fixed, but the tool still isn't surfacing real data,
+likely because `get_all_models` isn't resolving `stg_holdings_nightly` to a real `unique_id`, or
+dbt Cloud's Discovery API itself has no lineage recorded for it. Not root-caused further under
+time pressure. The full run also still fails on Snowflake demanding MFA enrollment for the
+service account — a real, unresolved blocker needing Snowflake account-admin access, not
+something fixable today. **Demo script unchanged**: describe this narratively rather than
+asking the live question. If asked directly whether it works, the honest answer is "not yet —
+here's exactly what's blocking it and why, and we found and fixed one of the two remaining
+bugs today," which is a stronger answer than a vague "it's real but variable."
 
 ---
 
@@ -113,26 +120,56 @@ capability Loop Capital also benefits from):
 - Test coverage: `test_longitudinal_detect.py`, `test_longitudinal_graph_wiring.py`,
   `test_gc_12_longitudinal_live.py` (live variant)
 
-**UPDATE 2026-07-17 — this section's "zero data assets" claim is now stale, corrected below.**
-**Loop Capital's own workspace now has 2 real `DataAsset` records** — confirmed live via the
-real GraphQL API (`workspace.dataAssets` → `resultCount: 2`, both named `holdings_raw`,
-`createdAt` 2026-07-17T05:26:05Z and 05:26:40Z, 35s apart) and independently via the chat-
-reachable `discover_data_assets` MCP tool against Loop Capital's own identity (passing live).
-**Root cause of the earlier "zero" reading**: earlier debugging wrote records via a direct
-OGM/bolt connection to `bolt+ssc://3.84.120.127:7687` (the documented `neo4j-proxy` EC2) —
-that proxy does **not** forward to the real Neo4j the GraphQL Lambda reads from
-(`DB_URI=bolt://172.31.2.22:7687`, the private `staging-platform-neo4j-db-v5` instance); it
-has its own local Neo4j state. Those writes never reached the database the webapp/API actually
-query, which is why `workspace.dataAssets` legitimately returned `[]` at the time this section
-was first written. The 2 records now present were created through the real `syncDataAssets`
-GraphQL mutation (which correctly routes through the Lambda to the real instance), not through
-that proxy path.
+**UPDATE 2026-07-17 (afternoon) — fully resolved, re-verified after live deploy.**
+**Loop Capital's own workspace now has 11 real, distinct `DataAsset` records** (all 11 real
+SQL Server tables: `holdings_raw`, 3 `mart_*`, 4 `raw_*`, 3 `stg_*`) — confirmed live via
+`workspace.dataAssets(pagination: {limit: 20})`, the webapp's own default page size, returning
+`resultCount: 11` on a fresh check (not immediately after a re-sync — this is stable state, not
+a lucky race).
 
-**Known rough edge, be upfront about it**: there are 2 records both named `holdings_raw`
-(duplicate, not two distinct tables) — an artifact of running the sync twice while diagnosing
-the proxy issue, not a clean single-asset catalog. If demoing a data-assets click-through live,
-either de-duplicate first or narrate honestly ("there are two entries here from re-syncing
-during setup — real duplicate, not two tables") rather than presenting it as a clean state.
+**The earlier duplicate `holdings_raw` and stale-page issues were two SEPARATE bugs, both now
+fixed and deployed to staging:**
+1. **SQL_SERVER/AZURE_SYNAPSE provider-matching bug** (`brighthive-platform-core#1082`/`#1085`,
+   `v2.9.0.87-pre-release`) — OMD's `Mssql` service type is ambiguous between Azure Synapse and
+   real SQL Server; the lookup only recognized `AZURE_SYNAPSE`, so Loop Capital's real
+   `SQL_SERVER`-provider warehouse service never matched. Fixed with a shared
+   `warehouse-provider-mapping.ts` treating both as one TDS family.
+2. **Catalog cache invalidation bug** (`#1087`/`#1088`, `v2.9.0.88-pre-release`) — `syncDataAssets`
+   only invalidated its Redis-cached catalog page when the sync itself created/linked something
+   new. Once the 11 real tables were already correctly linked, re-syncing found nothing new to
+   do and never invalidated — so the webapp's `limit:20` page kept serving a stale cached 2
+   indefinitely. Fixed to always invalidate on every sync call.
+
+**Sub-agent tabs — live-verified across all 11 assets**: `data_profiler_agent` and
+`quality_check_agent` triggered via `POST /manage/agents/run` for every asset.
+**11/11 have `quality_check`**; **7/11 also have `profiling`** (4 profiler runs did not
+complete — not chased further, a real known gap, not claimed as done).
+
+**2 real `QualityRule`s created** via `createQualityRule`, both `applyOnSchedule: true`:
+`holdings_raw: quantity not null` (CRITICAL) and `raw_market_prices: close_price positive`
+(WARNING) — confirmed live via `qualityRules(workspaceId)`.
+
+**Preview tab — root-caused and fixed same day** (`#1089`, pending promotion to staging as of
+this writing): `dataAssetPreview` silently returned `null` for every asset. NOT a routing or
+provider-matching bug — CloudWatch confirmed the request reached the correct warehouse service
+and host, then TLS rejected the connection: `ConnectionError: ... self-signed certificate`. The
+demo EC2 SQL Server box (self-signed by design, documented in its own CDK stack comments) needs
+`trustServerCertificate: true`, which the `mssql`/Tedious driver hardcoded to `false`. Fixed by
+adding an opt-in `trustServerCertificate` field on the warehouse secret store (default `false`
+— real customer connections stay strict); set `true` specifically for Loop Capital's connection
+via a named, confirmed Secrets Manager write. **Not yet re-verified live** — code fix needs to
+finish promoting to staging before preview can be re-tested.
+
+**Scheduled workflows (BrightRoutines) — confirmed NOT creatable for this demo.**
+`scheduleRoutineSuggestion` requires a pre-existing, system-generated `RoutineSuggestion` — there
+is no mutation to create one directly. Loop Capital's workspace has zero routines. This is a
+real, structural gap (routines are auto-suggested, not user-authored), not something fixable by
+calling an API differently. If asked, the honest answer is "routines are proactively suggested
+by the platform as it observes your workspace, not something you create from a blank page" —
+Loop Capital's workspace hasn't been observed long enough yet to generate one.
+
+**Semantic Views**: `hasSemanticView` is `null`/unset on all 11 assets — not attempted, a real
+open gap, larger scope (authoring a Semantic View YAML) than remaining demo prep time allowed.
 
 Longitudinal drift itself still needs historical metric **snapshots** to compare against (not
 just a catalogued asset) — a fresh `DataAsset` with no snapshot history yet will still show an
@@ -357,6 +394,11 @@ cd brighthive-e2e && .venv/bin/python -m pytest e2e/features/edges/test_loopcapi
 # 2. Confirm the golden-case proactive loop still passes
 cd brightbot && RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/ \
   -k "gc_14 or gc_15 or gc_16 or gc_17 or governance"
+
+# 2b. GC-15 also live-proven against the REAL deployed EC2 SQL Server (54.197.188.168),
+#     not just the local sandbox, as of 2026-07-17: disk-check correctly reports 54.38% free
+#     (no false alarm); real SQL Server Agent jobs seeded and confirmed Succeeded/Failed with
+#     real surfaced error text. Both scenarios demoable against the actual BYOW box.
 
 # 3. Confirm dbt-mcp lineage is STILL LIVE (not just still invokable — this test only
 #    checks the tool got called; a SKIP here is common (~6/6 seen on 2026-07-16 morning)
