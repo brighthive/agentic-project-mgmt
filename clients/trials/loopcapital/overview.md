@@ -346,6 +346,54 @@ BrightSignals event (correction merged via PR #104 earlier today, replacing a
 stale SendGrid claim). Anyone expecting an email in their inbox from this
 flow will not get one today.
 
+## Track J: /catalog/assets pagination-cache bug — FIXED (2026-07-17)
+
+After PR #1082/#1085 deployed to staging (release `v2.9.0.87-pre-release`),
+re-verification found the fix's underlying data IS correct but the webapp's
+default page still showed 2 assets, not 11 — a distinct, NEW bug from the one
+#1082 fixed:
+
+- Direct `dataAssetFilter: {dataAssetId}` lookups for the "missing" tables
+  succeeded and returned correct, workspace-scoped data — the link/dedup fix
+  (#1082) was working correctly.
+- `workspace.dataAssets(pagination: {limit: 20, offset: 0})` — the webapp's
+  actual default page size — returned only 2 (a stale cached result).
+  `pagination: {limit: 50}` on the same workspace, same moment, correctly
+  returned 11.
+- Root cause: `syncDataAssets`'s cache invalidation only ran when the sync
+  itself created/linked something new (`if (anyMutation)`). A caller
+  explicitly re-syncing after the data was already correct never triggered
+  invalidation, so a stale `limit:20` cache entry could never self-heal.
+
+**Fixed**: `brighthive-platform-core#1087`/`#1088` — `syncDataAssets` now
+always invalidates the catalog cache, not just on mutation. Deployed via
+`v2.9.0.88-pre-release`. **Live-reverified after deploy**: `limit:20` now
+correctly returns **11**, confirmed on a fresh, independent check (not
+immediately after a sync) — stable, not a lucky race.
+
+## Track K: Capability breadth across all 11 real assets — DONE (2026-07-17)
+
+Triggered `data_profiler_agent` + `quality_check_agent` via
+`POST /manage/agents/run` for all 10 previously-unlinked assets (real
+`run_id`s returned for all 20 calls). Live result:
+
+- **11/11 assets have at least one real `agentCapabilities` entry**
+  (`quality_check` on all 11; `profiling` completed on 7/11 — 4 profiler runs
+  did not complete/error silently, not chased further under time pressure).
+- **2 real `QualityRule`s created** via `createQualityRule`
+  (`holdings_raw: quantity not null`, CRITICAL; `raw_market_prices:
+  close_price positive`, WARNING) — both with `applyOnSchedule: true`,
+  confirmed live via the `qualityRules(workspaceId)` query.
+- **Scheduled workflows (BrightRoutines)**: confirmed NOT creatable directly —
+  `scheduleRoutineSuggestion` requires a pre-existing `RoutineSuggestion`,
+  which is system-generated, not user-created. Loop Capital's workspace has
+  zero routines (already documented, `test_loopcapital_workspace_has_no_routines_yet`)
+  — this is a real, pre-existing gap, not something fixable via a mutation
+  call. Not pursued further.
+- **Semantic Views**: `hasSemanticView` is `null` on all 11 assets — not
+  attempted this session (authoring a real Semantic View YAML is a
+  substantially larger task, out of scope for the remaining demo window).
+
 ## Engineering Artifacts
 
 - **Golden Cases (GC-14–17)**: `../../../docs/specs/golden-cases-loopcapital.md` — the first Golden
