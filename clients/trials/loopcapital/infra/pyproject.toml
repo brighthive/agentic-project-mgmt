@@ -1,7 +1,7 @@
 [project]
-name = "loopcapital-sqlserver-ec2"
+name = "loopcapital-demo-infra"
 version = "1.0.0"
-description = "Standalone CDK app: one EC2 instance running real SQL Server for the Loop Capital demo (BH-1036)."
+description = "Standalone CDK app: Loop Capital demo infra — SQL Server EC2 + Bedrock Knowledge Base (BH-1036)."
 requires-python = ">=3.11"
 dependencies = [
     "aws-cdk-lib>=2.160.0,<3.0.0",
@@ -9,4 +9,4 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["loopcapital_sqlserver_ec2"]
+packages = ["loopcapital_sqlserver_ec2", "loopcapital_knowledge_base"]
