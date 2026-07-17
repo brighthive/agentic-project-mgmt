@@ -187,9 +187,10 @@ function-on-filter issue — grounded in the actual file structure, not a generi
 guess.
 
 **What NOT to claim here**: this is on-demand diagnosis of a file you point the agent at, not
-a continuous background watch like GC-14/15. The diagnosis-to-PR path is now real and tested
-(`ssis_remediation_agent.py`, BH-1114) but not yet proven against a live GitHub sandbox — see
-the updated non-claims section below for the precise line to hold.
+a continuous background watch like GC-14/15. The diagnosis-to-PR path is real, tested, AND
+live-proven (`ssis_remediation_agent.py`, BH-1114 — real PR
+[#2](https://github.com/brighthive-dbt/loopcapital-dbt-demo/pull/2)) — see the non-claims
+section below, updated to reflect this closure.
 
 ### 5c. Storage Optimization — the third skill, verified live against a real Snowflake warehouse
 
@@ -224,19 +225,21 @@ costs").
 Being upfront here protects the demo. If Frank asks about any of these, the honest answer is
 "real engineering work, scoped, not yet built" — not a workaround or a screenshot.
 
-- **SSIS/SSRS → automatic PR suggestion — CLOSED (2026-07-17, BH-1114).** Diagnosis itself IS
-  real (see section 5 below), and it now has a real path into an opened GitHub PR:
-  `ssis_remediation_agent.py` mirrors GC-16's dbt remediation loop exactly — same
+- **SSIS/SSRS → automatic PR suggestion — CLOSED AND LIVE-PROVEN (2026-07-16, BH-1114).**
+  Diagnosis itself IS real (see section 5 below), and it now has a real path into an opened
+  GitHub PR: `ssis_remediation_agent.py` mirrors GC-16's dbt remediation loop exactly — same
   `REMEDIATION_TOOLS` GitHub tool list (GC-17's `github_merge_pull_request` exclusion holds
-  unconditionally), same "real finding, never a guessed fix" gate. Proven with 14 unit +
-  full-compiled-graph tests against Loop Capital's own real planted-gap fixtures. **What's
-  still open**: this is proven at the graph level with the LLM/GitHub call mocked at the
-  network boundary (the same maturity GC-16's dbt path had before its own live PR #1) — not
-  yet exercised against a live GitHub sandbox to produce a real, human-visible PR. If asked
-  "can it open a PR to fix my SSIS package," the honest answer is "yes, the wiring is real and
-  tested — we haven't yet run it against a live repo to show you the actual PR link the way we
-  can for GC-16." Do not claim a live PR link exists for this path; GC-16's PR #1 is still the
-  only one that does.
+  unconditionally), same "real finding, never a guessed fix" gate. **Live-proven the same day**,
+  the same bar GC-16's own PR #1 set: ran the real compiled graph against Loop Capital's own
+  real workspace and real connected dbt Cloud/GitHub service, fed it the real parsed diagnosis
+  from `Extract_Holdings_Nightly.dtsx` — the real LLM committed 5 real dbt files (staging
+  model, quarantine model, fact table, schema tests) scoped exactly to the two planted
+  findings and opened a real PR:
+  [`brighthive-dbt/loopcapital-dbt-demo#2`](https://github.com/brighthive-dbt/loopcapital-dbt-demo/pull/2)
+  — confirmed `mergedAt: null`, `state: open` via GitHub API (GC-17 held live, not just in a
+  unit test). This path needs zero Snowflake access (static XML parsing only), so it is NOT
+  affected by the Snowflake MFA blocker documented in §2/§6. If asked "can it open a PR to fix
+  my SSIS package," the honest answer is "yes — here's the real PR it opened this morning."
 - **SSIS/SSRS as a monitored, standing watch.** There is no live SQL Server connection reading
   `msdb`/`ReportServer` catalog metadata on an ongoing basis — this is on-demand diagnosis of a
   file you point the agent at (uploaded or in a known path), not a background watchdog like
@@ -310,10 +313,12 @@ cd brightbot && RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integratio
 cd brighthive-e2e && BH_LANGGRAPH_URL="https://brightagent-staging-760d8832084555d487edeb54e9969675.us.langgraph.app" \
   .venv/bin/python -m pytest e2e/features/data/test_dbt_mcp_lineage.py -v --env=staging -s
 
-# 4. Have PR #1 open in a tab, ready to show (state: MERGED)
+# 4. Have PR #1 (GC-16 dbt remediation, state: MERGED) and PR #2 (SSIS remediation,
+#    state: OPEN, not merged — GC-17 proof) open in tabs, ready to show.
 # NOTE: repo was moved to brighthive-dbt org on 2026-07-16 while fixing get_lineage's
 # GitHub App authorization (see overview.md entry 42) — use this URL, not the old brighthive/ one.
 open "https://github.com/brighthive-dbt/loopcapital-dbt-demo/pull/1"
+open "https://github.com/brighthive-dbt/loopcapital-dbt-demo/pull/2"
 
 # 5. Confirm SSIS/SSRS diagnostics find the real, planted gaps in Loop Capital's own fixtures
 cd brightbot && .venv/bin/python -m pytest \
