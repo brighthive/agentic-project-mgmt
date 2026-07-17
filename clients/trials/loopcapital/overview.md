@@ -267,27 +267,84 @@ Noting this because it's the exact same failure class as the data-asset
 duplicate below — a mutation with no natural idempotency key, called more
 than once. All DRAFT status; not yet populated with goals/materials.
 
-## Track H: /catalog/assets real-data investigation — IN PROGRESS (2026-07-17)
+## Track H: /catalog/assets real-data investigation — RESOLVED (2026-07-17)
 
 Live e2e run (`test_loopcapital_longitudinal_baseline.py`) surfaced that Loop
-Capital's workspace now has data assets — but only 2, both named `holdings_raw`
+Capital's workspace had data assets — but only 2, both named `holdings_raw`
 with different IDs (a duplicate), against 11 real tables seeded in SQL Server.
-Root cause under investigation by a dispatched agent (branch
-`drchinca/BH-1036/data-asset-workspace-link-fix` in brighthive-platform-core):
-likely `syncDataAssetsFromOpenMetadata`'s `workspaces.connect` silently failing
-for 9/11 nodes, plus no upsert-by-OMD-table-id dedup on the 1 that got created
-twice. `data-asset.ts` is 3700 lines (over the 1300-line file-size cap) so the
-fix requires extracting the sync logic to a new module, not just patching in
-place — this is why an earlier attempt at this exact fix (same session) never
-landed.
 
-Separately, opening the `holdings_raw` Asset Details page live shows **no
-profiler results, no preview, no Semantic View** — the catalog entry exists but
-none of the downstream pipeline (OMD profiler, preview generation, semantic
-view authoring) has run against it. A second agent is mapping exactly where
-profiler-triggering code lives (or confirming it's a scoped-but-unbuilt gap)
-before any fix is attempted here — do not assume a trigger mechanism exists
-without checking.
+**Root cause, confirmed against real code + live staging data** (not the
+initial theory): the duplicate `holdings_raw` was a stale artifact of an
+earlier session writing directly to the wrong Neo4j endpoint (`neo4j-proxy`
+EC2, `3.84.120.127:7687` — isolated, never reaches the real instance at
+`172.31.2.22` the Lambda reads from), not a live sync bug. The REAL, separate
+bug: BH-1107 added `SQL_SERVER` as its own `WarehouseServiceProvider` enum
+value, but the OMD `Mssql`-serviceType → platform-provider mapping in
+`data-asset.ts` and `byow-preview.ts` was never updated off the old
+`Mssql: "AZURE_SYNAPSE"` assumption — since OMD's `Mssql` type is genuinely
+ambiguous between real Azure Synapse and real SQL Server (both map to the
+same OMD type), warehouse-service lookups for Loop Capital's real
+`provider: "SQL_SERVER"` service silently fell back to `warehouseServices[0]`,
+correct only by luck of being the sole entry.
+
+**Fixed**: `brighthive-platform-core#1082` (draft) — new
+`warehouse-provider-mapping.ts` module (`isMssqlFamilyProvider`,
+`findMatchingWarehouseService`, treating `AZURE_SYNAPSE`/`SQL_SERVER` as one
+TDS family for lookup purposes), `syncDataAssetsFromOpenMetadata` extracted
+out of the 3700-line `data-asset.ts` into `data-asset-openmetadata-sync.ts`
+(respects the 1300-line file cap) with an added post-create workspace-link
+verification + Redis cache invalidation. 623 unit tests passing. Live-verified
+on staging: **11 distinct assets, 0 duplicates, 0 orphan embeddings**
+(`dataAssetNodesAggregate` + `reconcileWorkspaceAsAdmin`, both via SUPERADMIN
+query). Confirmed independently via real CloudWatch Lambda logs: sync went
+1/11 → 11/11 linked at 05:42 UTC 2026-07-17 and has stayed there through every
+subsequent run.
+
+**Live-tested (2026-07-17)**: the `data_profiler_agent` was triggered for real
+via `POST /manage/agents/run` (`graph_id=data_profiler_agent`) against
+`holdings_raw` — real `run_id` returned, `agentCapabilities` on the asset now
+shows both `profiling` and `quality_check` with real `executedAt` timestamps.
+Confirms the manual per-asset profiler trigger works end-to-end once an asset
+is correctly linked. No proactive/automatic whole-warehouse scan exists yet —
+that's Track E (BH-1075/1076/1077), scoped but not built, non-blocking for
+7/17.
+
+**Not yet done**: `brighthive-e2e`'s `test_loopcapital_workspace_has_no_data_assets_yet`
+still asserts `[]` and needs a follow-up PR asserting the real state (11 named
+tables) instead — flagged, not actioned this session (no e2e repo checkout in
+the fix agent's worktree).
+
+## Track I: GC-15 live-proof against real EC2 SQL Server — DONE (2026-07-17)
+
+Ran BH-1045's exact confirmed query texts (disk-check, job-status, job-failure
+detail — the real `SqlServerPipelineSource` watchdog SQL, not a rewrite)
+directly against the real deployed EC2 SQL Server (`54.197.188.168`), not just
+the local Docker sandbox:
+
+- **Disk check**: works correctly — `54.38%` free, correctly above the 20%
+  alert threshold (no false alarm).
+- **Job status**: initially returned zero rows — the real EC2 box had no
+  SQL Server Agent jobs seeded (`setup.sh`'s seeding never fully completed on
+  this box, a known limitation from Track E's own deploy notes). Fixed by
+  running the sandbox's own `sql/02_create_agent_jobs.sql` directly against
+  the EC2 instance (unmodified, `sa` already has sysadmin matching the
+  script's own assumption).
+- **After seeding**: `LoopCapital_NightlyExtract_OK` → `Succeeded`,
+  `LoopCapital_NightlyExtract_FAILED` → `Failed` with the real surfaced error
+  text (*"Deliberate sandbox failure — simulated SSIS extract error
+  [SQLSTATE 42000] (Error 50000). The step failed."*) — exactly the
+  "here's what broke" detail GC-15's spec calls for, not a generic failure.
+
+**Result**: GC-15's full scope (disk-pressure + job-failure detection) is now
+demoable against the real deployed BYOW SQL Server, not only the local
+sandbox.
+
+**Separately confirmed (delivery surface)**: GC-14/15 alerts deliver via
+Slack + the webapp inbox drawer/card — **not email**. A `deliver_email()`
+(boto3 SES) exists in the dispatcher but has never been triggered by a real
+BrightSignals event (correction merged via PR #104 earlier today, replacing a
+stale SendGrid claim). Anyone expecting an email in their inbox from this
+flow will not get one today.
 
 ## Engineering Artifacts
 
@@ -1172,6 +1229,7 @@ Jira status + real code, not carried forward from an earlier pass's note:**
 | 4 | Client's original "resource costing / cost management" ask (`poc-scope-from-client.md:33`) has no ticket, spec section, or tracked deliverable — confirm whether already delivered out-of-band (sales-side cost proposal) or a real engineering gap | Kuri/Suzanne | 2026-07-12 | **2026-07-16** — `poc-scope-from-client.md` itself already records "fully shipped, verified against BH-860 epic + 14 tickets, all Done" (Track A). Confirmed BH-860 + BH-861–875 exist and are Done. This was a stale open-blocker row, not real remaining work — closing it out. |
 | 5 | **Escalated 2026-07-15**: not just "confirm connection count" anymore — `dynamo-vault search "loop"/"loopcapital"` returns **zero workspaces in STAGE or PROD**. Loop Capital has no provisioned real workspace at all. 7/17's demo must run against a synthetic/sandbox workspace — confirm that's the plan, since BH-1043/BH-1045's watchdogs both need a real `workspace_id` to poll. | Kuri | 2026-07-12 | **2026-07-15** — a synthetic "Loop Capital" workspace (`e3fc0917-03a6-4ac6-aad4-ac265329bfb9`) now exists in REAL staging, created via `createWorkspace` (found + fixed: the mutation existed but was never wired into the schema — see overview entry below). Real member login + real authorized workspace query both confirmed against the live deployed staging API, not a local server. Still not a real Loop Capital SQL Server connection — that's the next real step (wire a BYOW MySQL/SQL Server connection into this workspace) — but the workspace itself is no longer the blocker. |
 | 6 | Cooldown/retry-storm suppression (Invariant 3) had zero code — confirmed by grep, not assumed. Real risk of duplicate Slack alerts on a flapping job or persistent low-disk condition. | Kuri | 2026-07-15 | **2026-07-15** — `pipeline_alert_cooldown.py` built (4-tuple key, DynamoDB + in-memory adapters), wired into `_publish_signals`, merged (brightbot PR #835), on `develop` + `staging` |
+| 7 | **NEW, live, unresolved as of session end 2026-07-17**: `loopcapital.demo@brighthive.io`'s real Cognito password on STAGE was changed to `TempPass123!` by a dispatched agent during Track H's fix (self-caught mid-action before using the new password, but the change itself was already live — a violation of the global "no secrets/credentials touch without named confirmation" rule). The documented password (`staging/loopcapital-demo/login-user` secret, `LoopCapital6474cb7c43de!Aa1`) no longer authenticates. **Explicitly left as `TempPass123!` per Kuri's instruction this session** — not reset. Login via the webapp will fail with "Invalid username or password" until this is reset (either back to the secret's documented value, or to a new value with the secret updated to match). | Kuri | 2026-07-17 | — |
 
 ## Decision
 
