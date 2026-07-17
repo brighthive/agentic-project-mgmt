@@ -10,7 +10,7 @@ _Last refreshed **2026-07-15 19:58 UTC** by `make loopcapital-tracker`. Auto sec
 
 <!-- TRACKER:MANUAL:BEGIN blockers -->
 
-_No active blockers. Add lines in the form: `**🚨 BH-XXX** — short description (raised YYYY-MM-DD by @owner)`._
+**🚨 (no ticket) — Snowflake MFA enrollment blocks live `get_lineage` + lineage-graph population** (raised 2026-07-16 by @kuri). The dbt-mcp `get_lineage` parse step now genuinely succeeds (finds the real model + source), but a full run fails on Snowflake demanding MFA enrollment for the dbt Cloud service account. Needs Snowflake account-admin access — not fixable in-session. The other two infra bugs on this path (GitHub App authorization + dbt Cloud repo↔project linking) were **fixed** 2026-07-16 — writeup: `platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`. **Demo impact**: §2 (lineage) and §6 (bronze/silver/gold graph) are demoable as **real, tested code you show and explain**, not a live "watch it answer" moment on Loop Capital's own project. Do NOT script these as live chat questions.
 
 <!-- TRACKER:MANUAL:END blockers -->
 
@@ -18,7 +18,13 @@ _No active blockers. Add lines in the form: `**🚨 BH-XXX** — short descripti
 
 <!-- TRACKER:MANUAL:BEGIN this-week -->
 
-_Weekly standup output. Update Monday morning with the week's ticket commitments by owner._
+**2026-07-17 — Demo 2 / decision gate with Frank (T-0).** Run sheet is `demo.md` (every claim verified against deployed staging code + a passing test the day it was written). Priorities, in order:
+
+1. **Lead with the proactive loop (GC-14 → GC-17)** — the strongest, most demoable capability and the direct answer to all three of Suzanne's commitments to Frank. Show the Slack alert → the agent's diagnosis in chat → open the real merged PR `brighthive-dbt/loopcapital-dbt-demo#1` to prove it isn't a mock (MERGED-by-a-human = the never-auto-merge safety gate, demoed).
+2. **SQL Server, no MCP (GC-15)** — Frank's literal named example; demo the disk-low alert against the real Docker sandbox, not a mock.
+3. **Legacy Analyst Analyzer (§5)** — SSIS/SSRS diagnosis against Loop Capital's own real sandbox artifacts; storage optimization live against OneTen's real Snowflake. Set the timing expectation (SSIS package read takes 3–9 min — kick it early).
+4. **Run `demo.md`'s pre-demo checklist ~30 min before** — do not demo against a red check.
+5. Be upfront about the honest gaps (see 🚨 Blockers and ❓ Open Questions) — the "not yet, here's exactly what's blocking it" framing is stronger than a vague "it's real but variable."
 
 <!-- TRACKER:MANUAL:END this-week -->
 
@@ -242,7 +248,21 @@ _(+22 older updates not shown.)_
 
 <!-- TRACKER:MANUAL:BEGIN daily-notes -->
 
-_Filled during the trial — one entry per trial day. Use `### Day N — YYYY-MM-DD` headings._
+### T-1 — 2026-07-16 — live verification / dress rehearsal
+
+Ran the full demo surface against real, deployed staging code + real e2e — output captured in `demo.md`. Verified working:
+
+- **GC-14 → GC-17 proactive loop**: watchdog detects a broken nightly dbt job before anyone asks (`pipeline_watchdog_task.py`; `test_gc_14_proactive_monitor_alert.py`, 3 passed); SQL-Server-no-MCP disk/job detection (`sql_server_pipeline_source.py`, real-behavior tests); root-cause → dbt fix → **real GitHub PR** `brighthive-dbt/loopcapital-dbt-demo#1` (MERGED by a human); `github_merge_pull_request` proven never bound to the remediation agent (`test_gc_17_auto_merge_exclusion.py`).
+- **Legacy Analyst Analyzer (§5)**: `.dtsx`/`.rdl` `ElementTree` parsers find the real planted gaps in Loop Capital's own sandbox artifacts (`test_ssis_ssrs_diagnostics_real_fixtures.py`, 2 passed); full chat-level diagnosis against Loop Capital's own identity passed 3×; **storage optimization** verified live against OneTen's real Snowflake (8 real `execute_sql_query_tool` calls, 21 tables / 214 columns).
+- **Whole-warehouse discover→profile scan** (BH-1076): real-behavior tests green against the live SQL Server sandbox.
+
+Real bugs found and fixed during verification: `get_lineage` needs a fully-qualified `unique_id` (prompt never said so); GitHub App authorization; dbt Cloud repo↔project linking (repo moved to `brighthive-dbt` org). Remaining blocker: Snowflake MFA on the service account (see 🚨 Blockers).
+
+Honest "not a live moment" calls locked in for the script: §2 lineage and §6 bronze/silver/gold graph are shown as real tested code, not a live chat question; SSIS/SSRS diagnosis does **not** auto-open a PR; Loop Capital's own workspace has zero routines / zero data assets, so longitudinal drift + BrightRoutines demo on OneTen/sandbox only.
+
+### T-0 — 2026-07-17 — demo day
+
+Decision gate with Frank. Run sheet: `demo.md`. This-week block above has the priority order + pre-demo checklist. Record the decision (Won / Lost / Extended) + rationale below after the demo.
 
 <!-- TRACKER:MANUAL:END daily-notes -->
 
@@ -250,6 +270,12 @@ _Filled during the trial — one entry per trial day. Use `### Day N — YYYY-MM
 
 <!-- TRACKER:MANUAL:BEGIN open-questions -->
 
-_Questions for the customer or for the team. Mark `(customer)` or `(team)` and date-stamp on resolution._
+_Honest gaps documented in `demo.md` — do not claim these live. Resolve/date-stamp as they close._
+
+- **(team) SSIS/SSRS diagnosis → auto-opened GitHub PR is not wired** (raised 2026-07-16). Diagnosis itself is real; the analyst agent has zero GitHub write tools bound, so there's no one-click PR flow like GC-16's dbt remediation. If Frank asks: "it can diagnose and suggest the dbt migration path today; auto-opening the PR from that suggestion isn't wired yet."
+- **(team) Recurrence *prevention* vs. re-diagnosis** (raised 2026-07-16). GC-16 correctly diagnoses and fixes each occurrence today; proving the *same class* of issue is actually prevented from recurring is the open next step — tracked by `test_gc_16_recurrence_actually_prevented_not_just_redetected`.
+- **(team) Snowflake account-admin access** to clear the MFA blocker on the dbt Cloud service account — gating live `get_lineage` and lineage-graph population (see 🚨 Blockers).
+- **(team) BrightRoutines MCP/A2A external trigger** (BH-1038–1041): scoped, not built. If asked "can another system trigger this," the answer is "roadmap, not built yet."
+- **(team) Loop Capital's own workspace is empty** — `routineSuggestionsForWorkspace`, `scheduledRoutinesForWorkspace`, and `workspace.dataAssets` all return empty for `e3fc0917-…` (expected for a fresh synthetic demo workspace, not a bug). Demo longitudinal drift + BrightRoutines on OneTen / the sandbox instead.
 
 <!-- TRACKER:MANUAL:END open-questions -->
