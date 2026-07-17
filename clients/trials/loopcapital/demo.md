@@ -135,6 +135,23 @@ Real and shipped (pre-existing BrightHive capability, not built for this trial s
 - Webapp surface: `SuggestedRoutinesSection`, `ScheduledRoutineRow`, `RoutineSuggestionCard`
 - Slack surface: `routine-suggestion-action`, Block Kit formatter, classify pipeline
 
+**Exact in-app navigation path (verified against `brighthive-webapp` routes 2026-07-17)**: left
+nav → **Knowledge → Workflows**. That nav label mounts `FormulasPage.tsx` — the page header
+itself says "Formulas," not "Workflows" (a real, user-visible naming mismatch — mention it only
+if asked, don't lead with it). `SuggestedRoutinesSection` is the only *live* section on that
+page; the other five "Formula" cards (Data Transformations, Calculated Metrics, Custom Prompts,
+Document Pipelines, Share & Publish) are all `status: coming_soon` placeholders at reduced
+opacity — do not click into them or imply they're real.
+
+**What the in-app routine card shows, and what it honestly doesn't**: a scheduled routine's row
+shows title, description, a cadence chip (daily/weekly/biweekly/monthly/quarterly), a delivery
+chip (webapp/Slack/email), and an on/off toggle. It does **not** show last-run status, next-run
+time, or the underlying workflow logic/steps — there's a separate, unrelated "Project Workflow"
+step-graph builder (`src/ProjectWorkflow/`, reached via Projects → a project → Workflow tab)
+that is NOT linked from the routines card. If asked "can I see exactly what steps this routine
+runs," the honest answer is "not from this card — that's a different, unconnected part of the
+app today."
+
 **Loop Capital's own workspace has zero routines today** — confirmed live: both
 `routineSuggestionsForWorkspace` and `scheduledRoutinesForWorkspace` return empty for
 workspace `e3fc0917-03a6-4ac6-aad4-ac265329bfb9`. This is expected, not a bug — BrightRoutines'
@@ -143,14 +160,18 @@ workspace is a fresh synthetic demo environment with no organic activity history
 ground-truth workspace has a real one ("Generate weekly earnings report", status `OFFERED`) —
 confirmed live the same way.
 
-**Demo script**: show the real OneTen routine in the webapp (or ask BrightHive's own team
-account, not Loop Capital's), then the equivalent Slack card — same routine, two surfaces.
-Frame it as "this is what emerges after the agent has watched your team's real work for a
-while" — do NOT open Loop Capital's own workspace expecting to find one; there isn't one yet.
+**Demo script**: navigate Knowledge → Workflows to show the real OneTen routine card in the
+webapp (or ask BrightHive's own team account, not Loop Capital's), then the equivalent Slack
+card — same routine, two surfaces. Frame it as "this is what emerges after the agent has
+watched your team's real work for a while" — do NOT open Loop Capital's own workspace expecting
+to find one; there isn't one yet. Do NOT click into the other five "Formulas" cards — they're
+placeholders, not built.
 
-**What NOT to claim here**: MCP/A2A exposure of BrightRoutines (letting an external agent
-trigger a routine) is scoped (BH-1038–1041) but not built. If asked "can another system
-trigger this," the honest answer is "that's on the roadmap, not built yet."
+**What NOT to claim here**: (1) MCP/A2A exposure of BrightRoutines (letting an external agent
+trigger a routine) is scoped (BH-1038–1041) but not built — if asked "can another system trigger
+this," the honest answer is "that's on the roadmap, not built yet." (2) A routine card does not
+show its own run history or its underlying step logic today — those live in a separate,
+unconnected part of the app (see above).
 
 ---
 

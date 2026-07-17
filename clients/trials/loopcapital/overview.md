@@ -1052,6 +1052,23 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     session. Golden cases re-confirmed on staging HEAD (`a620e522`): 12 passed, 10 documented
     skips, 0 failed. No code changes needed — this was a verification pass, not a fix.
 
+52. **Mapped BrightRoutines' real in-app nav path — corrected a real doc gap (2026-07-16/17).**
+    User asked specifically where routines appear "in observability & projects" vs. "in-app."
+    Investigation (webapp routes read + a new live browser check) found: routines do NOT
+    appear on the Projects or Observability pages at all — they live under a single,
+    workspace-level nav item (**Knowledge → Workflows**, route `/context/workflows`), which
+    mounts `FormulasPage.tsx` (a real, user-visible nav/header-label mismatch — nav says
+    "Workflows," the page itself says "Formulas"). `SuggestedRoutinesSection` is the only *live*
+    section on that page; the other five "Formula" cards are `coming_soon` placeholders. A
+    routine's own card shows cadence + delivery channel + on/off only — no run-history,
+    no next-run time, and no link to the actual step/workflow logic (that lives in a separate,
+    unconnected "Project Workflow" builder under Projects → a project → Workflow tab). Added a
+    real, browser-driven test (`test_loopcapital_knowledge_workflows_page_renders`,
+    brighthive-e2e PR #60, merged) confirming this exact route renders live for Loop Capital's
+    real identity with zero tenancy errors — prior verification of this surface was
+    code-read-only. `demo.md` §4 corrected with the exact nav path and the honest limits so
+    nothing is overclaimed if Frank clicks around live.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
