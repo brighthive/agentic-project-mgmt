@@ -23,13 +23,12 @@ related:
 
 # SPEC: BrightRoutines — Email Delivery Channel
 
-> Scope: add **email** as a first-class routine delivery channel alongside the
-> existing WEBAPP and SLACK channels. Today a routine suggestion (and, later,
-> a scheduled routine's result) can be delivered to the webapp inbox and to
-> Slack; there is no way to reach a user who lives in neither. This spec adds
-> `DeliveryHint.EMAIL`, the fan-out branch that renders and sends the email,
-> and the recipient-address resolution — reusing the SES `IMailService` that
-> already ships in platform-core.
+> Scope: add **email** as a routine delivery channel alongside the existing
+> WEBAPP and SLACK channels, for the **scheduled-routine result** (not the
+> offer — see §1.1 for why). This spec adds `DeliveryHint.EMAIL`, extends the
+> signal payload so delivery intent + recipients actually cross the wire,
+> parameterizes the mail port so a routine template isn't rendered through the
+> policy-email template, and adds recipient-address resolution.
 
 **Terms.** The `RoutineSuggestion` DTO, its status lifecycle, the
 `brightroutines-{env}` single-table layout, and the notification fan-out from
@@ -44,30 +43,54 @@ its composite forms.
 
 Routine suggestions and results fan out to two channels today. A user who
 doesn't open the webapp and isn't in the Slack workspace never learns a
-routine was offered or ran — the loop is invisible to them. Email is the
-lowest-common-denominator reach: every BrightHive user has a verified email
-(it's their Cognito identity). The delivery infrastructure already exists —
-platform-core ships `SesMailService implements IMailService` (real
-`@aws-sdk/client-ses`), currently used only for workspace-policy-confirmation
-emails. What's missing is (a) a `DeliveryHint.EMAIL` the detector/classifier
-can propose, (b) a fan-out branch in the notification path that renders a
-routine email and calls `mailService.sendMail(...)`, and (c) recipient-address
-resolution from the owner/recipient user IDs the suggestion already carries.
+routine ran — the loop is invisible to them. Email is the lowest-common-
+denominator reach: every `UserNode` carries a non-null, unique `emailAddress`
+in Neo4j (`typedefs.ts` — `emailAddress: EmailAddress! @unique`).
+
+**What must be built (three real gaps, none of them "just wiring"):**
+
+1. **A routine email template.** `IMailService` is bound to
+   `SendgridMailService` (`inversify.config.ts` → `.to(SendgridMailService)`),
+   whose `sendMail` is hardcoded to the policy-confirmation SendGrid template
+   `d-e5b52ec0…` (it maps `subject → workspace_name`, `body → policy_body`).
+   Sending a routine email through it verbatim renders as a *policy* email.
+   The port must be parameterized with a template selector (and a routine
+   template added), OR a second mail path stood up. `SesMailService` exists in
+   the tree but is **not bound** — choosing it means an explicit re-bind + SES
+   provisioning, not "reuse."
+2. **Delivery intent + recipients on the wire.** `build_routine_suggestion_signal`
+   (`signal_publisher.py`) emits metadata of exactly `{title,
+   routine_suggestion_id}` — `proposed_delivery` and recipients are dropped.
+   The email branch has nothing to key on today.
+3. **The recipient set only exists at schedule time.** At OFFER, a suggestion
+   has no owner/recipients (`decodeOwnership` returns null pre-schedule); they
+   are set when the user schedules. So email attaches to the **scheduled-
+   routine result**, where ownership + `recipientUserIds` exist — not the offer.
 
 Cognito's own login/OTP/verification emails are unrelated and out of scope —
-this is product notification email, sent by us through SES.
+this is product notification email.
+
+### 1.1 Why result, not offer
+
+The offer email was the original scope; it's dropped because an OFFERED
+suggestion has no recipients to send to (they don't exist until schedule) and
+no per-suggestion suppression on the notification path — an offer email would
+have no honest "off means off" story. The scheduled-result email attaches to a
+routine the user explicitly turned on, whose ownership + recipient list are
+recorded, and whose SCHEDULED→OFFERED turn-off is the natural suppression gate.
 
 ```mermaid
 sequenceDiagram
-    participant D as brightbot detector
+    participant S as scheduled routine (SCHEDULED, has recipients)
     participant PC as platform-core notifications
-    participant M as SesMailService (IMailService)
+    participant M as IMailService (routine template)
     participant U as User inbox
-    D->>PC: routine suggestion signal (proposed_delivery includes EMAIL)
-    PC->>PC: resolve recipient user IDs → verified email addresses
-    PC->>M: sendMail({ to, subject, body, from })
-    M->>U: SES SendEmailCommand (HTML + text)
-    Note over PC,M: a turned-off routine MUST NOT reach this branch
+    S->>PC: result signal (metadata carries proposed_delivery + recipientUserIds)
+    PC->>PC: proposed_delivery includes EMAIL? else skip
+    PC->>PC: resolve recipientUserIds → member emails (INV-3)
+    PC->>M: sendMail({ to, templateKey: "routine_result", data, from })
+    M->>U: rendered routine email (NOT the policy template)
+    Note over S,PC: a turned-off routine (SCHEDULED→OFFERED) never emits this signal
 ```
 
 ## 2. Interface Contract (MDE)
@@ -87,35 +110,65 @@ class DeliveryHint(str, Enum):
 changes behavior. `ALL` is the net-new "every channel" value. A bare `EMAIL`
 means email-only.
 
-### 2.2 Notification fan-out — email branch (`platform-core notifications`)
+### 2.2 Signal payload extension (`brightbot` — PR-1)
+
+`build_routine_suggestion_signal` (and the result-signal equivalent) must add
+the two fields the email branch keys on. Counts-only still holds — these are
+routing metadata, not row data:
+
+```python
+# signal_publisher.py — metadata gains:
+{
+  "title": suggestion.title,
+  "routine_suggestion_id": suggestion.routine_suggestion_id,
+  "proposed_delivery": suggestion.proposed_delivery.value,   # net-new on the wire
+  "recipient_user_ids": suggestion.recipient_user_ids,       # net-new; scheduled → non-empty
+}
+```
+
+### 2.3 Mail port parameterization (`platform-core` — PR-2)
+
+`IMailService.sendMail` today takes `{to, subject, body, from}` and the bound
+`SendgridMailService` forces the policy template. Extend the port to select a
+template so a routine email doesn't render as a policy email:
 
 ```
-# Consumes the routine suggestion signal; when proposed_delivery includes EMAIL,
-# renders and sends via the existing IMailService.
+sendMail({ to, from, templateKey: "policy" | "routine_result", data: object }) -> Result
+```
+
+`policy` preserves the existing behavior byte-for-byte (back-compat). The
+adapter maps `routine_result` → a new SendGrid dynamic template (or, if SES is
+chosen instead, an explicit re-bind + SES provisioning — decide in §6).
+
+### 2.4 Notification fan-out — email branch (`platform-core` — PR-2)
+
+```
+# Consumes the result signal; only when proposed_delivery ∈ {EMAIL, ALL}.
 deliverRoutineEmail(input: {
   workspaceId: ID,
   routineSuggestionId: ID,
-  recipientUserIds: [ID],       # already carried on the suggestion's ownership
-  title: string,                # counts-only payload, matching Slack/webapp
-}) -> { delivered: Boolean, skippedReason?: "no_verified_email" | "not_email_channel" }
+  recipientUserIds: [ID],       # from the signal (2.2), set at schedule time
+  title: string,                # counts-only, matching Slack/webapp
+}) -> { delivered: Boolean, skippedReason?: "no_verified_email" | "not_email_channel" | "no_recipients" }
 ```
 
-### 2.3 Recipient resolution
+### 2.5 Recipient resolution
 
 ```
-# user IDs (owner + recipientUserIds, workspace-membership-validated) → addresses
+# member-validated user IDs → addresses
 resolveVerifiedEmails(userIds: [ID], workspaceId: ID) -> [EmailAddress]
 ```
 
-Reuses the same membership validation the webapp/Slack fan-out already applies
-(`brightroutines-intent-loop.md` §6, "validated to be workspace members before
-delivery"). A user ID that resolves to no verified email is dropped with a
-logged `no_verified_email`, never a crash.
+Reuses `filterRecipientsToWorkspaceMembers` (already in `routine-suggestion.ts`)
+for INV-3, then reads each member's `UserNode.emailAddress` (non-null in Neo4j).
+An empty resolved set → `no_recipients`, logged, never a crash. "Verified" here
+means present+unique in Neo4j — SES/SendGrid deliverability is a §6 concern, not
+an identity guarantee.
 
 ## 3. Invariants (DbC)
 
 - INV-1 `WHEN proposed_delivery does NOT include EMAIL, THE System SHALL NOT send any routine email.`
-- INV-2 `WHEN a routine is turned off (SCHEDULED → OFFERED), THE System SHALL NOT send any further email for it` — mirrors the existing "off means off" guard (`brightroutines-your-routines-persistence.md` Property 2); email must not become a leak that outlives the toggle.
+- INV-2 `WHEN a routine is turned off (SCHEDULED → OFFERED), THE System SHALL NOT emit a result signal for it` — enforced upstream: only a SCHEDULED routine's run emits the result signal, so turn-off (which flips it to OFFERED and deletes the cron) removes the only source. Mirrors the "off means off" guard (`brightroutines-your-routines-persistence.md` Property 2). This is why email attaches to the result, not the offer (§1.1): the offer has no such gate.
 - INV-3 `EMAIL recipients are always a subset of workspace members` — no email to a non-member, ever (tenant-isolation, P0).
 - INV-4 email body is **counts-only** — title + routine_suggestion_id + evidence counts, matching the Slack (`renderWorkflowSuggestionDetails`) and webapp payloads exactly; no raw prompt, no row-level data.
 - INV-5 a per-address send failure is isolated — one bad address (bounce/SES reject) SHALL NOT abort delivery to the others.
@@ -126,35 +179,36 @@ Budget: 6 invariants.
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
-Feature: Routine email delivery
+Feature: Routine email delivery (scheduled-routine result)
 
-  Scenario: Email-only suggestion reaches the owner's inbox
-    Given a routine suggestion with proposed_delivery = EMAIL
-    And the owner has a verified email and is a workspace member
-    When the suggestion is offered
-    Then exactly one email is sent to the owner's address
+  Scenario: Email-only scheduled routine result reaches its recipients
+    Given a SCHEDULED routine with proposed_delivery = EMAIL
+    And each recipient has an emailAddress and is a workspace member
+    When the routine runs and produces a result
+    Then exactly one email per recipient is sent
+    And it renders via the routine_result template, not the policy template
     And the body contains the routine title and no row-level data
 
   Scenario: ALL fans out to every channel
-    Given a routine suggestion with proposed_delivery = ALL
-    When the suggestion is offered
+    Given a SCHEDULED routine with proposed_delivery = ALL
+    When the routine runs
     Then a webapp inbox row, a Slack card, and an email are all produced
 
   Scenario: BOTH does not send email
-    Given a routine suggestion with proposed_delivery = BOTH
-    When the suggestion is offered
+    Given a SCHEDULED routine with proposed_delivery = BOTH
+    When the routine runs
     Then a webapp row and a Slack card are produced
     And no email is sent
 
   Scenario: Turned-off routine stops emailing
-    Given a scheduled routine with EMAIL delivery
-    When the user turns it off
-    Then no further email is sent for that routine
+    Given a SCHEDULED routine with EMAIL delivery
+    When the user turns it off (SCHEDULED → OFFERED, cron deleted)
+    Then it no longer runs, so no result signal and no email are emitted
 
-  Scenario: A recipient with no verified email is skipped, others still get it
-    Given a suggestion targeting two recipients, one without a verified email
-    When the suggestion is offered
-    Then the recipient with an email receives it
+  Scenario: A recipient with no email is skipped, others still get it
+    Given a run targeting two recipients, one with no resolvable emailAddress
+    When the routine runs
+    Then the recipient with an address receives it
     And the other is skipped with a logged no_verified_email
     And delivery does not error
 ```
@@ -163,21 +217,30 @@ Budget: 5 scenarios.
 
 ## 5. Out of Scope
 
-- Email templating/branding beyond a plain counts-only HTML+text body (a
-  richer template is a follow-up).
+- Rich HTML branding beyond the counts-only routine_result template (follow-up).
 - User-facing per-channel notification **preferences** UI (choosing EMAIL in
   the webapp) — this spec adds the channel; the preference surface is separate.
-- Digest/batching (one email per suggestion here; digests are future work).
+- Digest/batching (one email per run here; digests are future work).
 - Cognito login/verification email — unrelated, unchanged.
-- Scheduled routine **result** emails — this spec covers the suggestion-offer
-  email; result delivery reuses the same branch but is ticketed separately.
+- **The offer email** — dropped by design (§1.1): no recipients at OFFER, no
+  suppression gate. Only the scheduled-result email is in scope.
 
 ## 6. Dependencies
 
-- Existing SES `IMailService` (`platform-core src/service/mail/ses-mail-service.ts`) — reused, not rebuilt.
-- `SETUP_EMAIL_ADDRESS` env (the verified SES `from` address) — already set for policy emails.
-- Recipient-membership validation from `brightroutines-intent-loop.md` §6.
-- SES sandbox status: staging SES must be out of sandbox (or recipients verified) to reach arbitrary member addresses — verify before rollout.
+- **Mail-provider decision (blocking §2.3)**: `IMailService` is bound to
+  `SendgridMailService` (policy template locked). Either (a) add a SendGrid
+  `routine_result` dynamic template + parameterize the port, or (b) re-bind
+  `SesMailService` and provision SES. This spec assumes (a) unless a follow-up
+  ADR chooses (b) — the choice gates §2.3 and the sandbox question below.
+- `SETUP_EMAIL_ADDRESS` env (the `from` address) — already set for policy email.
+- Recipient-membership validation via `filterRecipientsToWorkspaceMembers`
+  (`routine-suggestion.ts`) + `UserNode.emailAddress` (Neo4j, non-null/unique).
+- The result-signal path (a SCHEDULED routine's run publishing a result signal)
+  must exist and carry the §2.2 fields. If result signals aren't emitted yet,
+  that is a prerequisite, not part of this spec.
+- **Deliverability** (only if SES is chosen in (b)): staging SES sandbox status
+  must be checked (`aws sesv2 get-account`) — out-of-sandbox or per-recipient
+  verified before rollout. Moot under (a) SendGrid.
 
 ## 7. Correctness Properties
 
@@ -217,22 +280,26 @@ cover correctness. No evaluator entry.
 ## 10. Test Coverage Update
 
 ### a. In-repo layered tests
-- **L0** — the `deliverRoutineEmail` contract (§2.2): request/response shape, `skippedReason` codes.
+- **L0** — the `deliverRoutineEmail` contract (§2.4): request/response shape, `skippedReason` codes incl. `no_recipients`.
 - **L1** — fan-out routing: `EMAIL` and `ALL` reach the email branch; `BOTH`/`WEBAPP`/`SLACK` do not (one case per §4 routing scenario).
-- **L2** — one case per §3 invariant observable from outside: off-means-off (INV-2), members-only (INV-3), partial-failure isolation (INV-5), counts-only body (INV-4). Uses the real `SesMailService` against a captured SES stub or SES sandbox — a real-behavior test, not a mocked `sendMail`.
+- **L2** — one case per §3 invariant observable from outside: members-only (INV-3), partial-failure isolation (INV-5), counts-only body (INV-4), template-is-routine-not-policy (§1 gap 1). INV-2 (off means off) is verified at the signal source — assert a turned-off routine emits no result signal.
+- **Real-behavior**: exercise the *bound* mail adapter (`SendgridMailService` with the new `routine_result` templateKey) against a captured send — NOT a mocked `sendMail`, and NOT `SesMailService` (which isn't bound). Per `test-behavior-real.md`, test the adapter production actually uses.
 
 ### b. Cross-repo e2e (`brighthive-e2e`)
-- One feature test: `EMAIL`-delivery suggestion → assert an email is dispatched (SES sandbox / captured send) end-to-end.
-- One error-path: recipient with no verified email → skipped, others delivered, no error.
+- One feature test: a SCHEDULED `EMAIL`-delivery routine run → assert an email is dispatched (captured send) end-to-end.
+- One error-path: a recipient with no resolvable address → skipped, others delivered, no error.
 
 ### Self-verification (before the implementation PR)
-Run the layered suites + the e2e; confirm each §2/§3/§4 entry has a new case; SES send verified against a real (sandbox) SES call, not a mock.
+Run the layered suites + the e2e; confirm each §2/§3/§4 entry has a new case; the send verified against the real bound provider (captured), not a mock.
 
 ## 11. PR Split
 
-1. **brightbot** — extend `DeliveryHint` enum (`EMAIL`, `ALL`); classifier/detector may propose them; store round-trips them. (S)
-2. **platform-core** — `deliverRoutineEmail` fan-out branch + `resolveVerifiedEmails`, wired to the existing `IMailService`; log events. (M)
+1. **brightbot** — (a) extend `DeliveryHint` enum (`EMAIL`, `ALL`); classifier/detector may propose them; store round-trips them. (b) **Extend the signal payload** (§2.2) so `proposed_delivery` + `recipient_user_ids` cross the wire — without this, PR-2 has nothing to key on. (S–M)
+2. **platform-core** — (a) **parameterize `IMailService`** with `templateKey` + add the `routine_result` template (§2.3); `policy` path unchanged. (b) `deliverRoutineEmail` fan-out branch on the result signal + `resolveVerifiedEmails`; log events. (M)
 3. **brighthive-e2e** — feature + error-path email-delivery tests. (S)
 
-Ordered: 1 → 2 → 3. Each behind no feature flag change until 2 lands; email
-fan-out is inert until a suggestion actually carries `EMAIL`/`ALL`.
+Ordered strictly 1 → 2 → 3: PR-2's branch can't be wired until PR-1 puts
+delivery intent + recipients on the wire, and can't render correctly until the
+template is parameterized. Email fan-out stays inert until a scheduled routine
+actually carries `EMAIL`/`ALL`. **Blocking decision before PR-2**: SendGrid
+template (default) vs SES re-bind — see §6.
