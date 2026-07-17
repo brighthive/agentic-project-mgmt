@@ -268,6 +268,16 @@ Behavior:
      shape `GET /threads/{id}/state` returns — NOT LangChain message objects). Best-effort: any
      failure (empty messages, model timeout/error) returns `None` and is logged, never raised —
      the notification still publishes with the summary field simply omitted.
+
+  **Real bug found + fixed (2026-07-16)**: `thread_title` resolution read `metadata.get("Title")`
+  first — a field only ever set by the webapp on a run's OWN metadata for that thread's FIRST
+  message (`useAgentStream.ts`), never present on a later run in the same thread — falling through
+  to `metadata.get("thread_id")` (never actually set) and then the raw `thread_id` itself. A real
+  Slack message showed a UUID where the title should have been. Fixed by reading
+  `values.thread_title` first — the real AI-generated title, set once by `generate_thread_title`
+  in `end_processing_middleware.py` and already present in the same `values` dict this step reads
+  for the summary above — falling back to `metadata.get("Title")` (first-message case) and finally
+  a generic `"BrightAgent conversation"` label, NEVER the raw `thread_id`.
   7. Call platform-core's publishNotification:
        stage: "chat_run_interrupt" (status=="interrupted") | "chat_run_complete" (otherwise)
        status: "info" (interrupt) | "success"/"failed" (complete, mapped from LangGraph's status)
