@@ -1039,6 +1039,19 @@ Jira status + real code, not carried forward from an earlier pass's note:**
     now live-proven here) — the only capability in `demo.md` still gated on Snowflake access is
     the `get_lineage`/lineage-graph chat path itself (§2/§6), unchanged.
 
+51. **Full Loop Capital e2e re-verification sweep, live against staging, 2026-07-16/17
+    (post entries 47-50).** Ran every live e2e surface after this session's four merges to
+    confirm nothing regressed: webapp login/render (3 passed), longitudinal baseline (2
+    passed), routines baseline (2 passed), SQL Server warehouse provider validation (1
+    passed), storage-optimization skill (1 passed, real 8-query warehouse analysis), SSIS
+    diagnostics against Loop Capital's own real identity (1 passed, 7m03s). 10/10 real,
+    demo-relevant tests green. The one non-pass: `test_get_lineage_returns_real_dependency`
+    failed (not skipped this run) with `get_lineage is not a valid tool` — the SAME
+    already-documented §2 blocker (dbt-mcp's Discovery API tools not registered on this
+    deploy, traced to the Snowflake MFA issue), not a regression from anything merged this
+    session. Golden cases re-confirmed on staging HEAD (`a620e522`): 12 passed, 10 documented
+    skips, 0 failed. No code changes needed — this was a verification pass, not a fix.
+
 ## Open Blockers
 
 | # | Blocker | Owner | Raised | Resolved |
