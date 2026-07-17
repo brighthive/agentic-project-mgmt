@@ -1,0 +1,2 @@
+portfolio_id,rule_name,breach_type,limit_value,actual_value,breach_pct,as_of_date,severity
+PORT-001-GROWTH,Single Security Concentration 20%,CONCENTRATION,20.0000,28.4700,8.4700,2026-07-16,CRITICAL

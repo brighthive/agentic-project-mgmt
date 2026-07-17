@@ -1,0 +1,11 @@
+security_id,ticker,security_name,asset_class,sector,country,currency
+CASH_USD,CASH,USD Cash,CASH,Cash,US,USD
+AAPL,AAPL,Apple Inc,EQUITY,Technology,US,USD
+AMZN,AMZN,Amazon.com Inc,EQUITY,Consumer Discretionary,US,USD
+GS,GS,Goldman Sachs,EQUITY,Financials,US,USD
+JPM,JPM,JPMorgan Chase,EQUITY,Financials,US,USD
+MSFT,MSFT,Microsoft Corp,EQUITY,Technology,US,USD
+NVDA,NVDA,NVIDIA Corp,EQUITY,Technology,US,USD
+LQD,LQD,iShares Investment Grade Corporate Bond,FIXED_INCOME,Corporate,US,USD
+USB_T3M,TBILL,US Treasury 3-Month,FIXED_INCOME,Government,US,USD
+TLT,TLT,iShares 20+ Year Treasury,FIXED_INCOME,Government,US,USD

@@ -196,6 +196,54 @@ tickets filed under epic BH-1036: **BH-1075** (new connection type, connector co
 **BH-1076** (discovery → per-table profiling orchestration), **BH-1077** (DB-level rollup
 report). Non-blocking for 7/17.
 
+## Track F: Enterprise Knowledge Base (PDFs/CSVs, unstructured context) — IN PROGRESS (2026-07-17)
+
+Client ask: give the bank demo real enterprise context — investment mandates,
+compliance policy, client onboarding docs (PDF) plus reference exports (CSV) —
+retrievable by the agent via semantic search, not just structured warehouse data.
+
+**Corrected scope (2026-07-17)**: initially framed as needing the full
+`brighthive-admin` per-client AWS-account provisioning flow (new AWS Organizations
+account, 7 CDK stacks, Cognito, Neo4j entity). That flow was read directly
+(`brighthive-admin/src/api/create_workspace.py`) and confirmed **destructive** for
+an existing workspace — it runs `ogm.delete_workspace(workspace)` immediately
+before `ogm.create_workspace(workspace)`, keyed by name+owner. Running it against
+Loop Capital's real synthetic workspace (`e3fc0917-03a6-4ac6-aad4-ac265329bfb9`)
+would have wiped its governance/warehouse/dbt state to provision KB infra — not
+what "attach a knowledge base" means.
+
+**Real requirement, verified against `brightbot/tools/aws/knowledge_base.py` and
+`brighthive-data-workspace-cdk`**: `query_knowledge_base` resolves
+`knowledge_base_id` + `brightagent_kb_role_arn` from
+`workspace_secret_store/<uuid>` in Secrets Manager, then STS `AssumeRole`s that
+ARN. Nothing in that path requires a *new* AWS account — STS `AssumeRole` works
+same-account too. Loop Capital, like the SQL Server EC2 sandbox, only needs a
+small additive stack in the existing shared STAGE account: S3 bucket + Bedrock
+Knowledge Base (Aurora `pgvector` store) + IAM role, same pattern as
+`bedrock_unstructured_data_stack.py` but scoped down (no Data Automation Project,
+no Step Function — files are pre-extracted PDFs/CSVs, not raw uploads needing
+async extraction). See `platform-saas-ai-context/docs/architecture/AI_ARCHITECTURE.md`
+→ "Bedrock capability reference" for what each Bedrock piece (KB / Data
+Automation / Titan embeddings / pgvector) actually does — written up during this
+same correction, since the distinction wasn't previously documented anywhere.
+
+**Content**: 3 PDFs (`PORT-001-GROWTH_Investment_Mandate`,
+`Compliance_Policy_Concentration_Limits`, `Client_Onboarding_Summary`) + 3 CSVs
+(`holdings_snapshot_export`, `compliance_breach_register_export`,
+`security_master_reference_export`), generated from the real seeded SQL Server
+data (Track E's medallion schema), not invented fixtures. Committed at
+`sandbox/knowledge_base/`.
+
+**Status**: **DONE, live in STAGE (2026-07-17)**. `LoopCapitalKnowledgeBaseDemo`
+stack deployed (KB `6W18NMI5FR`, data source `HQHWEUW3V4`, S3 bucket
+`loopcapital-kb-docs-873769991712`). All 6 docs uploaded and ingested —
+`StartIngestionJob` reported `COMPLETE`, 6/6 documents indexed, 0 failed.
+`knowledge_base_id` / `knowledge_base_arn` / `brightagent_kb_role_arn` written
+into `services.knowledge_base` in `workspace_secret_store/e3fc0917-...`
+(named confirmation obtained first, per the global secrets rule; `warehouses`
+and `services.openmetadata` verified unchanged in the same secret after the
+write). `query_knowledge_base` is now live for the Loop Capital demo.
+
 ## Engineering Artifacts
 
 - **Golden Cases (GC-14–17)**: `../../../docs/specs/golden-cases-loopcapital.md` — the first Golden
