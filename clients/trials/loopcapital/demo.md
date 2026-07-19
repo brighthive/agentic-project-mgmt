@@ -25,7 +25,7 @@ tags: ["demo"]
 ## Environment
 
 - **Workspace**: `e3fc0917-03a6-4ac6-aad4-ac265329bfb9` ("Loop Capital"), real staging
-- **Login**: `loopcapital.demo@brighthive.io` — Cognito credentials in `staging/loopcapital-demo/login-user` (Secrets Manager)
+- **Login**: `loopcapital.demo@brighthive.io` — Cognito credentials in `staging/loopcapital-demo/login-user` (Secrets Manager). Re-aligned and verified live 2026-07-17 (`aws cognito-idp initiate-auth` returned a real IdToken against the documented secret value) — the earlier drift (unauthorized change to `TempPass123!`) is resolved; Cognito now matches the secret again.
 - **Webapp**: `https://staging.brighthive.io/workspace/e3fc0917-03a6-4ac6-aad4-ac265329bfb9/brightagent`
 - **Re-verify live right before the demo**: `cd brighthive-e2e && .venv/bin/python -m pytest e2e/features/edges/test_loopcapital_webapp.py -v --env=staging -s`
 
@@ -73,7 +73,7 @@ RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/ 
 Real, chat-reachable capabilities — not aspirational:
 
 - **SQL generation + dbt model creation** from a plain-English ask (`convert_sql_to_dbt`, `generate_dbt_source_and_staging`)
-- **Real dbt DAG lineage** via dbt-mcp (`get_lineage`, `get_model_parents`/`get_model_children`) — enabled on staging as of this week (BH-1111), proven against Loop Capital's own dbt Cloud project: ask "what are the upstream dependencies of `stg_holdings_nightly`" and the agent correctly answers `source('raw', 'holdings_raw')`
+- **Real dbt DAG lineage** via dbt-mcp (`get_lineage`, `get_model_parents`/`get_model_children`) — enabled on staging as of this week (BH-1111). **Still not reliably correct as of 2026-07-17 afternoon — see the note below, do not claim this line as demoable.**
 - **Warehouse/pipeline health checks** via `check_pipeline_health_tool` / `scan_warehouse_tables_tool`
 - **Whole-warehouse discover→profile scan** (`scan_warehouse_tables_direct`, BH-1076) — "scan
   the whole database" is real, chat-reachable, and now proven with real-behavior tests against
@@ -89,15 +89,22 @@ partially fixed, not just a phrasing quirk.** Forcing a direct `get_lineage` cal
 Field required` — the tool needs a fully-qualified `unique_id`, not a bare model name, and our
 prompt never told the model that. Traced further and fixed 2 of 3 real infra bugs blocking
 this (GitHub App authorization + a dbt Cloud repository↔project linking bug — full writeup:
-`platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`). The parse step now
-genuinely succeeds (found the real model + source), but the full run still fails on Snowflake
-demanding MFA enrollment for the service account — a real, unresolved blocker needing
-Snowflake account-admin access, not something fixable today. **Demo script**: describe this
-narratively ("we found and are actively fixing the exact reason this doesn't work yet — the
-underlying capability and its dbt Cloud connection are real, this is a live open engineering
-item, not vaporware") rather than asking the live question. If asked directly whether it works,
-the honest answer is "not yet — here's exactly what's blocking it and why," which is a stronger
-answer than a vague "it's real but variable."
+`platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`).
+
+**UPDATE 2026-07-17 (afternoon)**: fixed the `unique_id` argument bug directly —
+`brightbot/agents/dbt_agent/prompts/dbt_react_system_prompt.py` now tells the agent to resolve
+`unique_id` via `get_all_models()` first, never guess it (`brightbot#887`, merged and promoted
+to staging). **Live re-tested after deploy**: the crash is gone (no more validation error), but
+`get_lineage` now returns an empty result (`result_head='[] []'`) instead of the real
+dependency — the argument-shape bug is fixed, but the tool still isn't surfacing real data,
+likely because `get_all_models` isn't resolving `stg_holdings_nightly` to a real `unique_id`, or
+dbt Cloud's Discovery API itself has no lineage recorded for it. Not root-caused further under
+time pressure. The full run also still fails on Snowflake demanding MFA enrollment for the
+service account — a real, unresolved blocker needing Snowflake account-admin access, not
+something fixable today. **Demo script unchanged**: describe this narratively rather than
+asking the live question. If asked directly whether it works, the honest answer is "not yet —
+here's exactly what's blocking it and why, and we found and fixed one of the two remaining
+bugs today," which is a stronger answer than a vague "it's real but variable."
 
 ---
 
@@ -113,26 +120,94 @@ capability Loop Capital also benefits from):
 - Test coverage: `test_longitudinal_detect.py`, `test_longitudinal_graph_wiring.py`,
   `test_gc_12_longitudinal_live.py` (live variant)
 
-**UPDATE 2026-07-17 — this section's "zero data assets" claim is now stale, corrected below.**
-**Loop Capital's own workspace now has 2 real `DataAsset` records** — confirmed live via the
-real GraphQL API (`workspace.dataAssets` → `resultCount: 2`, both named `holdings_raw`,
-`createdAt` 2026-07-17T05:26:05Z and 05:26:40Z, 35s apart) and independently via the chat-
-reachable `discover_data_assets` MCP tool against Loop Capital's own identity (passing live).
-**Root cause of the earlier "zero" reading**: earlier debugging wrote records via a direct
-OGM/bolt connection to `bolt+ssc://3.84.120.127:7687` (the documented `neo4j-proxy` EC2) —
-that proxy does **not** forward to the real Neo4j the GraphQL Lambda reads from
-(`DB_URI=bolt://172.31.2.22:7687`, the private `staging-platform-neo4j-db-v5` instance); it
-has its own local Neo4j state. Those writes never reached the database the webapp/API actually
-query, which is why `workspace.dataAssets` legitimately returned `[]` at the time this section
-was first written. The 2 records now present were created through the real `syncDataAssets`
-GraphQL mutation (which correctly routes through the Lambda to the real instance), not through
-that proxy path.
+**UPDATE 2026-07-17 (afternoon) — fully resolved, re-verified after live deploy.**
+**Loop Capital's own workspace now has 11 real, distinct `DataAsset` records** (all 11 real
+SQL Server tables: `holdings_raw`, 3 `mart_*`, 4 `raw_*`, 3 `stg_*`) — confirmed live via
+`workspace.dataAssets(pagination: {limit: 20})`, the webapp's own default page size, returning
+`resultCount: 11` on a fresh check (not immediately after a re-sync — this is stable state, not
+a lucky race).
 
-**Known rough edge, be upfront about it**: there are 2 records both named `holdings_raw`
-(duplicate, not two distinct tables) — an artifact of running the sync twice while diagnosing
-the proxy issue, not a clean single-asset catalog. If demoing a data-assets click-through live,
-either de-duplicate first or narrate honestly ("there are two entries here from re-syncing
-during setup — real duplicate, not two tables") rather than presenting it as a clean state.
+**The earlier duplicate `holdings_raw` and stale-page issues were two SEPARATE bugs, both now
+fixed and deployed to staging:**
+1. **SQL_SERVER/AZURE_SYNAPSE provider-matching bug** (`brighthive-platform-core#1082`/`#1085`,
+   `v2.9.0.87-pre-release`) — OMD's `Mssql` service type is ambiguous between Azure Synapse and
+   real SQL Server; the lookup only recognized `AZURE_SYNAPSE`, so Loop Capital's real
+   `SQL_SERVER`-provider warehouse service never matched. Fixed with a shared
+   `warehouse-provider-mapping.ts` treating both as one TDS family.
+2. **Catalog cache invalidation bug** (`#1087`/`#1088`, `v2.9.0.88-pre-release`) — `syncDataAssets`
+   only invalidated its Redis-cached catalog page when the sync itself created/linked something
+   new. Once the 11 real tables were already correctly linked, re-syncing found nothing new to
+   do and never invalidated — so the webapp's `limit:20` page kept serving a stale cached 2
+   indefinitely. Fixed to always invalidate on every sync call.
+
+**Sub-agent tabs — live-verified across all 11 assets**: `data_profiler_agent` and
+`quality_check_agent` triggered via `POST /manage/agents/run` for every asset.
+**11/11 have `quality_check` AND `profiling`** (confirmed 2026-07-17). The earlier 4-asset
+profiling gap (`mart_portfolio_risk_summary`, `raw_counterparties`, `stg_daily_pnl`,
+`stg_positions`) was root-caused, not just retried blind: driving `data_profiler_agent_graph`
+in-process against real staging (bypassing `LOCAL_OGM_MODE` fixtures) showed the profiler's
+sample query correctly returned 0 rows — those 4 tables were genuinely empty on the real SQL
+Server EC2 box. `quality_check` tolerates 0 rows; profiling correctly refuses to fabricate a
+profile from no data. Fixed by seeding real, referentially-consistent rows (5 counterparties;
+480 `stg_positions`/`stg_daily_pnl` rows derived 1:1 from the real `raw_positions` table; 3
+`mart_portfolio_risk_summary` rows, one per real portfolio) directly into the live SQL Server
+box. Re-triggered all 4 — all completed clean.
+
+**2 real `QualityRule`s created** via `createQualityRule`, both `applyOnSchedule: true`:
+`holdings_raw: quantity not null` (CRITICAL) and `raw_market_prices: close_price positive`
+(WARNING) — confirmed live via `qualityRules(workspaceId)`.
+
+**Preview tab — root-caused, fixed, deployed, and re-verified live** (`#1089`/`#1091`,
+`v2.9.0.90-pre-release`): `dataAssetPreview` silently returned `null` for every asset. NOT a
+routing or provider-matching bug — CloudWatch confirmed the request reached the correct
+warehouse service and host, then TLS rejected the connection: `ConnectionError: ... self-signed
+certificate`. The demo EC2 SQL Server box (self-signed by design, documented in its own CDK
+stack comments) needs `trustServerCertificate: true`, which the `mssql`/Tedious driver
+hardcoded to `false`. Fixed by adding an opt-in `trustServerCertificate` field on the warehouse
+secret store (default `false` — real customer connections stay strict); set `true` specifically
+for Loop Capital's connection via a named, confirmed Secrets Manager write. **Re-verified live
+2026-07-17**: `dataAssetPreview` on `holdings_raw` returns real columns
+(`holding_id, portfolio_id, instrument_id, quantity, as_of_date, loaded_at`) and real row data.
+
+**Scheduled workflows (BrightRoutines) — RESOLVED, now real and live 2026-07-17.**
+`scheduleRoutineSuggestion` still requires a pre-existing, system-generated `RoutineSuggestion` —
+there is still no mutation to create one directly (routines are auto-suggested, not
+user-authored). But the earlier "zero routines" state was because the workspace hadn't been
+observed long enough — after this session's activity (profiler/quality-check runs, preview
+queries, drift-monitoring snapshots), the platform generated real suggestions on its own.
+**Confirmed live**: `routineSuggestionsForWorkspace` now returns 2 real `OFFERED` suggestions
+("Monthly counterparty exposure digest", "Daily stale-data check on holdings_raw"), and
+`scheduledRoutinesForWorkspace` returns 2 real `SCHEDULED` routines ("Nightly compliance breach
+sweep", "Weekly earnings report") — all four genuinely generated by the platform observing Loop
+Capital's real workspace, not seeded or forced. This closes the last structural gap: BrightHive's
+own proactive suggestion loop is demoable live on Loop Capital's actual tenant.
+
+**Semantic Views — 3/11 real, confirmed live 2026-07-17.** `hasSemanticView` had NO resolver at
+all (`brighthive-platform-core#1094`) — OGM's auto-resolver returned null regardless of whether
+a YAML was attached; fixed by deriving it from `semanticViewYaml` presence (same pattern as the
+existing `semanticViewPrState` field), deployed via `v2.9.0.91-pre-release`. Attached one real
+Snowflake Cortex Semantic View YAML to `mart_daily_portfolio_exposure` (real columns:
+`portfolio_id`, `as_of_date`, `total_market_value`, `equity_exposure`, `fixed_income_exposure`,
+`cash_exposure`, `num_positions`, `top_holding_pct`) via `upsertSemanticView` — real hash + real
+Neo4j write confirmed via `getSemanticViewYaml`. `holdings_raw` and `stg_holdings` already had
+real semantic views from earlier work this session. **Found and fixed a second instance of the
+same cache bug class**: `upsertSemanticView` never invalidated the Redis catalog cache
+(`brighthive-platform-core#1095`, same fix pattern as `syncDataAssets` in #1087) — the catalog
+list served stale `hasSemanticView: false` until a `syncDataAssets` re-sync incidentally
+invalidated it. **Merged, promoted (#1097), deployed (`v2.9.0.92-pre-release`), and re-verified
+live WITHOUT the workaround**: attaching a semantic view to `raw_positions` now shows
+`hasSemanticView: true` immediately on the catalog list, no manual re-sync needed. Fix is
+permanent, not a workaround.
+
+**Completed to 11/11 — full semantic view coverage, confirmed live 2026-07-17.** Added
+`mart_compliance_breaches`, `raw_security_master`, `raw_positions`, `raw_market_prices`,
+`stg_daily_pnl`, `mart_portfolio_risk_summary`, `raw_counterparties`, `stg_positions` — each with
+a real Snowflake Cortex Semantic View YAML matching that table's actual columns (verified against
+`INFORMATION_SCHEMA.COLUMNS` on the live SQL Server EC2 box before writing each YAML). All 11
+confirmed live via `hasSemanticView: true` on the workspace catalog query, zero manual cache
+workaround needed. Every one of the four sub-agent tabs (profiler, quality_check, preview,
+semantic view) is now at 100% coverage across all 11 real assets — spans all three medallion
+tiers (5 BRONZE, 3 SILVER, 3 GOLD).
 
 Longitudinal drift itself still needs historical metric **snapshots** to compare against (not
 just a catalogued asset) — a fresh `DataAsset` with no snapshot history yet will still show an
@@ -140,6 +215,18 @@ empty anomaly list. **Confirmed live 2026-07-17**: `get_anomalies` against Loop 
 `holdings_raw` FQN now returns cleanly (`status="ok"`, empty anomaly list, zero errors) — the
 tool itself works end-to-end for real against LC's tenant; there's just no drift history yet to
 surface, exactly as expected for a fresh asset.
+
+**UPDATE 2026-07-17 — full end-to-end drift proof, live against staging OGM (this is the actual
+demo moment: "historical null → drift detected → proactive alert"):**
+Built a real trailing-window history for `raw_counterparties.credit_rating` — 7 real
+`MetricSnapshotNode`s written via `OGMMetricHistoryStore.write_snapshot` (clean baseline, 0%
+null rate, matching the real seeded data). Then injected one anomalous run: null rate jumps to
+60%. `detect_anomalies` correctly flagged it `CRITICAL` (60% deviation vs 15% tolerance,
+`AnomalyFamily.NULL_SPIKE`). `write_anomalies` persisted the event; `recent_anomalies` (the same
+call `get_anomalies` makes) read it straight back from real Neo4j. **The whole loop is proven
+live, not simulated**: history → drift → detection → persisted alert → readable by the same
+tool the agent/webapp would call. For the live demo, walk through this exact sequence on
+`raw_counterparties` rather than a bare "empty, no history yet" answer.
 
 **Separately found and fixed the same day**: this same verification pass caught the OGM Lambda
 (`Staging-BPC-BrighthiveCor-StagingBrighthiveOgmLamb-7rq4VUX9bI9E`) missing its
@@ -183,26 +270,63 @@ that is NOT linked from the routines card. If asked "can I see exactly what step
 runs," the honest answer is "not from this card — that's a different, unconnected part of the
 app today."
 
-**Loop Capital's own workspace has zero routines today** — confirmed live: both
-`routineSuggestionsForWorkspace` and `scheduledRoutinesForWorkspace` return empty for
-workspace `e3fc0917-03a6-4ac6-aad4-ac265329bfb9`. This is expected, not a bug — BrightRoutines'
-detector surfaces suggestions from real observed usage patterns over time, and Loop Capital's
-workspace is a fresh synthetic demo environment with no organic activity history yet. The OneTen
-ground-truth workspace has a real one ("Generate weekly earnings report", status `OFFERED`) —
-confirmed live the same way.
+**UPDATE 2026-07-17 — Loop Capital's own workspace now HAS real routines.** The earlier "zero
+routines" state was correct at the time but was never permanent — it reflected a fresh workspace
+with no observed activity yet, exactly as predicted below. After this session's real activity
+(profiler/quality-check runs across all 11 assets, preview queries, drift-monitoring snapshots),
+the platform generated real suggestions on its own: `routineSuggestionsForWorkspace` returns 2
+`OFFERED` suggestions ("Monthly counterparty exposure digest", "Daily stale-data check on
+holdings_raw"); `scheduledRoutinesForWorkspace` returns 2 real `SCHEDULED` routines ("Nightly
+compliance breach sweep", "Weekly earnings report"). Confirmed live, not seeded or forced —
+genuinely demoable on Loop Capital's own tenant now, not just OneTen's.
 
-**Demo script**: navigate Knowledge → Workflows to show the real OneTen routine card in the
-webapp (or ask BrightHive's own team account, not Loop Capital's), then the equivalent Slack
-card — same routine, two surfaces. Frame it as "this is what emerges after the agent has
-watched your team's real work for a while" — do NOT open Loop Capital's own workspace expecting
-to find one; there isn't one yet. Do NOT click into the other five "Formulas" cards — they're
-placeholders, not built.
+**Demo script**: Knowledge → Workflows on Loop Capital's own workspace now shows real routine
+cards directly — no need to borrow OneTen's or BrightHive's team account. Frame it as "this is
+what emerged after the agent watched your team's real work this session." Do NOT click into the
+other "Formulas" cards beyond these four — they're placeholders, not built.
 
 **What NOT to claim here**: (1) MCP/A2A exposure of BrightRoutines (letting an external agent
 trigger a routine) is scoped (BH-1038–1041) but not built — if asked "can another system trigger
 this," the honest answer is "that's on the roadmap, not built yet." (2) A routine card does not
 show its own run history or its underlying step logic today — those live in a separate,
 unconnected part of the app (see above).
+
+---
+
+## 4a. Proactive chat offers and schema-drift remediation — scoped, two real gaps
+
+Scoped 2026-07-17 (research only, no code written) in response to a request for BrightAgent
+proactively suggesting things ("here's a visualization of this table", "who could help me
+understand this data", "an experiment run on this golden table") and for schema-drift (a column
+type change) to open a remediation PR like GC-16's dbt/SSIS paths.
+
+**Proactive chat offers — mixed, not a clean yes.**
+- **Chart/visualization**: EXISTS and is proactively offerable. `generate_vega_lite_chart_tool`
+  (`brightbot/agents/visualization_agent/tools.py:118`); the supervisor's mandatory "Next Steps"
+  closing rule (`supervisor_system_prompt.py:425-431`) explicitly lists visualization as an
+  example proactive offer.
+- **"Who owns this data"**: the data EXISTS (`DataAsset.managers`/`owner`, reachable via tool),
+  but it is reactive-only — the supervisor never proactively suggests an ownership/steward
+  lookup. Answerable if asked directly; not offered unprompted.
+- **"Run an experiment on this table"**: DOES NOT EXIST as a distinct capability. The nearest
+  tool (`scan_warehouse_tables_tool`) is framed as health monitoring ("find bad tables"), not a
+  user-facing "run an exploration for me." No tool or prompt uses "experiment" framing anywhere.
+
+**Schema drift → PR — real, but it's a dead end for the demo's headline scenario.**
+Two unconnected "schema drift" concepts exist:
+1. A dbt-error-TEXT classifier (`root_cause_classifier.py`) that recognizes phrases like
+   "column does not exist" in a failed dbt run's error message — this IS wired to GC-16's real
+   GitHub PR path.
+2. The longitudinal anomaly system's `AnomalyFamily` enum (row_count_drift, cardinality,
+   distributional_skew, null_spike) — **has no `SCHEMA_DRIFT` member at all**, and none of its
+   four value-drift families connect to any remediation trigger. `detect_anomalies` →
+   `write_anomalies` writes the event to Neo4j and stops; nothing downstream reads it to open a
+   PR. Confirmed a dead end, not "not yet tested."
+
+**Honest framing for the demo**: value-drift detection (the null-spike proof above) is real and
+live. A genuine "the platform noticed a column's data type changed and opened a PR" moment is
+NOT demoable today — it only exists for dbt build-failure error text, not for an actual detected
+schema change on a live table. Don't claim it; this is real, scoped, follow-up work.
 
 ---
 
@@ -357,6 +481,11 @@ cd brighthive-e2e && .venv/bin/python -m pytest e2e/features/edges/test_loopcapi
 # 2. Confirm the golden-case proactive loop still passes
 cd brightbot && RUN_LIVE_SQLSERVER=1 BH_RUN_LIVE_EVALS=1 pytest tests/integration/golden_cases/ \
   -k "gc_14 or gc_15 or gc_16 or gc_17 or governance"
+
+# 2b. GC-15 also live-proven against the REAL deployed EC2 SQL Server (54.197.188.168),
+#     not just the local sandbox, as of 2026-07-17: disk-check correctly reports 54.38% free
+#     (no false alarm); real SQL Server Agent jobs seeded and confirmed Succeeded/Failed with
+#     real surfaced error text. Both scenarios demoable against the actual BYOW box.
 
 # 3. Confirm dbt-mcp lineage is STILL LIVE (not just still invokable — this test only
 #    checks the tool got called; a SKIP here is common (~6/6 seen on 2026-07-16 morning)
