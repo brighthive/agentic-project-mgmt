@@ -1,5 +1,5 @@
 # Sprint 13 — Customer-Facing Highlights
-**BrightHive | June 23 – July 20, 2026**
+**Brighthive | June 23 – July 20, 2026**
 
 ---
 

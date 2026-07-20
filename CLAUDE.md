@@ -192,7 +192,7 @@ agentic-project-mgmt/
 
 Hard rules (also in the template):
 1. **Every ticket MUST have `parentKey="BH-XXX"`** — the Epic key. Tickets without an epic parent are rejected.
-2. **Always `issueType="Task"`. Never `"Story"`.** All children of epics at BrightHive are Tasks.
+2. **Always `issueType="Task"`. Never `"Story"`.** All children of epics at Brighthive are Tasks.
 3. **Project key**: `BH`. Board ID: `152`.
 4. **Find the epic live** before creating — never hardcode IDs: `mcp__jira__jira_get_epics(boardId=152, done=false)`
 5. **`customfield_10014` is blocked** by screen config — use `parentKey="BH-XXX"` instead.

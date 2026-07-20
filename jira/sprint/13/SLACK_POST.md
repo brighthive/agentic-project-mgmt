@@ -3,7 +3,7 @@ Posted to #releases on July 20, 2026 | ts: 1784587327.739009
 
 ---
 
-🧵 BrightHive Sprint 13 Release
+🧵 Brighthive Sprint 13 Release
 Release Date: July 20, 2026 • Sprint Period: June 23–July 20, 2026 • 28-day execution window
 
 ---
