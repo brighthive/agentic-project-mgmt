@@ -1,0 +1,70 @@
+{
+  "sprint": 13,
+  "name": "Sprint 13 — Routines, Signals & Trust Hardening",
+  "dates": {
+    "start": "2026-06-23",
+    "end": "2026-07-20",
+    "duration_days": 28
+  },
+  "note": "Unofficial sprint — no Jira sprint object. Scope derived from GitHub PRs merged June 23–July 20 + Jira tickets updated in same window (BH-737 through BH-1137, 446 tickets touched). Same date-range-cut pattern as Sprint 12.",
+  "goals": [
+    "BrightRoutines end-to-end: proactive schedule detection, workflow automation, ownership model (BH-876 epic, 30+ sub-tasks)",
+    "BrightSignals maturation: notification preferences, unread-count consistency, Signal Catalog refactor (BH-409, BH-1131)",
+    "Longaeva PoC trust hardening: analyst grounding, disambiguation, MCP tool contract fixes, quality-rule enforcement (BH-601, BH-173)",
+    "Monitoring Agents: pipeline discovery, watchdog poller, auto-remediation loop for dbt/Databricks (BH-1036)",
+    "Skills Extension Framework for deep_agent — SSIS/SSRS diagnostics (BH-860)",
+    "PII enforcement across agent I/O — sample-row masking sweep (BH-1084/BH-1078)",
+    "Semantic View lifecycle fixes — MCP/GraphQL parity, merge confirmation (BH-624)"
+  ],
+  "tickets": {
+    "total": 446,
+    "done": 141,
+    "needs_refinement": 235,
+    "code_review": 25,
+    "staging_qc": 18,
+    "testing_dev": 8,
+    "canceled": 5,
+    "to_do": 4,
+    "ready_for_staging": 4,
+    "in_progress": 4,
+    "blocked": 2,
+    "note": "446 unique tickets touched in window BH-737–BH-1137. Majority (235) sit in Needs Refinement — largely merged work not yet transitioned, consistent with Sprint 11/12 pattern."
+  },
+  "points": {
+    "total": 43,
+    "completed": 43,
+    "note": "Only 13 of 446 tickets carry story points (all completed). Estimation coverage remains near-zero — same gap flagged in Sprint 12."
+  },
+  "completion": {
+    "tickets_pct": 31.6,
+    "prs_delivered": 499,
+    "note": "Ticket pct understates delivery — most work ships via PR first, ticket status lags. 499 feature/fix PRs shipped across 28 days."
+  },
+  "team": {
+    "drchinca": {"display": "Kuri", "prs": 417},
+    "Nano-233": {"display": "Harbour", "prs": 71},
+    "Marwan-Samih-Brighthive": {"display": "Marwan", "prs": 88},
+    "sherbiny-bh": {"display": "Ahmed", "prs": 3}
+  },
+  "prs": {
+    "total_merged": 579,
+    "feature_prs": 499,
+    "staging_release_carriers": 80,
+    "additions": 355423,
+    "deletions": 91481,
+    "lines_changed": 446904,
+    "repos_touched": ["brightbot", "brighthive-platform-core", "brighthive-webapp", "brightbot-slack-server", "brighthive-admin", "brighthive-data-workspace-cdk"]
+  },
+  "themes": [
+    "BrightRoutines — proactive schedule detection, workflow automation, ownership/accountability model (BH-876)",
+    "BrightSignals maturation — Signal Catalog, notification preferences, unread-count consistency, per-user severity filters (BH-409, BH-1131)",
+    "Longaeva PoC trust hardening — analyst grounding/disambiguation, MCP tool contract fixes, quality-rule enforcement (BH-601, BH-624)",
+    "Monitoring Agents — pipeline discovery, watchdog poller, auto-remediation loop, dbt/Databricks health adapters (BH-1036, BH-1037)",
+    "Skills Extension Framework — SSIS/SSRS diagnostic skills for deep_agent (BH-860)",
+    "Always-on PII enforcement — sample-row masking sweep across agent I/O boundaries (BH-1084, BH-1078)",
+    "Lineage-aware data quality — dbt/Databricks lineage adapters, medallion-tier gating (BH-1061)",
+    "Analytics dashboard — wiring mock data to live workspace resolvers (BH-835)",
+    "Visualization agent refactor — deterministic Vega-Lite spec assembly (BH-1009)",
+    "Platform reliability — Neo4j bolt pool exhaustion, catalog/MCP tool parity fixes, RBAC/auth hardening (BH-173, BH-172)"
+  ]
+}
