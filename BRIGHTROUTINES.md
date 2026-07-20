@@ -192,3 +192,22 @@ if off, off everywhere; if on, check **per-workspace** override in AWS Secrets
 | BH-1003 | brightbot-slack-server: routine-suggestion Slack action route + cards |
 | BH-1004 | brighthive-e2e: local no-SSO chain test for the Slack auth path |
 | BH-1005 | (tech-debt) split `typedefs.ts` |
+
+## Related — the notification framework routines feed
+
+A routine's output is a **notification signal**, and every signal now flows through the
+**BrightSignals Signal Catalog** — one `signal-catalog.json` that is the single source of truth
+for each signal type's `label`, `category`, and `severity`, shared across platform-core (canonical),
+brightbot-slack-server, and brighthive-webapp (vendored, CI drift-checked). platform-core stamps
+severity/category on write; Slack, the webapp inbox/bell, Teams, and email all read those values.
+`scheduled_workflow_success`/`_error` and `workflow_suggestion` (the signals routines emit) are
+catalog entries like any other.
+
+- **Signal Catalog spec + architecture**: `brightbot-slack-server/docs/specs/signal-catalog.md`,
+  `brightbot-slack-server/docs/NOTIFICATIONS_ARCHITECTURE.md` (epic BH-409, merged to `develop`).
+- **On-demand, agent-authored alerts** (epic BH-1131): the follow-on layer where a user — or
+  BrightAgent — defines "notify me when metric X crosses Y" as data; a scheduled routine action
+  evaluates it and emits a generic `custom_alert` signal through the same catalog plumbing. This is
+  where routines become the evaluator for user-defined alerts. Spec:
+  `brightbot-slack-server/docs/specs/on-demand-alerts.md` (contract written, implementation pending —
+  BH-1131 tickets). Open decision: BH-1132 (webapp per-user min-severity scope).
