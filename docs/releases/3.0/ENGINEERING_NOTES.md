@@ -85,7 +85,30 @@ Investigated whether the volume of Sprint 13 GraphQL/schema changes (~50 commits
 
 `Brighthive` (lowercase h) is now the canonical spelling globally, replacing `BrightHive`. Updated `~/.claude/rules/naming.md`, the workspace root `CLAUDE.md`, and the live Sprint 13 Slack post. Historical ticket text and already-shipped-feature descriptions referencing the old casing were left as-is (they're records of real ticket text, not new prose).
 
-## 8. Recommendations before calling this a release
+## 8. Minor fixes shipped this cycle (not UAT-relevant, logged for the record)
+
+Small papercut fixes across the webapp, already merged — not something UAT needs to actively test, just a record of what shipped:
+- Upload modal click-to-browse (previously drag-and-drop only)
+- Update/Edit and Add/Create button label consistency
+- Green-background button text contrast
+- Delete confirmations added for projects and schemas
+- "Brighthive" branding casing fixed app-wide
+- Password show/hide toggle on login
+- Projects Grid/Table view parity
+- Stale "beta/preview/coming soon" tags removed
+
+## 9. Features built but intentionally hidden from nav
+
+Not part of this release's testable surface — flagged here so engineering knows the state, not for UAT to chase:
+- **Analytics Dashboard**: wired to real KPI data, deliberately hidden from nav again after testing surfaced gaps (`chore(nav): hide Analytics Dashboards from nav`, 2026-07-17).
+- **Access Control & Usage/Audit pages** (under Govern): hidden from nav pending further work.
+- **Monitoring Agents / pipeline watchdog**: dbt/Databricks auto-detection and auto-fix, in Staging QC, not fully rolled out.
+
+## 10. Other known in-progress work (unrelated to this release's scope)
+
+PII-masking hardening beyond the BH-1078 hotfix, Longaeva grounding/disambiguation fixes, and Semantic View lifecycle bugs are separately tracked and in progress — not blockers for this release, not relevant to UAT testing of the features above.
+
+## 11. Recommendations before calling this a release
 
 1. **Get PR #912 (BH-1078) reviewed and merged** — this is the release's actual blocker.
 2. **Open and merge equivalent hand-ports for BH-776/BH-777** — same divergence problem as #912, same fix pattern.

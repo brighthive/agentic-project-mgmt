@@ -44,27 +44,7 @@ The analyst agent can now load specialized diagnostic skills on demand, starting
 
 **Test**: for SSIS/SSRS-connected workspaces, ask the analyst a pipeline-diagnostic question and confirm it routes to the specialized skill.
 
-### 🧹 UAT bug-fix wave — papercuts fixed
-- Upload modal click-to-browse now works (not just drag-and-drop)
-- Update/Edit and Add/Create button labels are now consistent
-- Green-background button text is now readable
-- Delete confirmations added for projects and schemas
-- "BrightHive" branding casing fixed app-wide (note: casing convention itself changed mid-cycle — see engineering notes)
-- Password show/hide toggle added on login
-- Projects Grid/Table views now show matching data
-- Stale "beta/preview/coming soon" tags removed everywhere
-
 ---
-
-## Built but not yet visible — ask your lead to enable
-
-- **Analytics Dashboard**: wired to real KPI data behind the scenes, but was deliberately hidden from navigation again after testing surfaced gaps — ask your lead for a feature flag if you need to test it directly.
-- **Access Control & Usage/Audit pages** (under Govern): also hidden from nav pending further work.
-- **Monitoring Agents / pipeline watchdog**: auto-detection and auto-fix for dbt/Databricks pipeline failures is in staging validation, not yet fully rolled out — ask your lead before relying on it.
-
-## Known gaps — expect these, don't file as new bugs
-
-- PII-masking hardening on a few sample-data surfaces, Longaeva grounding/disambiguation fixes, and Semantic View lifecycle bugs are tracked and in progress. If you hit something in these areas, check with your lead before filing — it's likely already known.
 
 ## Why this is still a draft, not a release
 
