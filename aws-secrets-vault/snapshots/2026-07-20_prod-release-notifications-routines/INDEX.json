@@ -1,0 +1,124 @@
+{
+  "captured": "2026-07-20",
+  "release": "Sprint 13 prod promote — BrightSignals notifications + BrightRoutines scheduler",
+  "ticket": "BH-409 / BH-876 (parent epics); secret wiring precedent BH-1063",
+  "status": "PENDING — no secret mutated yet. This manifest is the checklist gate; each row below moves to a real snapshot subfolder only after explicit, per-secret, named confirmation per the hard rule in ../../../CLAUDE.md",
+  "protocol": "Mutation Protocol in ../../README.md — LastPass first, snapshot before/after, read-modify-write, commit INDEX.json only, never raw payloads",
+  "secrets": [
+    {
+      "name": "NOTIFICATIONS_API_KEY",
+      "targets": [
+        {
+          "surface": "aws-secrets-manager",
+          "account": "PROD (104403016368)",
+          "secret_id": "prod/platform/platform-core",
+          "consumed_by": "platform-core notifications-service-key.ts (bare process.env read — NOT in src/common/env-vars.ts zod schema)",
+          "status": "not_started"
+        },
+        {
+          "surface": "github-actions-secret",
+          "repo": "brighthive/brightbot-slack-server",
+          "set_via": "gh secret set NOTIFICATIONS_API_KEY --repo brighthive/brightbot-slack-server",
+          "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env",
+          "status": "not_started"
+        }
+      ],
+      "must_match_across_targets": true,
+      "gap_flagged": "platform-core has no declared required-secret manifest for this key — env-vars.ts zod schema does not include it. Recommend adding before this release, see 'System gaps' below."
+    },
+    {
+      "name": "SLACK_CONNECT_INTERNAL_SECRET",
+      "targets": [
+        {
+          "surface": "aws-secrets-manager",
+          "account": "PROD (104403016368)",
+          "secret_id": "prod/platform/platform-core",
+          "consumed_by": "platform-core src/common/env-vars.ts (zod schema — DECLARED)",
+          "status": "not_started"
+        },
+        {
+          "surface": "github-actions-secret",
+          "repo": "brighthive/brightbot-slack-server",
+          "set_via": "gh secret set SLACK_CONNECT_INTERNAL_SECRET --repo brighthive/brightbot-slack-server",
+          "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env",
+          "status": "not_started"
+        }
+      ],
+      "must_match_across_targets": true,
+      "gap_flagged": null,
+      "incident_note": "This exact secret was involved in the 2026-07-13 incident (see ../../../../CLAUDE.md 'NEVER touch secrets' rule + memory/feedback_never_modify_env_vars.md) — generated + set without named confirmation off an ambiguous 'fix that' reply. Extra care required: confirm exact value/generation method by name before any write."
+    },
+    {
+      "name": "SCHEDULER_SERVICE_API_KEY",
+      "targets": [
+        {
+          "surface": "aws-secrets-manager",
+          "account": "PROD (104403016368)",
+          "secret_id": "prod/platform/platform-core",
+          "consumed_by": "platform-core routine-scheduler-client.ts (bare process.env read — NOT in zod schema)",
+          "status": "not_started"
+        },
+        {
+          "surface": "github-actions-secret",
+          "repo": "brighthive/brightbot-slack-server",
+          "set_via": "gh secret set SCHEDULER_SERVICE_API_KEY --repo brighthive/brightbot-slack-server",
+          "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env",
+          "status": "not_started",
+          "precedent": "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json — same secret, staging. Reuse identical protocol for prod."
+        },
+        {
+          "surface": "langgraph-cloud-deployment-env",
+          "target_repo": "brightbot",
+          "deployment": "brightagent-prod (per langsmith-vault/data/prod/)",
+          "consumed_by": "brightbot os.environ.get('SCHEDULER_SERVICE_API_KEY') — bare read, no manifest",
+          "status": "not_started",
+          "protocol_ref": "../../../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md — pre-change snapshot, per-edit approval, read-modify-write PATCH, post-change snapshot, all in the same PR"
+        }
+      ],
+      "must_match_across_targets": true,
+      "gap_flagged": "platform-core has no manifest entry; brightbot has no manifest entry. Three independent targets, zero shared declaration today."
+    },
+    {
+      "name": "SCHEDULER_WEBHOOK_SECRET",
+      "targets": [
+        {
+          "surface": "aws-secrets-manager",
+          "account": "PROD (104403016368)",
+          "secret_id": "prod/platform/platform-core",
+          "consumed_by": "platform-core scheduler-bridge.ts (bare process.env read — NOT in zod schema)",
+          "status": "not_started"
+        },
+        {
+          "surface": "langgraph-cloud-deployment-env",
+          "target_repo": "brightbot",
+          "deployment": "brightagent-prod (per langsmith-vault/data/prod/)",
+          "consumed_by": "brightbot bare env read, no manifest",
+          "status": "not_started",
+          "protocol_ref": "../../../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md"
+        }
+      ],
+      "must_match_across_targets": true,
+      "gap_flagged": "Same as SCHEDULER_SERVICE_API_KEY — no declared manifest on either target."
+    }
+  ],
+  "approval_gate": {
+    "rule_source": "../../../../CLAUDE.md 'NEVER touch secrets/credentials without a separate, explicit, named confirmation'",
+    "required_before_any_write": [
+      "State exact secret name",
+      "State exact value or exact generation method",
+      "State exact target system(s)",
+      "Wait for user to confirm THAT SPECIFIC action by name — a general 'ok go' does not count"
+    ],
+    "approved_by": null,
+    "approved_at": null
+  },
+  "system_gaps_identified_this_release": [
+    "platform-core src/common/env-vars.ts zod schema is missing NOTIFICATIONS_API_KEY, SCHEDULER_SERVICE_API_KEY, SCHEDULER_WEBHOOK_SECRET — only SLACK_CONNECT_INTERNAL_SECRET is declared. Recommend adding a REQUIRED_SECRET_ENV_VARS list mirroring brightbot-slack-server's infrastructure/index.ts pattern.",
+    "brightbot has no required-secrets manifest at all — reads via bare os.environ.get with no startup validation.",
+    "No single tool today fans out a snapshot across all 3 surfaces (AWS Secrets Manager, GitHub Actions secrets, LangGraph Cloud deployment env) for one secret name — this INDEX.json is the manual bridge until that's automated."
+  ],
+  "related_snapshots": [
+    "../2026-06-22_dbt-cloud-api-staging-presync/INDEX.json",
+    "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json"
+  ]
+}

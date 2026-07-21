@@ -1,0 +1,4016 @@
+[
+  {
+    "key": "BH-1000",
+    "summary": "e2e: end-to-end scheduled-workflow completion → Slack + inbox delivery chain test (BH-962 follow-up)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1001",
+    "summary": "platform-core: service-key + actingUserId auth on scheduleRoutineSuggestion/dismissRoutineSuggestion",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1002",
+    "summary": "brightbot: x-acting-user-id auth mode on /manage/scheduled-agents",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1003",
+    "summary": "brightbot-slack-server: routine-suggestion Slack cards + Schedule/Dismiss action route",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1004",
+    "summary": "brighthive-e2e: end-to-end Slack routine-scheduling chain test against staging",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1005",
+    "summary": "tech-debt: split brighthive-platform-core src/graphql/schema/typedefs.ts (5000+ lines)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1006",
+    "summary": "fix(brightbot,webapp): Bedrock ReadTimeoutError kills turns with no retry and no FE error",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-1007",
+    "summary": "Surface resolved action kind/output artifact on scheduled-workflow Slack notifications",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-1008",
+    "summary": "brighthive-webapp: claude-review CI bot fails max-turns on nearly every open PR",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1009",
+    "summary": "Visualization Agent Refactor — deterministic spec assembly, multi-panel support, hardened data pipeline",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-1010",
+    "summary": "fix(brightbot): add auth + tenant-ownership check to GET /files/retrieve",
+    "status": "Canceled",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1011",
+    "summary": "fix(brightbot): add row/byte size cap to get_all=true file retrieval",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1012",
+    "summary": "fix(brightbot): reject spec-shaped input in generate_vega_lite_chart_tool instead of misparsing it",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1013",
+    "summary": "feat(brightbot): build dataset schema-descriptor helper (deterministic, replaces sample-guessing)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1014",
+    "summary": "feat(brightbot): build explicit chart-type registry with unsupported-type rejection",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1015",
+    "summary": "feat(brightbot): build deterministic Vega-Lite spec assembler from LLM intent + schema descriptor",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1016",
+    "summary": "feat(brightbot): add multi-panel/named-datasets support to generate_vega_lite_chart_tool",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1017",
+    "summary": "feat(brightbot): add GET /charts/{id}/hydrated centralized hydration endpoint",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1018",
+    "summary": "refactor(webapp): centralize chart-data hydration + visible error states (replace duplicated fetch/inject)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1019",
+    "summary": "fix(brightbot): validate assembled spec against full-dataset schema, not 20-row sample",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1020",
+    "summary": "test(brightbot): rebuild generate_vega_lite_chart_tool test suite + BH-995 regression fixture",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1009"
+  },
+  {
+    "key": "BH-1021",
+    "summary": "brighthive-platform-core: dev CDK deploy has failed since 2026-06-18 — dev/platform/platform-core secret missing SCHEDULER_SERVICE_API_KEY/SCHEDULER_WEBHOOK_SECRET",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1022",
+    "summary": "fix(notifications): drift detection emits canonical CRITICAL severity, not the outlier ERROR",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1023",
+    "summary": "OnboardDataAsset workflow defaults to only redshift warehouse (database_name, schema are hardcoded)",
+    "status": "Needs Refinement",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1024",
+    "summary": "Update OnboardDataAsset mutation workflow ",
+    "status": "In Progress",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Subtask",
+    "epic": "BH-1023"
+  },
+  {
+    "key": "BH-1025",
+    "summary": "fix(notifications): slack-server poller hardening — lease-TTL freeze, severity filter, fetch timeout, SSE leak",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1026",
+    "summary": "Update data organization cdk to dynamically execute ingestion ptath based on the default warehouse",
+    "status": "In Progress",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Subtask",
+    "epic": "BH-1023"
+  },
+  {
+    "key": "BH-1027",
+    "summary": "Introduce a new property for warehouse nodes for flagging default warehous",
+    "status": "In Progress",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Subtask",
+    "epic": "BH-1023"
+  },
+  {
+    "key": "BH-1028",
+    "summary": "docs/local-dev/MUTATIONS_INVENTORY.md stale — missing BrightRoutines mutations, last-reviewed 2026-06-08",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1029",
+    "summary": "brightbot-slack-server: docs/NOTIFICATIONS_ARCHITECTURE.md stale, last reviewed 2026-06-06",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1030",
+    "summary": "Webapp: missing space between \"catalog.\" and \"To confirm\" in remove-data-asset dialog",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1031",
+    "summary": "Webapp: policy confirm button says \"add policies\" (plural) when adding a single policy",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1032",
+    "summary": "Webapp: \"Brighthive\" misspelled with lowercase h — should be \"BrightHive\"",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1033",
+    "summary": "Webapp: Login page password field has no show/hide toggle",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1034",
+    "summary": "Webapp: action/confirm label mismatches (Update→Edit, Add Field→Create Schema Property, Remove→Delete)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1035",
+    "summary": "Webapp: deleting a project has no confirmation dialog",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1036",
+    "summary": "Monitoring Agents — proactive pipeline discovery &amp; health (dbt, Databricks, ETL)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-1037",
+    "summary": "Ingestion Observability — source syncs, batch, and event-processing health",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-1038",
+    "summary": "spec(routines): MCP/A2A surface for routine suggestions — list/schedule/dismiss/status as tools",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-1039",
+    "summary": "feat(mcp): expose routineSuggestionsForWorkspace + schedule/dismiss as curated FastMCP tools",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-1040",
+    "summary": "feat(mcp): expose scheduledRoutinesForWorkspace + unscheduleRoutine as MCP tools",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-1041",
+    "summary": "test(e2e): MCP client end-to-end — list/schedule/dismiss routine via A2A door against staging",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-1042",
+    "summary": "spec(monitoring): pipeline monitoring agent — project → pipeline discovery contract (dbt, Databricks, generic ETL)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1043",
+    "summary": "feat(monitoring): dbt job/run health poller — detect failed/stale runs, classify root cause",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1044",
+    "summary": "feat(monitoring): Databricks job/cluster health adapter (DatabricksPort)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1045",
+    "summary": "feat(monitoring): generic ETL pipeline adapter port + registry entry",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1046",
+    "summary": "feat(monitoring): proactive alert path — detected issue → Slack/inbox alert with proposed fix",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1047",
+    "summary": "feat(monitoring): auto-remediation loop for known fix patterns (check→find→alert→fix)",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1048",
+    "summary": "spec(ingestion-obs): source sync / batch / event-processing observability contract",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1037"
+  },
+  {
+    "key": "BH-1049",
+    "summary": "feat(ingestion-obs): Airbyte/source-sync health signals surfaced to monitoring agent",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1037"
+  },
+  {
+    "key": "BH-1050",
+    "summary": "feat(ingestion-obs): batch job observability (Step Functions execution history — reuse BH-844 groundwork)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1037"
+  },
+  {
+    "key": "BH-1051",
+    "summary": "feat(ingestion-obs): event-processing (streaming/queue) lag + failure detection",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1037"
+  },
+  {
+    "key": "BH-1052",
+    "summary": "feat(ingestion-obs): unify ingestion signals into the monitoring agent's alert path",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1037"
+  },
+  {
+    "key": "BH-1053",
+    "summary": "decision+fix(notifications): EventBridge dispatcher (Path A) is stranded off main — deploy or deprecate",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1054",
+    "summary": "feat(monitoring): watchdog poller — the actual missing proactivity primitive (calls existing on-demand tools on a cadence)",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1055",
+    "summary": "infra(dispatcher): add concurrency cap + fan-out load test to scheduled_agent_dispatcher before adding more watchdog consumers",
+    "status": "To Do",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1056",
+    "summary": "feat(notifications): add \"Clear read\" to notification drawer",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1057",
+    "summary": "provision the Loop Capital SQL Server sandbox (Docker, local) — replaces AWS RDS plan",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1058",
+    "summary": "provision a dbt Cloud job that can be deliberately triggered to fail (for BH-1043 e2e)",
+    "status": "To Do",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1059",
+    "summary": "track: scheduled_agent_dispatcher's LangGraph Cloud dependency is unaddressed by AgentCore/CEMAF migration tracks",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-453"
+  },
+  {
+    "key": "BH-1060",
+    "summary": "security: evaluate customer PII/data-value redaction for diagnosis text (scrub_text() covers secrets only, not customer data)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1061",
+    "summary": "Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-1062",
+    "summary": "feat(dbt-lineage): fetch + parse manifest.json/catalog.json, extract DAG + column metadata",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1063",
+    "summary": "feat(lineage): load parsed dbt/Databricks DAG into Neo4j as queryable lineage graph",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1064",
+    "summary": "feat(lineage): wire longitudinal-monitoring anomalies to walk the lineage graph forward (closes the BH-673 deferred bridge)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1065",
+    "summary": "verify: does anything render anomaly JSON metadata into a visible Slack/webapp message today?",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1066",
+    "summary": "feat: render longitudinal anomaly notifications in Slack + webapp (currently dead-ends, confirmed)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1067",
+    "summary": "feat: renderers for 5 new watchdog notification stages (Slack + webapp)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1068",
+    "summary": "feat(lineage): Snowflake-native lineage adapter (Snowpipe/Tasks/Streams/Dynamic Tables via ACCOUNT_USAGE)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1069",
+    "summary": "feat(lineage): brightbot call site for upsert_lineage_graph (BH-1063a)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1070",
+    "summary": "test: add missing unit/integration test coverage for metric-snapshot.ts (AnomalyEventNode/MetricSnapshotNode)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1071",
+    "summary": "docs: NOTIFICATION_SYSTEM_PLAN.md is stale — 4+ claims describe undeployed/never-built infra as current",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1072",
+    "summary": "Webapp: clicking a document/folder navigates to a dead route and lands on Home",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1073",
+    "summary": "Webapp: data asset delete/remove failures are silent — modal closes with no error, asset remains",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1074",
+    "summary": "feat(lineage): Databricks lineage adapter (DatabricksLineageSource) — closes Gap 4, currently untracked",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1075",
+    "summary": "feat(warehouse): new sql_server WarehouseType/WarehouseServiceProvider connection type",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1076",
+    "summary": "feat(quality): chain warehouse discovery -> per-table profiling for uncatalogued tables",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1077",
+    "summary": "feat(quality): DB-level rollup report aggregating per-table profiler results",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1078",
+    "summary": "P0: DBT load-table-schema returns raw PII sample rows to authenticated users (no masking layer)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1079",
+    "summary": "fix(brightbot): route dbt sample-row endpoints through pii_masking (P0)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1080",
+    "summary": "fix(brightbot): sweep all unmasked sample-row paths (governance/profiler/retrieval/workflow)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1081",
+    "summary": "config: flip PII_MASKING default on + provision privacy policies on demo/staging",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1082",
+    "summary": "test(e2e): real-behavior masking coverage on sample-row surfaces",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1083",
+    "summary": "feat(webapp): render \"PII masked\" indicator on DBT sample-rows table",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1084",
+    "summary": "Always-on PII enforcement across agent I/O (BH-1078 follow-through)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-1085",
+    "summary": "fix(platform-core): provision OMD autoClassification per warehouse + regex fallback for BYOW without OMD",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1084"
+  },
+  {
+    "key": "BH-1086",
+    "summary": "fix(brightbot): extend pii_masking to every agent tool I/O boundary (not just retrieval_agent)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1084"
+  },
+  {
+    "key": "BH-1087",
+    "summary": "feat(monitoring): dbt_run_failure webapp detail parity — platform-core registry + webapp card",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1088",
+    "summary": "feat(signals): replace target_user_id with scoped NotificationSubscription (workspace + personal)",
+    "status": "Staging QC",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1089",
+    "summary": "test(e2e): notification subscription CRUD + scoped delivery coverage",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1090",
+    "summary": "feat(notifications): profiler category + inbox category filter/pills + internal relative links",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1091",
+    "summary": "feat(monitoring): post-merge verification loop — VERIFYING cooldown state + honest re-detect",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1092",
+    "summary": "feat(monitoring): verify surgical PR actually opened after agent run — headless invocation is not deterministic",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1093",
+    "summary": "Profiler Slack notification links to nonexistent /data route instead of profiler tab",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1094",
+    "summary": "Surface curated failure reason for failed profiling notifications (Slack + webapp inbox)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1095",
+    "summary": "Failed profiling Slack notifications omit the human-readable asset name",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1096",
+    "summary": "feat(notifications): metric-free AI-only quality-check notification across all surfaces",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1097",
+    "summary": "feat(notifications): neutral \"Done\" pill for no-verdict completions (webapp) — one shared statusPill helper",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1098",
+    "summary": "SSE toast shows green \"Quality check passed\" for an AI-only run (no verdict)",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1099",
+    "summary": "test(e2e): AI-only quality notification delivers a lean, metric-free payload",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1100",
+    "summary": "spike: determine LangGraph Platform's run-completion signal (webhook vs poll)",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1101",
+    "summary": "brightbot: chat-session completion/interrupt notification hook + idempotent claim",
+    "status": "Code Review",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1102",
+    "summary": "webapp: presence heartbeat + \"Notify me\" opt-in toggle on chat thread",
+    "status": "Code Review",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1103",
+    "summary": "webapp: chat_run_complete/chat_run_interrupt stage labels + inbox rendering",
+    "status": "Code Review",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1104",
+    "summary": "brightbot-slack-server: \"Mute this session\" action for chat notify stages",
+    "status": "Code Review",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1105",
+    "summary": "test(e2e): chat-session-notify delivery chain against staging",
+    "status": "Code Review",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1106",
+    "summary": "Notification preferences: per-category inbox toggles + no-rules quality toggle",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1107",
+    "summary": "Add SQL Server as a UI-connectable warehouse source & destination (BYOW, no MCP)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-1108",
+    "summary": "Surface pipeline health, watchdog findings & PR fix-suggestions in-app (Projects + Analytics)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-359"
+  },
+  {
+    "key": "BH-1109",
+    "summary": "Add Microsoft Teams as a notification delivery channel (parity with Slack)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117"
+  },
+  {
+    "key": "BH-1110",
+    "summary": "Persist watchdog run + remediation PR state to platform-core (prerequisite for BH-1108)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1111",
+    "summary": "dbt dependency-edge writer + lineage traversal + DAG viewer (Phase 1, better-than-dbt-Cloud surfacing)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1112",
+    "summary": "Write-through warehouse connections from platform-core to Secrets Manager (prerequisite for real watchdog polling)",
+    "status": "Canceled",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-1113",
+    "summary": "currentUser throws on null firstName/lastName for workspace-owner UserNode created via createWorkspace",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1114",
+    "summary": "Bronze/silver/gold medallion-tier quality gating — no code exists today",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1061"
+  },
+  {
+    "key": "BH-1115",
+    "summary": "Data Profiler/Quality Check run against stale asset state after append (no debounce on OM sync webhook)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1116",
+    "summary": "Ingestion agent self-service: autonomously connect BYOW warehouse from chat (SQL Server + OMD sync) (BH-1036)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1036"
+  },
+  {
+    "key": "BH-1117",
+    "summary": "Analyst agent is blind to warehouse_type; cannot report table counts/rows/size for Synapse",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1118",
+    "summary": "Branded BrightAgent[bot] identity for agent-authored commits and PRs",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Story",
+    "epic": null
+  },
+  {
+    "key": "BH-1119",
+    "summary": "Semantic view + warehouse answers must be grounded and proactive, not placeholder/punt",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1120",
+    "summary": "Read-only warehouse SQL tool so the agent runs totals/disk queries itself",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Story",
+    "epic": null
+  },
+  {
+    "key": "BH-1121",
+    "summary": "fix(platform-core): disconnectSlackFromWorkspace must clean up orphaned personal Slack identity links",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-1122",
+    "summary": "Webapp: Projects list Grid view missing Managers row + \"Owning org.\" casing mismatch vs Table view",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1123",
+    "summary": "Add real createdAssetCount to Project — Grid/Table \"Created Assets\" is empty or mislabeled",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1124",
+    "summary": "Signal Catalog: add signal-catalog.json + catalog.ts loader (PC-PR1)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1125",
+    "summary": "Signal Catalog: stamp severity on the GraphQL wire (PC-PR2)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1126",
+    "summary": "Signal Catalog: dispatcher honors severity_filter + CI drift-check (PC-PR3)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1127",
+    "summary": "Signal Catalog: Python publisher const + status normalization (PC-PR4)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1128",
+    "summary": "Signal Catalog: slack-server adopts catalog, refactor classify (SLACK-PR1)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1129",
+    "summary": "Signal Catalog: webapp adopts catalog, delete 4 vocabs + 3 title switches (WEBAPP-PR1)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-1130",
+    "summary": "Pre-existing brightbot unit failures on develop: circular import + test-order pollution",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1131",
+    "summary": "On-Demand Alerts — agent-authored notification rules on the Signal Catalog",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-1132",
+    "summary": "Decide: should webapp per-user min-severity apply to all stages, or stay quality-scoped?",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1131"
+  },
+  {
+    "key": "BH-1133",
+    "summary": "Guard notification-feed consumers outside src/Notifications from severity/category drift",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-1131"
+  },
+  {
+    "key": "BH-1134",
+    "summary": "Concurrent same-workspace chat requests fail: shared InMemoryRunLogger single-run state race",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-1135",
+    "summary": "Webapp: removing a file from a project uses native browser confirm() instead of branded dialog",
+    "status": "Needs Refinement",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1136",
+    "summary": "Webapp: \"Add Existing Schema\" / \"Create new schema\" buttons use inconsistent casing",
+    "status": "Needs Refinement",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-1137",
+    "summary": "Webapp: schema creation dialog button says \"Next\" but it creates the schema and closes immediately",
+    "status": "Needs Refinement",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-115",
+    "summary": "Interconnect-ability: Source & Destinations (A2A)",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-211",
+    "summary": "Data ProjectContainer",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Subtask",
+    "epic": "BH-206"
+  },
+  {
+    "key": "BH-212",
+    "summary": "Schema ProjectContainer",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Subtask",
+    "epic": "BH-206"
+  },
+  {
+    "key": "BH-213",
+    "summary": "Files for ProjectContainer",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Subtask",
+    "epic": "BH-206"
+  },
+  {
+    "key": "BH-363",
+    "summary": "Create analytics model with Cypher aggregation queries",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Story",
+    "epic": "BH-359"
+  },
+  {
+    "key": "BH-409",
+    "summary": "BrightSignals — proactive Slack notifications across the platform",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-415",
+    "summary": "feat(platform-core): subscription CRUD GraphQL API for notification preferences",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-453",
+    "summary": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore — remove LangGraph Cloud / LangSmith service dependency",
+    "status": "Needs Refinement",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-503",
+    "summary": "Configurable Quality Agent — workspace rule library, curation, and history",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-548",
+    "summary": "fix(platform-core): extend agent CRUD permissions to collaborator role in BrightStudio",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-557",
+    "summary": "feat(notifications): wire Quality Agent → BrightSignals end-to-end (per-rule, per-asset)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-558",
+    "summary": "feat(webapp): wire side-menu push-notifications to live BrightSignals data (currently fake)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-503"
+  },
+  {
+    "key": "BH-587",
+    "summary": "feat(slack): bidirectional @brightagent — pipeline-state Q&A + re-run/scaffold trigger",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-683",
+    "summary": "Engine-agnostic data asset preview — populate previewAvailable for BYOW (Snowflake/Redshift/BigQuery/etc.), not only ingested CSV/Airbyte",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-685",
+    "summary": "feat(brightbot): streaming heartbeat contract for long-running dbt-agent tools",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-689",
+    "summary": "fix(brightbot): surface generated SQL in quality-check responses",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-690",
+    "summary": "fix(brightbot): quality-check data-asset lookup falls back to FQN when filter fields are empty",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-691",
+    "summary": "fix(brightbot): fail open with clear message when core API times out during quality check",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-710",
+    "summary": "brightbot: confirm_semantic_view_merge tool + ActionClass.OBSERVATIONAL + honest ship copy",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-711",
+    "summary": "e2e: semantic-view lifecycle PR_OPENED→MERGED across Slack/MCP/webapp entry points",
+    "status": "Needs Refinement",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-712",
+    "summary": "Fix data catalogue search to be case-insensitive",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-713",
+    "summary": "BrightSignals: SSE push delivery + end-to-end observability (slack-server)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-714",
+    "summary": "BrightSignals: CloudWatch alarms + on-call runbook + monitoring infra",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-715",
+    "summary": "BrightSignals Notifications MVP — cross-repo delivery (brightbot, platform-core, webapp)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-716",
+    "summary": "ECS deploy reliability: immutable image digest + desiredCount fight fix",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-171"
+  },
+  {
+    "key": "BH-717",
+    "summary": "ECS infra: INTERRUPTS_ENABLED env var + IAM hardening + SSRF allowlist split",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-171"
+  },
+  {
+    "key": "BH-718",
+    "summary": "Slack-server auth hardening: Cognito JWT + x-api-key primary auth path",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-719",
+    "summary": "OAuth workspace guard: refuse re-point to unprovisioned workspace + shutdown watchdog",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-720",
+    "summary": "Thinking indicator: surface full agent fleet + dbt/MCP/Longaeva tools",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-721",
+    "summary": "BrightBot CORS preflight fixes — MCP session, CORS middleware, custom routes",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-722",
+    "summary": "dbt agent: account-specific access URLs + scaffold ValidationError fixes",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-332"
+  },
+  {
+    "key": "BH-723",
+    "summary": "Snowflake quality checks: tableFQN fallback + TIMESTAMP_NTZ overflow + compat pass",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-724",
+    "summary": "Multi-workspace auth fixes: thread access, run tagging, X-Workspace-Id header",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-725",
+    "summary": "MCP connectivity card: tools/list live rendering + JSON-RPC test + SSE parser",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-726",
+    "summary": "brightagent-mcp dedicated ingress: {env}.brighthive.net hostname + /bh-mcp path",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-171"
+  },
+  {
+    "key": "BH-727",
+    "summary": "System admin portal: per-workspace feature flag management (webapp + platform-core)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-728",
+    "summary": "Webapp auth fixes: error toasts, logout cookie clear, workspace-switch cascade",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-729",
+    "summary": "Platform-core: workspace getWorkspaces OGM 20-cap + WorkspaceSwitcher fixes",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-730",
+    "summary": "Platform-core: OM webhook parse fixes + embeddings trigger for scanned tables",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-731",
+    "summary": "Platform-core: 504 timeout fix — remove assertConstraints from Lambda request path",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-732",
+    "summary": "Superadmin cleanup mutations: dedup assets, purge embeddings, repair warehouse service",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-733",
+    "summary": "Slack workspace connect: bhagent_api_key provisioning + disconnect/reconnect cleanup",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-734",
+    "summary": "Webapp: Slack connect progress legends + state polling (no more 504 Network Error)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-735",
+    "summary": "Webapp: RBAC surface — honest 5-role display + members error state + role rename",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-736",
+    "summary": "Governance: SQL preview for quality rules + Data Drift Monitor feature flag",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-737",
+    "summary": "Redshift connector upgrade v2.17 for SOC compliance + platform-core audit IaC cleanup",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-171"
+  },
+  {
+    "key": "BH-738",
+    "summary": "HITL interrupts: DBT query_selection input surface in Slack",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-739",
+    "summary": "Webapp: Playwright e2e suite for auth + token lifecycle + CI Amplify fix",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170"
+  },
+  {
+    "key": "BH-740",
+    "summary": "UAT-MCP regression suite: 14-scenario harness against live staging MCP",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-741",
+    "summary": "analyst_ask MCP tool returns stub on staging — wire LangGraph runs API",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-742",
+    "summary": "get_semantic_view_yaml returns not_found for valid asset names + 'Not Available' render bug",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-743",
+    "summary": "get_anomalies returns [] for Longaeva gold mart — verify monitoring wiring or downgrade UAT",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-744",
+    "summary": "Re-scope: jargon firewall — fire ONLY on explicit non-tech cue (already works; lock it as eval)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-745",
+    "summary": "Rename SARAH_DEMO.md → NON_TECH_UAT.md, strip persona invention",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-746",
+    "summary": "fix(webapp): Uppy upload modal — browse-files click dead, only drag-and-drop works",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-747",
+    "summary": "run_longitudinal_analysis MCP tool is a no-op — wire to run_longitudinal_monitoring",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-748",
+    "summary": "fix(core): CSV upload to S3 fails 400 — SDK auto-CRC32 checksum on presigned PUT",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-749",
+    "summary": "dbt lineage (analyze_model_impact) intermittently returns 0 consumers for a model with real downstream dependencies",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-750",
+    "summary": "fix(webapp): project overview info tooltips only repeat the field name (IL-25)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-751",
+    "summary": "fix(webapp): low-contrast button text on green backgrounds (IL-28, IL-29, IL-31)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-752",
+    "summary": "fix(webapp): schedules & studio agents not scoped to active workspace (AssistantApiContext missing X-Workspace-Id)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-753",
+    "summary": "fix(brightbot): description-generation agent OGM fallback mis-attributes workspace (workspaces[0])",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-754",
+    "summary": "dbt lineage (analyze_model_impact) reports \"safe to modify\" for nonexistent models — not-found indistinguishable from real leaf",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-755",
+    "summary": "dbt lineage (analyze_model_impact) is silently case-sensitive — uppercase model name returns total=0 for a real model",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-756",
+    "summary": "analyst_ask `pending` diagnostic note leaks platform jargon (deep_agent, LangGraph)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-757",
+    "summary": "analyst_ask hits 90s cap on multi-tool flows (QC, dbt staging) — wire LangGraph runs API submit/poll",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-758",
+    "summary": "P0: analyst_ask has no conversational memory — S14 watchlist crosscheck breaks (no recall of prior turn)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-759",
+    "summary": "P0: deep_agent ships approximated/wrong numbers in plain-English replies (UAT S14-Q1 hallucination)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-760",
+    "summary": "P0: analyst inconsistently drops the as-of-date filter — country exposure 250x inflated, labeled \"latest date\"",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-761",
+    "summary": "Analyst disambiguation — hybrid ask-or-declare when a data question has divergent interpretations",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-762",
+    "summary": "Online LLM-judge quality eval — score every (prompt, answer) on responsiveness/accuracy/insight/honesty, gate ≥90",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-763",
+    "summary": "data_profiler MIN/MAX on UUID columns fails on Postgres (cross-dialect bug)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-764",
+    "summary": "Local dogfood seed — port Longaeva warehouse to Postgres + wire into local_bootstrap",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-765",
+    "summary": "fix(mcp): filesystem read/ls/grep/glob crash on success — deepagents backend returns dataclasses, wrappers call .get()",
+    "status": "Ready for Staging",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-766",
+    "summary": "gap: custom governance policies are inert metadata — created/stored but never enforced anywhere",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-767",
+    "summary": "gap: governance agent generates quality expectations but cannot persist them — createQualityRule never called",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-768",
+    "summary": "gap: applyOnIngestion / applyOnSchedule flags on quality rules are decorative — no trigger reads them",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-769",
+    "summary": "bug: ACTIVE quality rules failing 99-100% produce no alert/notification",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-770",
+    "summary": "bug: governance data-profiler null-count query fails on Snowflake — lowercased column names double-quoted (case-sensitive)",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-771",
+    "summary": "bug: GraphQL schema introspection returns 400 on staging — breaks search_graphql_schema, inspect_graphql_type, and member lookups",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-772",
+    "summary": "bug: analyst discards a correct warehouse answer and emits infra jargon when scratch-file write fails",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-773",
+    "summary": "config: Longaeva staging workspace missing s3_filesystem_name — scratch writes rely on global fallback bucket",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-526"
+  },
+  {
+    "key": "BH-774",
+    "summary": "bug: fetch_workspace_schemas never shows schema field names — jsonSchema is a String but code checks isinstance(dict)",
+    "status": "Staging QC",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-775",
+    "summary": "gap: business glossary is inert — terms are fetched/displayed but never used to disambiguate questions or ground SQL",
+    "status": "Ready for Staging",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-776",
+    "summary": "bug: agent disambiguates before checking existence/availability — asks how to interpret a query about data that isn't there",
+    "status": "Blocked",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-777",
+    "summary": "bug: simple 'data not available' questions take >90s (often minutes) — analyst grinds instead of concluding quickly",
+    "status": "Blocked",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-778",
+    "summary": "bug: quality-rule execution silently reports success when the QualityRuleExecution write to Neo4j fails",
+    "status": "Ready for Staging",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-779",
+    "summary": "gap: project target schemas never reach the agent — only a COUNT is injected, and no workflow step validates against them",
+    "status": "Ready for Staging",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-780",
+    "summary": "bug: MCP tools leak raw Pydantic ValidationError to clients on bad/missing args (11 tools)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-781",
+    "summary": "bug: introspect_warehouse_schema fails with KeyError 'user' on Redshift/Synapse — secret store provides 'username'",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-782",
+    "summary": "bug: scaffold_atlas_semantic_view raises opaque 'silver_schema parse error: name' on incomplete input",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-783",
+    "summary": "feat(brightagent): governance agent tool to create workspace custom policies",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-784",
+    "summary": "Project Settings: reconcile edit/read-only views, fix owner & End Date editing",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-785",
+    "summary": "21 DataAssets have empty fields[] — breaks asset detail and SQL generation",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-786",
+    "summary": "QualityRuleExecution does not expose executedSql — governance AC unverifiable",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-787",
+    "summary": "[BLOCKER] Scheduler: invalid cron persists rejected row before validation",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-788",
+    "summary": "list_platform_sources leaks GraphQL envelope — clients must traverse data.data.workspace.services.sources",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-789",
+    "summary": "Standard daily cron \"0 3 * * *\" fails EventBridge conversion — returns 502",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-790",
+    "summary": "[BLOCKER] MCP scaffold_atlas_semantic_view crashes on Silver assets — silver_schema parse error",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-791",
+    "summary": "4 DataAssets have empty tableFQN — breaks SV matching and agent routing",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-792",
+    "summary": "get_semantic_view_yaml (MCP) returns empty body while GraphQL has 3716 chars — BH-624 parity regression",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-793",
+    "summary": "createProject times out (504) for the GT workspace — project lifecycle broken",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-794",
+    "summary": "hasSemanticView=false on 3 assets with populated semanticViewYaml — Platform Core resolver bug",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-795",
+    "summary": "onboardDataAssetToWorkspace times out (504) before returning upload presigned URL",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-796",
+    "summary": "confirm_semantic_view_merge absent from shared MCP catalog — SV lifecycle incomplete",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-797",
+    "summary": "Agent issued 69 tool calls — exceeds upstream limit of 50",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-798",
+    "summary": "deep_agent run never reaches terminal status within 90s — dbt subagent timeout unhandled",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-799",
+    "summary": "SSE streaming gap 27s — dbt subagent hangs without progress chunks",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-800",
+    "summary": "Agent stream closes without explicit terminal signal — webapp spinner never dismisses",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-801",
+    "summary": "Orphaned task tool_call_id with no paired ToolMessage — breaks LangGraph checkpoint",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-802",
+    "summary": "search_memory_tool not in deployed MCP catalog — memory never works for agent",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-803",
+    "summary": "discover_data_assets {} returns isError for session workspace — primary catalog tool broken",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-804",
+    "summary": "current_workspace MCP tool returns structuredContent.status=None — violates I-MCP-READS-2",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-805",
+    "summary": "introspect_warehouse_schema count (28) diverges from GraphQL catalog (21) — agent sees different tables than platform",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-806",
+    "summary": "STG_STG_-doubled table names — root cause in introspect_warehouse_schema MCP tool (warehouse_tools.py)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-807",
+    "summary": "get_semantic_view_yaml MCP returns JSON envelope instead of raw YAML — 4512 chars vs 3716",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-808",
+    "summary": "21 assets carry \"Not Available\"/\"N/A\" sentinel placeholders in metadata",
+    "status": "To Do",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-809",
+    "summary": "Webapp: no-YAML asset detail page lacks Semantic View empty state",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-810",
+    "summary": "REST ingestion row count not exposed in catalog — AC-REST-03 unverifiable",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-811",
+    "summary": "DataAsset has no partitionKey field for S3 vendor ingestion",
+    "status": "To Do",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-812",
+    "summary": "DataAsset cannot represent Snowflake share read-only access — READ_ONLY missing from AccessStatus enum",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-813",
+    "summary": "Ingestion write tools leak raw Pydantic validation errors to clients",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-814",
+    "summary": "Webapp: asset detail page lacks Ask BrightAgent affordance",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-815",
+    "summary": "Ingestion flows (2) and platform sources (0) disagree on staging — sources not returning configured connectors",
+    "status": "In Progress",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-816",
+    "summary": "Webapp: catalog route renders /home instead of data-assets grid",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-817",
+    "summary": "Webapp: project overview has no info-tooltip affordances",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-818",
+    "summary": "Webapp: catalog page has no Upload entry point",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-819",
+    "summary": "5 Silver assets lack timestamp-shaped column — Silver tier contract violated",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-820",
+    "summary": "Webapp: green-background button text fails WCAG AA contrast (2.20:1 vs 4.5:1 required)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-114"
+  },
+  {
+    "key": "BH-821",
+    "summary": "get_lineage (real dbt DAG lineage) absent from staging MCP catalog",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-822",
+    "summary": "10 required-argument MCP tools leak raw Pydantic validation errors — get_anomalies, analyze_dbt_error etc.",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-823",
+    "summary": "dbt lifecycle lacks PR-state reconcile parity vs confirmSemanticViewMerge",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-824",
+    "summary": "5 Silver assets lack id-shaped column — Silver tier contract violated",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-825",
+    "summary": "ORDERS and ANOMALY_EVENTS have null connectionType — source classification broken",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-826",
+    "summary": "Agent mentions 10+ table names not in the workspace — hallucinated catalog inventory",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-601"
+  },
+  {
+    "key": "BH-827",
+    "summary": "Lowercase \"bearer\" auth scheme rejected — violates RFC 6750 case-insensitivity requirement",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-828",
+    "summary": "[BLOCKER] Neo4j bolt connector thread pool exhaustion — INTERNAL_SERVER_ERROR on workspace queries under concurrent load",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-829",
+    "summary": "[BLOCKER] Neo4j bolt connector thread pool exhaustion — INTERNAL_SERVER_ERROR under concurrent e2e suite load",
+    "status": "Needs Refinement",
+    "assignee": "Ahmed Elsherbiny",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-830",
+    "summary": "WorkspaceProjectFilterInput lacks status field — project status filtering not supported in GraphQL",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-831",
+    "summary": "get_semantic_view returns YAML while get_semantic_view_yaml returns not_found for same asset — tool parity failure",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-832",
+    "summary": "list_platform_sources MCP tool omits required sourceFilter arg — fix: add sourceFilter:{} to the sources query",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-833",
+    "summary": "confirmSemanticViewMerge MCP tool in catalog but returns GraphQL error — SV lifecycle loop broken",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-834",
+    "summary": "workspace.projects(projectFilter:{projectId}) returns empty list for valid project id — project lookup broken",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-835",
+    "summary": "DASHBOARD_ANALYTICS — Wire Analytics Dashboard to real workspace data (mock → live)",
+    "status": "Needs Refinement",
+    "assignee": "Matt Gee",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-836",
+    "summary": "Verify analytics Cypher against staging Neo4j; fix live overview/KB/alerts resolvers",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-837",
+    "summary": "Implement dataAssets analytics resolver (coverage + assetsBySource)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-838",
+    "summary": "Implement pipelineHealth analytics resolver (transformations + source status)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-839",
+    "summary": "Implement quality analytics resolver (parse ACE result JSON for scores)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-840",
+    "summary": "Implement enrichment analytics resolver (context + description coverage)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-841",
+    "summary": "Add Redis cache layer for workspaceAnalytics sections (per-section TTLs)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-842",
+    "summary": "Extend WorkspaceAnalytics schema for full-parity dashboard fields",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-843",
+    "summary": "Build daily platform metrics snapshot (new OGM node + EventBridge Lambda + trends query)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-844",
+    "summary": "Surface ingestion Step Functions execution history via GraphQL",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-845",
+    "summary": "Split AnalyticsDashboardPage (2227 lines) into section components",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-846",
+    "summary": "Wire Analytics dashboard to workspace.analytics query (remove mock data)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-847",
+    "summary": "Analytics subpages (Reports/Alerts/Notifications): real data or gate behind PreviewBanner",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-848",
+    "summary": "Analytics test coverage: platform-core Jest + brighthive-e2e + webapp Playwright (from captured real response)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-849",
+    "summary": "Reusable pagination primitive: shared PaginationInput + paginate&lt;T&gt; helper + {items,resultCount,hasMore} pages",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-835"
+  },
+  {
+    "key": "BH-850",
+    "summary": "Asset source field contains free-text phrase \"User upload via platform\" instead of canonical code",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-851",
+    "summary": "DataAssetFilterInput lacks hasSemanticView field — SV-filtered catalog queries not supported",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-172"
+  },
+  {
+    "key": "BH-852",
+    "summary": "get_semantic_view returns search/discovery response (not YAML) — tool contract unclear vs get_semantic_view_yaml",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-853",
+    "summary": "generate_sql_query_tool returns isError=true with empty structured content — no error code or detail",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-854",
+    "summary": "Ghost e2e upload artifact leaked into workspace catalog — cleanup_registry failed to delete",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-855",
+    "summary": "Session-scoped auth_token expires during long streaming runs causing cascading 401 failures",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-856",
+    "summary": "get_semantic_view returns ok+discovery response (not YAML) — confirmed different contract from get_semantic_view_yaml",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-624"
+  },
+  {
+    "key": "BH-857",
+    "summary": "Data Preview tab flashes empty state on initial load before query fires",
+    "status": "Canceled",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-858",
+    "summary": "Notification badge count drifts from drawer unread count (cross-workspace SSE + counter reconciliation)",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-859",
+    "summary": "Visualization agent silently ships empty multi-series charts (spec validated against empty data)",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-860",
+    "summary": "Skills Extension Framework for deep_agent — Low-Effort Agent Capabilities",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-861",
+    "summary": "feat(skills): Extend SkillModel schema with affinity, priority, token_estimate fields",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-862",
+    "summary": "feat(skills): Implement DeepAgentSkillsMiddleware for deep_agent",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-863",
+    "summary": "feat(skills): Write 3 SSIS/SSRS diagnostic system skills for analyst agent",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-864",
+    "summary": "test(skills): Write L0/L1/L2 test coverage for skills extension",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-865",
+    "summary": "test(e2e): Add brighthive-e2e feature tests for skills SSIS diagnostics",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-866",
+    "summary": "deploy(skills): Staging validation and demo prep for SSIS/SSRS POC",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-867",
+    "summary": "feat(skills): Deliver affinity-filtered skills to the analyst subagent",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-868",
+    "summary": "feat(skills): Materialize system skills into the agent read_file backend",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-869",
+    "summary": "test(skills): Create synthetic SSIS .dtsx fixture for diagnostics demo",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-870",
+    "summary": "chore(skills): Decide exposure of affinity/priority on customer Studio API",
+    "status": "Canceled",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-871",
+    "summary": "Pre-token-gen Lambda: emit mcp:write scope for WorkspaceAdmins",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-115"
+  },
+  {
+    "key": "BH-872",
+    "summary": "test(skills): Assert brightagent.skills.load OTel span is emitted",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-873",
+    "summary": "feat(skills): User file ingestion path into deep_agent backend for read_file",
+    "status": "Canceled",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-874",
+    "summary": "feat(skills): Derive supervisor routing hints from subagent skill affinity",
+    "status": "Done",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-875",
+    "summary": "test(e2e): Self-seed .dtsx in skills e2e so it exercises the full flow",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-860"
+  },
+  {
+    "key": "BH-876",
+    "summary": "BrightRoutines — proactive schedule detection and workflow automation",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Epic",
+    "epic": null
+  },
+  {
+    "key": "BH-877",
+    "summary": "feat(scheduler): Add secure execute_workflow support to scheduled-agent CRUD",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 2.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-878",
+    "summary": "feat(scheduler): Add scheduler service-auth and owner permission revalidation",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-879",
+    "summary": "feat(scheduler): Add terminal completion bridge for scheduled workflow runs",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-880",
+    "summary": "feat(webapp): Add workflow schedule affordance and labels",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 2.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-881",
+    "summary": "test(e2e): Add P1 contract for schedule to workflow run to delivery",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-882",
+    "summary": "feat(infra): Create proactive signal, pattern, and suggestion DynamoDB table + IAM",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-883",
+    "summary": "feat(brightbot): Add IntentCaptureMiddleware and ProactiveSignal store",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-884",
+    "summary": "feat(brightbot): Add recurring automation detector and schedulability judge",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 5.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-885",
+    "summary": "feat(brightbot): Add routine suggestion routes: list, schedule, dismiss",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-886",
+    "summary": "feat(webapp): Add Suggested Routines section and inbox card",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 5.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-887",
+    "summary": "feat(slack-server): Add workflow suggestion cards and handlers",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-888",
+    "summary": "feat(brightbot): Add threshold tuning and suppression policy",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 3.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-889",
+    "summary": "test(e2e): Add BrightRoutines eval corpus and P2-P4 contract coverage",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": 5.0,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-890",
+    "summary": "chore(agentic-project-mgmt): remove single-person defaults, align spec template, enforce git hygiene",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170"
+  },
+  {
+    "key": "BH-891",
+    "summary": "fix(docs): remove stale/confusing cross-repo references that would mislead an AI agent",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170"
+  },
+  {
+    "key": "BH-892",
+    "summary": "Quality report shows generic \"Error loading report\" — backend error message never surfaced to user",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-893",
+    "summary": "Warehouse sample query transient timeout fails quality report with cryptic driver error",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-894",
+    "summary": "View quality check hyperlink fix from inbox",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-895",
+    "summary": "Quality check on-demand rerun posts duplicate notifications",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-896",
+    "summary": "Webapp inbox silently drops notifications when poller claims an event but delivery never completes",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Bug",
+    "epic": null
+  },
+  {
+    "key": "BH-897",
+    "summary": "spec(brightroutines): AI-authored WorkflowSpec generation from intent",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-898",
+    "summary": "feat(platform-core): WorkflowSpecNode.authoredBy field + checkPolicies() runtime-allowlist backstop",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-899",
+    "summary": "feat(brightbot): ground node — catalog RAG + fingerprint clone-candidate lookup",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-900",
+    "summary": "feat(brightbot): draft node — constrained ReAct authoring loop + sqlglot SQL validator",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-901",
+    "summary": "feat(brightbot): validate node — WorkflowSpec compile round-trip + bounded BLOCKER retry",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-902",
+    "summary": "feat(brightbot): register workflow-author subagent with supervisor + L1 shape evals",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-903",
+    "summary": "feat(brightbot): wire AI-authoring pipeline into RoutineSuggestion schedule flow",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-904",
+    "summary": "test(e2e): local no-SSO e2e for ground/draft/validate WorkflowSpec authoring",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-905",
+    "summary": "chore(brightbot): re-enable disabled unit-test CI step (currently if: false)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-906",
+    "summary": "feat(scheduler): surface real failure reason in scheduled_workflow_error Slack notification",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": null
+  },
+  {
+    "key": "BH-907",
+    "summary": "fix(slack): make workspace connect provisioning atomic with OAuth",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117"
+  },
+  {
+    "key": "BH-908",
+    "summary": "feat(platform-core): refactor deliver() to a channel-adapter registry + deliver_teams() Adaptive Card adapter",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-909",
+    "summary": "feat(webapp): add Teams as a channel option once BH-415 subscription API ships",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-910",
+    "summary": "demo(brightbot): throwaway script — autonomous WorkflowSpec creation from a natural-language prompt",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-911",
+    "summary": "feat(platform-core): runtime-allowlist BLOCKER + artifact-presence WARNING in checkPolicies()",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-912",
+    "summary": "feat(slack): support multiple Slack teams per BrightHive workspace",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117"
+  },
+  {
+    "key": "BH-913",
+    "summary": "feat(slack): user-level identity linking (\"Sign in with Slack\")",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-117"
+  },
+  {
+    "key": "BH-914",
+    "summary": "staging deploy blocked: SCHEDULER_SERVICE_API_KEY / SCHEDULER_WEBHOOK_SECRET missing from staging/platform/platform-core secret",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-915",
+    "summary": "Cannot confirm brightbot staging LangGraph deployment picked up develop→staging merge",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-916",
+    "summary": "No visibility into brighthive-webapp Amplify staging build status from CLI/CI tooling",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-917",
+    "summary": "Deleting a schedule mid-run resurrects a malformed row (no existence/running guard on DynamoDB update_item)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-918",
+    "summary": "No timeout for a scheduled AGENT step whose runtime never calls back — run can hang RUNNING forever, holding the overlap lock",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-919",
+    "summary": "Non-constant-time secret comparison recurs in notifications.ts (4th instance of this bug class, pre-existing)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-920",
+    "summary": "Webapp: execute_workflow schedules can be created against a project with no compiled WorkflowSpec — guaranteed-fail schedule, zero client warning",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-921",
+    "summary": "brighthive-e2e: SPEC-E2E-SCHEDULER's action_type contract is stale; execute_workflow has zero coverage against a real deployed environment",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-922",
+    "summary": "Slack: routine display_name interpolated unescaped into mrkdwn — link/formatting injection via a user-controlled field",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-923",
+    "summary": "DBT/Datapiary adapters treat a rejected trigger request as RUNNING instead of surfacing the failure immediately",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-924",
+    "summary": "GraphQL call failure before a WorkflowRun is created is invisible to the poller/retry-sweep recovery path",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-925",
+    "summary": "Minor UAT findings batch: unescaped IDs in Slack, no click-through link, route-visibility UX inconsistency, missing regression tests",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-926",
+    "summary": "SECURITY: updateWorkflowRunStep mutation has zero authentication — forges scheduled-workflow completions",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-927",
+    "summary": "Deployed-env e2e test for execute_workflow doesn't poll for terminal outcome or notification delivery",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-928",
+    "summary": "Slack push-delivery path (/notifications/deliver) has no dedup — at-least-once retries double-post",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-929",
+    "summary": "quality_checks classification silently reports any unknown status as \"passed\"",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-930",
+    "summary": "Editing a schedule never re-validates the linked WorkflowSpec's compiled status",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-931",
+    "summary": "Batch: deployed-env e2e non-isolated project fixture, N+1 project-discovery loop, internal error-string leakage",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-932",
+    "summary": "Scheduled workflow Slack notification never shows completion timestamp",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-933",
+    "summary": "Terminal-bridge webhook has no dedup key — lost ack + poller retry can double-fire notification signal",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-934",
+    "summary": "Batch: schedule dialog defaults to runnable on a failed spec check; list page shows stale project names",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-935",
+    "summary": "cronUtils has unguarded every<=0 infinite loop; empty daysOfWeek silently defaults to SUN; editing a schedule resets cadence to default",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-936",
+    "summary": "Spec says \"executeWorkflow permission\" but no such policy scope exists — projectUpdate is the actual enforced check",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-937",
+    "summary": "A failed _releaseClaim write permanently and silently blocks all future notification delivery for a run",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-938",
+    "summary": "scheduled_agent_dispatcher Lambda has no CDK stack — no DLQ, no retry policy, no alarm surface",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-939",
+    "summary": "Webapp inbox and Slack delivery have no shared source of truth — can silently disagree on whether a notification was delivered",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-940",
+    "summary": "Schedules UI has no staleness indicator on a stuck \"Running\" chip and silently swallows poll failures",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-941",
+    "summary": "feat(platform-core): scheduled_agent_dispatcher handler for detect_recurring_patterns action",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-942",
+    "summary": "Foundational: canonical UserActivityEvent store for cross-feature longitudinal memory",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-943",
+    "summary": "Scale: fan out BrightRoutines detector from one fleet-wide cron over SQS with per-tenant fairness",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-944",
+    "summary": "Seed labeled corpus + calibration eval for schedulability judge (§11 promotion gate)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-945",
+    "summary": "OTel/LangSmith span instrumentation for schedulability judge + detector run",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-946",
+    "summary": "Move ProactiveSignal embedding to capture-time; drop OpenAI calls from nightly detector",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-947",
+    "summary": "EventBridge→dispatcher→LangGraph e2e for detect_recurring_patterns in brighthive-e2e",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-948",
+    "summary": "Webapp contract snapshot test for RoutineSuggestion shape (BH-885 dependency)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-949",
+    "summary": "Product/spec revisit: evidence anchor quote, one-dismiss suppression, three-option card, manager-report gate",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-950",
+    "summary": "feat(routines): W/P/U scoring — workspace, project, and user routine scores",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-951",
+    "summary": "feat(notifications): DM the owning user for scheduled QC/profiling runs via linked Slack identity",
+    "status": "Staging QC",
+    "assignee": null,
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-952",
+    "summary": "feat(dispatcher): thread schedule created_by into scheduled-run graph invocation",
+    "status": "Staging QC",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-953",
+    "summary": "refactor(routines): naming review — drop `Automation`/`Proactive` prefixes on BrightRoutines DTOs",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-954",
+    "summary": "webapp: render RoutineSuggestion cards on /context/workflows (Scheduled Actions goes live)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-955",
+    "summary": "feat(brightbot): register read-only summary-agent graph for P2 routine scheduling (unblocks BH-885)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-956",
+    "summary": "feat(routines): gate shadow promotion on calibration + adversarial floor, not precision alone",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-957",
+    "summary": "feat(routines): online judge eval + circuit breaker during detection (self-healing)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-958",
+    "summary": "fix(routines): pin embedding_model on ProactiveSignal; reject cross-model cohesion clustering",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-959",
+    "summary": "test(routines): cross-workspace isolation locks for suggestion + pattern stores (PS-13)",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-960",
+    "summary": "test(brightbot): IntentCaptureMiddleware real-behavior test — capture head of pipeline (fixture-integrity)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-961",
+    "summary": "feat(routines): flag high-variance judge verdicts + NEEDS_REVIEW abstain path",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-962",
+    "summary": "test(routines): routine delivery real-behavior coverage — Slack + inbox post on scheduled run",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-963",
+    "summary": "spec(routines): action/artifact type + accountability model (§3/§4/§5/§7/§9)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-964",
+    "summary": "feat(routines): ActionKind/OutputArtifact axes on intent + suggestion DTOs",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-965",
+    "summary": "feat(routines): Neo4j ownership/accountability edges + recipient model",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-966",
+    "summary": "feat(webapp): render \"what is it\" + authority + ownership on routine cards",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-967",
+    "summary": "feat(routines): scheduleRoutineSuggestion + dismissRoutineSuggestion mutations (platform-core)",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-968",
+    "summary": "feat(routines): persist ownership on schedule — owner/accepter/recipients + Neo4j edges",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-969",
+    "summary": "feat(routines): resolve action/artifact from WorkflowSpec at schedule time",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-970",
+    "summary": "feat(webapp): editable recipient at Schedule (\"send to Maria, not me\")",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-971",
+    "summary": "feat(notifications): add unified severity/trigger/timestamp footer to Slack messages",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-972",
+    "summary": "BrightRoutines capture — OTel spans on the classify + write path",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-973",
+    "summary": "BrightRoutines audit follow-ups: schedule idempotency, stranded-lock reaper, test gaps",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-974",
+    "summary": "BrightRoutines chain e2e is flaky on the judge gate — assert pipeline, not a guaranteed OFFER",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-975",
+    "summary": "feat(platform-core): scheduledRoutinesForWorkspace query — read SCHEDULED routines",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-976",
+    "summary": "feat(platform-core): unscheduleRoutine mutation — turn a routine off",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-977",
+    "summary": "feat(webapp): persist \"Your routines\" — server-fetched SCHEDULED + turn-off",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-978",
+    "summary": "test(e2e): \"Your routines\" persistence — surface + feature + FORBIDDEN against staging",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-979",
+    "summary": "refactor(platform-core): split typedefs.ts (5000+ lines) into per-domain schema modules",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-170"
+  },
+  {
+    "key": "BH-980",
+    "summary": "fix(notifications): unread count drift across bell / drawer / inbox surfaces",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-981",
+    "summary": "feat(notifications): per-user inbox table as single source of truth for unread",
+    "status": "Done",
+    "assignee": "Harbour Wang",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-409"
+  },
+  {
+    "key": "BH-982",
+    "summary": "scheduleRoutineSuggestion/unscheduleRoutine always fail against real brightbot — double-Bearer-prefix bug",
+    "status": "Done",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-983",
+    "summary": "Generic \"try again\" toast masks a permanently-terminal schedule-guard reason",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-984",
+    "summary": "recipientUserIds has no upper bound — unbounded Cypher IN/UNWIND fan-out",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-985",
+    "summary": "Network drop after server commit lets optimistic UI restore a suggestion that's actually already scheduled",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-986",
+    "summary": "\"Couldn't load your routines\" error copy conflates permission errors with transient outages",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-987",
+    "summary": "Global Apollo error link uses a deny-list (2 codes) instead of an allow-list for raw error passthrough",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-988",
+    "summary": "All-zero evidenceSummary renders nonsensical \"You asked for this 0 times\" instead of a guarded empty state",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Bug",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-989",
+    "summary": "workspaceId/routineSuggestionId not pre-validated for empty string before Neo4j/DynamoDB round trip",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-990",
+    "summary": "scheduleRoutineSuggestion has no admin-override path for turning off another member's routine — track as deliberate scope decision",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-991",
+    "summary": "fix(routines): gate 2 must not fire on a manager→reports chain — P0, no hierarchy check today",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-992",
+    "summary": "feat(routines): viewer's-own-text anchor quote on suggestion cards",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-993",
+    "summary": "feat(webapp): \"Adjust\" card action — review before scheduling + capture what changed",
+    "status": "Code Review",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-994",
+    "summary": "fix(studio): data assets not available on first prompt after agent creation",
+    "status": "Testing (Dev)",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-260"
+  },
+  {
+    "key": "BH-995",
+    "summary": "fix(viz): multi-panel Vega-Lite charts only receive one dataset, causing render errors",
+    "status": "Needs Refinement",
+    "assignee": "Marwan Samih",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-173"
+  },
+  {
+    "key": "BH-996",
+    "summary": "refactor(platform-core): split typedefs.ts (5000+ lines, 3.8x over the 1300-line limit) into per-domain modules",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-997",
+    "summary": "refactor(routines): introduce EmbeddingPort — embedding provider not behind a port (PS-1/PS-4)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-998",
+    "summary": "webapp: schedules list shows stale project_name with no drift indicator (BH-934 item 3)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  },
+  {
+    "key": "BH-999",
+    "summary": "e2e: provision a dedicated isolated project fixture for execute_workflow deployed-env tests (BH-931 item 1)",
+    "status": "Needs Refinement",
+    "assignee": "Kuri Chinca",
+    "points": null,
+    "type": "Task",
+    "epic": "BH-876"
+  }
+]

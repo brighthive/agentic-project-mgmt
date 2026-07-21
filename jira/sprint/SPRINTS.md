@@ -1,8 +1,20 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 12 (released June 23, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 13 (released July 20, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 13 🧵 — Routines, Signals & Trust Hardening (June 23–July 20, 2026)
+- **Duration**: 28 days (date-range cut, unofficial — third unofficial sprint in a row)
+- **Focus**: BrightRoutines end-to-end (detector, schedulability judge, ownership model, BH-876 epic), Signal Catalog consolidation across platform-core/webapp/slack-server, Configurable Quality Agent live alerts, Monitoring Agents watchdog reaching Staging QC, Skills Extension Framework (SSIS/SSRS diagnostics) fully shipped, PII enforcement sweep still open
+- **Team**: Kuri, Marwan, Harbour, Ahmed
+- **PRs Merged**: 579 total (499 feature/fix + 80 staging release carriers, 6 repos)
+- **Lines Changed**: +355,423 / −91,481
+- **Highlights**: BrightRoutines suggestion cards + audit trail + "Your Routines" page (BH-876, 64/108 sub-tickets Done), Signal Catalog single source of truth for severity/copy (BH-1124–1129), notification preferences per-category toggles (BH-1106), Configurable Quality Agent wired to live webapp side-menu, Skills Extension Framework fully shipped and staged (BH-860, 14/14 Done), 6 UAT-driven papercut fixes shipped as a batch
+- **Sprint Health**: 141/446 tickets Done (31.6%) — understates delivery, most work ships via PR before ticket transitions. 235 tickets stuck in Needs Refinement — same linkage-gap pattern as Sprint 11/12, now 3rd sprint running. Concentration risk unchanged: Kuri authored 72% of PRs. Unofficial sprint, third in a row — Sprint 14 should open a formal Jira sprint object.
+- [Details →](./13/)
 
 ---
 
