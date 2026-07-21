@@ -9,33 +9,41 @@
     "brightbot": {
       "version": "3.0.0",
       "version_field": "pyproject.toml:version",
-      "pr": "https://github.com/brighthive/brightbot/pull/910",
-      "status": "pending_merge"
+      "prod_branch": "main",
+      "develop_pr": "https://github.com/brighthive/brightbot/pull/910",
+      "main_pr": "https://github.com/brighthive/brightbot/pull/913",
+      "status": "done — 3.0.0 on both develop and main"
     },
     "brighthive-platform-core": {
       "version": "3.0.0",
       "version_field": "package.json:version",
-      "pr": "https://github.com/brighthive/brighthive-platform-core/pull/1120",
-      "status": "pending_merge"
+      "prod_branch": "main",
+      "develop_pr": "https://github.com/brighthive/brighthive-platform-core/pull/1120",
+      "main_pr": "https://github.com/brighthive/brighthive-platform-core/pull/1121",
+      "status": "blocked — 3.0.0 on develop, main PR #1121 needs 1 human approval (enforce_admins is ON for this repo's main branch — cannot be bypassed with --admin, unlike the other 4 repos)"
     },
     "brighthive-webapp": {
       "version": "3.0.0",
       "version_field": "package.json:version",
-      "pr": "https://github.com/brighthive/brighthive-webapp/pull/1353",
-      "status": "pending_merge"
+      "prod_branch": "production",
+      "note_branch_naming": "this repo has NO 'main' branch at all — its prod branch is named 'production'. develop/staging/production, not develop/staging/main.",
+      "develop_pr": "https://github.com/brighthive/brighthive-webapp/pull/1353",
+      "production_pr": "https://github.com/brighthive/brighthive-webapp/pull/1356",
+      "status": "done — 3.0.0 on both develop and production"
     },
     "brightbot-slack-server": {
       "version": "3.0.0",
       "version_field": "package.json:version",
-      "pr": "https://github.com/brighthive/brightbot-slack-server/pull/157",
-      "status": "pending_merge"
+      "prod_branch": "main",
+      "main_pr": "https://github.com/brighthive/brightbot-slack-server/pull/157",
+      "status": "done — 3.0.0 on main (this repo's version-bump PR targeted main directly, not develop)"
     },
     "brighthive-admin": {
       "version": null,
       "version_field": "setuptools_scm (derived from git tags, no static field)",
       "pr": null,
       "status": "gap",
-      "note": "No git tags exist in this repo — setuptools_scm has nothing to derive a version from. Needs a v3.0.0 tag cut (deferred, see BH ticket for CI/CD + versioning follow-up)."
+      "note": "No git tags exist in this repo — setuptools_scm has nothing to derive a version from. Needs a v3.0.0 tag cut (BH-1144)."
     }
   },
   "deploy_mechanism_unaffected": "vX.Y.Z.W-pre-release GitHub release tags on platform-core/webapp continue to drive deploy-staging.yml/deploy-production.yml exactly as before — this manifest sits on top as a label, never as a new tag format.",
@@ -49,6 +57,12 @@
       "brighthive-admin": "BH-1144 — zero CI, no .github/workflows",
       "brighthive-e2e": "BH-1145 — health-check.yml has a real --gate mode but is wired to zero repos"
     }
+  },
+  "operational_learnings_2026_07_21": {
+    "develop_main_divergence": "A PR merged to develop does NOT mean it reaches main by itself. Confirmed 3 times this release: BH-1078 (PII masking), BH-776, BH-777 all merged to develop weeks earlier and were absent from main until hand-ported separately. main and develop had diverged enough in file structure that a straight cherry-pick of the develop squash-merge commit conflicted — several files it touched didn't exist on main at all. Each fix needed its own PR opened directly against main, re-verified there, not assumed from develop's state.",
+    "branch_naming_is_not_uniform": "brighthive-webapp has no 'main' branch — its prod branch is 'production'. Check `git branch -r` per repo before assuming develop/staging/main everywhere.",
+    "enforce_admins_varies_per_repo": "brighthive-platform-core has enforce_admins ON for its main branch — even a repo admin cannot bypass required review with `gh pr merge --admin`. The other 4 repos (brightbot, brighthive-webapp, brightbot-slack-server) allow the admin override. Check `gh api repos/{org}/{repo}/branches/main/protection` before assuming --admin will work uniformly across repos.",
+    "action_item": "Add a real develop→main sync check to CI (BH-1145 is the natural home) — this class of drift went undetected for 4+ weeks on a P0 security fix with no automated signal."
   },
   "related": [
     "aws-secrets-vault/snapshots/2026-07-20_prod-release-notifications-routines/INDEX.json",
