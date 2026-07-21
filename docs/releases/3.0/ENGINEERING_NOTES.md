@@ -98,11 +98,31 @@ Open gap: `platform-core`'s env schema declares only 1 of these 4 as required; `
 
 PII-masking hardening beyond BH-1078, Longaeva grounding/disambiguation, and Semantic View lifecycle bugs — in progress, unrelated to this release.
 
-## 11. Before calling this a release
+## 11. Update — later same session (2026-07-21, continued)
 
-1. Merge [PR #912](https://github.com/brighthive/brightbot/pull/912) (BH-1078).
-2. Open and merge BH-776/BH-777 to `main`.
-3. Re-verify all three against `main`'s HEAD.
-4. Prioritize BH-1145.
-5. Run the 235-ticket Needs-Refinement sweep.
-6. Cut `v3.0.0` on `brighthive-admin` (BH-1144).
+- **BH-1078 merged** to `brightbot` `main` (`14396c2e`) — verified live, all 3 files call `enforce_pii_masking`.
+- **BH-776/BH-777** cherry-picked cleanly and opened as [PR #914](https://github.com/brighthive/brightbot/pull/914) — CI green, awaiting review.
+- **MCP Settings UI** (13 commits) cherry-picked to `brighthive-webapp` `production`, plus 6 unrelated pre-existing `tsc` errors fixed (blocking the pre-push hook) — [PR #1357](https://github.com/brighthive/brighthive-webapp/pull/1357), CI green.
+- **Version 3.0.0 on prod branches**: done for `brightbot main`, `webapp production`, `slack-server main`. `platform-core main` blocked on [PR #1121](https://github.com/brighthive/brighthive-platform-core/pull/1121) — this repo has `enforce_admins` ON, cannot be bypassed even by an admin.
+- **`brighthive-admin`**: still no version scheme (BH-1144, not started).
+- **Analytics Dashboard webapp port attempted, discarded**: cherry-picked cleanly (2 commits, exact match with `develop`'s target file) but blocked on a **backend schema gap** — `DataAsset.metadataAvailable`/`embeddingAvailable`/`qualityReportAvailable` don't exist on `platform-core` `main`. Branch discarded rather than shipping code that breaks at runtime. See §12.
+- **Real prod E2E infrastructure built**: two new `brighthive-e2e-ci` IAM roles created (staging `873769991712` + prod `104403016368`), each trust-scoped to GitHub OIDC for `repo:brighthive/brighthive-e2e` only, permission-scoped to `secretsmanager:GetSecretValue` on their respective `login-user` secret only. Confirmed a real prod test workspace exists and works: `ProdTestWorkspace` (`1c814cd6-c88f-40f6-8c1c-12b75a73758e`, Nestlé UAT, owned by Matt), with a working service-account login (`prod/login-user`) and 25 real data assets (`revops_core_leads`, etc.). Writing the actual production `GroundTruth` fixture was deferred — the repo's own `fixtures.md` requires a platform-lead PR, and the fixture dataclass needs a schema change to make Semantic-View fields optional first (tracked: BH-1153).
+
+## 12. The bigger finding: `platform-core` main/develop have been diverging since 2022
+
+Investigating the Analytics Dashboard's backend gap surfaced something much larger: `platform-core`'s `main` and `develop` last shared a real merge on **2022-10-24** (commit `5d513af0`). Since then `main` has received only 8 individually cherry-picked commits — never a real promotion. `develop` has continued for 3+ years: Semantic Views (BH-624 and dependents) don't exist on `main`'s schema **at all** (zero matches, direct grep), and at least 8 Neo4j node types confirmed present on `develop` are absent from `main`.
+
+This is not fixable by cherry-pick — the generated-types diff for the Semantic-View-touching files alone is 155,000+ lines. A full spec was written for the reconciliation effort: [`docs/specs/platform-core-develop-main-reconciliation.md`](../../specs/platform-core-develop-main-reconciliation.md), with 8 tickets filed (BH-1146–BH-1153) covering the schema-diff audit, a restored-prod-data testing environment, per-node-type migrations, and the flag-gated promotion of Semantic Views + the DataAsset quality fields. This is real, multi-week engineering work requiring platform-lead ownership — explicitly **not** attempted as a same-session hand-port, unlike BH-1078/BH-776/BH-777/MCP-UI.
+
+**Explicitly ruled out**: force-pushing `develop`'s history over `main`. `main`'s live Neo4j database (real customer data: Virginia Workforce Data Trust, Indiana Tech, Nestlé's `ProdTestWorkspace`, others) has never been migrated through 3 years of `develop`'s schema evolution — overwriting the code without a corresponding data migration risks runtime crashes or silent data corruption against real customer data.
+
+## 13. Before calling this a release
+
+1. Get [PR #914](https://github.com/brighthive/brightbot/pull/914) (BH-776/BH-777) reviewed and merged.
+2. Get [PR #1357](https://github.com/brighthive/brighthive-webapp/pull/1357) (MCP UI) reviewed and merged.
+3. Get [PR #1121](https://github.com/brighthive/brighthive-platform-core/pull/1121) (v3.0.0 on main) reviewed and merged.
+4. Re-verify all merged fixes against each repo's actual `main`/`production` HEAD — not `develop`.
+5. Prioritize BH-1145 (e2e gate wiring) — would have caught the 3-year platform-core drift automatically.
+6. Run the 235-ticket Needs-Refinement sweep.
+7. Cut `v3.0.0` on `brighthive-admin` (BH-1144).
+8. Kick off BH-1146 (schema-diff audit) as the first step of the platform-core reconciliation effort — separate from this release, own timeline.
