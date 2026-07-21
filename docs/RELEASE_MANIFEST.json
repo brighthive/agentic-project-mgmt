@@ -2,6 +2,7 @@
   "platform_version": "3.0",
   "label": "Brighthive 3.0",
   "status": "in_progress",
+  "enforcement": "status_board_only — this file is NOT wired into any deploy pipeline and does not block anything today. It has no admin/webhook relationship to the 5 app repos' branch protection. Revisit turning it into a real gate once BH-1145 (brighthive-e2e --gate wiring) ships — that's the natural place to add a manifest-status check, rather than building a second gate mechanism in parallel.",
   "decided": "2026-07-21",
   "note": "Umbrella release label, not a repo version. Each app repo keeps its own independent version field/tag scheme (see per-repo package.json/pyproject.toml + the vX.Y.Z.W-pre-release GitHub tag mechanism, both unchanged by this label). This file is the single source of truth mapping the '3.0' marketing/release number to the per-repo version each app was bumped to.",
   "apps": {
