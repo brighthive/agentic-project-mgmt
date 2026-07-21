@@ -5,7 +5,7 @@
   "env_var_names": [],
   "graph_aliases": {},
   "host": "https://api.host.langchain.com",
-  "latest_revision_id": "d2e2434a-bb48-45cb-bfa7-dd8a32c6e42b",
+  "latest_revision_id": "33717a1f-65f1-49ce-9051-5fc467600b5b",
   "name": "brightagent-prod",
   "secret_count": 54,
   "secret_names": [
@@ -64,5 +64,5 @@
     "WEBHOOK_SECRET",
     "WHITELISTED_LANGSMITH_API_KEYS"
   ],
-  "snapshot_at": "2026-06-19T15:26:23+00:00"
+  "snapshot_at": "2026-07-21T02:35:38+00:00"
 }
