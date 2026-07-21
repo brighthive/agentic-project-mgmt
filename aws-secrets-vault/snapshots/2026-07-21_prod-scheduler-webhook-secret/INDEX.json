@@ -1,0 +1,41 @@
+{
+  "captured": "2026-07-21",
+  "ticket": "BH-409 / BH-1131 (notifications/routines prod promote — see aws-secrets-vault/snapshots/2026-07-20_prod-release-notifications-routines/INDEX.json)",
+  "reason": "SCHEDULER_WEBHOOK_SECRET was missing from prod across both targets (AWS, LangGraph Cloud). Copied staging's value verbatim into both, in the same batch as SCHEDULER_SERVICE_API_KEY. This is the last of the 4 secrets in the 2026-07-20 checklist — all rows now done.",
+  "change_kind": "aws-secrets-manager put-secret-value (read-modify-write) + langsmith-vault langgraph-deployment PATCH (full secrets array, same call as SCHEDULER_SERVICE_API_KEY)",
+  "source_of_truth": {
+    "account": "brighthive-staging",
+    "region": "us-east-1",
+    "secret_id": "staging/platform/platform-core",
+    "key": "SCHEDULER_WEBHOOK_SECRET",
+    "value_sha256_12": "126e60db33ab",
+    "note": "Value NOT captured in this file — write-only discipline."
+  },
+  "targets_written": [
+    {
+      "surface": "aws-secrets-manager",
+      "account": "brighthive-production (104403016368)",
+      "secret_id": "prod/platform/platform-core",
+      "version_id_after_write": "7d41e564-86e8-4fcf-9439-01611dd3e139",
+      "value_sha256_12_after_write": "126e60db33ab",
+      "verified": true
+    },
+    {
+      "surface": "langgraph-cloud-deployment-env",
+      "target_repo": "brightbot",
+      "deployment": "brightagent-prod",
+      "deployment_id": "8e0d70b3-cd72-446c-875b-ce27576ec29d",
+      "patch_method": "Same single PATCH call as SCHEDULER_SERVICE_API_KEY — both keys appended to the full 56-secret array in one request, never partial.",
+      "value_sha256_12_after_write": "126e60db33ab",
+      "verified": true,
+      "snapshot_before": "langsmith-vault/data/prod/brightagent-prod.json @ 2026-07-21T02:35:38+00:00 (commit 849cc54)",
+      "snapshot_after": "langsmith-vault/data/prod/brightagent-prod.json @ 2026-07-21T02:37:20+00:00"
+    }
+  ],
+  "rollback": "AWS: put-secret-value with the 29-key payload minus this key. LangGraph: GET full deployment, filter out this key + SCHEDULER_SERVICE_API_KEY from secrets array, PATCH the remaining 54 back (never partial).",
+  "approved_by": "explicit per-secret named confirmation 2026-07-21 — user confirmed 'yes 100% permission' following the specific plan for SCHEDULER_SERVICE_API_KEY, which this companion secret was batched with (same AWS payload, same LangGraph PATCH call)",
+  "related_snapshots": [
+    "../2026-07-20_prod-release-notifications-routines/INDEX.json (parent checklist — this closes the final open row)",
+    "../2026-07-21_prod-scheduler-service-api-key/INDEX.json (companion secret, same PATCH call)"
+  ]
+}

@@ -407,9 +407,9 @@
       "env_var_names": [],
       "graph_aliases": {},
       "host": "https://api.host.langchain.com",
-      "latest_revision_id": "33717a1f-65f1-49ce-9051-5fc467600b5b",
+      "latest_revision_id": "dce2ddcf-54d5-4688-aaef-99c76c0ec5c4",
       "name": "brightagent-prod",
-      "secret_count": 54,
+      "secret_count": 56,
       "secret_names": [
         "ANTHROPIC_API_KEY",
         "AWS_ACCESS_KEY_ID",
@@ -460,13 +460,15 @@
         "SCHEDULED_AGENTS_TABLE",
         "SCHEDULER_GROUP_NAME",
         "SCHEDULER_ROLE_ARN",
+        "SCHEDULER_SERVICE_API_KEY",
+        "SCHEDULER_WEBHOOK_SECRET",
         "USER_POOL_CLIENT_ID",
         "USER_POOL_ID",
         "USE_ANTHROPIC_DIRECT",
         "WEBHOOK_SECRET",
         "WHITELISTED_LANGSMITH_API_KEYS"
       ],
-      "snapshot_at": "2026-07-21T02:35:38+00:00"
+      "snapshot_at": "2026-07-21T02:37:20+00:00"
     },
     {
       "deployment_id": "f3848965-35c3-4d15-9939-8a4405ee5102",
@@ -563,5 +565,5 @@
       "snapshot_at": "2026-07-16T15:02:42+00:00"
     }
   ],
-  "generated_at": "2026-07-21T02:35:38+00:00"
+  "generated_at": "2026-07-21T02:37:20+00:00"
 }
