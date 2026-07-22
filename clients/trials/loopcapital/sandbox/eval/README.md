@@ -65,7 +65,12 @@ never guesses; breaker-open forces approval; transient retries.
 - `classifier.py` here is the offline **reference copy**; the 4 recall patterns
   are now landed in the shipped `brightbot` classifier (see the table above).
 - `core.py` (the decision core) is verified offline (`decision_core_eval.py`, 24/24)
-  but is **not yet ported to `brightbot`** — that is the next sequenced ticket
-  (`ExecutionOutcome` DTO + retry policy + `decide_gate`).
+  and is **now ported to `brightbot`** (`governance_agent/tools/remediation_decision.py`
+  + `fix_memory_store.py` + `remediation_planner.py`, all unit-tested), and **wired
+  into the watchdog behind the default-off `FEATURE_FLAG_REMEDIATION_GATE`**
+  (`pipeline_watchdog_task._attempt_remediation`). Flag-off = unchanged production
+  behavior; flag-on = unclassifiable failures gated to alert-only before drafting.
+  The full AUTO_EXECUTE + Undo path (needs the RemediationProposal card + VERIFYING
+  loop) is still pending — see the two repos' PRs.
 - `confidence` is supplied by you in the CLI; in production it comes from the
   diagnosis/judge (Layer 1).
