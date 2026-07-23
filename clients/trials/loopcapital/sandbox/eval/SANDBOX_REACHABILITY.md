@@ -7,15 +7,19 @@
 > instead. This is the single unknown everything above the investigation layer
 > rests on.
 >
-> **Date:** 2026-07-23 · **Status:** ✅ **EMPIRICALLY CONFIRMED, live, against
-> TWO real targets — Snowflake and dbt Cloud.** A new `Security: Public`
-> AgentCore Code Interpreter (`brightagent_code_interpreter_public-gkeSDLpcfs`,
-> provisioned same day) connected via the real `snowflake.connector` driver and
-> ran `SELECT 1` (returning `1`), and separately made a real authenticated HTTP
-> call to the dbt Cloud Admin API (`HTTP 200`). **This retires the single
-> biggest risk in the whole agentic-remediation plan: BrightAgent, running in
-> an isolated sandbox, CAN reach and query real customer data infrastructure.**
-> See "CONFIRMED PASS" sections below. **Redshift is the only target not yet
+> **Date:** 2026-07-23 · **Status:** ✅ **FULLY CONFIRMED, live, against ALL
+> THREE real targets — Snowflake, dbt Cloud, AND Redshift.** A single
+> `Security: Public` AgentCore Code Interpreter
+> (`brightagent_code_interpreter_public-gkeSDLpcfs`, provisioned same day)
+> connected via the real `snowflake.connector` driver and ran `SELECT 1`
+> (returning `1`); made a real authenticated HTTP call to the dbt Cloud Admin
+> API (`HTTP 200`); and connected via the real `psycopg2` driver to a
+> Redshift **Serverless** workgroup and ran `SELECT 1` (returning `1`) — no VPC
+> config needed, the Serverless endpoint is public-reachable by default.
+> **This fully retires the single biggest risk in the whole agentic-remediation
+> plan: BrightAgent, running in an isolated sandbox, CAN reach and query real
+> customer data infrastructure across all three target systems.** See
+> "CONFIRMED PASS" sections below.
 > run** — same script, pending the VPC-vs-public network-path decision.
 
 ## Live run log — first real attempt, 2026-07-23
@@ -221,23 +225,62 @@ Admin API from inside the sandbox, real `200`.
 reaches SaaS-hosted data infrastructure with real credentials and gets real
 results back — this is no longer a hypothesis for either target.
 
-### Remaining: Redshift only
+## ✅ CONFIRMED PASS — Redshift, live, 2026-07-23 — ALL THREE TARGETS DONE
 
-```bash
-# Redshift — needs the network-path question answered first (see script docstring's
-# CROSS-ACCOUNT NOTE): if Redshift has a public endpoint, PUBLIC mode (this same
-# tool) should reach it; if it's private-VPC-only, a VPC-mode tool is needed instead.
-export SPIKE_RS_HOST=<redacted>
-export SPIKE_RS_PORT=5439
-export SPIKE_RS_DATABASE=<redacted>
-export SPIKE_RS_USER=<redacted>
-read -s SPIKE_RS_PASSWORD; export SPIKE_RS_PASSWORD
-uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe redshift
+The network-path question resolved itself: this workspace's Redshift is
+**Redshift Serverless** (`*.redshift-serverless.amazonaws.com`), which by
+default has a public-reachable endpoint — no VPC config, no cross-account
+peering needed. The SAME `Public`-mode tool used for Snowflake/dbt reached it
+directly:
 
-# Redshift — needs the network-path question answered first (see script docstring's
-# CROSS-ACCOUNT NOTE): if Redshift has a public endpoint, PUBLIC mode (this same
-# tool) should reach it; if it's private-VPC-only, a VPC-mode tool is needed instead.
+```json
+{"connected": true, "target": "redshift", "select_1": 1}
 ```
+
+`status: success`, exit code 0. Real `psycopg2` driver connection, real
+authentication, real `SELECT 1` round-trip.
+
+### Final scoreboard — 4/4 probes, 3/3 real targets, all PASS
+
+| Probe | Target | Mode | Result |
+|---|---|---|---|
+| Sanity | internet | Public | ✅ PASS |
+| 4 | **Snowflake** | Public | ✅ **PASS — `SELECT 1` → `1`** |
+| 6 | **dbt Cloud** | Public | ✅ **PASS — Admin API, HTTP 200** |
+| 5 | **Redshift (Serverless)** | Public | ✅ **PASS — `SELECT 1` → `1`** |
+
+**The reachability question is closed for all three of BrightHive's real
+warehouse/pipeline targets, using a single Public-mode AgentCore Code
+Interpreter, with zero VPC configuration required.** The original
+`Security: Sandbox` tool remains untouched, still serving the Airbyte
+connector-sandboxing feature it was built for. This is the strongest possible
+outcome: one dedicated, simple (`Public` mode, no VPC complexity), already-
+provisioned tool covers 100% of the investigation surface this spec needs.
+
+### What each probe actually executed inside the sandbox (mechanics, not magic)
+
+Every probe follows the same pattern: brightbot's existing
+`invoke_bedrock_code_interpreter()` sends a short Python script to AWS, AWS
+runs it inside an isolated microVM and streams back whatever it printed, and
+the calling script parses that printed JSON for a `"connected": true` marker.
+Nothing is simulated — a network/auth/driver failure would (and on the first
+dbt attempt, did) surface as `"connected": false` with a real exception
+message, not a silent pass.
+
+- **Snowflake**: `pip install snowflake-connector-python` (live, in the
+  sandbox) → `snowflake.connector.connect(account=..., user=..., password=...)`
+  → `cur.execute("SELECT 1")` → `cur.fetchone()` returns the real row from
+  Snowflake's query engine.
+- **dbt Cloud**: `urllib.request` GET to `https://<cell>.dbt.com/api/v2/accounts/{id}/`
+  with `Authorization: Token ...` → dbt Cloud's real server validates the
+  token and returns a real HTTP status code.
+- **Redshift**: `psycopg2.connect(host=..., port=5439, dbname=..., user=..., password=...)`
+  → `cur.execute("SELECT 1")` → `cur.fetchone()` returns the real row from
+  Redshift's query engine.
+
+`fetchone()`/a real HTTP status are the reason this is trustworthy evidence,
+not a rubber stamp — there is no code path that returns `1` from `SELECT 1`
+without an actual successful round-trip to the actual server.
 
 ## Use brightbot's own sandbox, not a new one
 
