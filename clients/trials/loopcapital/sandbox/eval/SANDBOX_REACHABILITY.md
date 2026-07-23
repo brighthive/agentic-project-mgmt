@@ -151,18 +151,51 @@ against the real account with real credentials, opened a session, executed
   original `Security: Sandbox` tool stays untouched for Airbyte connector
   sandboxing; the new `Public` tool is dedicated to investigation. No
   regression to the existing feature, a working new capability.
-- **Sanity (probe 1) and Snowflake (probe 4) are both PASS.** Remaining:
-  **Redshift (probe 5)** — still needs the cross-account VPC-vs-public
-  decision (see the note in the script's docstring) before it can run — and
-  **dbt Cloud (probe 6)** — should work immediately, since it's the same
-  `Public`-mode shape as Snowflake (SaaS HTTPS API, no VPC needed).
+- **Sanity (probe 1) and Snowflake (probe 4) are both PASS.** dbt Cloud (probe 6)
+  attempted same day — see "dbt Cloud attempt" below (network reachable,
+  auth needs a rotated token + endpoint check). **Redshift (probe 5)** —
+  still needs the cross-account VPC-vs-public decision (see the note in the
+  script's docstring) before it can run.
+
+## dbt Cloud attempt, 2026-07-23 — reachable, auth failed (not a network problem)
+
+```json
+{"connected": false, "target": "dbt_cloud", "error": "HTTPError: HTTP Error 401: Unauthorized"}
+```
+
+**Read this as a GOOD sign for reachability, a bad sign for the token/endpoint
+used.** A `401` means the sandbox's HTTP request reached `cloud.getdbt.com` and
+got a real response — the network path works, same as Snowflake. This is purely
+an authentication/endpoint mismatch. Three likely causes, in order of
+likelihood:
+
+1. **Wrong API host ("cell").** Not every dbt Cloud account lives at
+   `cloud.getdbt.com` — multi-cell accounts live at a regional host (e.g.
+   `https://<id>.us1.dbt.com`). Check the URL dbt Cloud shows in the browser
+   when logged in — that's the real API host. Override with
+   `SPIKE_DBT_API_ENDPOINT` if it differs.
+2. **Wrong token type/scope.** dbt Cloud Service Tokens need explicit
+   permissions granted for the Admin API; a token scoped for something else
+   (e.g. a specific job) will 401 against the accounts endpoint.
+3. Token/account-ID mismatch (issued for a different account than `26133`).
+
+> ⚠️ **SECURITY — action required, unrelated to the reachability finding
+> itself:** the real dbt Cloud API token used in this attempt was pasted in
+> plaintext into a chat session. **That token must be revoked/regenerated in
+> dbt Cloud (Account Settings → Service Tokens) before this probe is retried**
+> — treat any secret that leaves its intended storage as compromised,
+> regardless of the channel. Not written into this repo or any commit; the
+> real value never appears above (redacted at doc-write time). Re-run with a
+> freshly rotated token once revoked.
 
 ### Next commands to run (no new provisioning needed for either)
 
 ```bash
-# dbt Cloud — same Public tool, same shape as Snowflake, should just work:
-export SPIKE_DBT_API_TOKEN=<redacted>
-export SPIKE_DBT_ACCOUNT_ID=<redacted>
+# dbt Cloud — RETRY with a freshly ROTATED token (the prior one was exposed in
+# chat and must be revoked first) + the correct API host if not cloud.getdbt.com:
+export SPIKE_DBT_API_TOKEN=<new rotated token>
+export SPIKE_DBT_ACCOUNT_ID=26133
+export SPIKE_DBT_API_ENDPOINT=<your actual dbt Cloud host, if not cloud.getdbt.com>
 uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe dbt
 
 # Redshift — needs the network-path question answered first (see script docstring's
