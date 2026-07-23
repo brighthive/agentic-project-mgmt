@@ -7,16 +7,14 @@
 > instead. This is the single unknown everything above the investigation layer
 > rests on.
 >
-> **Date:** 2026-07-23 · **Status:** architecturally CONFIRMED YES (AWS docs);
-> empirical run BLOCKED on an IAM permission gap (see "Live run log" below) —
-> not a network-mode or credentials problem, a one-line policy fix, owner TBD
-> (likely Ahmed per this org's AWS-infra ownership split).
-> **UPDATE 2026-07-23 (later same day):** brightbot already has a WORKING,
-> TESTED Code Interpreter integration — see "Use brightbot's own sandbox, not a
-> new one" below. It changes what to run first and surfaces a real open
-> question about the CURRENTLY CONFIGURED tool's network mode (still
-> UNCONFIRMED — the IAM error below happened one step earlier, before the
-> network-mode question could even be tested).
+> **Date:** 2026-07-23 · **Status:** architecturally CONFIRMED YES for AgentCore
+> in general (AWS docs — VPC/PUBLIC modes exist and support it). **The SPECIFIC
+> tool `brightagent_code_interpreter_tool` currently deployed is CONFIRMED
+> `Security: Sandbox` mode (AWS console, screenshot) — it CANNOT reach any
+> warehouse.** This is expected (it was built for a different job — sandboxing
+> Airbyte connector code) and fixable by provisioning a SECOND tool in
+> `Public` or `VPC` mode dedicated to investigation. See "CONFIRMED: current
+> tool is SANDBOX mode" below for the exact ask.
 
 ## Live run log — first real attempt, 2026-07-23
 
@@ -63,6 +61,60 @@ code changes. If it then reports `reached_internet: true`, proceed to
 `--probe snowflake` / `redshift` / `dbt`. If it reports `status: success` but
 `reached_internet: false`, that's the SANDBOX-network-mode hypothesis confirmed
 — see "Use brightbot's own sandbox" below for what that implies.
+
+## CONFIRMED: the current tool is `Security: Sandbox` mode — cannot reach any warehouse
+
+**2026-07-23, later — confirmed directly from the AWS console (not inferred from
+a docstring anymore):**
+
+```
+Name:                 brightagent_code_interpreter_tool
+IAM role:             brightagent_amazon_bedrock_code_interpreter_s3
+Status:               Ready
+Security:             Sandbox
+Tool resource ARN:    arn:aws:bedrock-agentcore:us-east-1:873769991712:
+                       code-interpreter-custom/brightagent_code_interpreter_tool-pKSS3YdeSV
+```
+
+`Security: Sandbox` is the console's label for AWS's `SANDBOX` network mode
+(no internet, no VPC — S3/DNS only). **This settles the open question: the
+tool as currently deployed cannot reach Snowflake, Redshift, or dbt Cloud, full
+stop — regardless of the IAM fix above.** This is not a flaw; it's the correct,
+intentionally-locked-down mode for the job this tool was ACTUALLY provisioned
+for (sandboxing untrusted Airbyte connector code — see
+`tests/integration/test_connector_sandbox_integration.py`). It was never meant
+to reach a live warehouse, and doing so would be a real security regression for
+that existing use case if "fixed" by loosening it.
+
+**The correct fix is a SECOND, dedicated Code Interpreter tool, not
+reconfiguring this one:**
+
+| For | Needs | Notes |
+|---|---|---|
+| Snowflake + dbt Cloud | a NEW tool with `Security: Public` | Both are SaaS reached over the internet — no VPC needed |
+| Redshift | a NEW tool with `Security: VPC` + subnets/SG that reach the cluster | Redshift is AWS-hosted; may be cross-account (see the cross-account note in the script's docstring) — confirm with whoever owns that account before requesting subnets |
+
+**The exact ask for whoever has AWS console access (Ahmed, per this org's
+infra split):**
+
+1. Create a new AgentCore Code Interpreter (console: Bedrock → AgentCore →
+   Code Interpreter → Create), name it something like
+   `brightagent_investigation_sandbox`, **Security = Public**.
+2. Attach an execution role with least-privilege access (no need to reuse
+   `brightagent_amazon_bedrock_code_interpreter_s3` — that role is scoped for
+   the S3/Airbyte job).
+3. Grant the same `brightagent-deployer` (or whichever principal) IAM actions
+   as above (Start/Invoke/Stop/GetCodeInterpreterSession), scoped to the NEW
+   tool's ARN.
+4. Share the new tool ID back — test with it via a NEW env var (don't overwrite
+   `BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID`, which the Airbyte sandboxing feature
+   depends on) — e.g. `SPIKE_INVESTIGATION_TOOL_ID`.
+5. If Redshift is in scope too, a second `Security = VPC` tool (or the same
+   Public tool won't work for a private-network Redshift — confirm which
+   applies before assuming Public covers it).
+
+Once that new tool ID exists, the probes need one small code change (pointing
+at the new tool ID instead of the default) — flag this back and it'll be made.
 
 ## Use brightbot's own sandbox, not a new one
 

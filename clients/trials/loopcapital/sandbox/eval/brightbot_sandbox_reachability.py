@@ -187,12 +187,31 @@ def main() -> int:
             "Run this from the brightbot repo (or with it on PYTHONPATH), "
             "e.g.: cd brightbot && uv run python <path to this file> --probe sanity"
         )
+
+    # Point at a SEPARATE, dedicated investigation tool (Public/VPC mode) once
+    # provisioned — WITHOUT touching brightbot's real BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID,
+    # which the Airbyte connector-sandboxing feature depends on staying Sandbox
+    # mode. invoke_bedrock_code_interpreter() reads the env var directly, so we
+    # override it in-process, only for this script's own calls.
+    override_tool_id = os.getenv("SPIKE_INVESTIGATION_TOOL_ID")
+    if override_tool_id:
+        os.environ["BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID"] = override_tool_id
+        print(f"[INFO] Using dedicated investigation tool (SPIKE_INVESTIGATION_TOOL_ID): "
+              f"{override_tool_id}\n")
+
     if not os.getenv("BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID"):
         return _preclude(
-            "BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID not set — brightbot's .env should "
-            "already have this; make sure you're running with that .env loaded "
-            "(sandbox_utils.py calls load_dotenv() itself, but only finds .env in "
-            "the current/parent directory — run from the brightbot repo root)."
+            "Neither SPIKE_INVESTIGATION_TOOL_ID nor BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID "
+            "is set. If a dedicated Public/VPC-mode tool has been provisioned for "
+            "investigation (see SANDBOX_REACHABILITY.md), export its ID as "
+            "SPIKE_INVESTIGATION_TOOL_ID. Otherwise brightbot's .env should already "
+            "have BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID set — make sure you're running "
+            "with that .env loaded (sandbox_utils.py calls load_dotenv() itself, but "
+            "only finds .env in the current/parent directory — run from the brightbot "
+            "repo root). NOTE: the default BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID is "
+            "CONFIRMED Sandbox-mode (no internet) — it will fail probes snowflake/"
+            "redshift/dbt even with correct credentials. Use SPIKE_INVESTIGATION_TOOL_ID "
+            "once a Public/VPC-mode tool exists."
         )
 
     if args.probe == "sanity":
