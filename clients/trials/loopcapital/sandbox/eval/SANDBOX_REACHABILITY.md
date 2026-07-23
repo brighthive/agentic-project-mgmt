@@ -8,11 +8,61 @@
 > rests on.
 >
 > **Date:** 2026-07-23 · **Status:** architecturally CONFIRMED YES (AWS docs);
-> empirical confirmation pending AWS creds (spike is built + ready to run).
+> empirical run BLOCKED on an IAM permission gap (see "Live run log" below) —
+> not a network-mode or credentials problem, a one-line policy fix, owner TBD
+> (likely Ahmed per this org's AWS-infra ownership split).
 > **UPDATE 2026-07-23 (later same day):** brightbot already has a WORKING,
 > TESTED Code Interpreter integration — see "Use brightbot's own sandbox, not a
 > new one" below. It changes what to run first and surfaces a real open
-> question about the CURRENTLY CONFIGURED tool's network mode.
+> question about the CURRENTLY CONFIGURED tool's network mode (still
+> UNCONFIRMED — the IAM error below happened one step earlier, before the
+> network-mode question could even be tested).
+
+## Live run log — first real attempt, 2026-07-23
+
+`--probe sanity` run from the brightbot repo (real `.env`, real AWS creds) failed
+with an **IAM permission error**, not a reachability result:
+
+```
+AccessDeniedException: User: arn:aws:iam::873769991712:user/brightagent-deployer
+is not authorized to perform: bedrock-agentcore:StartCodeInterpreterSession on
+resource: arn:aws:bedrock-agentcore:us-east-1:873769991712:code-interpreter-custom/
+brightagent_code_interpreter_tool-pKSS3YdeSV because no identity-based policy
+allows the bedrock-agentcore:StartCodeInterpreterSession action
+```
+
+**What this means:** the credentials are valid and the tool ID exists — the AWS
+user (`brightagent-deployer`) just has never been granted permission to *start a
+session* on this specific Code Interpreter resource. This is a known, one-line
+IAM fix, not evidence against the approach — the SANDBOX-vs-PUBLIC-vs-VPC
+network-mode question this probe was designed to test is **still open**,
+because the call failed one step earlier than that.
+
+**Fix needed (someone with IAM admin on account `873769991712`):** attach a
+policy granting `brightagent-deployer` (or whatever role/user brightbot's `.env`
+resolves to) these actions on that resource ARN:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": [
+      "bedrock-agentcore:StartCodeInterpreterSession",
+      "bedrock-agentcore:InvokeCodeInterpreter",
+      "bedrock-agentcore:StopCodeInterpreterSession",
+      "bedrock-agentcore:GetCodeInterpreterSession"
+    ],
+    "Resource": "arn:aws:bedrock-agentcore:us-east-1:873769991712:code-interpreter-custom/brightagent_code_interpreter_tool-pKSS3YdeSV"
+  }]
+}
+```
+
+**Next step once fixed:** re-run the identical `--probe sanity` command with no
+code changes. If it then reports `reached_internet: true`, proceed to
+`--probe snowflake` / `redshift` / `dbt`. If it reports `status: success` but
+`reached_internet: false`, that's the SANDBOX-network-mode hypothesis confirmed
+— see "Use brightbot's own sandbox" below for what that implies.
 
 ## Use brightbot's own sandbox, not a new one
 
