@@ -27,22 +27,40 @@ already reads from Secrets Manager (warehouse_connections.py / credentials_tools
   Probe 1 (PUBLIC mode) — sanity: sandbox executes code + has internet egress.
   Probe 2 (PUBLIC mode) — TCP to a PUBLICLY-REACHABLE db host:port.
   Probe 3 (VPC mode)    — DECISIVE generic case: TCP to a PRIVATE db host:port —
-                          the customer-BYOW shape (SQL Server/generic).
-  Probe 4 (VPC mode)    — SNOWFLAKE: real `snowflake.connector.connect(...)` +
+                          the customer-BYOW shape for a warehouse that lives
+                          INSIDE an AWS account (e.g. Redshift, SQL Server on EC2).
+  Probe 4 (PUBLIC mode) — SNOWFLAKE: real `snowflake.connector.connect(...)` +
                           `SELECT 1` from inside the sandbox, using
                           account/user/password (+ optional warehouse/database/
                           schema/role) — the SAME fields SnowflakeConnection.connect()
-                          requires (warehouse_connections.py:801-820).
+                          requires (warehouse_connections.py:801-820). PUBLIC mode
+                          is correct: Snowflake is a SaaS product reached over
+                          HTTPS to <account>.snowflakecomputing.com — it is NOT
+                          hosted inside any AWS account/VPC, so there is no VPC to
+                          attach to. Same reasoning as probe 6 (dbt Cloud).
   Probe 5 (VPC mode)    — REDSHIFT: real driver connect + `SELECT 1`, using
                           host/port/database/user/password — the SAME fields
-                          RedshiftConnection.connect() requires.
+                          RedshiftConnection.connect() requires. VPC mode is
+                          correct here: Redshift IS an AWS-hosted resource (in
+                          whichever account/VPC it was provisioned in — may be a
+                          DIFFERENT AWS account than the sandbox's own account;
+                          see the cross-account note below).
   Probe 6 (PUBLIC mode) — DBT CLOUD: NOT a private DB socket — dbt Cloud is a
                           SaaS HTTPS API (cloud.getdbt.com). Tests an authenticated
                           GET against the real Admin API using the SAME
                           apiToken/accountId shape read from Secrets Manager
                           secret `dbt/cloud-api/{service_id}` (credentials_tools.py).
-                          PUBLIC mode is correct here — VPC mode would be wrong,
-                          since dbt Cloud is not inside anyone's private network.
+
+CROSS-ACCOUNT NOTE (Redshift specifically): if the target Redshift cluster lives
+in a DIFFERENT AWS account than the one running the sandbox (common — e.g. a
+platform-core-owned account), SPIKE_VPC_SUBNETS/SPIKE_VPC_SECURITY_GROUPS must
+be subnets/SGs the SANDBOX'S OWN account can use to reach it — either (a) the
+sandbox and Redshift share a VPC via VPC peering / Transit Gateway, and you pass
+subnets in the sandbox's side of that peered network, or (b) Redshift has a
+public-facing endpoint reachable over the internet, in which case use PUBLIC
+mode instead of VPC (skip the subnets/SGs entirely, same as Snowflake/dbt).
+Ask whoever owns the platform-core AWS account (Ahmed, per this org's infra
+split) which of (a)/(b) is true before running probe 5 — don't guess.
 
 Why raw TCP first (probes 2/3) before a real driver connect (4/5): isolates
 "can I route to the port" from "are my driver/credentials right" — two
@@ -55,7 +73,8 @@ without them — by design, it's a live spike, not a unit test):
   export AWS_REGION=us-east-1
   export SPIKE_EXECUTION_ROLE_ARN=arn:aws:iam::<acct>:role/<role>
 
-  # Probes 3-5 (VPC mode) need the network wiring:
+  # Probes 3 and 5 (VPC mode) need the network wiring — probes 4/6 do NOT
+  # (Snowflake/dbt Cloud are SaaS, reached over PUBLIC mode, no VPC needed):
   export SPIKE_VPC_SUBNETS=subnet-aaa,subnet-bbb
   export SPIKE_VPC_SECURITY_GROUPS=sg-ccc      # must allow egress to the db port
 
@@ -63,7 +82,7 @@ without them — by design, it's a live spike, not a unit test):
   python sandbox_reachability_spike.py --probe 2   # + SPIKE_DB_HOST/PORT (public)
   python sandbox_reachability_spike.py --probe 3   # + SPIKE_DB_HOST/PORT (private)
 
-  # Probe 4 — Snowflake (VPC): use the REAL staging secret's values, never hardcode.
+  # Probe 4 — Snowflake (PUBLIC, no VPC needed): use the REAL staging secret's values, never hardcode.
   export SPIKE_SF_ACCOUNT=ab12345.us-east-1 SPIKE_SF_USER=... SPIKE_SF_PASSWORD=...
   export SPIKE_SF_WAREHOUSE=... SPIKE_SF_DATABASE=... SPIKE_SF_SCHEMA=... SPIKE_SF_ROLE=...
   python sandbox_reachability_spike.py --probe 4
@@ -437,20 +456,22 @@ def main() -> int:
                 "SPIKE_SF_ACCOUNT, SPIKE_SF_USER, SPIKE_SF_PASSWORD must be set for probe 4 "
                 "(the same required fields SnowflakeConnection.connect() reads)"
             )
-        vpc_config = _parse_vpc_config()
-        if vpc_config is None:
-            return _preclude("SPIKE_VPC_SUBNETS and SPIKE_VPC_SECURITY_GROUPS must be set for probe 4")
+        # CORRECTED: Snowflake is a SaaS product (HTTPS to
+        # <account>.snowflakecomputing.com), not an AWS-hosted resource — it is
+        # NOT inside any BrightHive/customer VPC. PUBLIC mode (internet egress)
+        # is the correct mode here, exactly like probe 6 (dbt Cloud). No
+        # SPIKE_VPC_SUBNETS/SPIKE_VPC_SECURITY_GROUPS needed for this probe.
         if not execution_role:
             return _preclude("SPIKE_EXECUTION_ROLE_ARN must be set for probe 4")
 
-        print(f"PROBE 4 — SNOWFLAKE: VPC-mode sandbox connects to account {account} + SELECT 1")
+        print(f"PROBE 4 — SNOWFLAKE: PUBLIC-mode sandbox connects to account {account} + SELECT 1")
         code = _snowflake_probe_code(
             account=account, user=user, password=password,
             warehouse=os.getenv("SPIKE_SF_WAREHOUSE"), database=os.getenv("SPIKE_SF_DATABASE"),
             schema=os.getenv("SPIKE_SF_SCHEMA"), role=os.getenv("SPIKE_SF_ROLE"),
         )
         ok, out = _run_in_sandbox(CodeInterpreter, region=region, code=code,
-                                  network_mode="VPC", vpc_config=vpc_config,
+                                  network_mode="PUBLIC", vpc_config=None,
                                   execution_role_arn=execution_role)
         print(out)
         passed = ok and '"connected": true' in out.lower()
