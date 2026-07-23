@@ -7,14 +7,16 @@
 > instead. This is the single unknown everything above the investigation layer
 > rests on.
 >
-> **Date:** 2026-07-23 · **Status:** ✅ **EMPIRICALLY CONFIRMED, live, against a
-> real Snowflake account.** A new `Security: Public` AgentCore Code Interpreter
-> (`brightagent_code_interpreter_public-gkeSDLpcfs`, provisioned same day)
-> connected via the real `snowflake.connector` driver and ran `SELECT 1`,
-> returning `1`. **This retires the single biggest risk in the whole
-> agentic-remediation plan: BrightAgent, running in an isolated sandbox, CAN
-> reach and query a real customer warehouse.** See "CONFIRMED PASS" below.
-> Redshift and dbt Cloud probes are the same script, not yet run.
+> **Date:** 2026-07-23 · **Status:** ✅ **EMPIRICALLY CONFIRMED, live, against
+> TWO real targets — Snowflake and dbt Cloud.** A new `Security: Public`
+> AgentCore Code Interpreter (`brightagent_code_interpreter_public-gkeSDLpcfs`,
+> provisioned same day) connected via the real `snowflake.connector` driver and
+> ran `SELECT 1` (returning `1`), and separately made a real authenticated HTTP
+> call to the dbt Cloud Admin API (`HTTP 200`). **This retires the single
+> biggest risk in the whole agentic-remediation plan: BrightAgent, running in
+> an isolated sandbox, CAN reach and query real customer data infrastructure.**
+> See "CONFIRMED PASS" sections below. **Redshift is the only target not yet
+> run** — same script, pending the VPC-vs-public network-path decision.
 
 ## Live run log — first real attempt, 2026-07-23
 
@@ -188,15 +190,49 @@ likelihood:
 > real value never appears above (redacted at doc-write time). Re-run with a
 > freshly rotated token once revoked.
 
-### Next commands to run (no new provisioning needed for either)
+## ✅ CONFIRMED PASS — dbt Cloud, live, 2026-07-23 (retry)
+
+Root cause was exactly hypothesis #1 above: the account lives on a **regional
+cell** (`https://<redacted>.us1.dbt.com`), not `cloud.getdbt.com`. Once
+`SPIKE_DBT_API_ENDPOINT` was pointed at the real host:
+
+```json
+{"connected": true, "target": "dbt_cloud", "http_status": 200}
+```
+
+`status: success`, exit code 0. Real authenticated HTTP call to the dbt Cloud
+Admin API from inside the sandbox, real `200`.
+
+> ⚠️ **SECURITY — same finding repeats:** the real dbt Cloud API token was
+> pasted in plaintext a second time (in the retry command). This value must
+> be rotated in dbt Cloud before any further use, independent of this
+> reachability result. Not written into this repo/any commit — redacted here.
+
+### Score after 3 attempts: 2/2 SaaS targets confirmed reachable + working
+
+| Target | Mode | Result |
+|---|---|---|
+| Sanity (internet) | Public | ✅ PASS |
+| **Snowflake** | Public | ✅ **PASS — full query round-trip (`SELECT 1` → `1`)** |
+| **dbt Cloud** | Public | ✅ **PASS — authenticated Admin API call, HTTP 200** (after correcting the regional-cell endpoint) |
+| Redshift | Public or VPC (TBD) | Not yet run — needs the network-path answer below |
+
+**Two independent, real, end-to-end confirmations.** The sandbox reliably
+reaches SaaS-hosted data infrastructure with real credentials and gets real
+results back — this is no longer a hypothesis for either target.
+
+### Remaining: Redshift only
 
 ```bash
-# dbt Cloud — RETRY with a freshly ROTATED token (the prior one was exposed in
-# chat and must be revoked first) + the correct API host if not cloud.getdbt.com:
-export SPIKE_DBT_API_TOKEN=<new rotated token>
-export SPIKE_DBT_ACCOUNT_ID=26133
-export SPIKE_DBT_API_ENDPOINT=<your actual dbt Cloud host, if not cloud.getdbt.com>
-uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe dbt
+# Redshift — needs the network-path question answered first (see script docstring's
+# CROSS-ACCOUNT NOTE): if Redshift has a public endpoint, PUBLIC mode (this same
+# tool) should reach it; if it's private-VPC-only, a VPC-mode tool is needed instead.
+export SPIKE_RS_HOST=<redacted>
+export SPIKE_RS_PORT=5439
+export SPIKE_RS_DATABASE=<redacted>
+export SPIKE_RS_USER=<redacted>
+read -s SPIKE_RS_PASSWORD; export SPIKE_RS_PASSWORD
+uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe redshift
 
 # Redshift — needs the network-path question answered first (see script docstring's
 # CROSS-ACCOUNT NOTE): if Redshift has a public endpoint, PUBLIC mode (this same
