@@ -7,14 +7,14 @@
 > instead. This is the single unknown everything above the investigation layer
 > rests on.
 >
-> **Date:** 2026-07-23 · **Status:** architecturally CONFIRMED YES for AgentCore
-> in general (AWS docs — VPC/PUBLIC modes exist and support it). **The SPECIFIC
-> tool `brightagent_code_interpreter_tool` currently deployed is CONFIRMED
-> `Security: Sandbox` mode (AWS console, screenshot) — it CANNOT reach any
-> warehouse.** This is expected (it was built for a different job — sandboxing
-> Airbyte connector code) and fixable by provisioning a SECOND tool in
-> `Public` or `VPC` mode dedicated to investigation. See "CONFIRMED: current
-> tool is SANDBOX mode" below for the exact ask.
+> **Date:** 2026-07-23 · **Status:** ✅ **EMPIRICALLY CONFIRMED, live, against a
+> real Snowflake account.** A new `Security: Public` AgentCore Code Interpreter
+> (`brightagent_code_interpreter_public-gkeSDLpcfs`, provisioned same day)
+> connected via the real `snowflake.connector` driver and ran `SELECT 1`,
+> returning `1`. **This retires the single biggest risk in the whole
+> agentic-remediation plan: BrightAgent, running in an isolated sandbox, CAN
+> reach and query a real customer warehouse.** See "CONFIRMED PASS" below.
+> Redshift and dbt Cloud probes are the same script, not yet run.
 
 ## Live run log — first real attempt, 2026-07-23
 
@@ -115,6 +115,60 @@ infra split):**
 
 Once that new tool ID exists, the probes need one small code change (pointing
 at the new tool ID instead of the default) — flag this back and it'll be made.
+
+## ✅ CONFIRMED PASS — Snowflake, live, 2026-07-23
+
+**The ask above was fulfilled same day.** A new `Security: Public` Code
+Interpreter was provisioned (`brightagent_code_interpreter_public-gkeSDLpcfs`)
+and granted the Start/Invoke/Stop/GetCodeInterpreterSession actions. Run:
+
+```bash
+export SPIKE_INVESTIGATION_TOOL_ID=brightagent_code_interpreter_public-gkeSDLpcfs
+export SPIKE_SF_ACCOUNT=<redacted — real Snowflake account locator>
+export SPIKE_SF_USER=<redacted — real service user>
+read -s SPIKE_SF_PASSWORD; export SPIKE_SF_PASSWORD
+uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe snowflake
+```
+
+**Result:**
+
+```json
+{"connected": true, "target": "snowflake", "select_1": 1}
+```
+
+`status: success`, exit code 0. This is not a ping or a TCP check — the
+sandbox's Python runtime installed `snowflake-connector-python`, authenticated
+against the real account with real credentials, opened a session, executed
+`SELECT 1`, and got `1` back. **Full round-trip proof.**
+
+### What this settles
+
+- **The architecture question is closed.** An AgentCore Code Interpreter, in
+  `Public` network mode, reaches a real Snowflake warehouse from inside the
+  sandbox. The "give BrightAgent a computer to investigate failures" premise
+  is no longer theoretical.
+- **The two-tool split is the right design, confirmed in practice**: the
+  original `Security: Sandbox` tool stays untouched for Airbyte connector
+  sandboxing; the new `Public` tool is dedicated to investigation. No
+  regression to the existing feature, a working new capability.
+- **Sanity (probe 1) and Snowflake (probe 4) are both PASS.** Remaining:
+  **Redshift (probe 5)** — still needs the cross-account VPC-vs-public
+  decision (see the note in the script's docstring) before it can run — and
+  **dbt Cloud (probe 6)** — should work immediately, since it's the same
+  `Public`-mode shape as Snowflake (SaaS HTTPS API, no VPC needed).
+
+### Next commands to run (no new provisioning needed for either)
+
+```bash
+# dbt Cloud — same Public tool, same shape as Snowflake, should just work:
+export SPIKE_DBT_API_TOKEN=<redacted>
+export SPIKE_DBT_ACCOUNT_ID=<redacted>
+uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe dbt
+
+# Redshift — needs the network-path question answered first (see script docstring's
+# CROSS-ACCOUNT NOTE): if Redshift has a public endpoint, PUBLIC mode (this same
+# tool) should reach it; if it's private-VPC-only, a VPC-mode tool is needed instead.
+```
 
 ## Use brightbot's own sandbox, not a new one
 
