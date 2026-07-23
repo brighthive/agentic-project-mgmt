@@ -41,6 +41,36 @@ configuration.
   "how do you reach the SQL server" objection** — the sandbox sits where the
   warehouse connection already reaches.
 
+## Credentials — two separate surfaces, don't conflate them
+
+**(1) AWS credentials — to create/run the sandbox itself** (infra-level, not
+per-warehouse):
+
+| What | Why |
+|---|---|
+| AWS account + region with Bedrock AgentCore enabled | Where the sandbox runs |
+| IAM principal with `bedrock-agentcore:CreateCodeInterpreter`/`StartCodeInterpreterSession`/`InvokeCodeInterpreter`/`StopCodeInterpreterSession`/`GetCodeInterpreter`/`DeleteCodeInterpreter` | To create + drive the spike |
+| An **execution role** (`SPIKE_EXECUTION_ROLE_ARN`) trusting `bedrock-agentcore.amazonaws.com` | What the sandbox itself runs as once inside |
+| For VPC mode: **subnet + security group IDs** with a network path to the warehouse | Not a credential, but the SG must allow egress to the db port or nothing below works |
+
+**(2) Warehouse credentials — to query Snowflake/Redshift/dbt once inside.**
+brightbot already has all three in Secrets Manager, in these exact shapes
+(confirmed by reading the real connection code) — the spike's probes 4-6 use
+the SAME field names, so this is a drop-in test against real staging secrets:
+
+| Target | Real brightbot source | Required fields |
+|---|---|---|
+| Snowflake | workspace secret `{warehouses: {[id]: {...}}}`, read by `SnowflakeConnection.connect()` (`warehouse_connections.py:801-820`) | `account`, `user`/`username`, `password`; optional `warehouse`, `database`, `schema`, `role` |
+| Redshift | same shape, `RedshiftConnection.connect()` | `host`, `database`, `port` (default 5439), `user`, `password` |
+| dbt Cloud | Secrets Manager `dbt/cloud-api/{service_id}` (`credentials_tools.py`) | `apiToken`, `accountId`, optional `apiEndpoint` |
+
+**Important distinction dbt makes clear:** dbt Cloud is a SaaS HTTPS API
+(`cloud.getdbt.com`), not a private customer resource — reaching it is a
+**PUBLIC**-mode question (does the sandbox have internet egress), not a VPC
+question. Snowflake/Redshift ARE typically private-network resources — those
+need **VPC** mode. Don't test dbt in VPC mode; it's the wrong mode for that
+target and would give a misleading pass/fail.
+
 ## The empirical confirmation: `sandbox_reachability_spike.py`
 
 The docs prove it's *supported*; the spike proves it *works for us*, end to end,
@@ -49,17 +79,22 @@ offline env (needs real AWS creds + the `bedrock-agentcore` SDK) — by design i
 is a **live spike, not a unit test**. It is written, parses, and handles missing
 prerequisites correctly (exits 2 = "couldn't run", never a false pass/fail).
 
-Three escalating probes, each an independent yes/no:
+Six probes — 1-3 are generic TCP/internet checks; **4-6 are the real
+per-warehouse tests**, using the exact credential shapes from the table above:
 
-| Probe | Mode | Proves |
-|---|---|---|
-| 1 | PUBLIC | sandbox executes code + has internet egress at all (cheapest sanity) |
-| 2 | PUBLIC | sandbox opens a TCP socket to a **publicly-reachable** db host:port (driver + egress path work) |
-| 3 | **VPC** | **DECISIVE:** VPC-mode sandbox opens TCP to a **private** warehouse — the customer-BYOW shape |
+| Probe | Mode | Target | Proves |
+|---|---|---|---|
+| 1 | PUBLIC | — | sandbox executes code + has internet egress at all (cheapest sanity) |
+| 2 | PUBLIC | generic | TCP to a **publicly-reachable** db host:port (driver + egress path work) |
+| 3 | **VPC** | generic | **DECISIVE (generic):** TCP to a **private** db host:port — the customer-BYOW shape |
+| 4 | **VPC** | **Snowflake** | real `snowflake.connector.connect(...)` + `SELECT 1` inside the sandbox |
+| 5 | **VPC** | **Redshift** | real `psycopg2.connect(...)` + `SELECT 1` inside the sandbox |
+| 6 | PUBLIC | **dbt Cloud** | authenticated HTTPS GET against the real dbt Cloud Admin API |
 
-Raw TCP first (not a full query) deliberately isolates "can I route to the port"
-from "are my driver/credentials right" — two failure modes that must not be
-conflated when reading the result.
+Raw TCP first (probes 2/3, before 4/5's real driver connect) deliberately
+isolates "can I route to the port" from "are my driver/credentials right" — two
+failure modes that must not be conflated when reading a result. Note probe 6 is
+correctly **PUBLIC**, not VPC — see the credentials note above.
 
 ### How to run it (when you have AWS creds)
 
@@ -67,39 +102,66 @@ conflated when reading the result.
 cd clients/trials/loopcapital/sandbox/eval
 uv add bedrock-agentcore boto3          # or pip install
 export AWS_REGION=us-east-1
+export SPIKE_EXECUTION_ROLE_ARN=arn:aws:iam::<acct>:role/<role>
 
 python sandbox_reachability_spike.py --probe 1      # sanity
 python sandbox_reachability_spike.py --probe 2      # needs SPIKE_DB_HOST/PORT (public)
 
-# Probe 3 — the decisive one. Needs a private target + the VPC wiring:
+# Probe 3 — generic decisive one. Needs a private target + the VPC wiring:
 export SPIKE_DB_HOST=<private-warehouse-host> SPIKE_DB_PORT=1433
 export SPIKE_VPC_SUBNETS=subnet-aaa,subnet-bbb
 export SPIKE_VPC_SECURITY_GROUPS=sg-ccc         # SG must allow egress to the db port
-export SPIKE_EXECUTION_ROLE_ARN=arn:aws:iam::<acct>:role/<role>
 python sandbox_reachability_spike.py --probe 3
+
+# Probe 4 — Snowflake (VPC). Use the REAL staging secret's values, never hardcode:
+export SPIKE_SF_ACCOUNT=ab12345.us-east-1 SPIKE_SF_USER=... SPIKE_SF_PASSWORD=...
+export SPIKE_SF_WAREHOUSE=... SPIKE_SF_DATABASE=... SPIKE_SF_SCHEMA=... SPIKE_SF_ROLE=...
+python sandbox_reachability_spike.py --probe 4
+
+# Probe 5 — Redshift (VPC):
+export SPIKE_RS_HOST=... SPIKE_RS_PORT=5439 SPIKE_RS_DATABASE=... SPIKE_RS_USER=... SPIKE_RS_PASSWORD=...
+python sandbox_reachability_spike.py --probe 5
+
+# Probe 6 — dbt Cloud (PUBLIC — it's a SaaS API, not a private resource):
+export SPIKE_DBT_API_TOKEN=... SPIKE_DBT_ACCOUNT_ID=...
+python sandbox_reachability_spike.py --probe 6
 ```
 
 Exit `0` = reachable (viable). Exit `1` = not reachable (records the failure
-mode). Exit `2` = prerequisites missing (not a reachability result).
+mode). Exit `2` = prerequisites missing (not a reachability result). Secrets
+are read from env only and never printed — only pass/fail + sanitized error
+text (exception type + message) crosses back out of the sandbox.
 
-### What each Probe-3 outcome means for the build
+### What the outcomes mean for the build
 
-- **PASS** → the sandbox approach is viable end-to-end. Proceed to build the
-  `DiagnosticSandbox` READ_ONLY adapter (spec §2) on AgentCore Code Interpreter,
-  VPC mode, scoped execution role per workspace (Invariant 11).
-- **FAIL** → do **not** build investigation-in-sandbox against BYOW sources on
-  this path. Fall back: investigate via the **existing `WarehouseTool`
-  connection** (which already reaches the warehouse), and scope the sandbox to
-  **compute-only** (`SANDBOX` mode — transform/analyze data handed to it, never
-  reach the live DB). The remediation decision core we already shipped is
-  unaffected either way — it runs *after* investigation, on the diagnosis,
-  wherever that diagnosis came from.
+- **PASS on 3/4/5** → the sandbox approach is viable end-to-end for that
+  warehouse. Proceed to build the `DiagnosticSandbox` READ_ONLY adapter (spec §2)
+  on AgentCore Code Interpreter, VPC mode, scoped execution role per workspace
+  (Invariant 11).
+- **FAIL on 3, but 4/5 pass** → the generic TCP probe used the wrong host/port
+  for this environment; trust 4/5 (the real per-warehouse drivers) over the
+  generic probe.
+- **FAIL on 4 or 5 specifically** → read the error text: a driver-not-installed
+  error means bake the driver into the sandbox's runtime image, not a
+  reachability problem; a network/timeout error means the VPC/SG wiring doesn't
+  route to that warehouse yet; an auth error means the credentials are wrong,
+  not the network path. Each is a different fix — don't conflate them.
+- **FAIL on 3/4/5 categorically (network)** → do **not** build
+  investigation-in-sandbox against BYOW sources on this path. Fall back:
+  investigate via the **existing `WarehouseTool` connection** (which already
+  reaches the warehouse), and scope the sandbox to **compute-only** (`SANDBOX`
+  mode). The remediation decision core we already shipped is unaffected either
+  way — it runs *after* investigation, on the diagnosis, wherever that came from.
+- **Probe 6 (dbt) is independent of 3/4/5** — dbt Cloud is a SaaS API reached
+  over PUBLIC egress, not the VPC. A FAIL here is a token/account_id/egress
+  issue, never a VPC wiring issue.
 
 ## Bottom line
 
 The deciding factor is **decided at the architecture level: YES, it can reach a
-customer warehouse (VPC mode).** The remaining step is a ~1-hour live spike to
-confirm it against real infra and shake out VPC/SG/role wiring — not a research
+customer warehouse (VPC mode) and dbt Cloud's API (PUBLIC mode).** The remaining
+step is a live spike (~1-2 hours across all 6 probes) to confirm it against real
+staging infra/secrets and shake out VPC/SG/role wiring — not a research
 question, a verification. Everything downstream (the investigation adapter, then
 the already-built retry/gate/fix-memory decision core) is unblocked the moment
-Probe 3 goes green.
+probes 3/4/5/6 go green.

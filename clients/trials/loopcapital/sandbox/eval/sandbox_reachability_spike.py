@@ -19,35 +19,67 @@ not discover whether it's possible):
      that can reach the warehouse's port SHOULD connect. This spike confirms it
      for real, and measures the failure modes if not.
 
-WHAT THIS SPIKE DOES (three escalating probes, each an independent yes/no):
-  Probe 1 (PUBLIC mode)  — sanity: can the sandbox execute code + reach the
-                           public internet at all? Cheapest possible check.
-  Probe 2 (PUBLIC mode)  — can it open a TCP socket to a PUBLICLY-REACHABLE db
-                           host:port (e.g. a test RDS with a public endpoint)?
-                           Proves the driver + egress path work before VPC.
-  Probe 3 (VPC mode)     — THE real test: a Code Interpreter created with
-                           networkMode=VPC + the subnets/SG that can route to a
-                           PRIVATE warehouse, runs a real `SELECT 1`. This is the
-                           customer-BYOW shape (private SQL Server / Snowflake /
-                           Databricks reached over the existing connection).
+WHAT THIS SPIKE DOES — six probes. 1-3 are generic TCP/internet checks; 4-6 are
+the REAL warehouse-specific tests, using the EXACT credential shapes brightbot
+already reads from Secrets Manager (warehouse_connections.py / credentials_tools.py)
+— this is a drop-in test against real staging secrets, not a toy:
+
+  Probe 1 (PUBLIC mode) — sanity: sandbox executes code + has internet egress.
+  Probe 2 (PUBLIC mode) — TCP to a PUBLICLY-REACHABLE db host:port.
+  Probe 3 (VPC mode)    — DECISIVE generic case: TCP to a PRIVATE db host:port —
+                          the customer-BYOW shape (SQL Server/generic).
+  Probe 4 (VPC mode)    — SNOWFLAKE: real `snowflake.connector.connect(...)` +
+                          `SELECT 1` from inside the sandbox, using
+                          account/user/password (+ optional warehouse/database/
+                          schema/role) — the SAME fields SnowflakeConnection.connect()
+                          requires (warehouse_connections.py:801-820).
+  Probe 5 (VPC mode)    — REDSHIFT: real driver connect + `SELECT 1`, using
+                          host/port/database/user/password — the SAME fields
+                          RedshiftConnection.connect() requires.
+  Probe 6 (PUBLIC mode) — DBT CLOUD: NOT a private DB socket — dbt Cloud is a
+                          SaaS HTTPS API (cloud.getdbt.com). Tests an authenticated
+                          GET against the real Admin API using the SAME
+                          apiToken/accountId shape read from Secrets Manager
+                          secret `dbt/cloud-api/{service_id}` (credentials_tools.py).
+                          PUBLIC mode is correct here — VPC mode would be wrong,
+                          since dbt Cloud is not inside anyone's private network.
+
+Why raw TCP first (probes 2/3) before a real driver connect (4/5): isolates
+"can I route to the port" from "are my driver/credentials right" — two
+different failure modes that must not be conflated when reading a result.
 
 USAGE (needs real AWS creds + the bedrock-agentcore SDK; NOTHING here runs
 without them — by design, it's a live spike, not a unit test):
 
   uv add bedrock-agentcore boto3           # or: pip install
   export AWS_REGION=us-east-1
-  # Probe 3 also needs a reachable target + VPC wiring:
-  export SPIKE_DB_HOST=... SPIKE_DB_PORT=5432
-  export SPIKE_VPC_SUBNETS=subnet-aaa,subnet-bbb
-  export SPIKE_VPC_SECURITY_GROUPS=sg-ccc
   export SPIKE_EXECUTION_ROLE_ARN=arn:aws:iam::<acct>:role/<role>
 
+  # Probes 3-5 (VPC mode) need the network wiring:
+  export SPIKE_VPC_SUBNETS=subnet-aaa,subnet-bbb
+  export SPIKE_VPC_SECURITY_GROUPS=sg-ccc      # must allow egress to the db port
+
   python sandbox_reachability_spike.py --probe 1
-  python sandbox_reachability_spike.py --probe 2
-  python sandbox_reachability_spike.py --probe 3
+  python sandbox_reachability_spike.py --probe 2   # + SPIKE_DB_HOST/PORT (public)
+  python sandbox_reachability_spike.py --probe 3   # + SPIKE_DB_HOST/PORT (private)
+
+  # Probe 4 — Snowflake (VPC): use the REAL staging secret's values, never hardcode.
+  export SPIKE_SF_ACCOUNT=ab12345.us-east-1 SPIKE_SF_USER=... SPIKE_SF_PASSWORD=...
+  export SPIKE_SF_WAREHOUSE=... SPIKE_SF_DATABASE=... SPIKE_SF_SCHEMA=... SPIKE_SF_ROLE=...
+  python sandbox_reachability_spike.py --probe 4
+
+  # Probe 5 — Redshift (VPC):
+  export SPIKE_RS_HOST=... SPIKE_RS_PORT=5439 SPIKE_RS_DATABASE=... SPIKE_RS_USER=... SPIKE_RS_PASSWORD=...
+  python sandbox_reachability_spike.py --probe 5
+
+  # Probe 6 — dbt Cloud (PUBLIC — it's a SaaS API, not a private resource):
+  export SPIKE_DBT_API_TOKEN=... SPIKE_DBT_ACCOUNT_ID=... [SPIKE_DBT_API_ENDPOINT=https://cloud.getdbt.com]
+  python sandbox_reachability_spike.py --probe 6
 
 Exit 0 = probe passed (reachable). Exit 1 = failed (records the failure mode).
 Exit 2 = prerequisites missing (creds/SDK/env) — NOT a reachability failure.
+Secrets are read from env only and NEVER printed — only pass/fail + sanitized
+error text (exception type + message) crosses back out of the sandbox.
 
 WHAT A GREEN PROBE 3 PROVES: the entire sandbox approach is viable — BrightAgent
 CAN run an investigative query against a customer's private warehouse from an
@@ -111,6 +143,97 @@ def _tcp_probe_code(host: str, port: int) -> str:
             print(json.dumps({{"tcp_reachable": True, "host": {host!r}, "port": {port}}}))
         except Exception as e:
             print(json.dumps({{"tcp_reachable": False, "host": {host!r}, "port": {port},
+                               "error": type(e).__name__ + ": " + str(e)}}))
+        """
+    ).strip()
+
+
+# --------------------------------------------------------------------------- #
+# Probe 4 — SNOWFLAKE: real driver connect + SELECT 1, from inside the         #
+# sandbox. Field names/optionality mirror SnowflakeConnection.connect()        #
+# EXACTLY (warehouse_connections.py:801-820) — account/user/password required, #
+# warehouse/database/schema/role optional, added only if present.              #
+# --------------------------------------------------------------------------- #
+def _snowflake_probe_code(*, account: str, user: str, password: str,
+                          warehouse: str | None, database: str | None,
+                          schema: str | None, role: str | None) -> str:
+    optional = {"warehouse": warehouse, "database": database, "schema": schema, "role": role}
+    optional_literal = repr({k: v for k, v in optional.items() if v})
+    return textwrap.dedent(
+        f"""
+        import json
+        try:
+            import snowflake.connector
+        except ImportError as e:
+            print(json.dumps({{"connected": False, "target": "snowflake",
+                               "error": "snowflake-connector-python not installed in sandbox: " + str(e)}}))
+        else:
+            try:
+                kwargs = {{"account": {account!r}, "user": {user!r}, "password": {password!r},
+                          "client_session_keep_alive": False}}
+                kwargs.update({optional_literal})
+                conn = snowflake.connector.connect(**kwargs)
+                cur = conn.cursor()
+                cur.execute("SELECT 1")
+                row = cur.fetchone()
+                cur.close(); conn.close()
+                print(json.dumps({{"connected": True, "target": "snowflake", "select_1": row[0]}}))
+            except Exception as e:
+                print(json.dumps({{"connected": False, "target": "snowflake",
+                                   "error": type(e).__name__ + ": " + str(e)}}))
+        """
+    ).strip()
+
+
+# --------------------------------------------------------------------------- #
+# Probe 5 — REDSHIFT: real driver connect + SELECT 1. Field names mirror       #
+# RedshiftConnection.connect() EXACTLY — host/database/port/user/password.     #
+# --------------------------------------------------------------------------- #
+def _redshift_probe_code(*, host: str, port: int, database: str, user: str,
+                         password: str) -> str:
+    return textwrap.dedent(
+        f"""
+        import json
+        try:
+            import psycopg2
+        except ImportError as e:
+            print(json.dumps({{"connected": False, "target": "redshift",
+                               "error": "psycopg2 not installed in sandbox: " + str(e)}}))
+        else:
+            try:
+                conn = psycopg2.connect(host={host!r}, port={port}, dbname={database!r},
+                                        user={user!r}, password={password!r}, connect_timeout=10)
+                cur = conn.cursor()
+                cur.execute("SELECT 1")
+                row = cur.fetchone()
+                cur.close(); conn.close()
+                print(json.dumps({{"connected": True, "target": "redshift", "select_1": row[0]}}))
+            except Exception as e:
+                print(json.dumps({{"connected": False, "target": "redshift",
+                                   "error": type(e).__name__ + ": " + str(e)}}))
+        """
+    ).strip()
+
+
+# --------------------------------------------------------------------------- #
+# Probe 6 — DBT CLOUD: NOT a private DB socket. dbt Cloud is a SaaS HTTPS API  #
+# (cloud.getdbt.com) — PUBLIC mode is the CORRECT mode here, unlike probes     #
+# 3-5. Auth shape mirrors credentials_tools.py's dbt/cloud-api/{service_id}    #
+# secret: apiToken + accountId.                                                #
+# --------------------------------------------------------------------------- #
+def _dbt_cloud_probe_code(*, api_token: str, account_id: str, api_endpoint: str) -> str:
+    url = f"{api_endpoint.rstrip('/')}/api/v2/accounts/{account_id}/"
+    return textwrap.dedent(
+        f"""
+        import json, urllib.request
+        try:
+            req = urllib.request.Request({url!r}, headers={{"Authorization": "Token {api_token}"}})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                status = r.status
+            print(json.dumps({{"connected": status == 200, "target": "dbt_cloud",
+                               "http_status": status}}))
+        except Exception as e:
+            print(json.dumps({{"connected": False, "target": "dbt_cloud",
                                "error": type(e).__name__ + ": " + str(e)}}))
         """
     ).strip()
@@ -224,8 +347,9 @@ def _parse_vpc_config() -> dict | None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--probe", type=int, choices=[1, 2, 3], required=True,
-                    help="1=internet, 2=public-db TCP, 3=VPC private-db TCP")
+    ap.add_argument("--probe", type=int, choices=[1, 2, 3, 4, 5, 6], required=True,
+                    help="1=internet, 2=public-db TCP, 3=VPC private-db TCP, "
+                         "4=Snowflake connect, 5=Redshift connect, 6=dbt Cloud API")
     args = ap.parse_args()
 
     region = os.getenv(REGION_ENV)
@@ -268,40 +392,122 @@ def main() -> int:
               else "FAIL — sandbox could not reach the db port (see error above)")
         return 0 if passed else 1
 
-    # probe 3 — the decisive one
-    host = os.getenv("SPIKE_DB_HOST")
-    port = os.getenv("SPIKE_DB_PORT")
-    if not host or not port:
-        return _preclude("SPIKE_DB_HOST and SPIKE_DB_PORT must be set for probe 3")
-    vpc_config = _parse_vpc_config()
-    if vpc_config is None:
-        return _preclude(
-            "SPIKE_VPC_SUBNETS and SPIKE_VPC_SECURITY_GROUPS must be set for probe 3 "
-            "(VPC mode requires vpcConfig)"
-        )
-    if not execution_role:
-        return _preclude("SPIKE_EXECUTION_ROLE_ARN must be set for probe 3 (VPC custom interpreter)")
+    if args.probe == 3:
+        host = os.getenv("SPIKE_DB_HOST")
+        port = os.getenv("SPIKE_DB_PORT")
+        if not host or not port:
+            return _preclude("SPIKE_DB_HOST and SPIKE_DB_PORT must be set for probe 3")
+        vpc_config = _parse_vpc_config()
+        if vpc_config is None:
+            return _preclude(
+                "SPIKE_VPC_SUBNETS and SPIKE_VPC_SECURITY_GROUPS must be set for probe 3 "
+                "(VPC mode requires vpcConfig)"
+            )
+        if not execution_role:
+            return _preclude("SPIKE_EXECUTION_ROLE_ARN must be set for probe 3 (VPC custom interpreter)")
 
-    print(f"PROBE 3 — DECISIVE: VPC-mode sandbox opens TCP to PRIVATE db {host}:{port}")
-    print(f"          subnets={vpc_config['subnets']} sgs={vpc_config['securityGroups']}")
-    ok, out = _run_in_sandbox(CodeInterpreter, region=region,
-                              code=_tcp_probe_code(host, int(port)),
-                              network_mode="VPC", vpc_config=vpc_config,
-                              execution_role_arn=execution_role)
+        print(f"PROBE 3 — DECISIVE (generic): VPC-mode sandbox opens TCP to PRIVATE db {host}:{port}")
+        print(f"          subnets={vpc_config['subnets']} sgs={vpc_config['securityGroups']}")
+        ok, out = _run_in_sandbox(CodeInterpreter, region=region,
+                                  code=_tcp_probe_code(host, int(port)),
+                                  network_mode="VPC", vpc_config=vpc_config,
+                                  execution_role_arn=execution_role)
+        print(out)
+        passed = ok and '"tcp_reachable": true' in out.lower()
+        print("\n" + "=" * 72)
+        if passed:
+            print("RESULT: PASS -- a VPC-mode Code Interpreter REACHED a private warehouse.")
+            print("  => The agentic-remediation sandbox approach is VIABLE end-to-end.")
+            print("     Investigation-in-sandbox against customer BYOW sources is confirmed.")
+        else:
+            print("RESULT: FAIL -- VPC-mode sandbox could NOT reach the private warehouse.")
+            print("  => Do NOT build investigation-in-sandbox against BYOW sources on this path.")
+            print("     Fall back: investigate via the EXISTING WarehouseTool connection instead;")
+            print("     scope the sandbox to compute-only. Record the exact error above as the")
+            print("     evidence for that decision.")
+        print("=" * 72)
+        return 0 if passed else 1
+
+    if args.probe == 4:
+        account = os.getenv("SPIKE_SF_ACCOUNT")
+        user = os.getenv("SPIKE_SF_USER")
+        password = os.getenv("SPIKE_SF_PASSWORD")
+        if not account or not user or not password:
+            return _preclude(
+                "SPIKE_SF_ACCOUNT, SPIKE_SF_USER, SPIKE_SF_PASSWORD must be set for probe 4 "
+                "(the same required fields SnowflakeConnection.connect() reads)"
+            )
+        vpc_config = _parse_vpc_config()
+        if vpc_config is None:
+            return _preclude("SPIKE_VPC_SUBNETS and SPIKE_VPC_SECURITY_GROUPS must be set for probe 4")
+        if not execution_role:
+            return _preclude("SPIKE_EXECUTION_ROLE_ARN must be set for probe 4")
+
+        print(f"PROBE 4 — SNOWFLAKE: VPC-mode sandbox connects to account {account} + SELECT 1")
+        code = _snowflake_probe_code(
+            account=account, user=user, password=password,
+            warehouse=os.getenv("SPIKE_SF_WAREHOUSE"), database=os.getenv("SPIKE_SF_DATABASE"),
+            schema=os.getenv("SPIKE_SF_SCHEMA"), role=os.getenv("SPIKE_SF_ROLE"),
+        )
+        ok, out = _run_in_sandbox(CodeInterpreter, region=region, code=code,
+                                  network_mode="VPC", vpc_config=vpc_config,
+                                  execution_role_arn=execution_role)
+        print(out)
+        passed = ok and '"connected": true' in out.lower()
+        print("\nRESULT:", "PASS -- sandbox connected to Snowflake and ran SELECT 1" if passed
+              else "FAIL -- see error above (driver missing vs. network vs. auth — check which)")
+        return 0 if passed else 1
+
+    if args.probe == 5:
+        host = os.getenv("SPIKE_RS_HOST")
+        database = os.getenv("SPIKE_RS_DATABASE")
+        user = os.getenv("SPIKE_RS_USER")
+        password = os.getenv("SPIKE_RS_PASSWORD")
+        port = int(os.getenv("SPIKE_RS_PORT", "5439"))
+        if not host or not database or not user or not password:
+            return _preclude(
+                "SPIKE_RS_HOST, SPIKE_RS_DATABASE, SPIKE_RS_USER, SPIKE_RS_PASSWORD must be set "
+                "for probe 5 (the same required fields RedshiftConnection.connect() reads)"
+            )
+        vpc_config = _parse_vpc_config()
+        if vpc_config is None:
+            return _preclude("SPIKE_VPC_SUBNETS and SPIKE_VPC_SECURITY_GROUPS must be set for probe 5")
+        if not execution_role:
+            return _preclude("SPIKE_EXECUTION_ROLE_ARN must be set for probe 5")
+
+        print(f"PROBE 5 — REDSHIFT: VPC-mode sandbox connects to {host}:{port}/{database} + SELECT 1")
+        code = _redshift_probe_code(host=host, port=port, database=database,
+                                    user=user, password=password)
+        ok, out = _run_in_sandbox(CodeInterpreter, region=region, code=code,
+                                  network_mode="VPC", vpc_config=vpc_config,
+                                  execution_role_arn=execution_role)
+        print(out)
+        passed = ok and '"connected": true' in out.lower()
+        print("\nRESULT:", "PASS -- sandbox connected to Redshift and ran SELECT 1" if passed
+              else "FAIL -- see error above (driver missing vs. network vs. auth — check which)")
+        return 0 if passed else 1
+
+    # probe 6 — dbt Cloud: PUBLIC mode is CORRECT (SaaS API, not a private resource)
+    api_token = os.getenv("SPIKE_DBT_API_TOKEN")
+    account_id = os.getenv("SPIKE_DBT_ACCOUNT_ID")
+    api_endpoint = os.getenv("SPIKE_DBT_API_ENDPOINT", "https://cloud.getdbt.com")
+    if not api_token or not account_id:
+        return _preclude(
+            "SPIKE_DBT_API_TOKEN and SPIKE_DBT_ACCOUNT_ID must be set for probe 6 "
+            "(the same fields read from Secrets Manager secret dbt/cloud-api/{service_id})"
+        )
+    print(f"PROBE 6 — DBT CLOUD: PUBLIC-mode sandbox calls {api_endpoint} Admin API "
+          f"for account {account_id}")
+    ok, out = _run_in_sandbox(
+        CodeInterpreter, region=region,
+        code=_dbt_cloud_probe_code(api_token=api_token, account_id=account_id,
+                                   api_endpoint=api_endpoint),
+        network_mode="PUBLIC", vpc_config=None, execution_role_arn=execution_role,
+    )
     print(out)
-    passed = ok and '"tcp_reachable": true' in out.lower()
-    print("\n" + "=" * 72)
-    if passed:
-        print("RESULT: PASS -- a VPC-mode Code Interpreter REACHED a private warehouse.")
-        print("  => The agentic-remediation sandbox approach is VIABLE end-to-end.")
-        print("     Investigation-in-sandbox against customer BYOW sources is confirmed.")
-    else:
-        print("RESULT: FAIL -- VPC-mode sandbox could NOT reach the private warehouse.")
-        print("  => Do NOT build investigation-in-sandbox against BYOW sources on this path.")
-        print("     Fall back: investigate via the EXISTING WarehouseTool connection instead;")
-        print("     scope the sandbox to compute-only. Record the exact error above as the")
-        print("     evidence for that decision.")
-    print("=" * 72)
+    passed = ok and '"connected": true' in out.lower()
+    print("\nRESULT:", "PASS -- sandbox authenticated against the dbt Cloud API" if passed
+          else "FAIL -- see error above (egress vs. bad token/account_id — check which)")
     return 0 if passed else 1
 
 
