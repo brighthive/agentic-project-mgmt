@@ -9,8 +9,56 @@
 >
 > **Date:** 2026-07-23 · **Status:** architecturally CONFIRMED YES (AWS docs);
 > empirical confirmation pending AWS creds (spike is built + ready to run).
+> **UPDATE 2026-07-23 (later same day):** brightbot already has a WORKING,
+> TESTED Code Interpreter integration — see "Use brightbot's own sandbox, not a
+> new one" below. It changes what to run first and surfaces a real open
+> question about the CURRENTLY CONFIGURED tool's network mode.
 
-## The architectural answer: YES (confirmed from AWS's own API reference)
+## Use brightbot's own sandbox, not a new one
+
+**Don't build a fresh AgentCore setup for this.** `brightbot/utils/sandbox_utils.py`
+already has `invoke_bedrock_code_interpreter()` — a working, tested function
+wired to real credentials ALREADY in brightbot's `.env`
+(`AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+`BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID`). A passing integration test
+(`tests/integration/test_connector_sandbox_integration.py`) proves that exact
+tool ID already executes Python and shell commands successfully — installing
+`airbyte-cdk`, running shell setup, base64 round-trips. **The "does the sandbox
+even work" question is already answered: yes, and has been for a while.**
+
+**The open question this raises, found by reading `agent_tools/sandbox_tools.py`'s
+own tool docstring (not assumed):**
+
+> "Runs in a sandboxed Linux environment with **limited network access (S3 and
+> DNS only)**." / "Network: Only S3 and DNS access (no general internet)"
+
+That phrasing matches AWS's **`SANDBOX`** network mode — no internet, no VPC.
+**If that's what the currently-configured `BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID`
+actually is, it CANNOT reach Snowflake, Redshift, or dbt Cloud today — not
+because of bad credentials, but because the network mode itself blocks
+outbound reach.** This was written for a different use case (sandboxing Airbyte
+connectors, which only needs S3+DNS) and has never been tested against a real
+warehouse. It's an inference from a docstring, not a confirmed fact — the new
+script below tests it directly.
+
+**Use `brightbot_sandbox_reachability.py`** (not `sandbox_reachability_spike.py`
+below, which builds its own boto3 client from scratch) — it calls the real,
+already-tested brightbot function directly, reusing its workspace-scoped
+credential resolution (STS cross-account role assumption) instead of
+reinventing it. Run FROM the brightbot repo so its `.env` loads:
+
+```bash
+cd brightbot
+uv run python ../agentic-project-mgmt/clients/trials/loopcapital/sandbox/eval/brightbot_sandbox_reachability.py --probe sanity
+```
+
+If `sanity` reports `reached_internet: false` while `status: success` — that
+CONFIRMS the SANDBOX-mode hypothesis, and the fix is reconfiguring
+`BRIGHTAGENT_CODE_INTERPRETER_TOOL_ID` (or provisioning a second, PUBLIC/VPC-mode
+Code Interpreter dedicated to investigation) before probes 4/5/6 mean anything.
+If `sanity` passes, proceed straight to `--probe snowflake` / `redshift` / `dbt`.
+
+## The architectural answer (AWS docs): a suitable network mode EXISTS
 
 AgentCore Code Interpreter supports three network modes, and one of them places
 the sandbox inside a VPC where it can reach private resources:
