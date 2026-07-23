@@ -259,8 +259,26 @@ class FixMemoryRecord:
    MAX_TRANSIENT_RETRIES (named constant, workspace-overridable); WHEN DETERMINISTIC or
    UNKNOWN, THE System SHALL NOT retry and SHALL proceed to diagnosis.`
 3. `WHEN diagnosis runs, investigation code SHALL execute only in a DiagnosticSandbox with
-   capability READ_ONLY; the READ_ONLY sandbox SHALL have no MUTATE capability and no
-   public-internet egress (AgentCore SANDBOX network mode).`
+   capability READ_ONLY, and the READ_ONLY adapter SHALL expose no MUTATE capability.`
+   **REVISED 2026-07-23 after live reachability testing (see
+   `clients/trials/loopcapital/sandbox/eval/SANDBOX_REACHABILITY.md`).** The original
+   invariant required "no public-internet egress (AgentCore SANDBOX network mode)". That
+   is EMPIRICALLY WRONG for this system: AgentCore SANDBOX mode CANNOT reach the warehouses
+   (Snowflake, Redshift Serverless, dbt Cloud) — all three were confirmed reachable ONLY
+   in `Security: Public` network mode, connecting directly over the internet with the real
+   driver. Snowflake/dbt Cloud are SaaS (never inside a VPC); Redshift Serverless has a
+   public endpoint by default. **Read-only safety therefore does NOT come from network
+   isolation — it comes from three enforced layers, none of which is the network:**
+   (a) the `AgentCoreCodeInterpreterSandbox` adapter's `capabilities()` returns
+   `frozenset({READ_ONLY})` and its `run()` raises on any non-READ_ONLY capability
+   (MUTATE can never execute through the investigation adapter — Invariant 5 by
+   construction); (b) every investigation query passes `assert_read_only_sql`
+   (the shipped guard, `brightbot/tools/warehouse_base.py`) which rejects multi-statement,
+   non-SELECT-start, and any DML/DDL keyword even inside a CTE body; (c) the query runs
+   under a scoped read-only DB credential. The ephemeral single-tenant microVM
+   (sanitized on session exit) + the workspace-scoped credential (Invariant 11) remain
+   the isolation guarantees. A future MUTATE path (fix execution) is a SEPARATE adapter/
+   capability and is out of scope for this READ_ONLY investigation layer.`
 4. `IF a failure is not classifiable into a known remediable mode, THEN THE System SHALL
    ALERT_ONLY — it SHALL NOT draft or execute a guessed fix (inherits self-healing Invariant 4;
    verified live — classifier precision 1.00 / abstention 1.00 at Layer 0).`
