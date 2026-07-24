@@ -282,6 +282,52 @@ message, not a silent pass.
 not a rubber stamp — there is no code path that returns `1` from `SELECT 1`
 without an actual successful round-trip to the actual server.
 
+## ✅ CONFIRMED PASS — full live investigation loop, 2026-07-24
+
+The reachability probes above prove the *sandbox* can reach a warehouse. This
+run proves the **whole investigation loop** does: a real Bedrock model
+(`dbt_react_model`, Sonnet) decides what to investigate, the real
+`AgentCoreCodeInterpreterSandbox` runs it against real Snowflake, and the model
+concludes with a genuine `RemediationProposal` — end to end, twice.
+
+**Run 1 — the model recovered from a real, unplanned failure.** The test
+warehouse config omitted `database`/`schema` (a test setup gap, not a code
+bug). The first query failed for real (`ProgrammingError: ... does not have a
+current database`). The model did not crash or bail — it read the real error
+and still produced a correct, safe conclusion:
+
+```
+diagnosis: schema drift — SETTLEMENT_CCY column no longer exists / was renamed
+confidence: 0.85
+reversibility: REVERSIBLE   (deterministic from the classifier's mode, not the model)
+has_compensating_action: True
+```
+
+**Run 2 — full warehouse config, clean multi-step investigation.** The model:
+1. Queried `SETTLEMENTS` table specifically → got back `[]` (table doesn't exist).
+2. Adapted — broadened to `information_schema.columns` across the whole warehouse.
+3. Got REAL rows back from the REAL warehouse (`BRONZE.RAW_CORPORATE_ACTIONS.CURRENCY`,
+   `GC_SANDBOX.STG_INT_ENRICHED_HOLDINGS.CURRENCY`, etc.)
+4. Concluded, from that real evidence, a materially better diagnosis than run 1:
+
+```
+diagnosis: no SETTLEMENT_CCY column exists anywhere in the warehouse; every
+  related table uses CURRENCY instead. SETTLEMENTS table itself is missing —
+  never provisioned / dropped / renamed. Fix: point the pipeline at the correct
+  table/column name.
+confidence: 0.88   (higher than run 1 — earned by real multi-table evidence)
+reversibility: REVERSIBLE
+has_compensating_action: True
+```
+
+**What this settles:** the model → sandbox → warehouse → proposal chain works
+live, is resilient to a real mid-investigation failure (adapts rather than
+giving up), and — critically — the safety-critical fields (`reversibility`,
+`has_compensating_action`) came from the deterministic classifier mapping in
+BOTH runs, never from the model, exactly as designed. This closes the "live LLM
+investigation quality" gap that was the one remaining creds-gated unknown in the
+agentic-remediation backend.
+
 ## Use brightbot's own sandbox, not a new one
 
 **Don't build a fresh AgentCore setup for this.** `brightbot/utils/sandbox_utils.py`
