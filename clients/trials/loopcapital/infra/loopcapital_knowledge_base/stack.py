@@ -281,6 +281,46 @@ class LoopCapitalKnowledgeBaseStack(Stack):
             )
         )
 
+        # Bedrock's managed reranker (brightbot's query_knowledge_base uses it
+        # for retrieval precision) needs its own grant, separate from the KB
+        # access above: bedrock:Rerank doesn't support resource-level ARN
+        # scoping (must be "*"), and the reranker is a different foundation
+        # model than the KB's own embedding model. Confirmed live against this
+        # role that neither is covered by the grant above.
+        #
+        # This exact 3-statement block is duplicated in brighthive-data-
+        # workspace-cdk's general BedrockUnstructuredDataStack construct
+        # (brighthive_data_cdk/bedrock_unstructured_data_stack.py) since this
+        # trial stack isn't an instance of that construct — keep both in sync
+        # if the required action list ever changes.
+        rerank_model_arn = f"arn:aws:bedrock:{region}::foundation-model/cohere.rerank-v3-5:0"
+        brightagent_kb_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:Rerank"],
+                resources=["*"],
+            )
+        )
+        brightagent_kb_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"],
+                resources=[rerank_model_arn],
+            )
+        )
+        # Cohere Rerank is a third-party model; Bedrock auto-subscribes via AWS
+        # Marketplace on first invoke, which requires these actions on the
+        # caller's role. Without them the subscription attempt fails and Rerank
+        # returns 403 even with bedrock:Rerank/InvokeModel already granted.
+        brightagent_kb_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "aws-marketplace:ViewSubscriptions",
+                    "aws-marketplace:Subscribe",
+                    "aws-marketplace:Unsubscribe",
+                ],
+                resources=["*"],
+            )
+        )
+
         Tags.of(self).add("Project", "loopcapital-demo")
         Tags.of(self).add("TemporaryUntil", "2026-07-18")
 
