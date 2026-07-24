@@ -131,7 +131,16 @@ systems and get named confirmation first (workspace `CLAUDE.md` rule).
 |---|---|---|
 | `NOTIFICATIONS_POLLER_ENABLED` | ✅ `true` (redeployed, boot log confirms) | n/a |
 | `NOTIFICATIONS_API_URL` | ✅ `https://api.app.brighthive.net` (redeployed) | n/a |
-| `CHAT_NOTIFY_MUTE_SECRET` | ⚠️ pending (both-ends set together) | ⚠️ pending (absent from 56 secrets) |
+| `CHAT_NOTIFY_MUTE_SECRET` | ✅ set + baked (task-def rev `:10`, 2026-07-24) | ✅ present (56→57, PATCHed + re-snapshot verified) |
+
+**Full parity reached 2026-07-24.** Both ends of the mute secret set in one change with a fresh
+`openssl rand -hex 32` value via the `langsmith-vault/cli/add-secret` tool (GET→append→assert
+count+1→PATCH full array→re-GET verify). Prod deploy green through `verify-deploy.sh`; boot log:
+`[poller] Starting`, `[notifications] SSE endpoint active`, Socket Mode owned, no `not_configured`.
+
+> **Hardening follow-up**: `CHAT_NOTIFY_MUTE_SECRET` (and `NOTIFICATIONS_API_KEY`) land in the ECS
+> task-def **plaintext `environment` block**, not the `secrets` block. Move both to `secrets`
+> (Secrets Manager–backed) in a future infra PR — separate ticket, not a regression.
 
 ---
 
