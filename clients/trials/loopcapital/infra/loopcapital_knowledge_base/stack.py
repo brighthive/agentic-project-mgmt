@@ -310,13 +310,28 @@ class LoopCapitalKnowledgeBaseStack(Stack):
         # Marketplace on first invoke, which requires these actions on the
         # caller's role. Without them the subscription attempt fails and Rerank
         # returns 403 even with bedrock:Rerank/InvokeModel already granted.
+        # All three are AWS-documented prerequisites for successful model
+        # access (Bedrock's own subscription flow calls them, not our code) —
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html
+        #
+        # Subscribe is scoped to Cohere Rerank 3.5's specific Marketplace
+        # product (confirmed via AWS's own model card:
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-cohere-rerank-3-5.html
+        # — "Marketplace product ID: prod-2o5bej62oxkbi"). ViewSubscriptions/
+        # Unsubscribe can't be scoped this way — AWS's aws-marketplace:ProductId
+        # condition key only applies to Subscribe.
         brightagent_kb_role.add_to_policy(
             iam.PolicyStatement(
-                actions=[
-                    "aws-marketplace:ViewSubscriptions",
-                    "aws-marketplace:Subscribe",
-                    "aws-marketplace:Unsubscribe",
-                ],
+                actions=["aws-marketplace:Subscribe"],
+                resources=["*"],
+                conditions={
+                    "StringEquals": {"aws-marketplace:ProductId": "prod-2o5bej62oxkbi"}
+                },
+            )
+        )
+        brightagent_kb_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["aws-marketplace:ViewSubscriptions", "aws-marketplace:Unsubscribe"],
                 resources=["*"],
             )
         )
