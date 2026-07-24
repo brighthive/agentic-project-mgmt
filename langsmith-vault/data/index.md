@@ -1,6 +1,6 @@
 # LangSmith Deployment Snapshot Index
 
-_Generated: 2026-07-21T02:37:20+00:00_
+_Generated: 2026-07-24T04:52:25+00:00_
 
 | Env | Deployment | Secrets | Env Vars | Snapshot At | Latest Revision |
 |-----|------------|---------|----------|-------------|-----------------|
@@ -11,5 +11,5 @@ _Generated: 2026-07-21T02:37:20+00:00_
 | main | `brighthive-scheduler` | 55 | 0 | 2026-06-19T15:26:23+00:00 | `fa6770a8-d61` |
 | main | `cron-jobs-quality-agent-poc` | 45 | 0 | 2026-06-19T15:26:24+00:00 | `299dd60c-a1f` |
 | main | `ibm-watsonx` | 30 | 0 | 2026-06-19T15:26:24+00:00 | `58ea0cd5-18c` |
-| prod | `brightagent-prod` | 56 | 0 | 2026-07-21T02:37:20+00:00 | `dce2ddcf-54d` |
+| prod | `brightagent-prod` | 57 | 0 | 2026-07-24T04:52:25+00:00 | `eba60629-eeb` |
 | staging | `brightagent-staging` | 80 | 0 | 2026-07-16T15:02:42+00:00 | `f537e8d9-a13` |
