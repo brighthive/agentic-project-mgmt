@@ -48,6 +48,98 @@ digital engineers are going to do the level of proactivity that I'm imagining."*
 | 2026-07-02 (target) | Original kickoff target: SSIS data assets + acceptance criteria/blueprint in BrightHive Studio |
 | 2026-07-09 | Demo #1 — "POC Scope Technical Deep Dive." Delivered: Legacy Analyst Analyzer Agent (SSIS/SSRS/storage-optimization skills) — see [Track A](#track-a-legacy-analyst-analyzer-agent-ssisssrsstorage--shipped). Frank's reaction: platform is real but "your screen says this is not live" and proactivity wasn't demonstrated. |
 | 2026-07-17 | Demo #2 — committed follow-up, scoped by Suzanne's reply (see [Track B](#track-b-proactive-monitoring--in-progress)). Decision gate for moving toward a sale. |
+| 2026-07-28 | Two new client-facing documents sent to Frank Sung (VP, Data Management): a "Trial Scope & Success Criteria" doc and a "Your Brighthive Demo — What to Expect" doc. Captured verbatim in `artifacts/2026-07-client-docs-trial-scope-and-demo.md`. See new [Scope: Demo vs Trial vs POC](#scope-demo-vs-trial-vs-poc-added-2026-07-28) section below. |
+
+## Scope: Demo vs Trial vs POC (added 2026-07-28)
+
+> Source: `artifacts/2026-07-client-docs-trial-scope-and-demo.md` (verbatim-condensed capture
+> of the two documents sent to Frank Sung). This section is the reconciliation pass the
+> artifact file explicitly calls for — it distinguishes three engagements that must not be
+> blurred together.
+
+**⚠️ Stack-mismatch callout — flagged, not resolved.** Everything below this point (Tracks
+A–I, the Capability Coverage Summary, Open Blockers) was written against an **internal
+GC-14..17 golden-case framing**: dbt Cloud job failure → detection → Slack/webapp alert →
+surgical PR → merge → verification, built for the 7/17 internal demo. The two client-facing
+docs captured 2026-07-28 describe a **different pipeline stack**: SQL Server 2019 + SSIS +
+SSRS, with the POC eventually adding Azure Data Factory, Synapse, Databricks, and Snowflake
+Cortex — no dbt Cloud anywhere in either doc. These may be the same engagement described two
+ways, or two genuinely different workloads for the same client (an internal dbt-Cloud-centric
+demo track vs. a client-facing SQL-Server/SSIS/SSRS trial track). **Do not assume they're the
+same without confirming with Kuri** — this doc does not merge or resolve which framing is "the
+real one."
+
+| Engagement | Environment | Data | Governs | Source |
+|---|---|---|---|---|
+| **Demo** | Brighthive's hosted demo workspace | Representative / synthetic (incl. sample legacy SSIS/SSRS artifacts) | Pre-POC guided walkthrough — governed multi-agent workflow, MCP read-only lookups, OSI (Open Semantic Interchange) preview, legacy diagnostics, storage-cost scan | Doc 2, "Your Brighthive Demo — What to Expect" |
+| **Trial** | Live connection into Loop Capital's own Azure VM (SQL Server 2019, Windows Server 2019) | Loop Capital's real (should be non-sensitive/representative) data over an allowlisted public-internet TLS connection | Scoped read + optional governed-write (reviewable PRs only, nothing applied without approval) | Doc 1, "Trial Scope & Success Criteria" |
+| **POC** | Loop Capital's full production environment — zero-copy, data never leaves their tenant | Their real production data/environment/controls | Synapse, Databricks, ADLS Gen2, Entra ID SSO, Azure Data Factory, Snowflake Cortex, Power BI, governance/compliance at production scale | Both docs defer to POC |
+
+### Scenario mapping (Doc 1, verbatim)
+
+| Scenario | In this trial? | What the agent does |
+|---|---|---|
+| SQL Server & database work | Partial | Connects/catalogs/profiles; creates governed tables/views/transformations as reviewed PRs if given a writable target. Not a DBA — no provisioning/administration. |
+| SSIS package development | Not this trial | Authoring stays in SSDT/Visual Studio. |
+| SSIS deployment | Not this trial | Deployment stays in their process. |
+| SSIS monitoring & troubleshooting | Yes | Reads SSISDB catalog (or a provided `.dtsx`), flags structural issues (missing error handling, missing staging steps), watches package/job health. |
+| SSRS report creation & publishing | Not this trial | Authoring/publishing stay in their tools. |
+| SSRS troubleshooting | Yes | Reads ReportServer catalog (or provided `.rdl`), flags performance anti-patterns. |
+| Power BI report development | Not this trial | Agent doesn't build Power BI reports; POC can discuss governed delivery of validated datasets into Power BI. |
+| SQL Server health monitoring | Yes | Proactively reports disk pressure + SQL Agent job status/failures over the same connection, no software installed on server. |
+| Windows / OS health monitoring | Not this trial | Out of scope; SQL Server health only. |
+
+**Not-this-trial callout**: several of the above (SSIS/SSRS authoring, Power BI report dev,
+Windows/OS monitoring) are capabilities the existing Tracks A/B/E below do NOT claim either —
+no silent scope creep detected on that front. But see the stack-mismatch callout above: the
+existing tracks' *pipeline* (dbt Cloud) is not the same pipeline these scenarios describe
+(SQL Server/SSIS/SSRS).
+
+### Success criteria (Doc 1, verbatim, 9 numbered — 1–4 and 7–8 are core; 5, 6, 9 are supporting)
+
+| # | Tier | Criterion | How we'll know it passed |
+|---|---|---|---|
+| 1 | Core | Connect & catalog | Connects over allowlisted link, produces browsable catalog (tables, columns, types) shortly after receiving credentials. |
+| 2 | Core | Data quality on your data | Authors/runs quality checks on chosen tables, returns a quality score + readable report + the SQL it generated; real issues flagged with plain-language root cause. |
+| 3 | Core | Ask in plain language | Business question about their SQL Server data answered correctly, underlying SQL shown alongside the answer. |
+| 4 | Core | Proactive SQL Server health | Unprompted, surfaces a specific SQL Agent job failure or disk-pressure condition, naming the job and actual error (not generic). |
+| 5 | Supporting | SSIS diagnostics | Pointed at a deployed package (or `.dtsx`), identifies ≥1 true structural issue. |
+| 6 | Supporting | SSRS diagnostics | Pointed at a report definition, flags ≥1 true performance anti-pattern. |
+| 7 | Core | The autonomy loop (headline) | Proactively detects an issue in a SQL Server/SSIS pipeline, diagnoses it, opens governed remediation as reviewable change, pauses for approval in Slack, drives task to completion with visible progress. Cannot approve its own change. |
+| 8 | Core | Governed & auditable | Every agent action in tamper-evident audit trail; PII tagged; nothing written without human review. |
+| 9 | Supporting | Platform capability | In the demo workspace, an external agent calls Brighthive's governed MCP lookups, and BrightAgent proposes a recurring routine the user can approve. |
+
+**GC-numbering cross-reference**: criterion 7's "cannot approve its own change" maps to the
+existing GC-16/GC-17 auto-merge exclusion (Track B / Capability Coverage Summary below —
+`REMEDIATION_TOOLS` safety gate). That is the one clear point of overlap found between the
+internal GC framing and the client's numbered criteria; no other 1:1 mappings were confirmed —
+flagging rather than forcing more matches given the stack mismatch above.
+
+### POC-deferred integrations (Doc 2, verbatim)
+
+| Area | What gets configured together in POC |
+|---|---|
+| Data sources | Ingestion Agent → Synapse, Databricks, ADLS Gen2, operational systems |
+| Identity | SSO via Microsoft Entra ID tenant |
+| Cross-cloud connectivity | AWS↔Azure Site-to-Site VPN + identity federation, zero-copy design |
+| Transformation engines | Azure Data Factory + Snowflake Cortex via their MCP servers, Databricks jobs, MSSQL where relevant |
+| BI & semantics | Governed visualizations into Power BI; semantic/metric alignment with BI layer |
+| Governance & scale | Enforcing their data contracts/policies/compliance at production scale |
+
+### Open Blockers cross-check (flagged, not resolved by this edit)
+
+Checked each row in [Open Blockers](#open-blockers) against Doc 1/Doc 2 — none are silently
+closed here; all resolutions below need Kuri's confirmation:
+
+- **Blocker #5** (no provisioned real Loop Capital workspace) is the one most directly touched
+  by the new docs: Doc 1 commits to a **live** SQL Server 2019 connection into Loop Capital's
+  own Azure VM "early next week" per Frank's Slack note — this is a firmer, dated commitment
+  than the blocker row's synthetic-workspace workaround anticipated. Whether the existing
+  synthetic workspace (`e3fc0917-...`) is what the Trial connects into, or a new one is
+  provisioned for the live SQL Server link, is unconfirmed — flagging, not deciding.
+- **Blocker #7** (Cognito password left as `TempPass123!`) is unaffected by these docs — still
+  open, still needs Kuri's reset decision.
+- No other Open Blocker row is contradicted or resolved by Doc 1/Doc 2's content.
 
 ## Track A: Legacy Analyst Analyzer Agent (SSIS/SSRS/Storage) — SHIPPED
 
