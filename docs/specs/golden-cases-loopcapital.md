@@ -23,6 +23,32 @@ related:
 
 # SPEC-GOLDEN-CASES-LOOPCAPITAL — Loop Capital Trial Bars
 
+> **Reconciliation callout (added 2026-07-28) — GC-14..17 are NOT the client's success
+> criteria; do not conflate.** GC-14 through GC-17 below were written for the **internal,
+> dbt-Cloud-centric 7/17 rehearsal** — Suzanne's three verbatim demo commitments plus the
+> auto-merge safety gate. Two NEW client-facing documents were sent to Frank Sung in July
+> 2026, captured verbatim in
+> `clients/trials/loopcapital/artifacts/2026-07-client-docs-trial-scope-and-demo.md`:
+> a **"Trial Scope & Success Criteria"** doc (9 numbered success criteria, 1–4 and 7–8 core,
+> gated on a **live SQL Server 2019** connection into Loop Capital's own Azure VM) and a
+> **"Your Brighthive Demo — What to Expect"** doc (a pre-POC guided walkthrough on
+> representative/synthetic data, with a POC-deferred integration table for
+> Synapse/Databricks/ADLS/Entra ID/ADF/Snowflake Cortex/Power BI). These 9 client success
+> criteria are a **separate artifact** from this spec's GC-14..17 — some overlap in intent
+> (see the cross-references added to GC-16/GC-17 below), but this spec does not renumber,
+> supersede, or merge into the client doc's numbering, and the client doc does not supersede
+> this spec.
+>
+> **Open question for Kuri, not assumed here**: whether the dbt-Cloud-centric workload this
+> spec targets and the SQL-Server/SSIS/SSRS workload the new client docs describe are the
+> **same Loop Capital engagement** (i.e. the internal 7/17 rehearsal was a rehearsal FOR the
+> SQL Server trial) or **two parallel engagements** (a dbt Cloud workstream and a separate
+> SQL Server trial) is unresolved as of this pass. The two workloads use different
+> connectivity (dbt Cloud API vs. a live TCP 1433 SQL Server connection) and different
+> pipeline tooling (dbt models vs. SSIS packages/SSRS reports) — this reconciliation pass
+> does NOT guess which framing is correct. Confirm with Kuri before merging the two
+> numbering schemes or retiring either doc.
+
 > Loop Capital had **zero** Golden Cases before this spec — every "GC-11"/"GC-12" mention in
 > `clients/trials/loopcapital/` cites Longaeva's cases as mechanism precedent, never as a Loop
 > Capital-scoped bar. This spec mints the first ones, continuing the numbering from brightbot's
@@ -349,6 +375,21 @@ BH-1047's classifier + wiring is net-new on top of a not-yet-built base.
 - Root-cause classification never fabricates a fix: an unclassifiable failure surfaces as "cannot
   auto-diagnose," not a guessed PR.
 
+**Cross-reference — client success criterion 7 (added 2026-07-28)**: the client's "Trial Scope &
+Success Criteria" doc (`clients/trials/loopcapital/artifacts/2026-07-client-docs-trial-scope-and-demo.md`)
+names criterion 7, **"The autonomy loop (headline)"**, as core (1 of 4 headline criteria): the agent
+"proactively detects an issue..., diagnoses it, opens governed remediation as reviewable change,
+pauses for approval in Slack, drives task to completion with visible progress. Cannot approve its
+own change." That is, word for word, the same guarantee this GC's first invariant above and its
+Gherkin scenarios encode — the surgical-PR-with-human-approval loop, gated on GC-17. The client's
+Doc 2 ("Your Brighthive Demo — What to Expect") independently proves the same mechanism on
+representative data: "Quality Agent detects issue... → Engineering Agent opens a version-controlled
+PR fix → human reviews/merges. Agent structurally unable to merge its own change." **Whether the
+dbt Cloud pipeline this GC targets and the SQL Server/SSIS pipeline criterion 7 targets are the
+same engagement is unresolved** — see the top-of-file reconciliation callout — but the underlying
+GC-16/GC-17 mechanism is what Frank will see demoed against criterion 7 regardless of which
+pipeline it runs against.
+
 ### Acceptance — the same break happening twice is the actual complaint
 
 **The scene**: last month, a source table feeding the Asset Management staging models changed a
@@ -490,6 +531,18 @@ implemented.
   to call a tool it has access to.
 - This exclusion is verifiable by static inspection of the bound tool list — not solely provable
   by observing that the model didn't call it in N test runs.
+
+**Cross-reference — client success criteria 7 and 8 (added 2026-07-28)**: this GC is the code-level
+mechanism underneath client success criterion 7 ("cannot approve its own change" — see GC-16's
+cross-reference above for the full text) AND directly evidences criterion 8, **"Governed &
+auditable"**: "every agent action in tamper-evident audit trail; PII tagged; nothing written
+without human review." GC-17's static, construction-level exclusion of `github_merge_pull_request`
+IS the "nothing written without human review" guarantee at the tool-binding layer — not a prompt
+promise. When Frank's team inspects the bound tool list (this GC's Acceptance scenario), they are
+literally exercising success criterion 8's audit/governance bar, not a separate concern. As with
+GC-16, whether this exact tool-exclusion code path also gates the SQL Server/SSIS remediation loop
+the client docs describe, or only the dbt Cloud loop this spec was written against, is unresolved —
+see the top-of-file reconciliation callout.
 
 ### Acceptance — the thing that would actually lose Loop Capital as a customer
 
@@ -688,3 +741,35 @@ closing a safety gap (GC-17) that Longaeva's own GC-11 spec left as a known, un-
   GC-14. This spec's GC-14 continues brightbot's `SPEC-GOLDEN-CASES.md` GC-1–13 numbering
   (Longaeva's own repo-tracked cases), which never reached 14. If searching Jira for "GC-14"
   surfaces BH-601, that ticket is unrelated to this spec.
+
+## Candidate new golden cases — not yet specced (added 2026-07-28, for Kuri to decide)
+
+The client's "Trial Scope & Success Criteria" doc names several success criteria with no
+corresponding GC in this spec. **Not written as GC-18+ here** — none of GC-14..17's existing
+Interface Contract, Invariants, or code paths cover these, and per this reconciliation pass's
+scope, deciding whether/how to spec net-new behavior against a still-unconfirmed engagement
+framing (see the top-of-file callout) is a call for the user, not an inference this pass should
+make silently. Each candidate below is a one-line flag, not a commitment:
+
+- **SSIS package diagnostics (client success criterion 5)** — "pointed at a deployed package
+  (or `.dtsx`), identifies ≥1 true structural issue (missing error handling, missing staging
+  steps)." No existing GC covers reading/diagnosing an SSIS package; GC-14..17 are dbt-Cloud- and
+  SQL-Server-disk-scoped only.
+- **SSRS report diagnostics (client success criterion 6)** — "pointed at a report definition,
+  flags ≥1 true performance anti-pattern." Same gap as above, for SSRS/ReportServer catalog
+  reads instead of SSISDB.
+- **SQL Server proactive health beyond disk (client success criterion 4)** — "unprompted,
+  surfaces a specific SQL Agent job failure or disk-pressure condition, naming the job and
+  actual error." GC-15 covers disk-pressure only; SQL Agent job-failure monitoring (distinct
+  from dbt Cloud job failures, which GC-14 covers) is unspecced.
+- **External-agent MCP lookup + recurring-routine proposal (client success criterion 9)** — "an
+  external agent calls Brighthive's governed MCP lookups, and BrightAgent proposes a recurring
+  routine the user can approve." No existing GC touches an external agent (e.g. Claude in an
+  IDE) calling BrightHive's MCP surface, nor routine-proposal-and-approval as a distinct
+  mechanism from the surgical-PR loop.
+- **Live-connection catalog + quality-check demo (client success criteria 1–3)** — "connect &
+  catalog," "data quality on your data," "ask in plain language" against a live SQL Server
+  connection. These map loosely to existing platform capability (quality checks, NL-to-SQL) but
+  none of GC-14..17 specs them against a live customer-owned SQL Server connection specifically —
+  worth confirming whether they need a dedicated GC or are covered by existing non-Loop-Capital
+  golden cases (Longaeva's GC-1..13) applied to a new connection type.

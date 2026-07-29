@@ -14,6 +14,7 @@ scope:
   adjacent_epics:
     - BH-1037
     - BH-1061
+    - BH-1245
   ticket_keys:
     - BH-1053
     - BH-1055
@@ -26,6 +27,15 @@ scope:
     - BH-1039
     - BH-1040
     - BH-1041
+    - BH-1246
+    - BH-1247
+    - BH-1248
+    - BH-1249
+    - BH-1250
+    - BH-1251
+    - BH-1252
+    - BH-1253
+    - BH-1254
   keyword_jql: |
     project = BH AND statusCategory != Done AND (
       summary ~ "Loop Capital" OR description ~ "Loop Capital"
@@ -254,3 +264,68 @@ phases:
       - day: "Post-demo"
         outcome: "BH-1077 — a new DB-level (not per-table) summary report shape aggregating BH-1076's per-table outputs — today's profiler output is always per-asset, never rolled up"
         linked: [BH-1077]
+
+  - title: "Trial (Doc 1) — 9 numbered success criteria"
+    description: >
+      Client-facing "Trial Scope & Success Criteria" doc sent to Frank Sung 2026-07-28.
+      Source: artifacts/2026-07-client-docs-trial-scope-and-demo.md Doc 1. Core = 1-4, 7-8;
+      Supporting = 5, 6, 9. This is the Trial (live SQL Server 2019 connection into Loop
+      Capital's own Azure VM) — a distinct engagement from the Demo tracked in the next phase;
+      do not merge the two. Blocked from starting at all until the 5 items in the Blockers
+      section above are resolved. Cross-reference to internal GC-14..17 mechanism per
+      LOOPCAPITAL.md's success-criteria mapping table. Spec:
+      docs/specs/loopcapital-trial-readiness.md. Tracking moved to its own epic BH-1245
+      ("Loop Capital Trial Execution") — each row below links to its verification ticket
+      (BH-1246-BH-1254); none are Done since the underlying mechanism has only run against
+      sandbox/EC2 stand-ins, never Loop Capital's real server.
+    expectations:
+      - day: "Core — #1"
+        outcome: "Connect & catalog — browsable catalog (tables/columns/types) shortly after credentials received. No SQL Server connector work started; also gated on blocker items 1-3."
+        linked: [BH-1246]
+      - day: "Core — #2"
+        outcome: "Data quality on their data — quality score + readable report + generated SQL, plain-language root cause. Quality-agent capability exists per Doc 2 demo bullets; not yet run against Loop Capital's own SQL Server."
+        linked: [BH-1247]
+      - day: "Core — #3"
+        outcome: "Ask in plain language — business question answered correctly, SQL shown. Not yet run against Loop Capital's own SQL Server."
+        linked: [BH-1248]
+      - day: "Core — #4"
+        outcome: "Proactive SQL Server health — unprompted, names a specific job failure or disk-pressure condition. Analogous in spirit to GC-15 but GC-15 is not demo-gating internally — verify separately for the Trial."
+        linked: [BH-1249]
+      - day: "Supporting — #5"
+        outcome: "SSIS diagnostics — >=1 true structural issue on a package/.dtsx. Legacy Analyst Analyzer (Track A) ships this capability class against sandbox artifacts; not yet run against Loop Capital's real .dtsx/deployed packages."
+        linked: [BH-1250]
+      - day: "Supporting — #6"
+        outcome: "SSRS diagnostics — >=1 true performance anti-pattern on a report/.rdl. Capability exists (Track A), not yet run against Loop Capital's real artifacts."
+        linked: [BH-1251]
+      - day: "Core — #7"
+        outcome: "Autonomy loop (headline) — detect -> diagnose -> governed PR -> pause for approval in Slack -> cannot self-approve. Internal mechanism may exist (GC-16/GC-17, BH-1047's code-level github_merge_pull_request exclusion) — verify against Loop Capital's own stack before marking done, and explicitly test the Slack-approval-gate, not just GitHub-PR-review."
+        linked: [BH-1252]
+      - day: "Core — #8"
+        outcome: "Governed & auditable — tamper-evident audit trail, PII tagged, nothing written without review. Internal mechanism may exist (GC-17's binding-layer exclusion is one input); PII tagging (BH-1060) is a confirmed code gap, now escalated — gated on BH-1060 reaching Ready for Dev before running against real data."
+        linked: [BH-1253]
+      - day: "Supporting — #9"
+        outcome: "Platform capability — external agent calls governed MCP lookups, BrightAgent proposes a recurring routine. Scoped to the hosted demo workspace (Doc 2 territory), gated on BH-1172/BH-1038-1041."
+        linked: [BH-1254]
+
+  - title: "Demo (Doc 2) — Your Brighthive Demo, What to Expect"
+    description: >
+      Pre-POC guided walkthrough on representative/synthetic data — a separate engagement
+      from the Trial above, run in the hosted Brighthive demo workspace, not a live
+      connection into Loop Capital's environment. Source: same artifacts file, Doc 2. Items
+      below are what the doc commits to showing live; the deferred-to-POC integration table
+      (Synapse/Databricks/ADLS/Entra ID SSO/ADF/Snowflake Cortex/Power BI/governance-at-scale)
+      is explicitly NOT tracked here since none of it is scoped to this Demo or the Trial.
+    expectations:
+      - day: "Demo"
+        outcome: "Governed multi-agent workflow end-to-end (Quality Agent -> Engineering Agent PR -> human merge). Overlaps in spirit with GC-14/16/17 internal mechanism, but on representative demo data, not Loop Capital's own environment."
+      - day: "Demo"
+        outcome: "Ask a question, see the reasoning (NL question -> SQL shown -> viz gated on governance checks). Not yet verified against the demo-workspace surface specifically."
+      - day: "Demo"
+        outcome: "Governance that runs (auto PII tagging, lineage, policy enforcement, audit trail). Cross-check against BH-1060 (PII redaction) before claiming live."
+        linked: [BH-1060]
+      - day: "Demo"
+        outcome: "Orchestration & Slack (BrightAgent supervisor routing, proactive alerts + approvals)."
+      - day: "Demo"
+        outcome: "MCP interface + OSI preview (external agent e.g. Claude in an IDE calling governed MCP lookups; OSI export previewed). OSI framed as emerging standard, not overclaimed, per Doc 2."
+      - day: "Demo"
+        outcome: "Legacy-aware analysis (SSIS/SSRS diagnostics + storage-cost optimization scan on demo data). Capability shipped per Track A (COMPLETE) — verify it's wired into the demo-workspace walkthrough specifically, not just the sandbox."

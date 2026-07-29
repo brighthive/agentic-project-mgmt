@@ -19,6 +19,7 @@
 | Active paying customer profile | `_templates/CLIENT.md` |
 | Longaeva POC overview | `trials/longaeva/overview.md` |
 | Loop Capital POC overview | `trials/loopcapital/overview.md` |
+| **Loop Capital Trial (Doc 1) — consolidated readiness statement** | `trials/loopcapital/TRIAL_STATEMENT.md` |
 | Loop Capital verbatim client asks (SSIS POC + 7/17 proactivity demo) | `trials/loopcapital/artifacts/poc-scope-from-client.md` |
 | Loop Capital proactive-monitoring handover spec | `../docs/specs/proactive-pipeline-ingestion-monitoring.md` (see its "Start Here" section) |
 | Longaeva milestone scorecard | `trials/longaeva/scorecard.md` |
