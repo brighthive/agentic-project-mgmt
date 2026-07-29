@@ -313,15 +313,15 @@ never `"Story"`.
 
 | Ticket | Summary | Points | Epic |
 |--------|---------|--------|------|
-| — | `PipelineRunner` port + `DbtCloudRunner` adapter + registry (engine-agnostic seam) | 3 | BH-1255 |
-| — | `path_between(from,to)` A→B lineage segment resolution on `lineage_graph.py` | 3 | BH-1255 |
-| — | `runPipelineSegment` mutation — scoped run + `lineageNodesTouched`/`runScope` on WorkflowRun | 5 | BH-1255 |
-| — | Run-record immutability at terminal state (`immutable` flag + write guard) | 2 | BH-1255 |
-| — | `reRunFromNode` mutation + capability gate (resume-from-point) | 5 | BH-1255 |
-| — | `schedule_pipeline_run` chat @tool — user-initiated schedule + alert-rule authoring | 5 | BH-1255 |
-| — | Webapp: "re-run from this node" affordance on RunTimeline | 3 | BH-1255 |
-| — | Finish `DbtAdapter.checkStatus` poll (unblocks async segment-run completion) | 2 | BH-1255 |
-| — | Cross-repo e2e: chat → routine → scheduled segment run → Slack/inbox alert | 3 | BH-1255 |
+| BH-1256 | `PipelineRunner` port + `DbtCloudRunner` adapter + registry (engine-agnostic seam) | 3 | BH-1255 |
+| BH-1257 | `path_between(from,to)` A→B lineage segment resolution on `lineage_graph.py` | 3 | BH-1255 |
+| BH-1258 | `runPipelineSegment` mutation — scoped run + `lineageNodesTouched`/`runScope` on WorkflowRun | 5 | BH-1255 |
+| BH-1259 | Run-record immutability at terminal state (`immutable` flag + write guard) | 2 | BH-1255 |
+| BH-1260 | `reRunFromNode` mutation + capability gate (resume-from-point) | 5 | BH-1255 |
+| BH-1261 | `schedule_pipeline_run` chat @tool — user-initiated schedule + alert-rule authoring | 5 | BH-1255 |
+| BH-1262 | Webapp: "re-run from this node" affordance on RunTimeline | 3 | BH-1255 |
+| BH-1263 | Finish `DbtAdapter.checkStatus` poll (unblocks async segment-run completion) | 2 | BH-1255 |
+| BH-1264 | Cross-repo e2e: chat → routine → scheduled segment run → Slack/inbox alert | 3 | BH-1255 |
 
 ## Related
 
