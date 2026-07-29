@@ -359,6 +359,36 @@ Noting this because it's the exact same failure class as the data-asset
 duplicate below — a mutation with no natural idempotency key, called more
 than once. All DRAFT status; not yet populated with goals/materials.
 
+### Track G update — projects bound to config + lineage populated (2026-07-29)
+
+The 4 GC projects are now wired into a real, demonstrable state on live staging
+(BH-1245). Verified live via the OGM endpoint:
+
+- **All 4 bound to one transformation config** — `Loop Capital dbt`
+  (`c0cfbfa4-1f20-47fa-9198-8c73e6f6aa1f`) via the `CONFIGURES` edge. One config
+  serving many projects is the enterprise-scale model (credential/connection
+  boundary held once, not per-project).
+- **GC-16 is a full pipeline project** — its `LoopCapitalAM raw sources` input
+  group now holds the 8 real raw+staging tables (`raw_security_master`,
+  `raw_positions`, `raw_market_prices`, `raw_counterparties`, `holdings_raw`,
+  `stg_positions`, `stg_holdings`, `stg_daily_pnl`); its `Portfolio risk &
+  compliance products` final group holds the 3 gold marts
+  (`mart_portfolio_risk_summary`, `mart_daily_portfolio_exposure`,
+  `mart_compliance_breaches`). Data assets = tables in the project config; data
+  products = the gold-table artifacts. `status=ACTIVE`.
+- **GC-14/15/17 are contextual-container projects** — no transformation tables
+  by design (proactive monitoring, SQL-Server disk-space, auto-merge safety).
+  A project needs no pipeline to be a real state-container box for agent work.
+
+**PR-merge sync is a capability gap, not a data task.** The real dbt-demo PRs
+(`brighthive-dbt/loopcapital-dbt-demo#1–#7`, mix of MERGED/OPEN) are dbt *model*
+fixes. `DataAssetNode.semanticViewPrState` is explicitly scoped to *semantic-view
+YAML* PRs (per its typedef doc, `typedefs.ts:530-537`) — a different lifecycle.
+There is no dbt-model-PR-state field on the data model today, so "reflect the
+dbt PR merging back onto the project" is net-new backend work — captured in the
+BH-1255 spec (versioned runs + pipeline lifecycle), not force-fit onto the
+semantic-view field.
+
 ## Track H: /catalog/assets real-data investigation — RESOLVED (2026-07-17)
 
 Live e2e run (`test_loopcapital_longitudinal_baseline.py`) surfaced that Loop
