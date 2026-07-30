@@ -245,15 +245,9 @@ invented to match.
 
 ## 11. PR Split
 
-1. **platform-core** — additive `CreatedFinalProduct.pipelineTier` reading the node's derived tier + L0. (S) — **W1**
-2. **webapp** — tier badge column on `CreatedDataProductsGrid`, reusing the existing `TierChip` styles. (S) — **W1**
-3. **webapp** — Gold/Platinum client-side filter over the `pipelineTier` W1 puts on each row. (S) — **W2**
-4. **webapp** — top-level "Data Products" sidebar entry → workspace-wide view. (S) — **W3**
-5. **brightbot** — attach `data_product`/`pipeline_tier` to the watchdog publish payload. (M) — **W4**
-6. **brightbot-slack-server** — tier badge + product grouping in `renderDetails`. (S) — **W4**
-7. **brighthive-e2e** — feature + surface + error-path tests. (S)
-
-Ordered by wave: 1–2 (W1) → 3 (W2) → 4 (W3) → 5–6 (W4) → 7. Each wave is independently shippable.
+One PR per Ticket Breakdown row (below) — each carries its repo, wave, and size. Order by wave:
+W1 (grid tier column) → W2 (filter) → W3 (sidebar) → W4 (Slack), then the e2e tests. Each wave is
+independently shippable.
 
 ## Ticket Breakdown
 
