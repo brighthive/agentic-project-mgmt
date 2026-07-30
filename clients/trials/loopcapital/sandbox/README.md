@@ -68,6 +68,25 @@ well-formed artifacts of both, not just plain SQL Server jobs:
   anywhere in this org** — a prior audit confirmed zero existed before this
   (`find . -iname "*.rdl"` returned nothing repo-wide).
 
+### Standalone diagnostic artifacts (`TradeDW`/`OMS` model — NOT wired to this DB)
+
+Three known-bad artifacts model a **second**, self-contained trading world
+(`TradeDW` / `OMS` / FIX drop-copy) used purely as **byte-level inputs** to the
+diagnostics readers (`parse_dtsx` / `parse_rdl` / XSD contract read). They are
+deliberately NOT seeded into `LoopCapitalAM` — the tables they reference
+(`dbo.Trades`, `dbo.FactTrade`, `dbo.ReconStaging`) do **not** exist in
+`sql/03_bank_schema.sql`, and that's fine: these are diagnostic *samples*, not
+DB fixtures. Do not run them against the container.
+
+- **`ssis/02_LoadTradesFromOLTP.dtsx`** — SSIS package with baked-in flaws for
+  criterion-5 diagnostics: no error handling, direct fast-load with no staging
+  step, `SELECT *` source + full-cache lookup.
+- **`ssrs/DailyTradeBlotter.rdl`** — SSRS report with `SELECT *`, report-side
+  filter (no query pushdown), and report-side sort — criterion-6 diagnostics.
+- **`contracts/TradeDW.ReconStaging.xsd`** — captured table contract for the
+  FIX reconciliation landing table (no PK; `LastPx money` fed a `DT_STR`,
+  TC-DTM-03), the schema-parity + PII-classification target.
+
 ## Warehouse/DB profiler
 
 **`profile_warehouse.py`** runs a REAL profiling pass against `holdings_raw`

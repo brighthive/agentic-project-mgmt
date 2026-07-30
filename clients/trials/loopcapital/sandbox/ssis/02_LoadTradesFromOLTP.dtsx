@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationName="Microsoft.Package"
+  DTS:DTSID="{A1B2C3D4-0001-0001-0001-0000000000FF}"
+  DTS:ObjectName="02_LoadTradesFromOLTP"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:VersionBuild="1"
+  DTS:LocaleID="1033">
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager DTS:refId="Package.ConnectionManagers[OMS_OLTP]"
+      DTS:CreationName="OLEDB" DTS:ObjectName="OMS_OLTP">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager DTS:ConnectionString="Data Source=oms-sql;Initial Catalog=OMS;Provider=SQLNCLI11;Integrated Security=SSPI;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager DTS:refId="Package.ConnectionManagers[TradeDW]"
+      DTS:CreationName="OLEDB" DTS:ObjectName="TradeDW">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager DTS:ConnectionString="Data Source=dw-sql;Initial Catalog=TradeDW;Provider=SQLNCLI11;Integrated Security=SSPI;"/>
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+  <DTS:Executables>
+    <DTS:Executable DTS:refId="Package\DFT LoadTrades"
+      DTS:CreationName="Microsoft.Pipeline"
+      DTS:ObjectName="DFT LoadTrades"
+      DTS:ExecutableType="Microsoft.Pipeline">
+      <DTS:ObjectData>
+        <pipeline>
+          <components>
+            <component refId="Package\DFT LoadTrades\SRC Trades" name="SRC Trades" componentClassID="Microsoft.OLEDBSource">
+              <properties>
+                <property name="AccessMode">2</property>
+                <property name="SqlCommand">SELECT * FROM dbo.Trades</property>
+              </properties>
+              <connections>
+                <connection connectionManagerRefId="Package.ConnectionManagers[OMS_OLTP]"/>
+              </connections>
+            </component>
+            <component refId="Package\DFT LoadTrades\LKP SecurityMaster" name="LKP SecurityMaster" componentClassID="Microsoft.Lookup">
+              <properties>
+                <property name="CacheType">0</property>
+                <property name="SqlCommand">SELECT * FROM dbo.SecurityMaster</property>
+              </properties>
+              <connections>
+                <connection connectionManagerRefId="Package.ConnectionManagers[TradeDW]"/>
+              </connections>
+            </component>
+            <component refId="Package\DFT LoadTrades\DST FactTrade" name="DST FactTrade" componentClassID="Microsoft.OLEDBDestination">
+              <properties>
+                <property name="AccessMode">3</property>
+                <property name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+                <property name="OpenRowset">[dbo].[FactTrade]</property>
+              </properties>
+              <connections>
+                <connection connectionManagerRefId="Package.ConnectionManagers[TradeDW]"/>
+              </connections>
+            </component>
+            <component refId="Package\DFT LoadTrades\OLECMD UpdatePosition" name="OLECMD UpdatePosition" componentClassID="Microsoft.OLEDBCommand">
+              <properties>
+                <property name="SqlCommand">UPDATE dbo.Positions SET Qty = Qty + ?, LastTradeTs = ? WHERE SecurityId = ?</property>
+              </properties>
+              <connections>
+                <connection connectionManagerRefId="Package.ConnectionManagers[TradeDW]"/>
+              </connections>
+            </component>
+          </components>
+          <paths>
+            <path startId="Package\DFT LoadTrades\SRC Trades.Output" endId="Package\DFT LoadTrades\LKP SecurityMaster.Input"/>
+            <path startId="Package\DFT LoadTrades\LKP SecurityMaster.Output" endId="Package\DFT LoadTrades\DST FactTrade.Input"/>
+            <path startId="Package\DFT LoadTrades\LKP SecurityMaster.Output" endId="Package\DFT LoadTrades\OLECMD UpdatePosition.Input"/>
+          </paths>
+        </pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+</DTS:Executable>
