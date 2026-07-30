@@ -4,6 +4,7 @@ epic: "BH-1255"
 author: "drchinca"
 status: "Draft"
 created: "2026-07-29"
+last-reviewed: "2026-07-29"
 generates: "tickets"
 tags: [data-quality, quality-rules, assets, tags, great-expectations, brightbot, platform-core, loopcapital, monitoring]
 related:
@@ -15,9 +16,6 @@ related:
 # Data Quality Rules on Assets — by Tag / Group, on a Routine
 
 > **Axis 3 of the pipeline-monitoring model** (see `pipeline-self-healing-fleet.md` §1). Axis 1 is the *engine* a pipeline runs on; axis 2 is a *detector* (drift) watched across engines; **axis 3 is a declared quality rule — "what must be true of the data" — bound to a data asset or a tag/group of assets, evaluated on a routine, emitting the same `PipelineHealthSignal` the fleet already routes and alerts on.** Engine-agnostic by construction: a rule is expressed against an asset, never against dbt/SSIS/Snowflake — the same rule fires whatever engine produced the asset.
-
-> Status: Draft · Owner: drchinca · Last-Reviewed: 2026-07-29
-> Repos touched: `brightbot` (primary — the bridge + selector + adapter), `brighthive-platform-core` (asset tag/group storage + query — the one greenfield boundary)
 
 ## 1. Context
 
