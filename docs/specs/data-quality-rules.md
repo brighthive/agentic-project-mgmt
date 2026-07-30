@@ -261,13 +261,13 @@ Run brightbot's layered suite + the e2e; confirm every §2/§3/§4 entry has a c
 
 ## 11. PR Split
 
-1. **platform-core** — public `rulesInScope(workspace, tag|groupId)` resolver over the EXISTING `DataAsset.tags` edges + group nodes + `findRules` (GAP #1 — no new storage; tags/groups/scope enum already ship). (S)
+1. **platform-core** — public `rulesInScope(workspace, tag|groupId)` resolver over the existing tag/group edges (GAP #1 — resolver only, storage already ships). (S)
 2. **brightbot** — `AssetRuleSelector` port + registry + first adapter over the OGM query; `RuleScope` id/tag/group/all resolution. (M)
 3. **brightbot** — `QualityRuleEvaluator` port + `GreatExpectationsEvaluator` wrapping the existing engine; `QualityRulePipelineSource` + signal mapping + `_FAILURE_TYPE_TO_STAGE` entry. (M)
 4. **brightbot** — real-behavior L2 suite against captured asset fixtures (RUN_LIVE-gated). (S)
 5. **brighthive-e2e** — feature + surface tests (GAP #1 + end-to-end alert). (S)
 
-Ordered 1 → 2 → 3 → 4 → 5. Steps 2–3 can start behind a flag with `RuleScope` limited to `asset_ids`/`all` while step 1 lands the tag/group storage.
+Ordered 1 → 2 → 3 → 4 → 5. Steps 2–3 can start behind a flag with `RuleScope` limited to `asset_ids`/`all` (both already honored) while step 1 lands the public tag/group resolver.
 
 ## Ticket Breakdown
 
