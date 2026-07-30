@@ -27,29 +27,23 @@ related:
 
 # SPEC: SSIS/SSRS as a Proactive PipelineSource
 
-> Scope: **CORRECTED 2026-07-29 after cross-repo grounding — the SSIS half is
-> already built.** `SsisCatalogPipelineSource` ships today
-> (`brightbot/.../governance_agent/tools/ssis_pipeline_source.py:103`, registered
-> at `pipeline_health.py:135` as key `"ssis"`): a full `poll_health` that pulls a
-> workspace-configured package list from the per-workspace secret
-> `workspace_secret_store/<workspace_uuid>`, sub-key `services.ssis_packages`
-> (`get_workspace_secret(workspace_id, service="ssis_packages")`,
-> `ssis_pipeline_source.py:92`; degrades to `[]` when unset, `:93-100`),
-> fetches each `.dtsx` from its `s3://` `source_uri`, and emits four failure
-> types (`ssis_missing_error_redirect`, `ssis_missing_staging_step`,
-> `ssis_package_unreachable`, `ssis_package_parse_error`, `:51-54`). It does NOT
-> use a separate fingerprint/diff store — it relies on the watchdog's existing
-> 4-tuple cooldown (`(workspace_id, source_type, job_id, failure_type)`) so a
-> repeat finding is suppressed and a genuinely new anti-pattern fires immediately
-> (docstring `:10-16`). The disk/job `SqlServerPipelineSource` (BH-1045) and the
-> reactive diagnostics (`analyze_dtsx_package`/`analyze_rdl_report`, GC-15/GC-16)
-> are also real and live on staging.
+> Scope: **CORRECTED 2026-07-29 after cross-repo grounding — the SSIS half is already
+> built.** `SsisCatalogPipelineSource` ships today (`ssis_pipeline_source.py:103`,
+> registered `pipeline_health.py:135` as key `"ssis"`): a full `poll_health` that reads a
+> workspace's package list from the per-workspace secret `workspace_secret_store/<workspace_uuid>`
+> sub-key `services.ssis_packages` (`get_workspace_secret(workspace_id, service="ssis_packages")`,
+> `:92`; degrades to `[]` when unset, `:93-100`), fetches each `.dtsx` from its `s3://` `source_uri`,
+> and emits four failure types (`ssis_missing_error_redirect`, `ssis_missing_staging_step`,
+> `ssis_package_unreachable`, `ssis_package_parse_error`, `:51-54`). Repeat findings are suppressed
+> by the watchdog's existing 4-tuple cooldown `(workspace_id, source_type, job_id, failure_type)` —
+> no separate fingerprint store — so a genuinely new anti-pattern fires immediately (docstring `:10-16`).
+> The disk/job `SqlServerPipelineSource` (BH-1045) and the reactive diagnostics
+> (`analyze_dtsx_package`/`analyze_rdl_report`, GC-15/GC-16) are also live on staging.
 >
-> **What's ACTUALLY missing (this spec's real remaining scope):** (1) **SSRS**
-> — there is no `.rdl` proactive source; `analyze_rdl_report` is reactive-only.
-> (2) **verify the SSIS source is wired to the trial's package set + reaches the
-> notification surface end-to-end** on staging for Loop Capital. The SSIS
-> `PipelineSource` itself is NOT to be re-authored — it exists.
+> **Real remaining scope:** (1) **SSRS** — no `.rdl` proactive source exists;
+> `analyze_rdl_report` is reactive-only. (2) **Verify** the SSIS source is wired to the trial's
+> package set and reaches the notification surface end-to-end on staging for Loop Capital. The SSIS
+> `PipelineSource` is NOT to be re-authored — it exists.
 
 **Terms.** `PipelineSource` is the `Protocol` in
 `brightbot/agents/governance_agent/tools/pipeline_health.py` — one method,
