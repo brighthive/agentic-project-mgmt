@@ -9,7 +9,7 @@ tags: [self-healing, pipelines, watchdog, sql-server, ssis, dbt, brightbot, plat
 related:
   features: []
   pocs: []
-  specs: ["sqlserver-health-watch.md", "ssis-ssrs-proactive-pipeline-source.md", "brightroutine-approve-schedule.md", "pipeline-run-lifecycle.md"]
+  specs: ["sqlserver-health-watch.md", "ssis-ssrs-proactive-pipeline-source.md", "brightroutine-approve-schedule.md", "pipeline-run-lifecycle.md", "data-quality-rules.md"]
 ---
 
 # Proactive Self-Healing Pipeline Monitoring — Fleet Architecture
