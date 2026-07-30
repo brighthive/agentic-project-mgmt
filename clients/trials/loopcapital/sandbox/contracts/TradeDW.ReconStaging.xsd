@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns="http://brighthive.net/loopcapital/TradeDW/ReconStaging" xmlns:xs="http://www.w3.org/2001/XMLSchema" id="ReconStaging" targetNamespace="http://brighthive.net/loopcapital/TradeDW/ReconStaging" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:annotation>
+    <xs:documentation>SQL table TradeDW.dbo.ReconStaging. Source: 03_LoadFixExecutionsAndReconcile (DST ReconStaging). Primary key: (none defined). FIX drop-copy reconciliation landing table. LastPx is MONEY while the pipeline feeds it a DT_STR value (TC-DTM-03), and LastQty/Symbol are the mapped destination columns.</xs:documentation>
+  </xs:annotation>
+  <xs:element name="ReconStaging">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Row" type="ReconStagingRow" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="ReconStagingRow">
+    <xs:sequence>
+      <xs:element name="Symbol" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=nvarchar(12); nullable=NO; primaryKey=NO</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:maxLength value="12"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="LastQty" minOccurs="0" maxOccurs="1" nillable="true" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=YES; primaryKey=NO</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="LastPx" minOccurs="0" maxOccurs="1" nillable="true">
+        <xs:annotation>
+          <xs:appinfo>sqlType=money; nullable=YES; primaryKey=NO; note=SQL MONEY (scale 4)</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:decimal">
+            <xs:totalDigits value="19"/>
+            <xs:fractionDigits value="4"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
