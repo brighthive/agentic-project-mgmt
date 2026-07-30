@@ -227,3 +227,14 @@ Run brightbot's layered suite + the e2e; confirm §2/§3/§4 each have a case; c
 
 Ordered 1 → 2 → 3. No platform-core or webapp changes required — this reuses
 BH-1045's existing signal→notification pipeline end to end.
+
+## Ticket Breakdown
+
+All children of epic **BH-1255**, `issueType=Task`. Covers trial success **criteria 5 & 6** (legacy SSIS/SSRS diagnostics — read + flag, never author). Numbers to create at handover.
+
+| Ticket | Summary | Size |
+|---|---|---|
+| BH-XXXX (to create) | `feat(brightbot): SsisCatalogPipelineSource poll_health + finding diff/fingerprint (crit 5)` | M |
+| BH-XXXX (to create) | `feat(brightbot): SSRS .rdl diagnostics via analyze_rdl_report as a PipelineSource finding (crit 6)` | M |
+| BH-XXXX (to create) | `test(brightbot): real-behavior L2 against LC sandbox .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
+| BH-XXXX (to create) | `test(e2e): new SSIS/SSRS finding reaches the notification surface end-to-end` | S |
