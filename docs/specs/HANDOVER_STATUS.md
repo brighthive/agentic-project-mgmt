@@ -28,8 +28,8 @@ built work visible/usable. Both start **simple + incremental** and are grounded 
 
 | Spec | Ask | Nature | Ready |
 |---|---|---|---|
-| [`data-product-tier-surfacing.md`](data-product-tier-surfacing.md) | Show Gold/Platinum data products in-app (grid + sidebar) and in Slack | Build — but pure **read** over the already-derived `pipelineTier`; W1 (grid tier column) ships smallest-first | ✅ |
-| [`pipeline-artifact-parser-registry.md`](pipeline-artifact-parser-registry.md) | "Files need to work for any type/format" — in-trial format-agnostic seam | Build — a `PipelineArtifactParser` port + registry; the two existing `.dtsx`/`.rdl` parsers become adapters #1/#2, behaviour unchanged | ✅ |
+| [`data-product-tier-surfacing.md`](data-product-tier-surfacing.md) | Show Gold/Platinum data products in-app (grid + sidebar) and in Slack | Build (pure read; W1 first — see note) | ✅ |
+| [`pipeline-artifact-parser-registry.md`](pipeline-artifact-parser-registry.md) | "Files need to work for any type/format" — in-trial format-agnostic seam | Build (seam only; behaviour unchanged — see note) | ✅ |
 
 - **Tier surfacing is read-only** — it never authors or edits a tier; `pipelineTier` is derived from
   lineage depth (`pipeline-lineage.ts:464-472`), never node names. W1 exploits that
