@@ -276,7 +276,7 @@ Numbers to create at handover.
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `feat(webapp): dbt-target picker on Project Files upload form for .sql/.yml uploads` | S |
-| BH-XXXX (to create) | `feat(brightbot): DbtArtifactBridge — repo-path inference + idempotent commit via existing GitHub proxy tools` | M |
-| BH-XXXX (to create) | `test(brightbot): real-behavior L2 — upload → branch/commit/PR in sandbox GitHub repo (RUN_LIVE-gated)` | S |
-| BH-XXXX (to create) | `test(e2e): upload → PR appears end-to-end; untagged upload creates no PR` | S |
+| BH-1309 | `feat(webapp): dbt-target picker on Project Files upload form for .sql/.yml uploads` | S |
+| BH-1310 | `feat(brightbot): DbtArtifactBridge — repo-path inference + idempotent commit via existing GitHub proxy tools` | M |
+| BH-1311 | `test(brightbot): real-behavior L2 — upload → branch/commit/PR in sandbox GitHub repo (RUN_LIVE-gated)` | S |
+| BH-1312 | `test(e2e): upload → PR appears end-to-end; untagged upload creates no PR` | S |

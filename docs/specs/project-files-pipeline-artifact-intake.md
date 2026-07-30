@@ -339,8 +339,8 @@ Numbers to create at handover.
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `feat(webapp): extend ALLOWED_FILE_TYPES + resourceType() to recognize .dtsx/.rdl/.sql` | S |
-| BH-XXXX (to create) | `feat(platform-core): add PipelineArtifact to ResourceType enum + resources-list type filter` | S |
-| BH-XXXX (to create) | `feat(brightbot): PipelineArtifactSource port + registration in watchdog PipelineSource registry` | M |
-| BH-XXXX (to create) | `test(brightbot): real-behavior L2 against uploaded LC sandbox .dtsx fixture (RUN_LIVE-gated)` | S |
-| BH-XXXX (to create) | `test(e2e): drag-drop upload → watchdog cycle → notification surface` | S |
+| BH-1304 | `feat(webapp): extend ALLOWED_FILE_TYPES + resourceType() to recognize .dtsx/.rdl/.sql` | S |
+| BH-1305 | `feat(platform-core): add PipelineArtifact to ResourceType enum + resources-list type filter` | S |
+| BH-1306 | `feat(brightbot): PipelineArtifactSource port + registration in watchdog PipelineSource registry` | M |
+| BH-1307 | `test(brightbot): real-behavior L2 against uploaded LC sandbox .dtsx fixture (RUN_LIVE-gated)` | S |
+| BH-1308 | `test(e2e): drag-drop upload → watchdog cycle → notification surface` | S |
