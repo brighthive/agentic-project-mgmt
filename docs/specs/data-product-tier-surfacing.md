@@ -186,6 +186,7 @@ Budget: 6 scenarios.
 ## 6. Dependencies
 
 - `PipelineTier` enum + derived `pipelineTier` on `DataAssetNode` (`ogm/typedefs.ts:567`, ships) — read-only source of truth.
+- **External dependency (different epic):** name-free tier derivation is **BH-1265**, tracked under epic **BH-1273 (Data Lineage)** — not this trial. The derived `pipelineTier` this spec reads is a required upstream input; this spec adds no name-based fallback and never re-derives.
 - `ProjectModel.getCreatedDataProducts` (`project.ts:1096`) — W1 resolver already returns the tier-bearing node (`:131-150`).
 - Client-side row filtering — W2 filters the `pipelineTier` W1 exposes; **no** workspace-wide tier query exists to depend on.
 - `SideBarV3` + `genNav()` route-tree nav (`src/routes/index.tsx`, `genNav.tsx:37-183`) — W3 seam.
