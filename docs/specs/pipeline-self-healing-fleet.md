@@ -23,6 +23,16 @@ related:
 
 > **One capacity, every stack.** The detect → diagnose → heal → verify loop this spec defines is *identical* whether the pipeline engine is dbt, SSIS, Databricks, or Airflow; whether the warehouse is Snowflake, SQL Server, Redshift, or BigQuery; and whichever client's niche stack it runs against. The engine/warehouse/tool is never a branch in the loop — it is a `PipelineSource` adapter + a `Healer` registered against a `SignalShape`. Adding a stack is a registry entry (config), not a code change to anything that polls, routes, heals, or alerts (see **INV-16**). Loop Capital's SQL Server + SSIS are simply the first two adapters this trial exercises.
 
+> **Three axes, not one.** The live `register_adapters()` dict (`pipeline_health.py:136-137`) collapses three orthogonal ideas into one keyspace because everything that exposes `poll_health` lands there. This spec keeps them separate — sharing the `PipelineSource` Protocol is plumbing, not a semantic axis:
+>
+> | Axis | Answers | Examples | Binds to |
+> |---|---|---|---|
+> | **1. Engine / source** | *where the pipeline runs* | dbt, ssis, snowflake, databricks, custom_sql, etl | `MonitoredPipeline.source_type` (§2.1) |
+> | **2. Detector / watcher** | *what to watch for, across engines* | longitudinal_drift (future: freshness lag, volume anomaly) | a pipeline/group, opt-in — `watch_drift` today (§2.1) |
+> | **3. Quality rule** | *what must be true of the data on this pipeline* | null-rate ceiling, PK unique, value-in-set, row-count floor | a **data asset** or a **tag/group** of assets — see [`data-quality-rules.md`](data-quality-rules.md) |
+>
+> `source_type` names **only** the engine (axis 1). A detector (axis 2) runs *across* engines — a dbt model, a snowflake task, and an ssis package can all drift — so `longitudinal_drift` is never a `source_type`; it attaches via `watch_drift`. Quality rules (axis 3) bind to assets/tags, not engines, and live in their own spec; all three axes feed the same `PipelineHealthSignal → route → heal/alert` backbone this spec defines.
+
 The BrightAgent Pipeline Watchdog today monitors **one workspace, one connection per source, and self-heals exactly one failure kind (dbt), with no proof the fix worked.** Five concrete gaps block a trustworthy, multi-workspace, self-healing product:
 
 1. **No monitored-unit model.** The watchdog is scoped only by `workspace_id` and discovers connections first-wins: it sweeps the registry building every adapter with an empty config (`pipeline_watchdog_task.py:129-136`), so `DbtPipelineSource` polls whatever `_find_connected_dbt_service()` returns first (`dbt_pipeline_source.py:12-23`, live `# TODO(multi-connection)`). A workspace's second dbt project is never polled. Nothing ties a source connection + adapter + schedule + healer together as one named unit a data leader can see.
@@ -61,17 +71,26 @@ All new types live in `brightbot`. Existing types are reused verbatim and cited.
 
 ```python
 # brightbot/monitored_pipelines/dtos.py (new). Product label "Pipeline".
-SourceType = Literal[
-    "dbt", "custom_sql", "etl", "ssis",
-    "snowflake", "databricks", "longitudinal_drift",
-]  # the SEVEN real register_adapters() dict KEYS (pipeline_health.py:136-137):
-#   SSIS_CATALOG = "ssis" (ssis_pipeline_source.py:49), SNOWFLAKE_TASKS = "snowflake"
-#   (snowflake_pipeline_source.py:43) — constant NAMES differ from their string VALUES.
-
-class PipelineHealer(str, Enum):
-    DBT_REMEDIATION = "dbt_remediation"   # -> remediation_agent_graph (remediation_agent.py:169)
-    SSIS_REMEDIATION = "ssis_remediation" # -> ssis_remediation_agent_graph (once registered)
-    NONE = "none"                          # alert-only
+# TWO AXES, not one. The poll registry (register_adapters(), pipeline_health.py:136-137) keys on a
+# mix of ENGINES ("dbt","ssis","snowflake","databricks","custom_sql","etl") and one cross-cutting
+# DETECTOR ("longitudinal_drift") — they share that dict only because they all implement the
+# PipelineSource Protocol (poll_health). Sharing a Protocol is not sharing a semantic axis.
+#
+# On the MonitoredPipeline ENTITY, source_type names the ENGINE a pipeline runs on — where its data
+# comes from. "longitudinal_drift" is NOT a valid source_type: no pipeline's source is "drift"; drift
+# is watched ACROSS engines (a dbt model, a snowflake task, an ssis package can all drift). The drift
+# watcher attaches to a pipeline as a DETECTOR (§2.2 SourceSeams.history_provider), never as its source.
+#
+# OPEN discriminators, NOT closed types — INV-16: adding an engine is a registry entry, never a
+# domain-type edit. A closed Literal/Enum here would make every new engine a code change.
+SourceType = str    # a live ENGINE adapter key (excludes the drift detector); validated at save (INV-6).
+#   Current engine adapters: "dbt", "custom_sql", "etl", "ssis" (SSIS_CATALOG,
+#   ssis_pipeline_source.py:49), "snowflake" (SNOWFLAKE_TASKS, snowflake_pipeline_source.py:43),
+#   "databricks" — examples, not an enum. ("longitudinal_drift" is a detector, not an engine.)
+HealerKey = str     # a live PIPELINE_HEALERS-registered healer id; validated at save, never a closed set.
+NO_HEALER: Final[str] = "none"   # alert-only; the default
+#   Current healers: "dbt_remediation" (-> remediation_agent_graph, remediation_agent.py:169),
+#   "ssis_remediation" (-> ssis_remediation_agent_graph, once registered). Adding one is a registration.
 
 class PipelineLifecycle(str, Enum):
     DRAFT = "draft"; ENABLED = "enabled"; DISABLED = "disabled"; ARCHIVED = "archived"
@@ -81,9 +100,10 @@ class MonitoredPipeline(BaseModel):
     pipeline_id: str                      # uuid4, immutable
     workspace_id: str
     name: str                             # human label ("Loop Capital dbt models")
-    source_type: SourceType
+    source_type: SourceType               # the ENGINE this pipeline runs on (never a detector like drift)
     source_config: dict[str, Any] = Field(default_factory=dict)  # connection REFERENCES only, never secrets
-    healer: PipelineHealer = PipelineHealer.NONE
+    healer: HealerKey = NO_HEALER
+    watch_drift: bool = False             # attach the cross-engine drift DETECTOR to this pipeline (§2.2 SourceSeams)
     lifecycle: PipelineLifecycle = PipelineLifecycle.DRAFT
     schedule_id: str | None = None        # FK to a SCHEDULE# row; None == covered by fleet sweep
     created_by: str; created_at: str; updated_at: str
@@ -110,10 +130,12 @@ class PipelineSource(Protocol):
     def capabilities(self) -> frozenset[Capability]: ...
     async def poll_health(self, *, ctx: RequestContext) -> list[PipelineHealthSignal]: ...
 
-# §2 CONTRACT CHANGE: widen PipelineHealthSignal.source_type from Literal["dbt","databricks","etl"]
-# (pipeline_health.py:72) to the full SourceType set, so the routing key domain matches what
-# adapters actually emit (snowflake/ssis/custom_sql/longitudinal_drift signals were previously
-# unrepresentable in the DTO's own type). L0 asserts every value round-trips through the DTO.
+# §2 CONTRACT CHANGE: open PipelineHealthSignal.source_type from Literal["dbt","databricks","etl"]
+# (pipeline_health.py:72) to `str`, so the field carries whatever poll_health-adapter emitted the
+# signal — engine keys (snowflake/ssis/custom_sql) AND the drift detector's own key were previously
+# unrepresentable in the DTO's own type. On a signal, source_type = the emitting adapter's registry
+# key (routing input); on the MonitoredPipeline entity it's the engine only (§2.1). L0 asserts a
+# signal from each live adapter round-trips through the DTO.
 Capability = Literal["JOB_STATUS", "DISK_METRICS", "VALUE_DRIFT", "NULL_SPIKE"]
 
 @dataclass(frozen=True)
@@ -272,7 +294,7 @@ FLEET_QUEUE_ADAPTERS: Final[dict[str, FleetQueueFactory]] = {"sqs": ...}   # + F
 - **INV-3 Port intact.** `PipelineSource` SHALL remain a two-method `Protocol` (`capabilities`, `poll_health`) with no vendor SDK/type crossing it; fan-out and seams live in the factory/registry, never in the Port.
 - **INV-4 Connection-stable job_id.** For every emitted signal, `job_id` SHALL be namespaced by `connection_key` so it is unique within `(workspace_id, source_type)`; two connections with identical native ids produce distinct 4-tuple keys and never suppress each other.
 - **INV-5 Secret non-leakage — including streamed surfaces.** `source_config`, `connection_key`, and `job_id` SHALL carry connection references only, never secret material; secrets resolve at poll time, and `scrub_text` (`pipeline_watchdog_task.py:172-175`) stays the single sink choke point. Every streamed progress chunk (§9.1 Slack/Webapp/OTel) SHALL pass `scrub_text` before emission — a step/tool-detail stream cannot leak a secret or a raw value a log may not carry.
-- **INV-6 Registered source_type only.** `save_pipeline` SHALL reject a Pipeline whose `source_type` is not a live `register_adapters()` key (`pipeline_health.py:136-137`), mirroring the `build_sources_for_workspace` unknown-type `ValueError`.
+- **INV-6 Registered ENGINE source_type only.** `save_pipeline` SHALL reject a Pipeline whose `source_type` is not a live *engine* adapter key (`register_adapters()`, `pipeline_health.py:136-137`, minus the cross-engine detector keys like `longitudinal_drift`), mirroring the `build_sources_for_workspace` unknown-type `ValueError`. Drift is opted into via `watch_drift`, never by naming it a `source_type`.
 - **INV-7 Poll only ENABLED, else legacy fallback.** IF a Pipeline is not ENABLED, THE System SHALL NOT poll it; WHEN a workspace has zero Pipelines, THE System SHALL fall back to the legacy empty-config sweep so no monitored workspace regresses during rollout.
 - **INV-8 Drift liveness/safety.** WHEN `SourceSeams` supplies `history_provider` and a non-empty watched-asset set, THE System SHALL run detection per asset and emit `DATA_SHAPE` signals; WHILE either seam is absent it SHALL return `[]` and log, never raise (`longitudinal_drift_pipeline_source.py:122-128`).
 - **INV-9 Alert-only default (never guess), routed by shape only.** Routing keys on `SignalShape(source_type, failure_type)` ONLY — never on `root_cause_class`. WHEN `PIPELINE_HEALERS.find` returns `None` (e.g. an `ssis_package_unreachable` / `ssis_package_parse_error` signal, for which no healer is registered) OR `can_heal` is false, THE System SHALL take no fix action; the signal has already reached Slack/Inbox, so alert-only is a terminal `ALERT_ONLY` publish outcome (no ledger row), not a dropped alert.

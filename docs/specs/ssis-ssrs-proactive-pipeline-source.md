@@ -1,11 +1,10 @@
 ---
 title: SSIS/SSRS as a Proactive PipelineSource
-epic: BH-1036
-tickets: [BH-1110]
-author: kuri
-status: proposed
+epic: "BH-1255"
+author: "drchinca"
+status: "Draft"
 created: 2026-07-17
-last-reviewed: 2026-07-17
+last-reviewed: 2026-07-29
 generates: tickets
 tags:
   - brightagent
@@ -15,7 +14,10 @@ tags:
   - ssrs
   - loopcapital
 related:
+  epics:
+    - BH-1036   # Monitoring Agents — the proactive-health epic this capability observes into
   specs:
+    - pipeline-self-healing-fleet.md
     - proactive-pipeline-ingestion-monitoring.md
     - golden-cases-loopcapital.md
   features: []
