@@ -13,9 +13,9 @@ stay placeholders until the family is approved and `/create-jira-ticket` runs un
 
 | Spec | Trial criterion | Nature | Lines | Ready |
 |---|---|---|---|---|
-| [`pipeline-run-lifecycle.md`](pipeline-run-lifecycle.md) | Lineage-scoped, re-runnable runs (foundation) | Build | 333 | ✅ |
+| [`pipeline-run-lifecycle.md`](pipeline-run-lifecycle.md) | Lineage-scoped, re-runnable runs (foundation) | **Mixed** — platform-core ships (verify-only); brightbot/webapp/e2e build | 333 | ✅ |
 | [`sqlserver-health-watch.md`](sqlserver-health-watch.md) | 4 — proactive SQL Server health (disk-low + failed Agent jobs) | **Verify-only** (capability ships) | 377 | ✅ |
-| [`ssis-ssrs-proactive-pipeline-source.md`](ssis-ssrs-proactive-pipeline-source.md) | 5 & 6 — legacy SSIS/SSRS diagnostics (read + flag) | Build (new caller) | 240 | ✅ |
+| [`ssis-ssrs-proactive-pipeline-source.md`](ssis-ssrs-proactive-pipeline-source.md) | 5 & 6 — legacy SSIS/SSRS diagnostics (read + flag) | **Mostly verify** — SSIS ships (wire+verify); only SSRS is net-new | 240 | ✅ |
 | [`pipeline-self-healing-fleet.md`](pipeline-self-healing-fleet.md) | 7 — self-healing fleet (engine/warehouse/tool agnostic) | Build | 560 | ✅ |
 | [`data-quality-rules.md`](data-quality-rules.md) | 7 (axis 3) — quality rules on assets, by tag/group, on a routine | Build (mostly a bridge) | 269 | ✅ |
 | [`brightroutine-approve-schedule.md`](brightroutine-approve-schedule.md) | 9 — human approves in Slack → scheduled routine (+ 8 audit) | Build (the one missing seam) | 406 | ✅ |
@@ -23,10 +23,24 @@ stay placeholders until the family is approved and `/create-jira-ticket` runs un
 
 ## Notes for the engineer picking this up
 
-- **Two specs are verify-only, not greenfield.** `sqlserver-health-watch` and the SSIS/SSRS
-  diagnostics capability already ship in `brightbot` (`SqlServerPipelineSource`,
-  `analyze_dtsx_package`/`analyze_rdl_report`). Those specs pin the trial acceptance bar around
-  existing code + wire the schedule/surfacing + name the real gaps — they are not build-from-zero.
+- **More ships than the specs first assumed — grounded 2026-07-29 against committed source.** A
+  cross-repo pass (all repos on `develop`/`origin/staging`) found the family had drifted from an
+  already-built reality:
+  - `sqlserver-health-watch` + the SSIS diagnostics capability ship in `brightbot`
+    (`SqlServerPipelineSource`, `SsisCatalogPipelineSource` at `ssis_pipeline_source.py:103`,
+    `analyze_dtsx_package`/`analyze_rdl_report`). SSIS work is **wire + verify**, not authoring;
+    only SSRS (`.rdl` proactive source) is net-new.
+  - **`pipeline-run-lifecycle`'s entire platform-core side ships** on staging (commit `a4c00f80`):
+    `runPipelineSegment`, `reRunFromNode`, `WorkflowRunNode.lineageNodesTouched`/`runScope`/`immutable`,
+    and a real `DbtAdapter.checkStatus` dbt Cloud poll. BH-1258/1259/1260/1263 are **verify-only**;
+    the net-new is brightbot (`path_between`, `schedule_pipeline_run`, runner port) + webapp + e2e.
+  - `data-quality-rules`' scope storage already exists (`ALL_ASSETS`/`SELECTED_ASSETS`
+    `typedefs.ts:631-633`, `DataAsset.tags` `:565`, group NODES via INCLUDES edges) — the bridge
+    is a thin public `rulesInScope(tag|groupId)` resolver, not new tag/group storage. There is **no**
+    `DataAsset.group: String` scalar — target group nodes.
+  - **Verify a claim in the layer that OWNS it.** GraphQL enums live in platform-core `typedefs.ts`,
+    not brightbot's Python persistence dict — reading the wrong layer nearly flagged real capability
+    as invented. See memory `bh1255-specs-vs-built-reality`.
 - **Three axes, not one — read fleet §1 first.** The live `register_adapters()` dict collapses
   three orthogonal ideas: **(1) engine** the pipeline runs on (`dbt`/`ssis`/`snowflake`/…) →
   `MonitoredPipeline.source_type`; **(2) detector** watched across engines (`longitudinal_drift`)
