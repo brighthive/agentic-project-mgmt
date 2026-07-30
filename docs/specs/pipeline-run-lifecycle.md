@@ -75,11 +75,8 @@ stateDiagram-v2
 
 ### Hard Limitations
 
-> **Note (2026-07-29 grounding):** limitations 1–3 below were **partially closed on platform-core** — the
-> `runPipelineSegment`/`reRunFromNode` mutations and the `lineageNodesTouched`/`runScope`/`immutable`
-> WorkflowRunNode fields now ship on staging (commit `a4c00f80`). What still limits is the **brightbot
-> side**: the mutations expect a resolved A→B lineage path and are not yet driven from chat. The
-> limitations are reworded to that residual.
+> Platform-core has closed the storage/mutation half of limitations 1–3 (see the Ticket Breakdown
+> grounding note). These are reworded to the **brightbot-side residual** that still limits.
 
 1. **No A→B lineage path resolver in brightbot.** Platform-core's `runPipelineSegment` accepts a scoped
    lineage path, but `lineage_graph.py` still has only whole-DAG directional traversal from a single
