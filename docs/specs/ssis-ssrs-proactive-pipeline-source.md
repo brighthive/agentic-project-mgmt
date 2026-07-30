@@ -244,7 +244,7 @@ All children of epic **BH-1255**, `issueType=Task`. Covers trial success **crite
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `chore(brightbot): populate services.ssis_packages in workspace_secret_store/<loop-capital-uuid> so the already-built SsisCatalogPipelineSource (pipeline_health.py:135) polls the LC package set + verify end-to-end on staging (crit 5)` | S |
-| BH-XXXX (to create) | `feat(brightbot): SsrsCatalogPipelineSource — .rdl proactive source over analyze_rdl_report, mirroring the shipped SSIS adapter (crit 6)` | M |
-| BH-XXXX (to create) | `test(brightbot): real-behavior L2 against LC sandbox .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
-| BH-XXXX (to create) | `test(e2e): new SSIS/SSRS finding reaches the notification surface end-to-end` | S |
+| BH-1274 | `chore(brightbot): populate services.ssis_packages in workspace_secret_store/<loop-capital-uuid> so the already-built SsisCatalogPipelineSource (pipeline_health.py:135) polls the LC package set + verify end-to-end on staging (crit 5)` | S |
+| BH-1275 | `feat(brightbot): SsrsCatalogPipelineSource — .rdl proactive source over analyze_rdl_report, mirroring the shipped SSIS adapter (crit 6)` | M |
+| BH-1276 | `test(brightbot): real-behavior L2 against LC sandbox .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
+| BH-1277 | `test(e2e): new SSIS/SSRS finding reaches the notification surface end-to-end` | S |

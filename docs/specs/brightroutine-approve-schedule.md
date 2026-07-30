@@ -371,12 +371,12 @@ All children of epic **BH-1255**, `issueType=Task`, `parentKey="BH-1255"`.
 
 | Ticket | Repo | Summary | Points |
 |---|---|---|---|
-| BH-XXXX (to create) | `brightbot` | `feat(brightbot): add RoutineApprovalGate port + registry + Slack adapter reusing interruptible` | 3 |
-| BH-XXXX (to create) | `brightbot` | `feat(brightbot): register routine_approval graph in langgraph.json; OFFERED→SCHEDULING→SCHEDULED transitions with idempotency + lock release` | 3 |
-| BH-XXXX (to create) | `brightbot` | `feat(brightbot): build ScheduleRoutineRequest from approved suggestion and call create_schedule; record approver on SCHEDULED` | 2 |
-| BH-XXXX (to create) | `platform-core` | `feat(platform-core): expose approver + SCHEDULED status transition to the suggestion write-side signal (audit, criterion 8)` | 2 |
-| BH-XXXX (to create) | `brightbot` | `test(brightbot): L0/L1/L2 approval-gate suites incl. real create_schedule behavior + span/log assertions` | 3 |
-| BH-XXXX (to create) | `brighthive-e2e` | `test(e2e): chat → OFFERED suggestion → Slack approve → schedule fires on staging` | 2 |
+| BH-1288 | `brightbot` | `feat(brightbot): add RoutineApprovalGate port + registry + Slack adapter reusing interruptible` | 3 |
+| BH-1289 | `brightbot` | `feat(brightbot): register routine_approval graph in langgraph.json; OFFERED→SCHEDULING→SCHEDULED transitions with idempotency + lock release` | 3 |
+| BH-1290 | `brightbot` | `feat(brightbot): build ScheduleRoutineRequest from approved suggestion and call create_schedule; record approver on SCHEDULED` | 2 |
+| BH-1291 | `platform-core` | `feat(platform-core): expose approver + SCHEDULED status transition to the suggestion write-side signal (audit, criterion 8)` | 2 |
+| BH-1292 | `brightbot` | `test(brightbot): L0/L1/L2 approval-gate suites incl. real create_schedule behavior + span/log assertions` | 3 |
+| BH-1293 | `brighthive-e2e` | `test(e2e): chat → OFFERED suggestion → Slack approve → schedule fires on staging` | 2 |
 
 ## Related
 

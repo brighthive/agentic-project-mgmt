@@ -248,6 +248,6 @@ future file type is an additive adapter, not a call-site edit. Numbers to create
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `refactor(brightbot): PipelineArtifactParser port + registry keyed by format; move analyze_dtsx_package/analyze_rdl_report behind it as adapters #1/#2 (behaviour unchanged)` | M |
-| BH-XXXX (to create) | `test(brightbot): golden L2 — registry path yields identical findings to direct calls on real LC .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
-| BH-XXXX (to create) | `test(e2e): .dtsx diagnostics via registry end-to-end; unsupported extension fails loudly` | S |
+| BH-1301 | `refactor(brightbot): PipelineArtifactParser port + registry keyed by format; move analyze_dtsx_package/analyze_rdl_report behind it as adapters #1/#2 (behaviour unchanged)` | M |
+| BH-1302 | `test(brightbot): golden L2 — registry path yields identical findings to direct calls on real LC .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
+| BH-1303 | `test(e2e): .dtsx diagnostics via registry end-to-end; unsupported extension fails loudly` | S |

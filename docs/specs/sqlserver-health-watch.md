@@ -360,11 +360,11 @@ placeholders until created via `/create-jira-ticket`.
 
 | Ticket | Summary | Points | Epic |
 |---|---|---|---|
-| BH-XXXX (to create) | `test(brightbot): extend GC-15 real-sandbox coverage to failed Agent job + healthy-no-signal` | 3 | BH-1255 |
-| BH-XXXX (to create) | `feat(brightbot): emit sql_server_health OTel span + disk_low/job_failed/poll_degraded log events (§9)` | 3 | BH-1255 |
-| BH-XXXX (to create) | `feat(brightbot): wire per-workspace watchdog schedule + surface critical health signals to data leader` | 5 | BH-1255 |
-| BH-XXXX (to create) | `chore(brightbot): document + provision read-only BYOW login with VIEW SERVER STATE for trial-4 (GAP #1)` | 2 | BH-1255 |
-| BH-XXXX (to create) | `test(brightbot): unit L2 cases for threshold monotonicity, never-drop, no-secret-in-config invariants` | 2 | BH-1255 |
+| BH-1278 | `test(brightbot): extend GC-15 real-sandbox coverage to failed Agent job + healthy-no-signal` | 3 | BH-1255 |
+| BH-1279 | `feat(brightbot): emit sql_server_health OTel span + disk_low/job_failed/poll_degraded log events (§9)` | 3 | BH-1255 |
+| BH-1280 | `feat(brightbot): wire per-workspace watchdog schedule + surface critical health signals to data leader` | 5 | BH-1255 |
+| BH-1281 | `chore(brightbot): document + provision read-only BYOW login with VIEW SERVER STATE for trial-4 (GAP #1)` | 2 | BH-1255 |
+| BH-1282 | `test(brightbot): unit L2 cases for threshold monotonicity, never-drop, no-secret-in-config invariants` | 2 | BH-1255 |
 
 ## Related
 

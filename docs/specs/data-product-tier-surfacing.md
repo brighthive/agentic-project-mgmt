@@ -256,10 +256,10 @@ leader asked to see. Numbers to create at handover.
 
 | Ticket | Summary | Wave | Size |
 |---|---|---|---|
-| BH-XXXX (to create) | `feat(platform-core): additive CreatedFinalProduct.pipelineTier reading the node's derived tier` | W1 | S |
-| BH-XXXX (to create) | `feat(webapp): tier badge column on Created Data Products grid (reuse TierChip)` | W1 | S |
-| BH-XXXX (to create) | `feat(webapp): Gold/Platinum client-side tier filter over the pipelineTier column from W1` | W2 | S |
-| BH-XXXX (to create) | `feat(webapp): top-level "Data Products" sidebar entry → workspace-wide view` | W3 | S |
-| BH-XXXX (to create) | `feat(brightbot): attach data_product + pipeline_tier to watchdog signal payload` | W4 | M |
-| BH-XXXX (to create) | `feat(slack): tier badge + data-product grouping in signal card renderer` | W4 | S |
-| BH-XXXX (to create) | `test(e2e): Gold data product shows tier badge end-to-end; no-lineage → UNKNOWN` | — | S |
+| BH-1294 | `feat(platform-core): additive CreatedFinalProduct.pipelineTier reading the node's derived tier` | W1 | S |
+| BH-1295 | `feat(webapp): tier badge column on Created Data Products grid (reuse TierChip)` | W1 | S |
+| BH-1296 | `feat(webapp): Gold/Platinum client-side tier filter over the pipelineTier column from W1` | W2 | S |
+| BH-1297 | `feat(webapp): top-level "Data Products" sidebar entry → workspace-wide view` | W3 | S |
+| BH-1298 | `feat(brightbot): attach data_product + pipeline_tier to watchdog signal payload` | W4 | M |
+| BH-1299 | `feat(slack): tier badge + data-product grouping in signal card renderer` | W4 | S |
+| BH-1300 | `test(e2e): Gold data product shows tier badge end-to-end; no-lineage → UNKNOWN` | — | S |

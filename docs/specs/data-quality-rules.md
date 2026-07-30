@@ -273,8 +273,8 @@ All children of epic **BH-1255**, `issueType=Task`. Adds **axis 3** (declared qu
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `feat(platform-core): public rulesInScope(tag\|groupId) resolver over existing tag/group edges` | S |
-| BH-XXXX (to create) | `feat(brightbot): AssetRuleSelector port + registry + OGM adapter (id/tag/group/all scope)` | M |
-| BH-XXXX (to create) | `feat(brightbot): QualityRulePipelineSource + QualityRule→PipelineHealthSignal bridge + routing` | M |
-| BH-XXXX (to create) | `test(brightbot): real-behavior L2 quality-rule eval against captured asset fixtures (RUN_LIVE-gated)` | S |
-| BH-XXXX (to create) | `test(e2e): scheduled tag-scoped rule failure reaches the quality_asset_result surface` | S |
+| BH-1283 | `feat(platform-core): public rulesInScope(tag\|groupId) resolver over existing tag/group edges` | S |
+| BH-1284 | `feat(brightbot): AssetRuleSelector port + registry + OGM adapter (id/tag/group/all scope)` | M |
+| BH-1285 | `feat(brightbot): QualityRulePipelineSource + QualityRule→PipelineHealthSignal bridge + routing` | M |
+| BH-1286 | `test(brightbot): real-behavior L2 quality-rule eval against captured asset fixtures (RUN_LIVE-gated)` | S |
+| BH-1287 | `test(e2e): scheduled tag-scoped rule failure reaches the quality_asset_result surface` | S |

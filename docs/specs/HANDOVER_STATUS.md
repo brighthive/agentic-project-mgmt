@@ -2,9 +2,11 @@
 
 The Loop Capital trial success criteria, mapped to the specs that answer them. The seven core specs
 plus two adjunct surfacing specs below are **spec-complete** (§1–§10 per `~/.claude/rules/spec-driven.md`),
-grounded in real `file:line` references, and ready for an engineer to pick up. **No implementation has started;
-no child tickets exist yet** — the `BH-XXXX (to create)` placeholders in each Ticket Breakdown
-stay placeholders until the family is approved and `/create-jira-ticket` runs under epic BH-1255.
+grounded in real `file:line` references, and ready for an engineer to pick up. **No implementation has started**,
+but every Ticket Breakdown is now backed by real Jira children under epic BH-1255: the run-lifecycle
+foundation is **BH-1256→1264** and the remaining six specs are **BH-1274→1303** (31 tickets, keys filled
+into each spec's Ticket Breakdown). Lineage engineering (name-free tier derivation, delete/merge integrity)
+lives under its own epic **BH-1273**; BH-1265 there is a cross-referenced dependency of the tier-surfacing spec.
 
 > **Core principle:** in-trial SSIS/SSRS work is **diagnose & operate, don't author** — read +
 > flag, never regenerate. The one regeneration spec is explicitly out of trial scope (POC).
