@@ -1,8 +1,8 @@
 # BH-1255 Spec Family — Handover Status
 
-The Loop Capital trial success criteria, mapped to the specs that answer them. All six specs
-below are **spec-complete** (§1–§10 per `~/.claude/rules/spec-driven.md`), grounded in real
-`file:line` references, and ready for an engineer to pick up. **No implementation has started;
+The Loop Capital trial success criteria, mapped to the specs that answer them. The seven core specs
+plus two adjunct surfacing specs below are **spec-complete** (§1–§10 per `~/.claude/rules/spec-driven.md`),
+grounded in real `file:line` references, and ready for an engineer to pick up. **No implementation has started;
 no child tickets exist yet** — the `BH-XXXX (to create)` placeholders in each Ticket Breakdown
 stay placeholders until the family is approved and `/create-jira-ticket` runs under epic BH-1255.
 
@@ -20,6 +20,25 @@ stay placeholders until the family is approved and `/create-jira-ticket` runs un
 | [`data-quality-rules.md`](data-quality-rules.md) | 7 (axis 3) — quality rules on assets, by tag/group, on a routine | Build (mostly a bridge) | 269 | ✅ |
 | [`brightroutine-approve-schedule.md`](brightroutine-approve-schedule.md) | 9 — human approves in Slack → scheduled routine (+ 8 audit) | Build (the one missing seam) | 406 | ✅ |
 | [`ssis-ssrs-to-dbt-regeneration.md`](ssis-ssrs-to-dbt-regeneration.md) | none — **OUT OF TRIAL SCOPE** (modernize / POC) | Build (POC) | 643 | ✅ (deferred) |
+
+## Adjunct specs (surfacing + file-format seam — added 2026-07-30)
+
+Two capabilities the trial surfaces asked for that aren't a numbered criterion but make the
+built work visible/usable. Both start **simple + incremental** and are grounded against real source.
+
+| Spec | Ask | Nature | Ready |
+|---|---|---|---|
+| [`data-product-tier-surfacing.md`](data-product-tier-surfacing.md) | Show Gold/Platinum data products in-app (grid + sidebar) and in Slack | Build — but pure **read** over the already-derived `pipelineTier`; W1 (grid tier column) ships smallest-first | ✅ |
+| [`pipeline-artifact-parser-registry.md`](pipeline-artifact-parser-registry.md) | "Files need to work for any type/format" — in-trial format-agnostic seam | Build — a `PipelineArtifactParser` port + registry; the two existing `.dtsx`/`.rdl` parsers become adapters #1/#2, behaviour unchanged | ✅ |
+
+- **Tier surfacing is read-only** — it never authors or edits a tier; `pipelineTier` is derived from
+  lineage depth (`pipeline-lineage.ts:464-472`), never node names. W1 exploits that
+  `getCreatedDataProducts` already returns the tier-bearing Neo4j node (`project.ts:131-150`) —
+  the field just isn't selected yet. **No workspace-wide "products by tier" query exists**
+  (`pipelineLineage(tier:)` needs a `nodeId`+`direction`), so W2's filter is client-side over W1's column.
+- **Format seam wraps, doesn't rewrite** — the real parsers return `dict[str, Any]`
+  (`parse_dtsx:130`, `parse_rdl:52`); adapters carry that dict through unchanged (INV-1). A new format
+  is then an additive adapter + one registry line, never a call-site edit.
 
 ## Notes for the engineer picking this up
 
