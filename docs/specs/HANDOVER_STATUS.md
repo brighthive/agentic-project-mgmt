@@ -48,9 +48,33 @@ stay placeholders until the family is approved and `/create-jira-ticket` runs un
   it unifies five architectural layers behind one GC-17/self-heal safety story that splitting
   would fragment. Every other spec is within budget.
 
+## Build order (scored by trial value, not spec number)
+
+Score each spec on **Trial Value** (answers "this is not live" / hits a numbered criterion),
+**Speed** (inverse effort — a capability that already ships scores 5), and **Unblocks** (gates
+other specs). `score = TrialValue×2 + Speed + Unblocks`. Build highest-score first.
+
+| # | Spec | Crit | TV | Speed | Unblk | Score | Wave |
+|---|---|---|:--:|:--:|:--:|:--:|:--:|
+| 1 | `sqlserver-health-watch` | 4 | 5 | 5 | 2 | **17** | **W1 — live proof** |
+| 2 | `ssis-ssrs-proactive-pipeline-source` | 5 & 6 | 5 | 3 | 2 | **15** | **W1 — live proof** |
+| 3 | `pipeline-run-lifecycle` | foundation | 3 | 3 | 5 | **14** | **W2 — foundation** |
+| 4 | `brightroutine-approve-schedule` | 9 (+8) | 4 | 3 | 3 | **14** | **W2 — foundation** |
+| 5 | `pipeline-self-healing-fleet` | 7 | 4 | 2 | 3 | **13** | **W3 — depth** |
+| 6 | `data-quality-rules` | 7 (axis 3) | 3 | 4 | 1 | **11** | **W3 — depth** |
+| — | `ssis-ssrs-to-dbt-regeneration` | none | 1 | 1 | 0 | **3** | **defer (OOS)** |
+
+- **W1 buys the fastest live proof.** Both are verify-only / new-caller over capabilities that
+  already ship — the fastest rebuttal to Frank's "this is not live" (2026-07-09), because the
+  underlying watch already runs; the work is pinning the acceptance bar + wiring the schedule/surfacing.
+- **W2 is the foundation** the rest leans on — re-runnable runs and human-approved scheduling
+  (`Unblocks` is why `pipeline-run-lifecycle` sequences here despite a lower trial value).
+- **W3 is the heavier depth work** — the engine-agnostic self-healing fleet and the quality-rule bridge.
+- **Regeneration stays deferred** — out of trial scope; a POC, not a trial deliverable.
+
 ## What happens next (spec-first gate)
 
 1. Review the family (this PR).
 2. On approval → create child tickets under **BH-1255** (board 152, every ticket `parentKey`
-   the epic, `issueType: Task`) from each spec's Ticket Breakdown.
-3. Implement spec-by-spec; §10 test coverage lands in the real suites before each PR opens.
+   the epic, `issueType: Task`) from each spec's Ticket Breakdown, **in build order above** (W1 first).
+3. Implement wave-by-wave; §10 test coverage lands in the real suites before each PR opens.

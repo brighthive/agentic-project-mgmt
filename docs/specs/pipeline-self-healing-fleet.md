@@ -118,7 +118,7 @@ class PipelineStore(Protocol):
     async def save_pipeline(self, *, pipeline: MonitoredPipeline) -> None: ...
 # DynamoDB row in the EXISTING SCHEDULED_AGENTS_TABLE:
 #   PK = "WORKSPACE#<workspace_id>" (_WORKSPACE_KEY_PREFIX, store.py:45)  SK = "PIPELINE#<pipeline_id>" (new)
-#   disjoint from "SCHEDULE#" (_SCHEDULE_SK_PREFIX, store.py:46) and "ASSET#" (schedule_asset_junctions.py:13)
+#   disjoint from the existing "SCHEDULE#" SK prefix (_SCHEDULE_SK_PREFIX, store.py:46)
 # InMemoryPipelineStore fake ships alongside (PS-10).
 ```
 
@@ -449,7 +449,7 @@ Feature: Fleet fan-out, fairness, danger halt
 
 - **Existing PipelineSource Port + registry + factory** — `pipeline_health.py:86-95, :106-112, :142` (reused; Port shape unchanged, PS-1).
 - **`PipelineHealthSignal.source_type`** — `pipeline_health.py:72`, opened from `Literal["dbt","databricks","etl"]` to `str` (this spec's §2 contract change), so a signal carries whichever live adapter key emitted it — engine or detector.
-- **`SCHEDULED_AGENTS_TABLE` + `DynamoDbScheduledAgentStore`** — `store.py:45-46, 119-197` (mirrored for `PipelineStore`; disjoint `PIPELINE#` prefix from `SCHEDULE#`/`ASSET#` at `schedule_asset_junctions.py:13`).
+- **`SCHEDULED_AGENTS_TABLE` + `DynamoDbScheduledAgentStore`** — `store.py:45-46, 119-197` (mirrored for `PipelineStore`; new `PIPELINE#` SK prefix, disjoint from the existing `SCHEDULE#` at `store.py:46`).
 - **platform-core GraphQL** — `get_transformation_services` (`platform_queries.py:385`) as the connection source of truth; a list-all variant returning EVERY connected dbt service to replace `_find_connected_dbt_service()` first-wins (`credentials_tools.py:158-166`).
 - **`DbtPipelineSource.poll_health`** (`dbt_pipeline_source.py:94`) — extended to honor `config["transformation_service_id"]` and to namespace `job_id` by `connection_key`; `root_cause_class` remains hardcoded `JOB_RUNTIME` (`:146`) and is not a routing input.
 - **`SsisPipelineSource`** (`ssis_pipeline_source.py:49`) — the SSIS adapter; its four real emitted `failure_type`s (`:51-54`) are `SsisPackageHealer`'s routing keys per §2.3 (two fixable, two alert-only); the previously-registered `ssis_package_failure` is fictional and emitted by nothing.
