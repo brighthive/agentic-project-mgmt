@@ -14,7 +14,7 @@ related:
 
 # Proactive Self-Healing Pipeline Monitoring — Fleet Architecture
 
-> Trial success criterion 7 (self-heal). Loop Capital's legacy stack is SQL Server 2019 + SSIS-fed / SSRS-reported; SQL Server and SSIS are the first two healer-routed adapters. Engine-agnostic by construction — every source is a `PipelineSource` adapter behind a registry; no vendor string in the routing logic.
+> Trial success criterion 7 (self-heal). Loop Capital's legacy stack is SQL Server 2019 + SSIS-fed / SSRS-reported; SQL Server and SSIS are the first two healer-routed adapters. Engine-agnostic by construction (thesis + INV-16 in §1).
 
 > Status: Draft · Owner: drchinca · Last-Reviewed: 2026-07-29
 > Repos touched: `brightbot` (primary), `brighthive-platform-core` (cron boundary), `brightbot-slack-server` (renderers, out of scope here)
