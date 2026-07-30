@@ -29,21 +29,6 @@ related:
 > propose path exists (detector → Slack card). The approve primitive exists
 > (`interruptible`). The wire between them does not.
 
-## Contents
-
-- [1. Context](#1-context)
-- [2. Interface Contract (MDE)](#2-interface-contract-mde)
-- [3. Invariants (DbC)](#3-invariants-dbc)
-- [4. Acceptance Criteria (BDD — Gherkin)](#4-acceptance-criteria-bdd--gherkin)
-- [5. Out of Scope](#5-out-of-scope)
-- [6. Dependencies](#6-dependencies)
-- [7. Correctness Properties](#7-correctness-properties)
-- [8. Eval Criteria](#8-eval-criteria)
-- [9. Observability Contract](#9-observability-contract)
-- [10. Test Coverage Update](#10-test-coverage-update)
-- [Ticket Breakdown](#ticket-breakdown)
-- [Related](#related)
-
 ## 1. Context
 
 Three pieces already exist in `brightbot`; the seam that joins them does not.
