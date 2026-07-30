@@ -31,11 +31,7 @@ The BrightAgent Pipeline Watchdog today monitors **one workspace, one connection
 4. **No closed loop.** The watchdog trusts "the run returned a `github_pr_url`" as proof a PR exists (no deterministic check, BH-1092), and nothing re-runs the pipeline after a human merges (BH-1091). A wrong merge is **silently suppressed** for the full 60-min cooldown window because the cooldown key is the failure *signature*, not "was it resolved".
 5. **No fleet scale.** One cron row per workspace, no fairness ceiling, no shared resilience envelope, no run-level runaway guard.
 
-This spec unifies the fix into one layered architecture. The **MonitoredPipeline** entity (product label "Pipeline") is the foundation — the atomic monitored unit every other layer keys on. On top of it: source fan-out over connections + live drift; a signal-shape → healer routing registry; a closed-loop remediation lifecycle with a durable ledger; a fleet sweep layer for fairness, resilience, and observability; and a single **danger-threshold circuit-breaker** that halts a runaway run. The **PipelineSource Protocol stays byte-for-byte intact** (`pipeline_health.py:86-95`); the **GC-17 no-self-merge guarantee** is preserved and generalized to *every* healer.
-
-Named "Pipeline" (`MonitoredPipeline`), not "Project": the subsystem already speaks this vocabulary ("pipeline watchdog", `PipelineHealthSignal`, `PipelineSource`), and "Project" collides with BrightStudio Projects. The fleet layer references a `pipeline_id`, never a separate "project" model.
-
-The remediation lifecycle — the safety heart of the epic — is a six-state ledger machine. `ALERT_ONLY` and `PR_MISSING` are **publish-only outcomes** (BrightSignals stages, never persisted ledger rows); the RECURRED human gate is an **out-of-ledger** `interruptible()` phase whose only ledger effect is the guarded `RECURRED→PR_OPEN` edge.
+This spec unifies the fix into one layered architecture keyed on the **MonitoredPipeline** entity (product label "Pipeline" — the vocabulary the subsystem already speaks; "Project" would collide with BrightStudio Projects): the atomic monitored unit. On top of it — source fan-out over connections + live drift; a signal-shape → healer routing registry; a closed-loop remediation lifecycle with a durable six-state ledger; a fleet sweep layer for fairness, resilience, observability; and a single **danger-threshold circuit-breaker** that halts a runaway run. The **PipelineSource Protocol stays byte-for-byte intact** (`pipeline_health.py:86-95`) and the **GC-17 no-self-merge guarantee** is generalized to *every* healer. In the ledger, `ALERT_ONLY` and `PR_MISSING` are **publish-only outcomes** (never persisted rows); the RECURRED human gate is an **out-of-ledger** `interruptible()` phase whose only ledger effect is the guarded `RECURRED→PR_OPEN` edge.
 
 ```mermaid
 stateDiagram-v2
@@ -55,7 +51,7 @@ stateDiagram-v2
     end note
 ```
 
-Two supporting flows aid review — watchdog enumeration (`WatchRoster.list_targets → per target build_sources_for_workspace(source_type, seams) → poll_health → reconcile_open_attempts`) and fleet fan-out (`platform-core EventBridge → scheduled_agent_dispatcher Lambda → brightbot sweep planner → FleetQueue (one message per target, group=workspace_id) → N poll consumers → existing watchdog graph unchanged`).
+Runtime flow: `platform-core EventBridge → scheduled_agent_dispatcher Lambda → brightbot sweep planner → FleetQueue (one message per target, group=workspace_id) → N poll consumers → WatchRoster.list_targets → build_sources_for_workspace → poll_health → ClosedLoopReconciler` — the existing watchdog graph unchanged.
 
 ## 2. Interface Contract (MDE)
 
@@ -176,19 +172,16 @@ class HealerRegistry:
     def bound_shapes(self) -> frozenset[SignalShape]: ...
 
 PIPELINE_HEALERS: Final = HealerRegistry()  # single module instance; PIPELINE_HEALERS[x]=y is impossible
-# Concrete healers:
-#   DbtModelHealer  — shape ("dbt","dbt_run_failure"); can_heal=True for every dbt signal (root_cause_class is
-#     ALWAYS JOB_RUNTIME, dbt_pipeline_source.py:146). The WRAPPED remediation_agent_graph keeps its own
+# Concrete healers (keyed on REAL emitted failure_types, ssis_pipeline_source.py:51-54, NOT the
+# fictional "ssis_package_failure" that no adapter emits and routed find()→None for every SSIS signal):
+#   DbtModelHealer  — shape ("dbt","dbt_run_failure"); can_heal=True for every dbt signal (root_cause_class
+#     ALWAYS JOB_RUNTIME, dbt_pipeline_source.py:146). Wraps remediation_agent_graph, which keeps its own
 #     classify_data_shape_mode gate (remediation_agent.py:86) — today's behavior preserved exactly.
-#   SsisPackageHealer — registered ONLY on the two REAL emitted failure_types the SSIS agent can structurally
-#     fix (ssis_pipeline_source.py:51-54):
-#         SignalShape("ssis","ssis_missing_staging_step")   and   SignalShape("ssis","ssis_missing_error_redirect")
-#     — both are missing-package-structure defects with a deterministic PR fix; can_heal = has_actionable_finding (:67).
-#     The other two emitted failure_types are NOT registered, so find() returns None and they stay alert-only:
-#         ssis_package_unreachable  — catalog/connectivity failure, no code fix exists (fix is infra, not a PR)
-#         ssis_package_parse_error  — the .dtsx cannot be parsed, so there is no safe patch to draft
-#     This is why the healer keys on the emitted types, not the previously-fictional "ssis_package_failure"
-#     (which no adapter ever emits) — that fiction routed find() to None for EVERY real SSIS signal.
+#   SsisPackageHealer — registered ONLY on the two structurally-fixable shapes (deterministic PR fix;
+#     can_heal = has_actionable_finding, :67): SignalShape("ssis","ssis_missing_staging_step") and
+#     SignalShape("ssis","ssis_missing_error_redirect"). The other two — ssis_package_unreachable
+#     (infra failure, no code fix) and ssis_package_parse_error (unparseable, no safe patch) — are NOT
+#     registered, so find() returns None and they stay alert-only.
 ```
 
 ### 2.4 Closed-loop — remediation ledger, PR/merge finder, reconciler
@@ -437,7 +430,7 @@ Feature: Fleet fan-out, fairness, danger halt
 - **`SCHEDULED_AGENTS_TABLE` + `DynamoDbScheduledAgentStore`** — `store.py:45-46, 119-197` (mirrored for `PipelineStore`; disjoint `PIPELINE#` prefix from `SCHEDULE#`/`ASSET#` at `schedule_asset_junctions.py:13`).
 - **platform-core GraphQL** — `get_transformation_services` (`platform_queries.py:385`) as the connection source of truth; a list-all variant returning EVERY connected dbt service to replace `_find_connected_dbt_service()` first-wins (`credentials_tools.py:158-166`).
 - **`DbtPipelineSource.poll_health`** (`dbt_pipeline_source.py:94`) — extended to honor `config["transformation_service_id"]` and to namespace `job_id` by `connection_key`; `root_cause_class` remains hardcoded `JOB_RUNTIME` (`:146`) and is not a routing input.
-- **`SsisPipelineSource`** (`ssis_pipeline_source.py:49`) — the SSIS adapter; its four real emitted `failure_type`s (`:51-54`: `ssis_package_unreachable`, `ssis_package_parse_error`, `ssis_missing_staging_step`, `ssis_missing_error_redirect`) are the routing keys `SsisPackageHealer` registers against (two of them) — the previously-registered `ssis_package_failure` is fictional and emitted by nothing.
+- **`SsisPipelineSource`** (`ssis_pipeline_source.py:49`) — the SSIS adapter; its four real emitted `failure_type`s (`:51-54`) are `SsisPackageHealer`'s routing keys per §2.3 (two fixable, two alert-only); the previously-registered `ssis_package_failure` is fictional and emitted by nothing.
 - **Metric-history store + golden-asset registry** — power `MetricHistoryProvider`/`WatchedAssetsProvider`; golden/tier-0 identification depends on the lineage subsystem (BH-1258 bridge + BH-1265 name-free tiering).
 - **`remediation_agent_graph`** (`remediation_agent.py:169`, `langgraph.json:41`) — wrapped by `DbtModelHealer`, keeps its internal `classify_data_shape_mode` gate (`remediation_agent.py:86`); **`ssis_remediation_agent_graph`** (`ssis_remediation_agent.py:191`) + `has_actionable_finding` (`:67`) — wrapped by `SsisPackageHealer` for the two structurally-fixable findings; **must be added to `langgraph.json`** (currently orphaned).
 - **`REMEDIATION_TOOLS`** (`dbt_agent_react.py:240-248`) — GC-17-safe tool set both healers reuse; `bound_tool_names()` is derived from the compiled graph, not a literal; `MERGE_TOOL_NAME` promoted from bare literals (`dbt_agent_react.py:237`, `pipeline_watchdog_task.py:505`).
@@ -517,24 +510,19 @@ The only LLM behavior is the dbt/SSIS remediation agents that draft a fix PR. De
 
 ### 9.1 Streaming & liveness (a heal is minutes of agent work — surface it)
 
-A remediation graph runs for minutes; today `_attempt_remediation` invokes it with a **bare
-`ainvoke`** (`pipeline_watchdog_task.py:525`) and **discards the agent's stream** — the heal is a black
-box until a PR appears or doesn't. This spec **switches that call to `forward_subgraph_stream`** so the
-wrapped `remediation_agent_graph` / `ssis_remediation_agent_graph` chunks reach the caller, and streams
-**step + tool detail** to **three surfaces** via the existing LangGraph `get_stream_writer()` "custom"
-chunk (`StreamContext.to_dict()`), reusing `emit_phase` and `periodic_heartbeat`.
-
-- **Slack** — a `chat.update` loop edits one thread message per remediation phase
-  (`detected → diagnosing → drafting_pr → pr_open`, and later `verifying → resolved|recurred`), tool
-  detail as a sub-line, on the same thread the alert already posted to.
-- **Webapp** — the same chunks stream over SSE (LangGraph Platform stream; no new in-repo endpoint).
-- **OTel/logs** — each step also lands as the §9 spans/log events above (stdlib `logging`, **not**
-  structlog — the repo has no structlog seam).
-- **Heartbeat** — `periodic_heartbeat` ticks ~10s with `signature.key`, current phase, and **elapsed
-  work-time**; a long-running diagnosis is visibly alive, and the reconciler's `VERIFYING` window is
-  streamed as a "watching for recurrence" liveness tick.
-- **Scrub on the wire (INV-5).** Every streamed chunk passes `scrub_text` before emission; step/tool
-  detail may name a model, a failure type, or a PR — never a secret or a raw row value.
+Today `_attempt_remediation` invokes the remediation graph with a **bare `ainvoke`**
+(`pipeline_watchdog_task.py:525`) and **discards its stream** — the heal is a black box until a PR
+appears or doesn't. This spec **switches that call to `forward_subgraph_stream`** so the wrapped
+`remediation_agent_graph` / `ssis_remediation_agent_graph` chunks reach the caller, and streams **step +
+tool detail** to **three surfaces** via the existing `get_stream_writer()` "custom" chunk
+(`StreamContext.to_dict()`), reusing `emit_phase` + `periodic_heartbeat`:
+**Slack** (`chat.update` loop editing one thread message per phase `detected→diagnosing→drafting_pr→pr_open→verifying→resolved|recurred`, on the alert's own thread),
+**Webapp** (same chunks over the LangGraph Platform SSE stream; no new endpoint), and
+**OTel/logs** (each step as the §9 spans/log events; stdlib `logging`, not structlog — no structlog seam exists).
+`periodic_heartbeat` ticks ~10s with `signature.key`, current phase, and **elapsed work-time**, so a long
+diagnosis is visibly alive and the `VERIFYING` window streams as a "watching for recurrence" tick.
+**Scrub on the wire (INV-5):** every chunk passes `scrub_text` before emission — step/tool detail may name
+a model, failure type, or PR, never a secret or raw row value.
 
 ## 10. Test Coverage Update
 
