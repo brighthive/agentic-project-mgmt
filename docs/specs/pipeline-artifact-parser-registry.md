@@ -238,12 +238,8 @@ pre-refactor output exactly.
 
 ## 11. PR Split
 
-1. **brightbot** — port + domain types + registry + detection, with `DtsxArtifactParser` /
-   `RdlArtifactParser` wrapping the existing parsers unchanged; repoint callers to `resolve_parser`. (M)
-2. **brightbot** — L0/L1 + the L2 golden real-fixture comparison (RUN_LIVE-gated). (S)
-3. **brighthive-e2e** — feature + unsupported-format error-path tests. (S)
-
-Ordered 1 → 2 → 3. No platform-core or webapp changes — this is a brightbot-internal seam.
+One PR per Ticket Breakdown row (below): the seam+adapters refactor → the golden L2 test → the e2e
+test, in that order. No platform-core or webapp changes — this is a brightbot-internal seam.
 
 ## Ticket Breakdown
 
