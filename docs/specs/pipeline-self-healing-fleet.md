@@ -149,8 +149,8 @@ class ConnectionDirectory(Protocol):     # listing connections is an external ca
 @dataclass(frozen=True)
 class SourceSeams:                        # injectable seam bundle threaded by the factory
     connections: ConnectionDirectory
-    history_provider: MetricHistoryProvider | None = None   # drift only
-    watched_assets: WatchedAssetsProvider | None = None     # drift only
+    history_provider: MetricHistoryProvider | None = None   # drift only: Callable alias (longitudinal_drift_pipeline_source.py:81-84)
+    watched_assets: list[WatchedAsset] | None = None        # drift only: plain injected list (:61-75, :110) — no provider protocol exists
 
 AdapterBuilder = Callable[[MonitoredConnection, SourceSeams], PipelineSource]
 PIPELINE_SOURCE_BUILDERS: dict[str, AdapterBuilder] = {}    # populated by register_adapters()
@@ -448,12 +448,12 @@ Feature: Fleet fan-out, fairness, danger halt
 ## 6. Dependencies
 
 - **Existing PipelineSource Port + registry + factory** — `pipeline_health.py:86-95, :106-112, :142` (reused; Port shape unchanged, PS-1).
-- **`PipelineHealthSignal.source_type`** — `pipeline_health.py:72`, widened from `Literal["dbt","databricks","etl"]` to the full `SourceType` set (this spec's §2 contract change).
+- **`PipelineHealthSignal.source_type`** — `pipeline_health.py:72`, opened from `Literal["dbt","databricks","etl"]` to `str` (this spec's §2 contract change), so a signal carries whichever live adapter key emitted it — engine or detector.
 - **`SCHEDULED_AGENTS_TABLE` + `DynamoDbScheduledAgentStore`** — `store.py:45-46, 119-197` (mirrored for `PipelineStore`; disjoint `PIPELINE#` prefix from `SCHEDULE#`/`ASSET#` at `schedule_asset_junctions.py:13`).
 - **platform-core GraphQL** — `get_transformation_services` (`platform_queries.py:385`) as the connection source of truth; a list-all variant returning EVERY connected dbt service to replace `_find_connected_dbt_service()` first-wins (`credentials_tools.py:158-166`).
 - **`DbtPipelineSource.poll_health`** (`dbt_pipeline_source.py:94`) — extended to honor `config["transformation_service_id"]` and to namespace `job_id` by `connection_key`; `root_cause_class` remains hardcoded `JOB_RUNTIME` (`:146`) and is not a routing input.
 - **`SsisPipelineSource`** (`ssis_pipeline_source.py:49`) — the SSIS adapter; its four real emitted `failure_type`s (`:51-54`) are `SsisPackageHealer`'s routing keys per §2.3 (two fixable, two alert-only); the previously-registered `ssis_package_failure` is fictional and emitted by nothing.
-- **Metric-history store + golden-asset registry** — power `MetricHistoryProvider`/`WatchedAssetsProvider`; golden/tier-0 identification depends on the lineage subsystem (BH-1258 bridge + BH-1265 name-free tiering).
+- **Metric-history store + golden-asset registry** — feed the drift detector's real seams: `MetricHistoryProvider` (a `Callable` type alias, `longitudinal_drift_pipeline_source.py:81-84`) and the injected `list[WatchedAsset]` (`:61-75, :110`) — NOT a `WatchedAssetsProvider` protocol (none exists). Golden/tier-0 identification depends on the lineage subsystem (BH-1258 bridge + BH-1265 name-free tiering).
 - **`remediation_agent_graph`** (`remediation_agent.py:169`, `langgraph.json:41`) — wrapped by `DbtModelHealer`, keeps its internal `classify_data_shape_mode` gate (`remediation_agent.py:86`); **`ssis_remediation_agent_graph`** (`ssis_remediation_agent.py:191`) + `has_actionable_finding` (`:67`) — wrapped by `SsisPackageHealer` for the two structurally-fixable findings; **must be added to `langgraph.json`** (currently orphaned).
 - **`REMEDIATION_TOOLS`** (`dbt_agent_react.py:240-248`) — GC-17-safe tool set both healers reuse; `bound_tool_names()` is derived from the compiled graph, not a literal; `MERGE_TOOL_NAME` promoted from bare literals (`dbt_agent_react.py:237`, `pipeline_watchdog_task.py:505`).
 - **`DynamoDbAlertCooldownStore` + 4-tuple key** (`pipeline_alert_cooldown.py:33,53,77-127`) — the ledger shares the exact signature key and native-TTL idiom (sibling, not subclass).
