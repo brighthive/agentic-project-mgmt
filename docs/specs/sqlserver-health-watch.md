@@ -32,9 +32,7 @@ extract silently starts failing for lack of space. Frank's literal challenge was
 with no MCP... disk at 20%." The capability that answers it already exists: `SqlServerPipelineSource`
 (`brightbot/agents/governance_agent/tools/sql_server_pipeline_source.py:182`) polls disk via
 `sys.dm_os_volume_stats` and Agent jobs via `msdb.dbo.sysjobs`/`sysjobhistory` through the
-**existing** `SynapseConnection` (plain pymssql/TDS) — no on-host collector. This spec's job is
-to (1) pin the trial-4 acceptance bar as executable Gherkin against that code, (2) specify the
-schedule + surfacing wiring around it, and (3) name the two gaps the code's own comments flag.
+**existing** `SynapseConnection` (plain pymssql/TDS) — no on-host collector.
 
 ### Watch flow
 
