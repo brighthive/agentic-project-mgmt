@@ -14,9 +14,9 @@ related:
 
 # Scheduled, Versioned, Lineage-Aware Pipeline Runs
 
-> Full contract: `~/.claude/rules/spec-driven.md`. This spec specs ONLY the genuine gaps
-> for BH-1255 and cross-references the substrate that already ships. What already exists is
-> named in §1 "How It Works Today" with `file:line` evidence so no ticket reinvents it.
+> This spec specs ONLY the genuine gaps for BH-1255 and cross-references the substrate that
+> already ships. What already exists is named in §1 "How It Works Today" with `file:line`
+> evidence so no ticket reinvents it.
 
 ## 1. Context
 
