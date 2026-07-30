@@ -18,14 +18,10 @@ related:
 
 # Format-agnostic pipeline-artifact parser — a registry keyed by file type
 
-> Today the diagnostics tools hardcode two formats: `.dtsx` (SSIS XML) and `.rdl` (SSRS XML) are
-> parsed inline by `analyze_rdl_report` (`pipeline_diagnostics_tools.py:106`, delegating to `parse_rdl:52`)
-> and `analyze_dtsx_package` (`:161`, delegating to `parse_dtsx:130`) — each a `@tool` returning
-> `dict[str, Any]`. A third file type means editing that module and adding another format branch. This spec introduces a
-> **`PipelineArtifactParser` port + a registry keyed by extension/mime**, so a new format is a new
-> adapter + one registry entry — never a call-site edit. Per `~/.claude/rules/pluggable-scalable.md`
-> (PS-1): the two existing parsers become the first two adapters behind the port; behaviour is
-> unchanged, the seam is new.
+> Diagnostics hardcode two formats today (`.dtsx`, `.rdl`; §1 + §6 grounding), so a third file type
+> means editing the module. This spec adds a **`PipelineArtifactParser` port + registry keyed by
+> extension/mime** (PS-1): the two existing parsers become adapters #1/#2, behaviour unchanged; a new
+> format is then an adapter + one registry entry, never a call-site edit.
 
 ## 1. Context
 
