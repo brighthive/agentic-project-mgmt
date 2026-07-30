@@ -26,7 +26,7 @@ BrightAgent **already** has a data-quality subsystem: `QualityRule` nodes with G
 Three gaps stop this from being a *proactive, fleet-monitored* capability:
 
 1. **Rules don't reach the signal backbone.** Rule execution writes a `QualityRuleExecution` node (`create_quality_rule_execution_mutation`, `platform_queries_quality.py:37-69`) and stops there. It never emits a `PipelineHealthSignal` (`pipeline_health.py:60-83`), so a failed quality rule is invisible to the watchdog's publish/route/alert path (`_publish_signals`, `pipeline_watchdog_task.py:192-345`) — even though the exact stage constant `STAGE_QUALITY_ASSET_RESULT = "quality_asset_result"` already exists (`notification_constants.py:15`). A rule can fail nightly and no one is told the way they're told about a disk-low or a dbt failure.
-2. **No tag / group selection.** A rule's only asset selector today is `scope = SELECTED_ASSETS` — an explicit asset-id list (`_RULE_SCOPE_SELECTED`, `quality_rule_persistence.py:37`; that's the sole scope constant — there is no all-assets scope). There is no way to say "every asset tagged `tier-0`" or "the `holdings` group" — so a data leader can't govern by domain, only by hand-picking ids. Tags exist on *schemas* (`governance_context_tools.py:106,117-118`) but not on assets — greenfield.
+2. **No tag / group selection at the *rule* level.** A rule scopes to `SELECTED_ASSETS` (explicit id list) or `ALL_ASSETS` — the enum ships in platform-core (`QualityRuleScope`, `typedefs.ts:631-633`, honored in `findRules`, `service/neo4j/quality-rule.ts:255`). What's missing is scoping a rule to a *tag* or *group*: "every asset tagged `tier-0`", "the `holdings` group". The primitives already exist — `DataAsset.tags` TAGGED edges (`typedefs.ts:565`, NOT schema-only), a global `TagNode`, and `InputDataAssetGroupNode`/`FinalDataProductGroupNode` via INCLUDES edges — and `findRules` already resolves a *tagged asset's* rules (`tags_SOME.dataAssets_SOME`, `quality-rule.ts:257`). The gap is a **public resolver** that turns "tag/group → assets → rules-in-scope" into a first-class selector (§6 GAP #1), not tag storage.
 3. **Not a fleet-monitored source.** Quality evaluation isn't a `PipelineSource` (`pipeline_health.py:86-95`), so it can't ride the fleet sweep, fairness, resilience, or the routine-scheduling seam (`brightroutine-approve-schedule.md`). It runs only inside the quality agent's own tools, on demand.
 
 This spec closes all three by adding a **`QualityRulePipelineSource`** — a `PipelineSource` adapter (axis 3) that resolves the rules in scope for a workspace (by asset id *or* tag/group), runs the existing evaluation engine, and maps each **failed** rule to a `PipelineHealthSignal(failure_type="quality_rule_failed")`. It reuses the whole downstream backbone unchanged: publish → route (`_FAILURE_TYPE_TO_STAGE`) → alert. Healing is out of scope (a bad row is not auto-fixable); this is **detect + alert**, like drift.
@@ -68,9 +68,10 @@ class AssetRef:                       # a monitored data asset, engine-neutral
 
 @dataclass(frozen=True)
 class RuleScope:                      # how a rule selects its assets — a CLOSED set of selector KINDS,
-    kind: Literal["asset_ids", "tag", "group"]   #   but the VALUES (which tags/groups) are open data
-    asset_ids: tuple[str, ...] = ()   # kind="asset_ids": today's ONLY scope (SELECTED_ASSETS, quality_rule_persistence.py:37)
-    selector: str | None = None       # kind="tag"|"group": the tag or group name — free-form workspace data (NEW, GAP #1)
+    kind: Literal["asset_ids", "all", "tag", "group"]   #   but the VALUES (which tags/groups) are open data
+    asset_ids: tuple[str, ...] = ()   # kind="asset_ids": today's SELECTED_ASSETS (QualityRuleScope, typedefs.ts:633)
+    selector: str | None = None       # kind="tag": tag name; kind="group": group node id — NEW public selector (GAP #1)
+    # kind="all" maps to the existing ALL_ASSETS scope (typedefs.ts:632) — every asset in the workspace
 
 class AssetRuleSelector(Protocol):    # listing rules+assets in scope is an external capability → a Port (PS-1)
     async def rules_in_scope(self, *, workspace_id: str,
@@ -146,7 +147,7 @@ QUALITY_RULES_ADAPTER_KEY: Final[str] = "quality_rules"
 ## 3. Invariants (DbC)
 
 - **INV-1 Engine-agnostic rule.** A `QualityRule`, `RuleScope`, `AssetRef`, and every routing decision SHALL be free of any pipeline-engine / warehouse identity. The same rule against the same asset fires identically whether dbt, SSIS, or Snowflake produced it. Grep test: no `if source_type ==`, no vendor string, in `quality_rule_source.py` or the selector.
-- **INV-2 Tag/group is a governance dimension, not code.** Adding a new tag or group SHALL be workspace data (a tag applied to an asset), never a code change; `RuleScope.selector` is free-form. Only the three selector *kinds* (`asset_ids`/`tag`/`group`) are a closed set — the values are open.
+- **INV-2 Tag/group is a governance dimension, not code.** Adding a new tag or group SHALL be workspace data (a tag applied to an asset), never a code change; `RuleScope.selector` is free-form. Only the four selector *kinds* (`asset_ids`/`all`/`tag`/`group`) are a closed set — the values are open.
 - **INV-3 Only ENABLED, scheduled rules poll.** `poll_health` SHALL evaluate only rules with `applyOnSchedule=True` for the workspace (OGM context filter `SCHEDULED`, `ogm_queries.py:220-224`); on-ingestion-only rules are never swept here.
 - **INV-4 One signal per FAILED/DEGRADED rule×asset; passing rules are silent.** A `passed` result SHALL emit no signal. A `degraded` result (past `warningThreshold`) emits a `warning`-severity signal; `failed` emits at the rule's mapped severity.
 - **INV-5 Cooldown correct at rule×asset grain.** `job_id = "{asset_id}:{rule_id}"` so the existing 4-tuple cooldown (`pipeline_watchdog_task.py:249-275`) suppresses re-alerts per asset×rule, never collapsing two assets' failures of the same rule into one.
@@ -214,7 +215,7 @@ Budget: 6 scenarios.
 - `PipelineHealthSignal` + `PipelineSource` Protocol + `_publish_signals` + `_FAILURE_TYPE_TO_STAGE` (existing, reused unchanged).
 - The `pipeline-self-healing-fleet.md` fleet backbone — this source registers as a detector key and rides the fleet sweep; `source_type` on the signal being `str` (fleet §2 CONTRACT CHANGE) is what lets `"quality_rules"` flow through the DTO.
 - Existing quality subsystem: `quality_rule_translation.py`, `quality_tools.py`, `platform_queries_quality.py`, `ogm_queries.py:153-267`.
-- **GAP #1 (greenfield — platform-core):** asset-level **tags/groups**. Today tags live on schemas (`governance_context_tools.py:106`), and a rule's only selector is an asset-id list (`SELECTED_ASSETS`). A tag/group on `DataAsset` + a `rulesInScope(workspace, tag|group)` resolver is a **new platform-core capability** — confirm the DataAsset schema can carry `tags: [String]` + a `group` field, and that the OGM/GraphQL can filter assets by them, before implementation. Until it lands, `RuleScope.kind` is limited to `asset_ids` (today's only behavior — `SELECTED_ASSETS`) and tag/group scopes raise a clear "not yet supported" at save.
+- **GAP #1 (platform-core — SMALLER than a greenfield build):** the storage already exists — `DataAsset.tags` TAGGED edges (`typedefs.ts:565`), a global `TagNode`, group nodes (`InputDataAssetGroupNode`/`FinalDataProductGroupNode` via INCLUDES), the `ALL_ASSETS`/`SELECTED_ASSETS` scope enum (`typedefs.ts:631-633`), and `findRules` resolving a tagged asset's rules (`tags_SOME.dataAssets_SOME`, `quality-rule.ts:257`). The **only** additions: (1) a public **`rulesInScope(workspace, tag|groupId)`** resolver (a thin traversal over the existing `findRules` + tag/group edges — not new storage), and (2) target **group *nodes*** (`InputDataAssetGroupNode`/`FinalDataProductGroupNode`), **NOT** a `DataAsset.group: String` scalar — no such scalar exists and grouping is modeled as nodes. Until the public resolver lands, `RuleScope.kind` is limited to `asset_ids`/`all` (both already honored) and tag/group scopes raise a clear "not yet supported" at save.
 - **GAP #2:** the QualityRule→signal bridge is new — confirm `createQualityRuleExecution` (the existing result sink) and the new signal emission are **both** written (execution node for the quality history, signal for the alert), not one replacing the other.
 
 ## 7. Correctness Properties
@@ -260,7 +261,7 @@ Run brightbot's layered suite + the e2e; confirm every §2/§3/§4 entry has a c
 
 ## 11. PR Split
 
-1. **platform-core** — `DataAsset.tags` + `group` fields + `rulesInScope(workspace, tag|group)` resolver (GAP #1). (M)
+1. **platform-core** — public `rulesInScope(workspace, tag|groupId)` resolver over the EXISTING `DataAsset.tags` edges + group nodes + `findRules` (GAP #1 — no new storage; tags/groups/scope enum already ship). (S)
 2. **brightbot** — `AssetRuleSelector` port + registry + first adapter over the OGM query; `RuleScope` id/tag/group/all resolution. (M)
 3. **brightbot** — `QualityRuleEvaluator` port + `GreatExpectationsEvaluator` wrapping the existing engine; `QualityRulePipelineSource` + signal mapping + `_FAILURE_TYPE_TO_STAGE` entry. (M)
 4. **brightbot** — real-behavior L2 suite against captured asset fixtures (RUN_LIVE-gated). (S)
@@ -274,7 +275,7 @@ All children of epic **BH-1255**, `issueType=Task`. Adds **axis 3** (declared qu
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `feat(platform-core): DataAsset tags + group fields + rulesInScope(tag\|group) resolver` | M |
+| BH-XXXX (to create) | `feat(platform-core): public rulesInScope(tag\|groupId) resolver over existing tag/group edges` | S |
 | BH-XXXX (to create) | `feat(brightbot): AssetRuleSelector port + registry + OGM adapter (id/tag/group/all scope)` | M |
 | BH-XXXX (to create) | `feat(brightbot): QualityRulePipelineSource + QualityRule→PipelineHealthSignal bridge + routing` | M |
 | BH-XXXX (to create) | `test(brightbot): real-behavior L2 quality-rule eval against captured asset fixtures (RUN_LIVE-gated)` | S |

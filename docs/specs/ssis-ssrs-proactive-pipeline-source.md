@@ -27,15 +27,29 @@ related:
 
 # SPEC: SSIS/SSRS as a Proactive PipelineSource
 
-> Scope: SQL Server BYOW (BH-1075/BH-1107) and SSIS/SSRS diagnostics
-> (`analyze_dtsx_package`/`analyze_rdl_report`, GC-15/GC-16) are both real and
-> both shipped — verified merged and live on staging (Loop Capital's warehouse
-> connects to `54.88.115.112`, `analyst_ask` diagnoses `Extract_Holdings_
-> Nightly.dtsx` for real). What's missing: SSIS/SSRS diagnosis is
-> **reactive-only** (a user uploads/pastes a `.dtsx`/`.rdl` and asks). There is
-> no `PipelineSource` for SSIS/SSRS the way `SqlServerPipelineSource`
-> (BH-1045) exists for disk/job-status — so a legacy SSIS catalog can never be
-> *proactively* watched the way a SQL Server warehouse can.
+> Scope: **CORRECTED 2026-07-29 after cross-repo grounding — the SSIS half is
+> already built.** `SsisCatalogPipelineSource` ships today
+> (`brightbot/.../governance_agent/tools/ssis_pipeline_source.py:103`, registered
+> at `pipeline_health.py:135` as key `"ssis"`): a full `poll_health` that pulls a
+> workspace-configured package list from the per-workspace secret
+> `workspace_secret_store/<workspace_uuid>`, sub-key `services.ssis_packages`
+> (`get_workspace_secret(workspace_id, service="ssis_packages")`,
+> `ssis_pipeline_source.py:92`; degrades to `[]` when unset, `:93-100`),
+> fetches each `.dtsx` from its `s3://` `source_uri`, and emits four failure
+> types (`ssis_missing_error_redirect`, `ssis_missing_staging_step`,
+> `ssis_package_unreachable`, `ssis_package_parse_error`, `:51-54`). It does NOT
+> use a separate fingerprint/diff store — it relies on the watchdog's existing
+> 4-tuple cooldown (`(workspace_id, source_type, job_id, failure_type)`) so a
+> repeat finding is suppressed and a genuinely new anti-pattern fires immediately
+> (docstring `:10-16`). The disk/job `SqlServerPipelineSource` (BH-1045) and the
+> reactive diagnostics (`analyze_dtsx_package`/`analyze_rdl_report`, GC-15/GC-16)
+> are also real and live on staging.
+>
+> **What's ACTUALLY missing (this spec's real remaining scope):** (1) **SSRS**
+> — there is no `.rdl` proactive source; `analyze_rdl_report` is reactive-only.
+> (2) **verify the SSIS source is wired to the trial's package set + reaches the
+> notification surface end-to-end** on staging for Loop Capital. The SSIS
+> `PipelineSource` itself is NOT to be re-authored — it exists.
 
 **Terms.** `PipelineSource` is the `Protocol` in
 `brightbot/agents/governance_agent/tools/pipeline_health.py` — one method,
@@ -236,7 +250,11 @@ All children of epic **BH-1255**, `issueType=Task`. Covers trial success **crite
 
 | Ticket | Summary | Size |
 |---|---|---|
-| BH-XXXX (to create) | `feat(brightbot): SsisCatalogPipelineSource poll_health + finding diff/fingerprint (crit 5)` | M |
-| BH-XXXX (to create) | `feat(brightbot): SSRS .rdl diagnostics via analyze_rdl_report as a PipelineSource finding (crit 6)` | M |
+| BH-XXXX (to create) | `chore(brightbot): populate services.ssis_packages in workspace_secret_store/<loop-capital-uuid> so the already-built SsisCatalogPipelineSource (pipeline_health.py:135) polls the LC package set + verify end-to-end on staging (crit 5)` | S |
+| BH-XXXX (to create) | `feat(brightbot): SsrsCatalogPipelineSource — .rdl proactive source over analyze_rdl_report, mirroring the shipped SSIS adapter (crit 6)` | M |
 | BH-XXXX (to create) | `test(brightbot): real-behavior L2 against LC sandbox .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
 | BH-XXXX (to create) | `test(e2e): new SSIS/SSRS finding reaches the notification surface end-to-end` | S |
+
+> **Note (2026-07-29 grounding):** the SSIS source is NOT greenfield — it ships at
+> `ssis_pipeline_source.py:103`. Crit-5 work is *wiring + verification*, not authoring.
+> Only SSRS (crit 6) is a net-new adapter, and it mirrors the existing SSIS one.

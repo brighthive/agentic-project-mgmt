@@ -75,16 +75,23 @@ stateDiagram-v2
 
 ### Hard Limitations
 
-1. **No A→B lineage-scoped run.** `lineage_graph.py` has only whole-DAG directional traversal from a
-   single anchor — no "path between node A and node B" / scoped subgraph. Runs execute a whole
-   `WorkflowSpec`, never a lineage segment.
-2. **No re-run-from-a-point.** CEMAF's `DAGExecutor` has no interrupt/pause/resume primitive
-   (`_resume_stub` is a no-op, BH-172 not started; confirmed `langgraph-cloud-detach.md`). Today a
-   failed run can only be re-run whole.
-3. **Run record does not name lineage nodes touched.** `WorkflowRunNode` records steps, not the lineage
-   node set the run covered; and immutability of the run record is not asserted anywhere.
+> **Note (2026-07-29 grounding):** limitations 1–3 below were **partially closed on platform-core** — the
+> `runPipelineSegment`/`reRunFromNode` mutations and the `lineageNodesTouched`/`runScope`/`immutable`
+> WorkflowRunNode fields now ship on staging (commit `a4c00f80`). What still limits is the **brightbot
+> side**: the mutations expect a resolved A→B lineage path and are not yet driven from chat. The
+> limitations are reworded to that residual.
+
+1. **No A→B lineage path resolver in brightbot.** Platform-core's `runPipelineSegment` accepts a scoped
+   lineage path, but `lineage_graph.py` still has only whole-DAG directional traversal from a single
+   anchor — no `path_between(A, B)` to compute the segment the mutation needs (BH-1257).
+2. **Re-run mutation ships, but no chat/agent path invokes it.** `reRunFromNode` exists on platform-core;
+   there is no brightbot tool or CEMAF path that calls it from a conversation. (CEMAF's `DAGExecutor`
+   interrupt/resume primitive is separately unstarted — BH-172, `langgraph-cloud-detach.md`.)
+3. **Run record shape ships; brightbot does not yet populate `lineageNodesTouched` from a real segment.**
+   The fields exist and immutability is enforced platform-side; the gap is emitting the touched-node set
+   from a brightbot-resolved segment run (depends on limitation 1).
 4. **No chat-native "schedule this dbt job" command.** Scheduling is detector-suggestion-driven; there
-   is no first-class agent tool a user invokes directly from chat to create/modify a schedule.
+   is no first-class agent tool a user invokes directly from chat to create/modify a schedule (BH-1261).
 5. **No conversational run-scope / alert-rule authoring.** The intent loop authors the schedule cadence,
    not the run scope (which lineage segment) or the alert thresholds.
 
@@ -302,26 +309,35 @@ case, and confirm all suites are green.
 
 | Area | Repo | Impact |
 |------|------|--------|
-| BrightBot | `brightbot` | `path_between` on `lineage_graph.py`; new `schedule_pipeline_run` chat @tool; `PipelineRunner` port + `DbtCloudRunner` adapter + registry |
-| Platform Core | `brighthive-platform-core` | `runPipelineSegment` + `reRunFromNode` mutations; additive `WorkflowRunNode` fields (`lineageNodesTouched`, `runScope`, `immutable`); finish `DbtAdapter.checkStatus` poll |
-| Web App | `brighthive-webapp` | Run-history "re-run from this node" affordance on the RunTimeline |
+| BrightBot | `brightbot` | **(build)** `path_between` on `lineage_graph.py`; new `schedule_pipeline_run` chat @tool; `PipelineRunner` port + `DbtCloudRunner` adapter + registry |
+| Platform Core | `brighthive-platform-core` | **(verify-only — all ship on staging, commit `a4c00f80`)** `runPipelineSegment` (`workflow-pipeline-runs.ts:120`) + `reRunFromNode` (`:331`) mutations; additive `WorkflowRunNode` fields `lineageNodesTouched`/`runScope`/`immutable` (`workflow-spec-typedefs.ts:138-140`); `DbtAdapter.checkStatus` real poll (`runtime-adapters.ts:348`) |
+| Web App | `brighthive-webapp` | **(build)** Run-history "re-run from this node" affordance on the RunTimeline |
 
 ## Ticket Breakdown
 
 Generated via `/create-jira-ticket` from this spec. Every row is `issueType: "Task"` under `BH-1255` —
 never `"Story"`.
 
-| Ticket | Summary | Points | Epic |
-|--------|---------|--------|------|
-| BH-1256 | `PipelineRunner` port + `DbtCloudRunner` adapter + registry (engine-agnostic seam) | 3 | BH-1255 |
-| BH-1257 | `path_between(from,to)` A→B lineage segment resolution on `lineage_graph.py` | 3 | BH-1255 |
-| BH-1258 | `runPipelineSegment` mutation — scoped run + `lineageNodesTouched`/`runScope` on WorkflowRun | 5 | BH-1255 |
-| BH-1259 | Run-record immutability at terminal state (`immutable` flag + write guard) | 2 | BH-1255 |
-| BH-1260 | `reRunFromNode` mutation + capability gate (resume-from-point) | 5 | BH-1255 |
-| BH-1261 | `schedule_pipeline_run` chat @tool — user-initiated schedule + alert-rule authoring | 5 | BH-1255 |
-| BH-1262 | Webapp: "re-run from this node" affordance on RunTimeline | 3 | BH-1255 |
-| BH-1263 | Finish `DbtAdapter.checkStatus` poll (unblocks async segment-run completion) | 2 | BH-1255 |
-| BH-1264 | Cross-repo e2e: chat → routine → scheduled segment run → Slack/inbox alert | 3 | BH-1255 |
+> **Grounding (2026-07-29, verified against committed source on `develop` + `origin/staging`):** the
+> **entire platform-core side already ships** — BH-1258 `runPipelineSegment` (`workflow-pipeline-runs.ts:120`),
+> BH-1260 `reRunFromNode` (`:331`), BH-1259 additive `WorkflowRunNode.lineageNodesTouched`/`runScope`/`immutable`
+> (`workflow-spec-typedefs.ts:138-140`), and BH-1263 `DbtAdapter.checkStatus` real dbt Cloud poll
+> (`runtime-adapters.ts:348,354`) all merged (commit `a4c00f80`, live on staging). Those four are
+> **verify-only**: pin the trial acceptance bar + integration coverage against existing code, not build-from-zero.
+> The genuine net-new is in **brightbot** (BH-1256 runner port, BH-1257 `path_between`, BH-1261 chat @tool —
+> none present in `brightbot/`) + **webapp** (BH-1262) + **e2e** (BH-1264).
+
+| Ticket | Summary | Nature | Points | Epic |
+|--------|---------|--------|--------|------|
+| BH-1256 | `PipelineRunner` port + `DbtCloudRunner` adapter + registry (engine-agnostic seam) | Build (brightbot) | 3 | BH-1255 |
+| BH-1257 | `path_between(from,to)` A→B lineage segment resolution on `lineage_graph.py` | Build (brightbot) | 3 | BH-1255 |
+| BH-1258 | `runPipelineSegment` mutation — scoped run + `lineageNodesTouched`/`runScope` on WorkflowRun | **Verify-only** (ships `workflow-pipeline-runs.ts:120`) | 2 | BH-1255 |
+| BH-1259 | Run-record immutability at terminal state (`immutable` flag + write guard) | **Verify-only** (ships `workflow-spec-typedefs.ts:140`) | 1 | BH-1255 |
+| BH-1260 | `reRunFromNode` mutation + capability gate (resume-from-point) | **Verify-only** (ships `workflow-pipeline-runs.ts:331`) | 2 | BH-1255 |
+| BH-1261 | `schedule_pipeline_run` chat @tool — user-initiated schedule + alert-rule authoring | Build (brightbot) | 5 | BH-1255 |
+| BH-1262 | Webapp: "re-run from this node" affordance on RunTimeline | Build (webapp) | 3 | BH-1255 |
+| BH-1263 | `DbtAdapter.checkStatus` poll (async segment-run completion) | **Verify-only** (ships `runtime-adapters.ts:348`) | 1 | BH-1255 |
+| BH-1264 | Cross-repo e2e: chat → routine → scheduled segment run → Slack/inbox alert | Build (e2e) | 3 | BH-1255 |
 
 ## Related
 
