@@ -19,10 +19,8 @@ related:
 
 # Data Products by Tier — surfaced in-app, in the sidebar, and in Slack
 
-> Reads the **already-derived `pipelineTier`** — it never authors or edits a tier. Gold/Platinum
-> are existing enum values, computed from lineage depth (`pipeline-lineage.ts:444-479`), never from
-> node names (BH-1265). This spec is a **surfacing layer** over shipped data: one additive API
-> field, one grid column, one sidebar entry, one Slack grouping — no new tier logic.
+> A **read-only surfacing layer** over the already-derived `pipelineTier` (§1 grounding, INV-1/INV-3):
+> one additive API field, one grid column, one sidebar entry, one Slack grouping — no new tier logic.
 
 ## 1. Context
 
@@ -36,7 +34,7 @@ it's **buried**:
   `DataAssetNode.pipelineTier` (`src/graphql/ogm/typedefs.ts:567`, nullable) and
   `TransformationNode.pipelineTier` (`pipeline-typedefs.ts:87`), **derived** from the longest
   `DERIVES_FROM` chain (depth capped at 4) via a Cypher `CASE` — pure structure, no name inference
-  (`service/neo4j/pipeline-lineage.ts:444-479`, mapping at `:464-472`).
+  (`service/neo4j/pipeline-lineage.ts:444-479`, mapping at `:464-472`; name-free tiering is BH-1265).
 - The webapp **already renders tier chips** with per-tier color + a "trusted = GOLD/PLATINUM" insight
   — but only inside one per-project page (`src/Projects/ProjectObservabilityPage/PipelineLineageSection.tsx:65-83`,
   `lineageInsights.ts:4-50`).
