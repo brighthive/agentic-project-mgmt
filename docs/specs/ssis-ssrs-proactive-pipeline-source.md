@@ -237,9 +237,9 @@ Run brightbot's layered suite + the e2e; confirm §2/§3/§4 each have a case; c
 
 ## 11. PR Split
 
-1. **brightbot** — `SsisCatalogPipelineSource` + diff/fingerprint logic + wiring into the existing watchdog poll loop. (M)
-2. **brightbot** — real-behavior test against the LC sandbox fixture (L2, RUN_LIVE-gated). (S)
-3. **brighthive-e2e** — one feature test proving a new SSIS finding reaches the notification surface. (S)
+1. **brightbot** — `SsrsCatalogPipelineSource` (`.rdl` proactive source over `analyze_rdl_report`, mirroring the shipped SSIS adapter) + wiring into the watchdog poll loop. (M) — the SSIS source already ships (see Scope banner); this is the one net-new adapter.
+2. **brightbot** — real-behavior test against the LC sandbox `.dtsx`/`.rdl` fixtures (L2, RUN_LIVE-gated). (S)
+3. **brighthive-e2e** — one feature test proving a new SSIS/SSRS finding reaches the notification surface. (S)
 
 Ordered 1 → 2 → 3. No platform-core or webapp changes required — this reuses
 BH-1045's existing signal→notification pipeline end to end.
@@ -254,7 +254,3 @@ All children of epic **BH-1255**, `issueType=Task`. Covers trial success **crite
 | BH-XXXX (to create) | `feat(brightbot): SsrsCatalogPipelineSource — .rdl proactive source over analyze_rdl_report, mirroring the shipped SSIS adapter (crit 6)` | M |
 | BH-XXXX (to create) | `test(brightbot): real-behavior L2 against LC sandbox .dtsx/.rdl fixtures (RUN_LIVE-gated)` | S |
 | BH-XXXX (to create) | `test(e2e): new SSIS/SSRS finding reaches the notification surface end-to-end` | S |
-
-> **Note (2026-07-29 grounding):** the SSIS source is NOT greenfield — it ships at
-> `ssis_pipeline_source.py:103`. Crit-5 work is *wiring + verification*, not authoring.
-> Only SSRS (crit 6) is a net-new adapter, and it mirrors the existing SSIS one.
