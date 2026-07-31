@@ -169,6 +169,49 @@ etl_job_failure  (:417-425):
   { job_name, connection_key, failed_step_name, failure_message }   # failure_message trimmed to 300 chars (:400)
 ```
 
+### Surfacing contract (GAP #2 — persist the latest health snapshot onto the warehouse node)
+
+The adapter already emits signals; a `PipelineHealthSignal` is delivered to the **per-user**
+notification inbox (`NotificationInbox`, `notification-inbox.ts` — PK `USER#<uid>`). That is the
+right home for an *alert*, but the wrong source for *workspace health*: a teammate who never
+received the alert would see a green warehouse while disk sits below threshold. Workspace health
+must be workspace-level truth, so the latest health-watch result is **persisted onto the
+`WarehouseServiceNode`** (mirrors the BH-1110 run-status persist pattern,
+`pipeline_watchdog_task._persist_run_status`) and folded into the existing per-warehouse
+`healthChecks` row the landing band already reads.
+
+```graphql
+# platform-core — new service-key-authed mutation, mirrors updateTransformationRunStatus.
+# Called by the watchdog after each SQL Server poll; non-blocking (a persist failure logs
+# and continues, never crashes the poll — same posture as _persist_run_status).
+input RecordWarehouseHealthInput {
+  workspaceId: ID!
+  warehouseServiceId: ID          # null on empty-config callers → match by connectionKey
+  connectionKey: String!          # stable per-connection id from the signal metadata
+  operationalStatus: String!      # "Healthy" | "Degraded" | "Down" (worst of this poll)
+  diskFreePct: Float               # lowest percent_free seen this poll, null if not checked
+  failedJobCount: Int              # count of Agent jobs in Failed state this poll
+  detail: JSON                     # { databaseName, largestFileName, jobName, failedStepName, ... }
+  polledAt: String!                # ISO-8601
+}
+type RecordWarehouseHealthOutput { ok: Boolean! }
+
+# ServiceHealthCheck gains operational fields (additive — existing consumers ignore them).
+# getHealthChecks reads the persisted snapshot off the WarehouseServiceNode and, when a
+# snapshot exists and is worse than the connection-state status, downgrades the row.
+type ServiceHealthCheck {
+  id: ID!  service: String!  type: String!  status: String!  provider: String  lastChecked: String!
+  diskFreePct: Float          # new — null when no SQL Server snapshot for this warehouse
+  failedJobCount: Int         # new
+  detail: JSON                # new — the enrichment fields (largest file, failed step)
+}
+```
+
+**Read fold (`analytics-resolver.getHealthChecks`, `:55-69`):** the Warehouse row keeps its
+connection-state derivation, then — if a health snapshot exists — takes the *worse* of
+connection-state and `operationalStatus` (a snapshot never upgrades an inactive connection to
+Healthy). `diskFreePct`/`failedJobCount`/`detail` ride along for the band's detail line.
+
 ## 3. Invariants (DbC)
 
 1. `WHEN` a workspace has zero SQL-Server-shaped (TDS) connections, `THE System SHALL` return an
@@ -203,6 +246,14 @@ etl_job_failure  (:417-425):
     `percent_free` seen (`:282-291`).
 14. `WHEN` an unknown `source_type` is passed to `build_pipeline_source`, `THE System SHALL` raise a
     hand-written actionable `ValueError`, never a bare `KeyError` (`pipeline_health.py:150-154`).
+15. `WHEN` `recordWarehouseHealth` fails (network, auth, GraphQL error), `THE System SHALL` log a
+    warning and continue the poll — a persist failure `SHALL NOT` crash the watchdog run (mirrors
+    `_persist_run_status`'s non-blocking posture).
+16. `WHEN` a health snapshot exists for a warehouse, `getHealthChecks` `SHALL` set the row status to
+    the *worse* of connection-state and `operationalStatus` — a snapshot `SHALL NOT` upgrade an
+    inactive connection to Healthy (worst-of, never best-of; mirrors landing-indicator I-1).
+17. `THE System SHALL` scope every persisted snapshot to its `workspaceId`; `getHealthChecks`
+    `SHALL NOT` read a snapshot across workspaces (multi-tenant isolation, PS-13).
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -349,8 +400,9 @@ corresponding new case, and confirm all suites are green.
 
 | Area | Repo | Impact |
 |---|---|---|
-| BrightBot | `brightbot` | Verify existing adapter against trial-4 bar; add schedule/surfacing wiring + §9 spans/log events; extend GC-15 job-failure coverage |
-| Web App | `brighthive-webapp` | Surface `critical` health signals to the data leader |
+| BrightBot | `brightbot` | Verify existing adapter against trial-4 bar; add schedule/surfacing wiring + §9 spans/log events; extend GC-15 job-failure coverage; **call `recordWarehouseHealth` after each SQL poll (non-blocking, mirrors `_persist_run_status`)** |
+| Platform Core | `brighthive-platform-core` | **`recordWarehouseHealth` mutation + snapshot on `WarehouseServiceNode`; fold operational health into `getHealthChecks` (worst-of, additive `ServiceHealthCheck` fields)** |
+| Web App | `brighthive-webapp` | Surface `critical` health signals to the data leader; **render disk-free % + failed-job count on the landing Hive Health band's warehouse row** |
 | Sandbox | `agentic-project-mgmt/clients/trials/loopcapital/sandbox/` | Real-behavior fixture (no change; consumed by tests) |
 
 ## Ticket Breakdown
@@ -365,6 +417,9 @@ placeholders until created via `/create-jira-ticket`.
 | BH-1280 | `feat(brightbot): wire per-workspace watchdog schedule + surface critical health signals to data leader` | 5 | BH-1255 |
 | BH-1281 | `chore(brightbot): document + provision read-only BYOW login with VIEW SERVER STATE for trial-4 (GAP #1)` | 2 | BH-1255 |
 | BH-1282 | `test(brightbot): unit L2 cases for threshold monotonicity, never-drop, no-secret-in-config invariants` | 2 | BH-1255 |
+| BH-1313 | `feat(platform-core): recordWarehouseHealth mutation + WarehouseServiceNode health snapshot; fold operational health into getHealthChecks (worst-of, additive ServiceHealthCheck fields)` | 5 | BH-1255 |
+| BH-1314 | `feat(brightbot): call recordWarehouseHealth after each SQL Server poll (non-blocking, mirrors _persist_run_status)` | 3 | BH-1255 |
+| BH-1315 | `feat(webapp): render disk-free % + failed-job count on the landing Hive Health band warehouse row` | 3 | BH-1255 |
 
 ## Related
 
