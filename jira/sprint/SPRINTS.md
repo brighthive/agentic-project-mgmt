@@ -1,8 +1,20 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 13 (released July 20, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 14 (released Aug 1, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 14 🍯 — Warehouse Health, MCP Hardening & Lineage (July 21 – Aug 1, 2026)
+- **Duration**: 12 days (date-range cut, unofficial — fourth unofficial sprint in a row)
+- **Focus**: Warehouse operational health folded into the landing band (BH-1280), engine-agnostic pipeline lineage + staged quality with re-runnable immutable segments (BH-1036), a 13-fix MCP prod-test hardening sweep against a real Redshift workspace (BH-1181 family), catalog/projects UX sweep, schema-file (XSD/XML) intake vertical slice
+- **Team**: Kuri, Harbour, Marwan
+- **PRs Merged**: 82 total (62 code + 20 release/promotion carriers, 5 repos)
+- **Lines Changed**: +41,813 / −4,316 (code-only; release re-merges excluded — one alone was +262k)
+- **Highlights**: warehouse-health worst-of fold shipped to staging (never-optimistic disk/failed-job surfacing across SQL Server/Snowflake/Redshift), 6-tier medallion lineage view + re-run-from-node, 13 MCP tool fixes (hyphenated Redshift DBs, Spectrum external tables, honest `pending` vs 120s timeout, `bad_request` vs generic errors), Harbour's 11-fix catalog/projects UX sweep + atomic project creation + KB reranking, Marwan's XSD/XML schema-file upload+editor slice
+- **Sprint Health**: 28 tickets resolved (27 Done, 1 Canceled) against 82 PRs — same PR-ahead-of-Jira pattern. Concentration unchanged: Kuri authored 69.5% of PRs (57/82). Fourth unofficial sprint running — a formal Jira sprint object is overdue. 10 tickets carrying to Sprint 15 (all default-warehouse ingestion + unstructured-data stack).
+- [Details →](./14/)
 
 ---
 

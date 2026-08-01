@@ -1,0 +1,101 @@
+{
+  "sprint": 14,
+  "name": "Sprint 14 🍯",
+  "official": false,
+  "note": "Date-range release cut — no Jira sprint object. Fourth unofficial sprint in a row (Sprint 11–14). A formal Jira sprint object is overdue.",
+  "dates": { "start": "2026-07-21", "end": "2026-08-01", "duration_days": 12 },
+  "tickets": {
+    "resolved_in_window": 28,
+    "done": 27,
+    "canceled": 1,
+    "in_flight": 10,
+    "in_progress": 4,
+    "to_do": 5,
+    "to_do_pointed": 1
+  },
+  "points": {
+    "note": "Team does not estimate — story points unset on all in-window tickets except BH-233 (2 pts). Velocity is measured by PRs + resolved tickets, not points."
+  },
+  "prs": {
+    "total": 82,
+    "code_prs": 62,
+    "release_promotion_prs": 20,
+    "lines_changed_all": 477109,
+    "lines_added_code_only": 41813,
+    "lines_deleted_code_only": 4316,
+    "repos_touched": 5,
+    "repos": [
+      "brighthive-platform-core",
+      "brighthive-webapp",
+      "agentic-project-mgmt",
+      "brighthive-e2e",
+      "platform-saas-ai-context"
+    ]
+  },
+  "by_person": {
+    "drchinca": {
+      "display": "Kuri",
+      "prs_total": 57,
+      "code_prs": 41,
+      "release_prs": 16,
+      "lines_added_code_only": 38402,
+      "lines_deleted_code_only": 3556,
+      "repos": {
+        "brighthive-platform-core": 31,
+        "brighthive-webapp": 17,
+        "agentic-project-mgmt": 6,
+        "platform-saas-ai-context": 2,
+        "brighthive-e2e": 1
+      },
+      "share_of_prs_pct": 69.5,
+      "themes": [
+        "Engine-agnostic lineage + staged quality (BH-1036)",
+        "Warehouse-health snapshot fold → home band (BH-1280)",
+        "MCP prod-test hardening: 13 tool fixes (BH-1181 family)",
+        "BrightRoutines cadence/feedback + dispatcher lock reclaim (BH-993/1235/1207)",
+        "Pipeline lineage lifecycle: re-runnable, immutable segments (BH-1258/1265)",
+        "Release train: 3.0.0 cut + develop→staging→prod promotions"
+      ]
+    },
+    "Nano-233": {
+      "display": "Harbour",
+      "prs_total": 17,
+      "code_prs": 17,
+      "release_prs": 0,
+      "lines_added_code_only": 2020,
+      "lines_deleted_code_only": 575,
+      "repos": {
+        "brighthive-webapp": 14,
+        "brighthive-platform-core": 2,
+        "agentic-project-mgmt": 1
+      },
+      "tickets_done": 12,
+      "themes": [
+        "Catalog + Projects UX bug sweep (BH-1154 through BH-1162): 11 fixes",
+        "Atomic project creation with rollback + toasts (BH-1382)",
+        "KB retrieval precision: reranking + grounding + file-id scoping (BH-1163/1164/1165)",
+        "Catalog healthcheck + bulk tagging + preview/profiler availability (BH-1036)"
+      ]
+    },
+    "Marwan-Samih-Brighthive": {
+      "display": "Marwan",
+      "prs_total": 8,
+      "code_prs": 4,
+      "release_prs": 4,
+      "lines_added_code_only": 1391,
+      "lines_deleted_code_only": 185,
+      "repos": {
+        "brighthive-platform-core": 4,
+        "brighthive-webapp": 4
+      },
+      "themes": [
+        "Schema-file raw reads: resourceContent query (platform-core)",
+        "Schema-file upload URL: resourceContentUploadUrl (platform-core)",
+        "XSD/XML schema file uploads in Project Files (webapp)",
+        "XSD/XML schema file editor (webapp)"
+      ]
+    }
+  },
+  "team": ["Kuri", "Harbour", "Marwan"],
+  "concentration_note": "Kuri authored 69.5% of PRs (57/82), consistent with the 72% flagged in Sprint 13. Single-author concentration risk unchanged."
+}
