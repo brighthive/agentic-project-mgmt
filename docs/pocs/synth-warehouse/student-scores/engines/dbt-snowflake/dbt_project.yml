@@ -1,0 +1,45 @@
+name: student_scores_snowflake
+version: "1.0.0"
+config-version: 2
+
+# dbt → Snowflake materialization of the canonical student matter-scores model
+# (../../MODEL.md). Reads the SAME shared source CSVs as the SSIS and Redshift
+# projects via seed-paths — no per-engine data fork.
+
+profile: student_scores_snowflake
+
+model-paths: ["models"]
+seed-paths: ["../../sources"]   # the shared CSVs — identical across engines
+test-paths: ["tests"]
+
+target-path: target
+clean-targets:
+  - target
+  - dbt_packages
+
+seeds:
+  student_scores_snowflake:
+    +schema: raw
+    schools:
+      +column_types:
+        school_id: number(38,0)
+        enrollment: number(38,0)
+    monthly_matter_scores:
+      +column_types:
+        school_id: number(38,0)
+        year: number(38,0)
+        month: number(38,0)
+        matter_score: number(5,2)
+        national_rank: number(38,0)
+    # weekly_matter_scores is intentionally NOT type-pinned here: the planted
+    # "n/a" matter_score means a numeric seed cast would fail on load, so the
+    # staging model does a safe TRY_CAST and surfaces the bad row instead.
+
+models:
+  student_scores_snowflake:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
