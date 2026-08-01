@@ -9,18 +9,20 @@ tags: [pipeline, health, sqlserver, disk, agent-jobs, loopcapital, byow, engine-
 related:
   features: []
   pocs: []
-  specs: ["pipeline-self-healing-fleet.md", "ssis-ssrs-proactive-pipeline-source.md", "golden-cases-loopcapital.md"]
+  specs: ["warehouse-health-snapshot.md", "pipeline-self-healing-fleet.md", "ssis-ssrs-proactive-pipeline-source.md", "golden-cases-loopcapital.md"]
 ---
 
 # Proactive SQL Server Health Watch
 
-> Full contract: `~/.claude/rules/spec-driven.md`. **This is a VERIFY-ONLY spec.** The
-> capability already ships (`SqlServerPipelineSource`, BH-1045 / GC-15). This spec pins the
-> Loop Capital trial success-criterion-4 acceptance bar around code that already exists,
-> wires the schedule/surfacing, and flags the two real gaps the code itself documents. Every
-> type and behavior below carries a `file:line` reference to the real implementation — nothing
-> here is invented. Engine-agnostic: SQL Server is ONE adapter behind the existing
-> `PipelineSource` port + registry.
+> Full contract: `~/.claude/rules/spec-driven.md`. **This is a VERIFY-ONLY spec, scoped to
+> detection.** The capability already ships (`SqlServerPipelineSource`, BH-1045 / GC-15). This
+> spec pins the Loop Capital trial success-criterion-4 acceptance bar around code that already
+> exists and flags the two real gaps the code itself documents. Every type and behavior below
+> carries a `file:line` reference to the real implementation — nothing here is invented.
+> Engine-agnostic: SQL Server is ONE adapter behind the existing `PipelineSource` port +
+> registry. **The workspace-level surfacing of these signals (persist + fold + band render) is
+> engine-agnostic and owned by [`warehouse-health-snapshot.md`](warehouse-health-snapshot.md);
+> this spec is the first signal *producer*, not the surfacing path.**
 
 ## 1. Context
 
@@ -169,6 +171,22 @@ etl_job_failure  (:417-425):
   { job_name, connection_key, failed_step_name, failure_message }   # failure_message trimmed to 300 chars (:400)
 ```
 
+### Surfacing contract (GAP #2 — how a signal reaches the data leader)
+
+The adapter already emits signals; a `PipelineHealthSignal` is delivered to the **per-user**
+notification inbox (`NotificationInbox`, `notification-inbox.ts` — PK `USER#<uid>`). That is the
+right home for an *alert*, but the wrong source for *workspace health*: a teammate who never
+received the alert would see a green warehouse while disk sits below threshold.
+
+**The workspace-level surfacing path is engine-agnostic and lives in its own spec:**
+[`warehouse-health-snapshot.md`](warehouse-health-snapshot.md). It owns the `recordWarehouseHealth`
+mutation, the `WarehouseServiceNode` snapshot, the `getHealthChecks` worst-of fold, and the Hive
+Health band render — for **every** signal producer, not just SQL Server. This spec is the *first
+producer* of the signals that path surfaces; it does not redefine the path. SQL Server disk-low /
+failed-Agent-job signals carry `connection_key` in their metadata
+(`sql_server_pipeline_source.py:323`, `:411`), which is the key the surfacing layer persists on —
+identical to how a Snowflake or Redshift producer's signal is surfaced.
+
 ## 3. Invariants (DbC)
 
 1. `WHEN` a workspace has zero SQL-Server-shaped (TDS) connections, `THE System SHALL` return an
@@ -203,6 +221,10 @@ etl_job_failure  (:417-425):
     `percent_free` seen (`:282-291`).
 14. `WHEN` an unknown `source_type` is passed to `build_pipeline_source`, `THE System SHALL` raise a
     hand-written actionable `ValueError`, never a bare `KeyError` (`pipeline_health.py:150-154`).
+
+> Invariants for persisting + folding the snapshot into workspace health (worst-of, non-blocking
+> persist, cross-workspace isolation) live in [`warehouse-health-snapshot.md`](warehouse-health-snapshot.md)
+> §3 — engine-agnostic, not SQL-Server-specific.
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -349,9 +371,13 @@ corresponding new case, and confirm all suites are green.
 
 | Area | Repo | Impact |
 |---|---|---|
-| BrightBot | `brightbot` | Verify existing adapter against trial-4 bar; add schedule/surfacing wiring + §9 spans/log events; extend GC-15 job-failure coverage |
-| Web App | `brighthive-webapp` | Surface `critical` health signals to the data leader |
+| BrightBot | `brightbot` | Verify existing adapter against trial-4 bar; add §9 spans/log events; extend GC-15 job-failure coverage |
 | Sandbox | `agentic-project-mgmt/clients/trials/loopcapital/sandbox/` | Real-behavior fixture (no change; consumed by tests) |
+
+> **Cross-repo surfacing** (platform-core `recordWarehouseHealth` mutation + snapshot,
+> `getHealthChecks` fold, webapp band render, and the brightbot persist call) is engine-agnostic and
+> owned by [`warehouse-health-snapshot.md`](warehouse-health-snapshot.md) — not this spec. This spec
+> only produces the signals that path surfaces.
 
 ## Ticket Breakdown
 
@@ -365,6 +391,10 @@ placeholders until created via `/create-jira-ticket`.
 | BH-1280 | `feat(brightbot): wire per-workspace watchdog schedule + surface critical health signals to data leader` | 5 | BH-1255 |
 | BH-1281 | `chore(brightbot): document + provision read-only BYOW login with VIEW SERVER STATE for trial-4 (GAP #1)` | 2 | BH-1255 |
 | BH-1282 | `test(brightbot): unit L2 cases for threshold monotonicity, never-drop, no-secret-in-config invariants` | 2 | BH-1255 |
+
+> The cross-repo surfacing tickets (platform-core `recordWarehouseHealth`, brightbot persist call,
+> webapp band render) moved to [`warehouse-health-snapshot.md`](warehouse-health-snapshot.md) §Ticket
+> Breakdown — they surface signals from *any* engine, not just SQL Server.
 
 ## Related
 
