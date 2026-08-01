@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns="http://brighthive.net/synth-warehouse/StudentScores/schools" xmlns:xs="http://www.w3.org/2001/XMLSchema" id="schools" targetNamespace="http://brighthive.net/synth-warehouse/StudentScores/schools" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:annotation>
+    <xs:documentation>Destination table `schools` — one row per high school. Engine-neutral contract shared by the SSIS destination mapping and the dbt schema.yml tests. Source: sources/schools.csv. Primary key: (school_id). The `state` column is the "by state" rollup key for the national matter-scores.</xs:documentation>
+  </xs:annotation>
+  <xs:element name="schools">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Row" type="schoolsRow" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="schoolsRow">
+    <xs:sequence>
+      <xs:element name="school_id" minOccurs="1" maxOccurs="1" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="school_name" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=nvarchar(120); nullable=NO; primaryKey=NO</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:maxLength value="120"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="state" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=nvarchar(2); nullable=NO; primaryKey=NO; note=2-letter US state code</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:length value="2"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="city" minOccurs="0" maxOccurs="1" nillable="true">
+        <xs:annotation>
+          <xs:appinfo>sqlType=nvarchar(80); nullable=YES; primaryKey=NO</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:maxLength value="80"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="enrollment" minOccurs="0" maxOccurs="1" nillable="true" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=YES; primaryKey=NO</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

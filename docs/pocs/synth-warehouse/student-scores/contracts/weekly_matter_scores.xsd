@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns="http://brighthive.net/synth-warehouse/StudentScores/weekly_matter_scores" xmlns:xs="http://www.w3.org/2001/XMLSchema" id="weekly_matter_scores" targetNamespace="http://brighthive.net/synth-warehouse/StudentScores/weekly_matter_scores" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:annotation>
+    <xs:documentation>Destination table `weekly_matter_scores` — one row per school x ISO week. Source: sources/weekly_matter_scores.csv. Primary key: (school_id, iso_year, iso_week). NOTE: the source feed carries one planted defect — a `matter_score` delivered as free text ("n/a") against this NOT-NULL decimal(5,2) contract, and one blank national_rank — so a diagnostics/profiler skill has a real drift to catch (see MODEL.md).</xs:documentation>
+  </xs:annotation>
+  <xs:element name="weekly_matter_scores">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Row" type="weekly_matter_scoresRow" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="weekly_matter_scoresRow">
+    <xs:sequence>
+      <xs:element name="school_id" minOccurs="1" maxOccurs="1" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES; note=FK to schools.school_id</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="iso_year" minOccurs="1" maxOccurs="1" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="iso_week" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES; note=ISO-8601 week 1-53</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:int">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="53"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="matter_score" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=decimal(5,2); nullable=NO; primaryKey=NO; note=national weekly index 0.00-100.00</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:decimal">
+            <xs:totalDigits value="5"/>
+            <xs:fractionDigits value="2"/>
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="100"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="national_rank" minOccurs="0" maxOccurs="1" nillable="true" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=YES; primaryKey=NO; note=1 = highest that week</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
