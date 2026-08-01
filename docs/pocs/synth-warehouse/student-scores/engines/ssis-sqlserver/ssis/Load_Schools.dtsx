@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Load_Schools.dtsx — loads dbo.schools from ../../sources/schools.csv.
+  Part of the SSIS -> SQL Server / Synapse materialization of the canonical
+  student matter-scores model (../../MODEL.md). Deliberately kept at the
+  ~100-line "toy but real, well-formed" scale of the loopcapital fixtures —
+  the point is a REAL .dtsx a diagnostics/lineage skill can parse, not a
+  production-scale package.
+-->
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorName="BrightHive-SynthWarehouse"
+  DTS:DTSID="{B7A10001-1001-4C2A-9101-000000000101}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="Load_Schools"
+  DTS:PackageType="5"
+  DTS:VersionBuild="1">
+
+  <DTS:Property DTS:Name="PackageFormatVersion">8</DTS:Property>
+
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Src_SchoolsCsv]"
+      DTS:CreationName="FLATFILE"
+      DTS:DTSID="{B7A10001-1002-4C2A-9101-000000000102}"
+      DTS:ObjectName="Src_SchoolsCsv">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="..\..\sources\schools.csv" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Tgt_StudentScores]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{B7A10001-1003-4C2A-9101-000000000103}"
+      DTS:ObjectName="Tgt_StudentScores">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Data Source=localhost;Initial Catalog=StudentScores;Provider=SQLNCLI11;Integrated Security=SSPI;" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\DFT Load Schools"
+      DTS:CreationName="Microsoft.Pipeline"
+      DTS:DTSID="{B7A10001-1010-4C2A-9101-000000000110}"
+      DTS:ExecutableType="Microsoft.Pipeline"
+      DTS:ObjectName="DFT Load Schools"
+      DTS:Description="Reads schools.csv and loads dbo.schools">
+      <DTS:ObjectData>
+        <pipeline>
+          <components>
+            <component
+              refId="Package\DFT Load Schools\Flat File Source Schools"
+              componentClassID="Microsoft.FlatFileSource"
+              name="Flat File Source Schools"
+              description="Reads the schools source CSV">
+              <properties>
+                <property name="FlatFileConnectionManager">Src_SchoolsCsv</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{B7A10001-1002-4C2A-9101-000000000102}" />
+              </connections>
+              <outputs>
+                <output refId="Package\DFT Load Schools\Flat File Source Schools.Outputs[Flat File Source Output]">
+                  <outputColumns>
+                    <outputColumn refId="school_id" dataType="i4" />
+                    <outputColumn refId="school_name" dataType="WSTR" length="120" />
+                    <outputColumn refId="state" dataType="WSTR" length="2" />
+                    <outputColumn refId="city" dataType="WSTR" length="80" />
+                    <outputColumn refId="enrollment" dataType="i4" />
+                  </outputColumns>
+                </output>
+              </outputs>
+            </component>
+            <component
+              refId="Package\DFT Load Schools\OLE DB Destination Schools"
+              componentClassID="Microsoft.OLEDBDestination"
+              name="OLE DB Destination Schools"
+              description="Inserts rows into StudentScores.dbo.schools">
+              <properties>
+                <property name="OpenRowset">dbo.schools</property>
+                <property name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{B7A10001-1003-4C2A-9101-000000000103}" />
+              </connections>
+            </component>
+          </components>
+          <paths>
+            <path name="Source to Destination"
+              startId="Package\DFT Load Schools\Flat File Source Schools"
+              endId="Package\DFT Load Schools\OLE DB Destination Schools" />
+          </paths>
+        </pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+
+</DTS:Executable>

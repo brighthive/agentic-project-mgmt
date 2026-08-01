@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Load_WeeklyMatterScores.dtsx — loads dbo.weekly_matter_scores from
+  ../../sources/weekly_matter_scores.csv.
+
+  PLANTED GAP (intentional, for a diagnostics/profiler skill to find, mirroring
+  loopcapital's Extract_Holdings_Nightly.dtsx): the matter_score output column
+  is typed WSTR (string) at the source and there is NO data-type validation or
+  error-row redirect before the OLE DB destination. The source feed carries one
+  row where matter_score = "n/a" and one row with a blank national_rank. Against
+  the destination's DECIMAL(5,2) NOT NULL contract (../../contracts/
+  weekly_matter_scores.xsd) the bad score row fails silently at insert time
+  rather than being caught and redirected — exactly the class of drift the
+  engine-agnostic diagnostics story exists to surface.
+-->
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorName="BrightHive-SynthWarehouse"
+  DTS:DTSID="{B7A10002-2001-4C2A-9201-000000000201}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="Load_WeeklyMatterScores"
+  DTS:PackageType="5"
+  DTS:VersionBuild="1">
+
+  <DTS:Property DTS:Name="PackageFormatVersion">8</DTS:Property>
+
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Src_WeeklyCsv]"
+      DTS:CreationName="FLATFILE"
+      DTS:DTSID="{B7A10002-2002-4C2A-9201-000000000202}"
+      DTS:ObjectName="Src_WeeklyCsv">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="..\..\sources\weekly_matter_scores.csv" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Tgt_StudentScores]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{B7A10002-2003-4C2A-9201-000000000203}"
+      DTS:ObjectName="Tgt_StudentScores">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Data Source=localhost;Initial Catalog=StudentScores;Provider=SQLNCLI11;Integrated Security=SSPI;" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\DFT Load Weekly"
+      DTS:CreationName="Microsoft.Pipeline"
+      DTS:DTSID="{B7A10002-2010-4C2A-9201-000000000210}"
+      DTS:ExecutableType="Microsoft.Pipeline"
+      DTS:ObjectName="DFT Load Weekly"
+      DTS:Description="Reads weekly_matter_scores.csv and loads dbo.weekly_matter_scores">
+      <DTS:ObjectData>
+        <pipeline>
+          <components>
+            <component
+              refId="Package\DFT Load Weekly\Flat File Source Weekly"
+              componentClassID="Microsoft.FlatFileSource"
+              name="Flat File Source Weekly"
+              description="Reads the weekly matter-scores source CSV">
+              <properties>
+                <property name="FlatFileConnectionManager">Src_WeeklyCsv</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{B7A10002-2002-4C2A-9201-000000000202}" />
+              </connections>
+              <outputs>
+                <output refId="Package\DFT Load Weekly\Flat File Source Weekly.Outputs[Flat File Source Output]">
+                  <outputColumns>
+                    <outputColumn refId="school_id" dataType="i4" />
+                    <outputColumn refId="iso_year" dataType="i4" />
+                    <outputColumn refId="iso_week" dataType="i4" />
+                    <!-- GAP: matter_score read as string, no numeric validation
+                         or error-output redirect before the destination. -->
+                    <outputColumn refId="matter_score" dataType="WSTR" length="10" />
+                    <outputColumn refId="national_rank" dataType="i4" />
+                  </outputColumns>
+                </output>
+              </outputs>
+            </component>
+            <component
+              refId="Package\DFT Load Weekly\OLE DB Destination Weekly"
+              componentClassID="Microsoft.OLEDBDestination"
+              name="OLE DB Destination Weekly"
+              description="Inserts rows into StudentScores.dbo.weekly_matter_scores">
+              <properties>
+                <property name="OpenRowset">dbo.weekly_matter_scores</property>
+                <property name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{B7A10002-2003-4C2A-9201-000000000203}" />
+              </connections>
+            </component>
+          </components>
+          <paths>
+            <path name="Source to Destination"
+              startId="Package\DFT Load Weekly\Flat File Source Weekly"
+              endId="Package\DFT Load Weekly\OLE DB Destination Weekly" />
+          </paths>
+        </pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+
+</DTS:Executable>

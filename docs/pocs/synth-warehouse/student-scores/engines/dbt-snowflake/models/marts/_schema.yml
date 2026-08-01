@@ -1,0 +1,46 @@
+version: 2
+
+# Tests encode the XSD contracts (../../contracts/*.xsd) as dbt assertions:
+# primary keys are unique + not_null, and the canonical non-null columns hold.
+# The weekly matter_score is intentionally NOT not_null-tested — the planted
+# "n/a" row surfaces as NULL after TRY_CAST, and this is the drift a
+# data-quality skill should catch (see ../../MODEL.md § "Planted defect").
+models:
+  - name: schools
+    description: "Canonical schools dimension."
+    columns:
+      - name: school_id
+        description: "Primary key."
+        tests: [unique, not_null]
+      - name: school_name
+        tests: [not_null]
+      - name: state
+        tests: [not_null]
+
+  - name: weekly_matter_scores
+    description: "Canonical weekly national matter-scores per school."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [school_id, iso_year, iso_week]
+    columns:
+      - name: school_id
+        tests: [not_null]
+      - name: iso_year
+        tests: [not_null]
+      - name: iso_week
+        tests: [not_null]
+
+  - name: monthly_matter_scores
+    description: "Canonical monthly national matter-scores per school."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [school_id, year, month]
+    columns:
+      - name: school_id
+        tests: [not_null]
+      - name: year
+        tests: [not_null]
+      - name: month
+        tests: [not_null]
+      - name: matter_score
+        tests: [not_null]

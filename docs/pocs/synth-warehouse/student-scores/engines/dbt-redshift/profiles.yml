@@ -1,0 +1,14 @@
+# Redshift connection profile. Values are environment-driven — no secrets in
+# the repo. Point DBT_* env vars at a BYOW Redshift cluster before `dbt run`.
+student_scores_redshift:
+  target: dev
+  outputs:
+    dev:
+      type: redshift
+      host: "{{ env_var('DBT_REDSHIFT_HOST') }}"
+      port: "{{ env_var('DBT_REDSHIFT_PORT', '5439') | int }}"
+      user: "{{ env_var('DBT_REDSHIFT_USER') }}"
+      password: "{{ env_var('DBT_REDSHIFT_PASSWORD') }}"
+      dbname: "{{ env_var('DBT_REDSHIFT_DATABASE', 'student_scores') }}"
+      schema: "{{ env_var('DBT_REDSHIFT_SCHEMA', 'public') }}"
+      threads: 4

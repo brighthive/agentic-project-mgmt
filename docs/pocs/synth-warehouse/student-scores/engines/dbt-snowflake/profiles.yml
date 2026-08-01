@@ -1,0 +1,15 @@
+# Snowflake connection profile. Values are environment-driven — no secrets in
+# the repo. Point DBT_* env vars at a BYOW Snowflake account before `dbt run`.
+student_scores_snowflake:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('DBT_SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('DBT_SNOWFLAKE_USER') }}"
+      authenticator: "{{ env_var('DBT_SNOWFLAKE_AUTHENTICATOR', 'externalbrowser') }}"
+      role: "{{ env_var('DBT_SNOWFLAKE_ROLE', 'TRANSFORMER') }}"
+      warehouse: "{{ env_var('DBT_SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
+      database: "{{ env_var('DBT_SNOWFLAKE_DATABASE', 'STUDENT_SCORES') }}"
+      schema: "{{ env_var('DBT_SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
+      threads: 4

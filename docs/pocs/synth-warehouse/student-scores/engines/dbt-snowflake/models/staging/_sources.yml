@@ -1,0 +1,12 @@
+version: 2
+
+# The shared source CSVs land as dbt seeds in the `raw` schema (see
+# dbt_project.yml seed-paths → ../../sources). Staging models read them by ref.
+sources:
+  - name: raw
+    description: "Raw student matter-scores feeds, seeded from ../../sources/*.csv"
+    schema: raw
+    tables:
+      - name: schools
+      - name: weekly_matter_scores
+      - name: monthly_matter_scores

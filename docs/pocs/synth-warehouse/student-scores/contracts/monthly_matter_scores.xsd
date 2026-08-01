@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema xmlns="http://brighthive.net/synth-warehouse/StudentScores/monthly_matter_scores" xmlns:xs="http://www.w3.org/2001/XMLSchema" id="monthly_matter_scores" targetNamespace="http://brighthive.net/synth-warehouse/StudentScores/monthly_matter_scores" elementFormDefault="qualified" attributeFormDefault="unqualified">
+  <xs:annotation>
+    <xs:documentation>Destination table `monthly_matter_scores` — one row per school x calendar month. Source: sources/monthly_matter_scores.csv. Primary key: (school_id, year, month). Clean feed (no planted defect) — the monthly rollup is the well-behaved counterpart to the weekly feed.</xs:documentation>
+  </xs:annotation>
+  <xs:element name="monthly_matter_scores">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Row" type="monthly_matter_scoresRow" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:complexType name="monthly_matter_scoresRow">
+    <xs:sequence>
+      <xs:element name="school_id" minOccurs="1" maxOccurs="1" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES; note=FK to schools.school_id</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="year" minOccurs="1" maxOccurs="1" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="month" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=NO; primaryKey=YES; note=calendar month 1-12</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:int">
+            <xs:minInclusive value="1"/>
+            <xs:maxInclusive value="12"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="matter_score" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>sqlType=decimal(5,2); nullable=NO; primaryKey=NO; note=national monthly index 0.00-100.00</xs:appinfo>
+        </xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:decimal">
+            <xs:totalDigits value="5"/>
+            <xs:fractionDigits value="2"/>
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="100"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="national_rank" minOccurs="0" maxOccurs="1" nillable="true" type="xs:int">
+        <xs:annotation>
+          <xs:appinfo>sqlType=int; nullable=YES; primaryKey=NO; note=1 = highest that month</xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>
