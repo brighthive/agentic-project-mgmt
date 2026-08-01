@@ -69,5 +69,7 @@ they describe the three destination tables in SQL terms (`sqlType` / `nullable`
 
 ## Status
 
-🚧 Skeleton — canonical model + source cases land first, then each engine
-project. Tracked under BH-1320.
+✅ Complete — canonical model, shared source cases, engine-neutral `.xsd`
+contracts, and all three engine projects (SSIS→SQL Server, dbt→Snowflake,
+dbt→Redshift) are in place and validate (YAML parses, XSDs are valid W3C
+schemas, all `.dtsx`/`.rdl` XML is well-formed). Tracked under BH-1320.
