@@ -1,0 +1,46 @@
+{
+  "captured": "2026-07-21",
+  "ticket": "BH-409 / BH-1131 (notifications/routines prod promote — see aws-secrets-vault/snapshots/2026-07-20_prod-release-notifications-routines/INDEX.json)",
+  "reason": "prod/platform/platform-core was missing NOTIFICATIONS_API_KEY entirely — confirmed via key-listing before write (staging had 29 keys, prod had 25, missing NOTIFICATIONS_API_KEY/SCHEDULER_SERVICE_API_KEY/SCHEDULER_WEBHOOK_SECRET/SLACK_CONNECT_INTERNAL_SECRET). This snapshot covers the first of the four: copied staging's value verbatim into prod so notifications work end-to-end after the prod promote.",
+  "change_kind": "aws-secrets-manager put-secret-value (read-modify-write, added missing key, all 25 existing keys preserved) + github-actions-secret-add",
+  "source_of_truth": {
+    "account": "brighthive-staging",
+    "region": "us-east-1",
+    "secret_id": "staging/platform/platform-core",
+    "key": "NOTIFICATIONS_API_KEY",
+    "version_id_at_capture": "c962d8b6-8669-44b4-8fa2-709d59a831c2",
+    "value_sha256_12": "669ef101ce0b",
+    "note": "Value NOT captured in this file — write-only discipline. The sha256 prefix lets a future audit confirm prod + GitHub secret still match this source without exposing either value."
+  },
+  "targets_written": [
+    {
+      "surface": "aws-secrets-manager",
+      "account": "brighthive-production (104403016368)",
+      "secret_id": "prod/platform/platform-core",
+      "version_id_after_write": "81ea8b96-28a2-4160-9bd5-4c2d6eb35675",
+      "value_sha256_12_after_write": "669ef101ce0b",
+      "verified": true,
+      "note": "Read-modify-write: fetched prod's current 25-key payload, added NOTIFICATIONS_API_KEY via jq merge, wrote back. All 25 pre-existing keys unchanged."
+    },
+    {
+      "surface": "github-actions-secret",
+      "repo": "brighthive/brightbot-slack-server",
+      "name": "NOTIFICATIONS_API_KEY",
+      "set_via": "gh secret set NOTIFICATIONS_API_KEY --repo brighthive/brightbot-slack-server",
+      "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> pulumi config -> ECS task env",
+      "must_match": "prod/platform/platform-core NOTIFICATIONS_API_KEY — mismatch = notifications auth failures between slack-server and platform-core in prod"
+    }
+  ],
+  "rollback": "AWS: aws secretsmanager put-secret-value --secret-id prod/platform/platform-core --region us-east-1 --profile brighthive-production --secret-string <full-25-key-payload-without-NOTIFICATIONS_API_KEY>  (removes the key by omission, restoring pre-2026-07-21 state). GitHub: gh secret delete NOTIFICATIONS_API_KEY --repo brighthive/brightbot-slack-server",
+  "approved_by": "explicit user confirmation 2026-07-21 — \"Ok I need you to modify secrets and manage then as needed we own this project now, we must have responsability\" following named per-secret plan confirmation for NOTIFICATIONS_API_KEY specifically (staging→prod copy + slack-server GH secret)",
+  "related_snapshots": [
+    "../2026-07-20_prod-release-notifications-routines/INDEX.json (parent checklist — this entry moves that row from not_started to done)",
+    "../2026-06-22_dbt-cloud-api-staging-presync/INDEX.json",
+    "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json"
+  ],
+  "remaining_in_checklist": [
+    "SLACK_CONNECT_INTERNAL_SECRET — flagged with incident note (2026-07-13), needs extra care",
+    "SCHEDULER_SERVICE_API_KEY — 3 targets (AWS + GitHub + LangGraph)",
+    "SCHEDULER_WEBHOOK_SECRET — 2 targets (AWS + LangGraph)"
+  ]
+}

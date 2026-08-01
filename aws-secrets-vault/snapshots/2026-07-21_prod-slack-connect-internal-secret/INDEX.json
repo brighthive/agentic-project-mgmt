@@ -1,0 +1,44 @@
+{
+  "captured": "2026-07-21",
+  "ticket": "BH-409 / BH-1131 (notifications/routines prod promote — see aws-secrets-vault/snapshots/2026-07-20_prod-release-notifications-routines/INDEX.json)",
+  "reason": "prod/platform/platform-core was missing SLACK_CONNECT_INTERNAL_SECRET — confirmed via key-listing before write. Copied staging's value verbatim into prod so Slack-connect flows work end-to-end after the prod promote.",
+  "incident_note": "This is the exact secret involved in the 2026-07-13 incident (generated + set without named confirmation off an ambiguous 'fix that' reply — see ~/.claude/projects/-Users-bado-iccha-brighthive/memory/feedback_never_modify_env_vars.md). This time: explicit per-secret named confirmation was obtained before any read/write (user confirmed 'Yes, copy from staging' for this specific secret + these specific targets), value was copied verbatim from staging rather than freshly generated (no new credential minted), and verified via sha256 prefix match before and after write.",
+  "change_kind": "aws-secrets-manager put-secret-value (read-modify-write, added missing key, all 26 existing keys preserved) + github-actions-secret-add",
+  "source_of_truth": {
+    "account": "brighthive-staging",
+    "region": "us-east-1",
+    "secret_id": "staging/platform/platform-core",
+    "key": "SLACK_CONNECT_INTERNAL_SECRET",
+    "value_sha256_12": "9c675b2cbc54",
+    "note": "Value NOT captured in this file — write-only discipline. The sha256 prefix lets a future audit confirm prod + GitHub secret still match this source without exposing either value."
+  },
+  "targets_written": [
+    {
+      "surface": "aws-secrets-manager",
+      "account": "brighthive-production (104403016368)",
+      "secret_id": "prod/platform/platform-core",
+      "version_id_after_write": "e3ef84e7-9893-4e7e-bc8c-8f81cca65f92",
+      "value_sha256_12_after_write": "9c675b2cbc54",
+      "verified": true,
+      "note": "Read-modify-write: fetched prod's current 26-key payload (post NOTIFICATIONS_API_KEY addition), added SLACK_CONNECT_INTERNAL_SECRET via jq merge, wrote back. All 26 pre-existing keys unchanged."
+    },
+    {
+      "surface": "github-actions-secret",
+      "repo": "brighthive/brightbot-slack-server",
+      "name": "SLACK_CONNECT_INTERNAL_SECRET",
+      "set_via": "gh secret set SLACK_CONNECT_INTERNAL_SECRET --repo brighthive/brightbot-slack-server",
+      "consumed_by": "platform-core src/common/env-vars.ts zod schema (declared) + brightbot-slack-server Slack-connect flow",
+      "must_match": "prod/platform/platform-core SLACK_CONNECT_INTERNAL_SECRET — mismatch = Slack-connect auth failures in prod"
+    }
+  ],
+  "rollback": "AWS: aws secretsmanager put-secret-value --secret-id prod/platform/platform-core --region us-east-1 --profile brighthive-production --secret-string <full-27-key-payload-without-SLACK_CONNECT_INTERNAL_SECRET>. GitHub: gh secret delete SLACK_CONNECT_INTERNAL_SECRET --repo brighthive/brightbot-slack-server",
+  "approved_by": "explicit per-secret named confirmation 2026-07-21 — user confirmed 'Yes, copy from staging' for SLACK_CONNECT_INTERNAL_SECRET specifically, targets: prod/platform/platform-core + brightbot-slack-server GitHub secret",
+  "related_snapshots": [
+    "../2026-07-20_prod-release-notifications-routines/INDEX.json (parent checklist)",
+    "../2026-07-21_prod-notifications-api-key/INDEX.json (same-session precedent, first secret done)"
+  ],
+  "remaining_in_checklist": [
+    "SCHEDULER_SERVICE_API_KEY — 3 targets (AWS + GitHub + LangGraph)",
+    "SCHEDULER_WEBHOOK_SECRET — 2 targets (AWS + LangGraph)"
+  ]
+}

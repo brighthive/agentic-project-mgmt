@@ -1,0 +1,50 @@
+{
+  "captured": "2026-07-21",
+  "ticket": "BH-409 / BH-1131 (notifications/routines prod promote — see aws-secrets-vault/snapshots/2026-07-20_prod-release-notifications-routines/INDEX.json)",
+  "reason": "SCHEDULER_SERVICE_API_KEY was missing from prod across all 3 targets (AWS, GitHub, LangGraph Cloud). Copied staging's value verbatim into all 3 so the routine-scheduler flow works end-to-end after the prod promote. Value confirmed unchanged from the 2026-07-13 staging precedent (BH-1063) via sha256 prefix match — no rotation since.",
+  "change_kind": "aws-secrets-manager put-secret-value (read-modify-write) + github-actions-secret-add + langsmith-vault langgraph-deployment PATCH (full secrets array, read-modify-write)",
+  "source_of_truth": {
+    "account": "brighthive-staging",
+    "region": "us-east-1",
+    "secret_id": "staging/platform/platform-core",
+    "key": "SCHEDULER_SERVICE_API_KEY",
+    "value_sha256_12": "fd45eeec0e66",
+    "note": "Matches the 2026-07-13 BH-1063 precedent's recorded hash exactly — confirms no value rotation. Value NOT captured in this file — write-only discipline."
+  },
+  "targets_written": [
+    {
+      "surface": "aws-secrets-manager",
+      "account": "brighthive-production (104403016368)",
+      "secret_id": "prod/platform/platform-core",
+      "version_id_after_write": "8b06bf4e-9229-4f7e-be42-dad453a314f7",
+      "value_sha256_12_after_write": "fd45eeec0e66",
+      "verified": true
+    },
+    {
+      "surface": "github-actions-secret",
+      "repo": "brighthive/brightbot-slack-server",
+      "name": "SCHEDULER_SERVICE_API_KEY",
+      "set_via": "gh secret set SCHEDULER_SERVICE_API_KEY --repo brighthive/brightbot-slack-server",
+      "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env"
+    },
+    {
+      "surface": "langgraph-cloud-deployment-env",
+      "target_repo": "brightbot",
+      "deployment": "brightagent-prod",
+      "deployment_id": "8e0d70b3-cd72-446c-875b-ce27576ec29d",
+      "api_key_source": "prod/platform/platform-core LANGGRAPH_API_KEY (the same secret this key was being added alongside — confirmed admin-scoped for /v2/deployments PATCH, unlike the runtime key in brightbot/.env_prod which returned 403)",
+      "patch_method": "GET full deployment (54 secrets with values) -> jq append 2 new entries (this key + SCHEDULER_WEBHOOK_SECRET, same PATCH call) -> PATCH full 56-secret array back. Never sent a partial array.",
+      "value_sha256_12_after_write": "fd45eeec0e66",
+      "verified": true,
+      "snapshot_before": "langsmith-vault/data/prod/brightagent-prod.json @ 2026-07-21T02:35:38+00:00 (commit 849cc54)",
+      "snapshot_after": "langsmith-vault/data/prod/brightagent-prod.json @ 2026-07-21T02:37:20+00:00"
+    }
+  ],
+  "rollback": "AWS: put-secret-value with the 29-key payload minus this key. GitHub: gh secret delete SCHEDULER_SERVICE_API_KEY --repo brighthive/brightbot-slack-server. LangGraph: GET full deployment, filter out this key + SCHEDULER_WEBHOOK_SECRET from secrets array, PATCH the remaining 54 back (never partial).",
+  "approved_by": "explicit per-secret named confirmation 2026-07-21 — user confirmed 'yes 100% permission' following the specific 3-target plan (AWS+GitHub+LangGraph) for SCHEDULER_SERVICE_API_KEY",
+  "related_snapshots": [
+    "../2026-07-20_prod-release-notifications-routines/INDEX.json (parent checklist)",
+    "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json (staging precedent, confirmed unrotated)",
+    "../2026-07-21_prod-scheduler-webhook-secret/INDEX.json (companion secret, same PATCH call)"
+  ]
+}

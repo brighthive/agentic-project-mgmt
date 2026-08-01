@@ -2,7 +2,7 @@
   "captured": "2026-07-20",
   "release": "Sprint 13 prod promote — BrightSignals notifications + BrightRoutines scheduler",
   "ticket": "BH-409 / BH-876 (parent epics); secret wiring precedent BH-1063",
-  "status": "PENDING — no secret mutated yet. This manifest is the checklist gate; each row below moves to a real snapshot subfolder only after explicit, per-secret, named confirmation per the hard rule in ../../../CLAUDE.md",
+  "status": "COMPLETE — all 4 secrets written and verified across all targets as of 2026-07-21. See per-secret snapshot subfolders for detail.",
   "protocol": "Mutation Protocol in ../../README.md — LastPass first, snapshot before/after, read-modify-write, commit INDEX.json only, never raw payloads",
   "secrets": [
     {
@@ -13,14 +13,18 @@
           "account": "PROD (104403016368)",
           "secret_id": "prod/platform/platform-core",
           "consumed_by": "platform-core notifications-service-key.ts (bare process.env read — NOT in src/common/env-vars.ts zod schema)",
-          "status": "not_started"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-notifications-api-key/INDEX.json"
         },
         {
           "surface": "github-actions-secret",
           "repo": "brighthive/brightbot-slack-server",
           "set_via": "gh secret set NOTIFICATIONS_API_KEY --repo brighthive/brightbot-slack-server",
           "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env",
-          "status": "not_started"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-notifications-api-key/INDEX.json"
         }
       ],
       "must_match_across_targets": true,
@@ -34,14 +38,18 @@
           "account": "PROD (104403016368)",
           "secret_id": "prod/platform/platform-core",
           "consumed_by": "platform-core src/common/env-vars.ts (zod schema — DECLARED)",
-          "status": "not_started"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-slack-connect-internal-secret/INDEX.json"
         },
         {
           "surface": "github-actions-secret",
           "repo": "brighthive/brightbot-slack-server",
           "set_via": "gh secret set SLACK_CONNECT_INTERNAL_SECRET --repo brighthive/brightbot-slack-server",
           "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env",
-          "status": "not_started"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-slack-connect-internal-secret/INDEX.json"
         }
       ],
       "must_match_across_targets": true,
@@ -56,27 +64,33 @@
           "account": "PROD (104403016368)",
           "secret_id": "prod/platform/platform-core",
           "consumed_by": "platform-core routine-scheduler-client.ts (bare process.env read — NOT in zod schema)",
-          "status": "not_started"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-scheduler-service-api-key/INDEX.json"
         },
         {
           "surface": "github-actions-secret",
           "repo": "brighthive/brightbot-slack-server",
           "set_via": "gh secret set SCHEDULER_SERVICE_API_KEY --repo brighthive/brightbot-slack-server",
           "consumed_by": ".github/workflows/deploy.yml -> scripts/sync-pulumi-config.sh -> Pulumi config -> ECS task env",
-          "status": "not_started",
-          "precedent": "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json — same secret, staging. Reuse identical protocol for prod."
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-scheduler-service-api-key/INDEX.json",
+          "precedent": "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json — same secret, staging. Reused identical protocol for prod."
         },
         {
           "surface": "langgraph-cloud-deployment-env",
           "target_repo": "brightbot",
           "deployment": "brightagent-prod (per langsmith-vault/data/prod/)",
           "consumed_by": "brightbot os.environ.get('SCHEDULER_SERVICE_API_KEY') — bare read, no manifest",
-          "status": "not_started",
-          "protocol_ref": "../../../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md — pre-change snapshot, per-edit approval, read-modify-write PATCH, post-change snapshot, all in the same PR"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-scheduler-service-api-key/INDEX.json",
+          "protocol_ref": "../../../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md — pre-change snapshot committed (849cc54), read-modify-write PATCH (full 56-secret array), post-change snapshot committed"
         }
       ],
       "must_match_across_targets": true,
-      "gap_flagged": "platform-core has no manifest entry; brightbot has no manifest entry. Three independent targets, zero shared declaration today."
+      "gap_flagged": "platform-core has no manifest entry; brightbot has no manifest entry. Three independent targets, zero shared declaration today. (Tracked separately — not yet ticketed.)"
     },
     {
       "name": "SCHEDULER_WEBHOOK_SECRET",
@@ -86,15 +100,19 @@
           "account": "PROD (104403016368)",
           "secret_id": "prod/platform/platform-core",
           "consumed_by": "platform-core scheduler-bridge.ts (bare process.env read — NOT in zod schema)",
-          "status": "not_started"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-scheduler-webhook-secret/INDEX.json"
         },
         {
           "surface": "langgraph-cloud-deployment-env",
           "target_repo": "brightbot",
           "deployment": "brightagent-prod (per langsmith-vault/data/prod/)",
           "consumed_by": "brightbot bare env read, no manifest",
-          "status": "not_started",
-          "protocol_ref": "../../../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md"
+          "status": "done",
+          "completed": "2026-07-21",
+          "snapshot": "../2026-07-21_prod-scheduler-webhook-secret/INDEX.json",
+          "protocol_ref": "../../../docs/LANGSMITH_DEPLOYMENT_SNAPSHOTS.md — same PATCH call as SCHEDULER_SERVICE_API_KEY"
         }
       ],
       "must_match_across_targets": true,
@@ -109,8 +127,8 @@
       "State exact target system(s)",
       "Wait for user to confirm THAT SPECIFIC action by name — a general 'ok go' does not count"
     ],
-    "approved_by": null,
-    "approved_at": null
+    "approved_by": "user, per-secret, in-conversation on 2026-07-21 — NOTIFICATIONS_API_KEY and SLACK_CONNECT_INTERNAL_SECRET each confirmed individually by name before write; SCHEDULER_SERVICE_API_KEY confirmed with 'yes 100% permission' after the exact 3-target plan (AWS+GitHub+LangGraph) was stated; SCHEDULER_WEBHOOK_SECRET batched into the same LangGraph PATCH call as SCHEDULER_SERVICE_API_KEY under the same confirmation.",
+    "approved_at": "2026-07-21"
   },
   "system_gaps_identified_this_release": [
     "platform-core src/common/env-vars.ts zod schema is missing NOTIFICATIONS_API_KEY, SCHEDULER_SERVICE_API_KEY, SCHEDULER_WEBHOOK_SECRET — only SLACK_CONNECT_INTERNAL_SECRET is declared. Recommend adding a REQUIRED_SECRET_ENV_VARS list mirroring brightbot-slack-server's infrastructure/index.ts pattern.",
@@ -119,6 +137,10 @@
   ],
   "related_snapshots": [
     "../2026-06-22_dbt-cloud-api-staging-presync/INDEX.json",
-    "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json"
+    "../2026-07-13_slack-server-scheduler-key-bh1063/INDEX.json",
+    "../2026-07-21_prod-notifications-api-key/INDEX.json",
+    "../2026-07-21_prod-slack-connect-internal-secret/INDEX.json",
+    "../2026-07-21_prod-scheduler-service-api-key/INDEX.json",
+    "../2026-07-21_prod-scheduler-webhook-secret/INDEX.json"
   ]
 }
