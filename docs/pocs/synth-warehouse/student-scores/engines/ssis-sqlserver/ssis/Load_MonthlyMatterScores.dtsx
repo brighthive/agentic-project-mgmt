@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Load_MonthlyMatterScores.dtsx — loads dbo.monthly_matter_scores from
+  ../../sources/monthly_matter_scores.csv. The well-behaved counterpart to the
+  weekly package: matter_score is read as a numeric (R8) column with proper
+  typing, and the monthly source feed is clean (no planted defect). Same
+  canonical 3-table model (../../MODEL.md), same source-to-destination shape.
+-->
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationName="Microsoft.Package"
+  DTS:CreatorName="BrightHive-SynthWarehouse"
+  DTS:DTSID="{B7A10003-3001-4C2A-9301-000000000301}"
+  DTS:ExecutableType="Microsoft.Package"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="Load_MonthlyMatterScores"
+  DTS:PackageType="5"
+  DTS:VersionBuild="1">
+
+  <DTS:Property DTS:Name="PackageFormatVersion">8</DTS:Property>
+
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Src_MonthlyCsv]"
+      DTS:CreationName="FLATFILE"
+      DTS:DTSID="{B7A10003-3002-4C2A-9301-000000000302}"
+      DTS:ObjectName="Src_MonthlyCsv">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="..\..\sources\monthly_matter_scores.csv" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[Tgt_StudentScores]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{B7A10003-3003-4C2A-9301-000000000303}"
+      DTS:ObjectName="Tgt_StudentScores">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Data Source=localhost;Initial Catalog=StudentScores;Provider=SQLNCLI11;Integrated Security=SSPI;" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\DFT Load Monthly"
+      DTS:CreationName="Microsoft.Pipeline"
+      DTS:DTSID="{B7A10003-3010-4C2A-9301-000000000310}"
+      DTS:ExecutableType="Microsoft.Pipeline"
+      DTS:ObjectName="DFT Load Monthly"
+      DTS:Description="Reads monthly_matter_scores.csv and loads dbo.monthly_matter_scores">
+      <DTS:ObjectData>
+        <pipeline>
+          <components>
+            <component
+              refId="Package\DFT Load Monthly\Flat File Source Monthly"
+              componentClassID="Microsoft.FlatFileSource"
+              name="Flat File Source Monthly"
+              description="Reads the monthly matter-scores source CSV">
+              <properties>
+                <property name="FlatFileConnectionManager">Src_MonthlyCsv</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{B7A10003-3002-4C2A-9301-000000000302}" />
+              </connections>
+              <outputs>
+                <output refId="Package\DFT Load Monthly\Flat File Source Monthly.Outputs[Flat File Source Output]">
+                  <outputColumns>
+                    <outputColumn refId="school_id" dataType="i4" />
+                    <outputColumn refId="year" dataType="i4" />
+                    <outputColumn refId="month" dataType="i4" />
+                    <outputColumn refId="matter_score" dataType="R8" />
+                    <outputColumn refId="national_rank" dataType="i4" />
+                  </outputColumns>
+                </output>
+              </outputs>
+            </component>
+            <component
+              refId="Package\DFT Load Monthly\OLE DB Destination Monthly"
+              componentClassID="Microsoft.OLEDBDestination"
+              name="OLE DB Destination Monthly"
+              description="Inserts rows into StudentScores.dbo.monthly_matter_scores">
+              <properties>
+                <property name="OpenRowset">dbo.monthly_matter_scores</property>
+                <property name="FastLoadOptions">TABLOCK,CHECK_CONSTRAINTS</property>
+              </properties>
+              <connections>
+                <connection connectionManagerID="{B7A10003-3003-4C2A-9301-000000000303}" />
+              </connections>
+            </component>
+          </components>
+          <paths>
+            <path name="Source to Destination"
+              startId="Package\DFT Load Monthly\Flat File Source Monthly"
+              endId="Package\DFT Load Monthly\OLE DB Destination Monthly" />
+          </paths>
+        </pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+
+</DTS:Executable>

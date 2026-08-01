@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Weekly_MatterScores_ByState.rdl — the SSRS report over the SSIS-materialized
+  StudentScores warehouse. Reads dbo.weekly_matter_scores joined to dbo.schools
+  and rolls the national weekly matter-score up per state — the "national ...
+  by state" headline of this dataset (../../MODEL.md). Deliberately simple: a
+  real, well-formed Report Definition Language document an SSRS-diagnostics /
+  lineage skill can parse, matching the loopcapital .rdl convention.
+-->
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition"
+        xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+
+  <DataSources>
+    <DataSource Name="StudentScores">
+      <ConnectionProperties>
+        <DataProvider>SQL</DataProvider>
+        <ConnectString>Data Source=localhost;Initial Catalog=StudentScores</ConnectString>
+      </ConnectionProperties>
+    </DataSource>
+  </DataSources>
+
+  <DataSets>
+    <DataSet Name="WeeklyByState">
+      <Query>
+        <DataSourceName>StudentScores</DataSourceName>
+        <CommandText>
+          SELECT s.state,
+                 w.iso_year,
+                 w.iso_week,
+                 AVG(w.matter_score) AS avg_matter_score,
+                 COUNT(*)            AS schools_scored
+          FROM dbo.weekly_matter_scores w
+          INNER JOIN dbo.schools s ON s.school_id = w.school_id
+          GROUP BY s.state, w.iso_year, w.iso_week
+          ORDER BY w.iso_year, w.iso_week, s.state;
+        </CommandText>
+      </Query>
+      <Fields>
+        <Field Name="state">
+          <DataField>state</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="iso_year">
+          <DataField>iso_year</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="iso_week">
+          <DataField>iso_week</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="avg_matter_score">
+          <DataField>avg_matter_score</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="schools_scored">
+          <DataField>schools_scored</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+
+  <ReportSections>
+    <ReportSection>
+      <Body>
+        <ReportItems>
+          <Tablix Name="WeeklyByStateTable">
+            <TablixBody>
+              <TablixColumns>
+                <TablixColumn><Width>1.5in</Width></TablixColumn>
+                <TablixColumn><Width>1in</Width></TablixColumn>
+                <TablixColumn><Width>1in</Width></TablixColumn>
+                <TablixColumn><Width>2in</Width></TablixColumn>
+                <TablixColumn><Width>1.5in</Width></TablixColumn>
+              </TablixColumns>
+              <TablixRows>
+                <TablixRow>
+                  <Height>0.25in</Height>
+                  <TablixCells>
+                    <TablixCell><CellContents><Textbox Name="HeaderState"><Value>State</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HeaderYear"><Value>ISO Year</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HeaderWeek"><Value>ISO Week</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HeaderAvg"><Value>Avg Matter Score</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="HeaderCount"><Value>Schools Scored</Value></Textbox></CellContents></TablixCell>
+                  </TablixCells>
+                </TablixRow>
+                <TablixRow>
+                  <Height>0.2in</Height>
+                  <TablixCells>
+                    <TablixCell><CellContents><Textbox Name="State"><Value>=Fields!state.Value</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="IsoYear"><Value>=Fields!iso_year.Value</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="IsoWeek"><Value>=Fields!iso_week.Value</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="AvgMatterScore"><Value>=Fields!avg_matter_score.Value</Value></Textbox></CellContents></TablixCell>
+                    <TablixCell><CellContents><Textbox Name="SchoolsScored"><Value>=Fields!schools_scored.Value</Value></Textbox></CellContents></TablixCell>
+                  </TablixCells>
+                </TablixRow>
+              </TablixRows>
+            </TablixBody>
+            <DataSetName>WeeklyByState</DataSetName>
+          </Tablix>
+        </ReportItems>
+        <Height>3in</Height>
+      </Body>
+      <Width>7in</Width>
+    </ReportSection>
+  </ReportSections>
+
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+</Report>
