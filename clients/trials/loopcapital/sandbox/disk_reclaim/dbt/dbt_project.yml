@@ -1,0 +1,12 @@
+name: loopcapital_disk_reclaim
+version: "1.0.0"
+config-version: 2
+
+profile: loopcapital_disk_reclaim
+
+model-paths: ["models"]
+
+models:
+  loopcapital_disk_reclaim:
+    +materialized: table
+    +schema: dbo

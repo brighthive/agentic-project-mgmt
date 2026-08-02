@@ -1,0 +1,18 @@
+# dbt profile for the Loop Capital disk-reclaim demo. Points dbt-sqlserver at the
+# local sandbox container's mapped port (1433). Password comes from the env, never
+# committed — the same MSSQL_SA_PASSWORD the rest of the sandbox scripts read.
+loopcapital_disk_reclaim:
+  target: sandbox
+  outputs:
+    sandbox:
+      type: sqlserver
+      driver: "ODBC Driver 18 for SQL Server"
+      server: localhost
+      port: 1433
+      database: LoopCapitalAM
+      schema: dbo
+      user: sa
+      password: "{{ env_var('MSSQL_SA_PASSWORD') }}"
+      encrypt: true
+      trust_cert: true
+      threads: 1
