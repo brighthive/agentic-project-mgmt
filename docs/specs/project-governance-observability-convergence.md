@@ -93,6 +93,32 @@ lineage node**. Rules/terms/policies/PII anchor to a *workspace* or an *asset*, 
 > **node identity**, never to dbt/SSIS/Snowflake. Types below marked *(exists)* are referenced,
 > not redefined — see the owning spec/file.
 
+### 2.0 Capability scoping — one core impl, four surface planes
+
+Every capability this spec introduces follows the shared-core pattern ratified in
+**ADR-015** (`platform-saas-ai-context/docs/decisions/decisions.md`): one core verb impl
+behind a port, reached by up to four thin surface adapters (global chat, project chat, MCP,
+Slack) that only authenticate, resolve scope, and shape the response. **Project-scope is a
+`project_id` parameter into the shared core — not a separate surface and not a permission
+axis** (the chat plane already works this way: one `deep_agent_graph` + one `base_tools`
+registry at `deep_agent.py:291-312`, with `project_id` in session state deciding scope at
+`deep_agent.py:267`; the capability catalog has no project dimension —
+`capabilities.py:836-851`).
+
+Per-capability surface map for this spec:
+
+| Ticket / capability | Core impl (the one place) | Chat | MCP | Webapp | Slack |
+|---|---|---|---|---|---|
+| BH-1333 `gatesForNode`/`gatesForProject` | platform-core resolver (§2.1) | — | — | ✅ declare + show surfaces | N/A |
+| BH-1334/1335 declare gates on a node | existing artifact stores + §2.1 binding | ✅ base_tools authoring | — | ✅ node drawer (§2.2) | N/A |
+| BH-1336 per-node quality + watchdog | `get_fleet_health_impl` (`fleet_health.py:148`) — **reused, unchanged** | — | ✅ existing `get_fleet_health` tool | ✅ observability overlay (§2.3/§2.4) | N/A |
+| BH-1337 fleet-health page | `get_fleet_health_impl` (`fleet_health.py:148`) | — | ✅ existing tool | ✅ new page (§2.5) | N/A |
+
+**Slack is N/A for every row above with reason:** the surfaces this spec adds are project- and
+workspace-scoped *webapp pages* plus their existing MCP tool. Slack has no project concept and
+its convergence to the shared-core pattern is separately tracked (ADR-015 carve-out, task #48 /
+BH-1131) — it is not silently claimed here. INV-9 makes this explicit and mechanically checkable.
+
 ### 2.1 The one new backend anchor — `GovernanceGateBinding` (platform-core)
 
 The missing edge: bind an existing governance artifact to a lineage node **within a project**.
@@ -224,8 +250,16 @@ status. No in-app merge (existing constraint: review-and-redirect).
 - **INV-8 Scope-kind closed, values open.** The node/tag/group scope added to `QualityRuleDrawer`
   SHALL reuse the closed `RuleScope.kind` set (`data-quality-rules.md` INV-2); the node/tag/group
   values are open workspace data, never code.
+- **INV-9 One core impl, thin surfaces (ADR-015).** Every capability this spec introduces SHALL
+  expose exactly ONE core impl reached by all applicable surfaces; no surface adapter SHALL
+  re-implement the verb (own query, own orchestration, own signal path). Grep test at each impl
+  PR: `grep -rn "<verb>_impl"` shows one definition + N call sites. The §2.4/§2.5 fleet-health
+  surfaces SHALL call `get_fleet_health_impl` (`fleet_health.py:148`) unchanged, never a second
+  copy. Slack registration is explicitly N/A-with-reason (§2.0 table) — the surfaces here are
+  project/workspace webapp pages + the existing MCP tool, and Slack convergence is separately
+  tracked (ADR-015 carve-out, task #48 / BH-1131), never silently claimed done.
 
-Budget: 8 invariants.
+Budget: 9 invariants.
 
 ## 4. Acceptance Criteria (BDD)
 
