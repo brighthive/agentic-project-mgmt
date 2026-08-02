@@ -134,7 +134,7 @@ type GovernanceGateBinding {
   id: ID!
   workspaceId: String!          # native scalar scoping — mirrors LineageNode (that spec, pass 50)
   projectId: String!            # the project this gate is declared in
-  nodeUniqueId: String!         # the LineageNode.uniqueId the gate anchors to (§ that spec)
+  nodeUniqueId: String!         # the anchor node's `id` property (INV-1, INV-3) — see storage note
   artifactKind: GovernanceArtifactKind!
   artifactId: String!           # id of the existing QualityRule / TermOutput / Policy / DataAsset
   createdAt: DateTime!
@@ -149,6 +149,17 @@ gatesForProject(workspaceId: String!, projectId: String!): [GovernanceGateBindin
 for `QUALITY_RULE` is the same id `rulesInScope` (`data-quality-rules.md` GAP #1) resolves; the
 gate merely records *which node* a rule/term/policy/PII class is declared against, so the two
 surfaces (declare / show) share one node identity.
+
+**Storage decision (implementation, BH-1333):** the binding is stored as a `GOVERNED_BY`
+relationship *edge* directly to the artifact node —
+`(node)-[:GOVERNED_BY {id, artifactKind, workspaceId, projectId, createdAt}]->(artifact)` — not
+as a standalone binding node. This makes "index, not a store" literal and makes INV-2 hold *by
+construction* for all four artifact kinds: a `DETACH DELETE` of any artifact (the existing
+delete path for rules/terms/policies/PII) removes its edges with it, so no cascade hook is
+needed and no gate can outlive its artifact. The `type GovernanceGateBinding` above is the read
+projection of that edge (via `gatesForNode`/`gatesForProject`), not a second persisted entity.
+`nodeUniqueId` binds to the anchor node's `id` property (matched on `id` alone — INV-1 one
+identity, INV-3 engine-agnostic), which is what `LineageNode.uniqueId` resolves to in the graph.
 
 ### 2.2 Declare surface — per-node governance drawer (webapp, project page)
 
@@ -234,7 +245,9 @@ status. No in-app merge (existing constraint: review-and-redirect).
   `LineageNode.uniqueId`, never on display name or table-name regex (see `[[lineage-by-declared-structure-not-names]]`).
 - **INV-2 Binding is an index, never a second store.** `GovernanceGateBinding` SHALL reference an
   existing artifact by id; deleting the artifact SHALL cascade-remove the binding, never orphan a
-  gate pointing at nothing.
+  gate pointing at nothing. Implementation (§2.1): the binding is a `GOVERNED_BY` edge to the
+  artifact node, so `DETACH DELETE` of the artifact removes it with zero cascade hook — the
+  invariant holds by construction, proven live in the L2 forcing-question test.
 - **INV-3 Engine-agnostic gate.** No binding, overlay, or projection SHALL branch on warehouse /
   engine identity. A gate on a node fires identically whatever engine produced it.
 - **INV-4 Observability stays project-run-scoped.** The observability page SHALL NOT host a
