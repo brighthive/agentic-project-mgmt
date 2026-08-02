@@ -65,10 +65,12 @@ flowchart LR
 
 **What already exists (recon, real `file:line`):**
 
-- **Quality-rule node binding is a dormant one-prop wire-up.** `PipelineLineageSection.tsx:55`
-  declares `onCreateRule(targets)`; `:470-473` renders a per-node "Create quality rule" action
-  gated on `canCreateRule` — but `ProjectObservabilityPage/index.tsx:260-263` mounts the section
-  **without** passing `onCreateRule`, so the action is inert. (item #5, item #2)
+- **Quality-rule node binding is a one-prop wire-up, live on one page, dormant on the other.**
+  `PipelineLineageSection.tsx:55` declares `onCreateRule(targets: LineageRuleTarget[])`; `:470-473`
+  renders a per-node "Create quality rule" action gated on `canCreateRule`. The standalone
+  `DataLineagePage.tsx:161` **already passes it** (`openRuleForTargets`, :76) — proof the pattern
+  works — but `ProjectObservabilityPage/index.tsx:260-263` mounts the section **without**
+  `onCreateRule`, so the action is inert on the project page. (item #5, item #2)
 - **Backend scope-by-tag/group** is spec'd in `data-quality-rules.md` (`QualityRuleScope`,
   `typedefs.ts:631-633`; `rulesInScope` resolver is GAP #1 there). (item #5)
 - **PR section** exists (`AgentPRs.tsx`, review-and-redirect + `remediationDiagnosis`); BH-1329
@@ -109,8 +111,8 @@ Per-capability surface map for this spec:
 
 | Ticket / capability | Core impl (the one place) | Chat | MCP | Webapp | Slack |
 |---|---|---|---|---|---|
-| BH-1333 `gatesForNode`/`gatesForProject` | platform-core resolver (§2.1) | — | — | ✅ declare + show surfaces | N/A |
-| BH-1334/1335 declare gates on a node | existing artifact stores + §2.1 binding | ✅ base_tools authoring | — | ✅ node drawer (§2.2) | N/A |
+| BH-1333 `declareGovernanceGate` + `gatesForNode`/`gatesForProject` | platform-core mutation + resolvers (§2.1) | ✅ via mutation | — | ✅ via mutation | N/A |
+| BH-1334/1335 declare gates on a node | `declareGovernanceGate` mutation (§2.1) — one core write | ✅ base_tools authoring tool | — | ✅ node drawer (§2.2) | N/A |
 | BH-1336 per-node quality + watchdog | `get_fleet_health_impl` (`fleet_health.py:148`) — **reused, unchanged** | — | ✅ existing `get_fleet_health` tool | ✅ observability overlay (§2.3/§2.4) | N/A |
 | BH-1337 fleet-health page | `get_fleet_health_impl` (`fleet_health.py:148`) | — | ✅ existing tool | ✅ new page (§2.5) | N/A |
 
@@ -126,8 +128,7 @@ Reuses `LineageNode` (spec'd in `lineage-aware-data-quality.md`) as the anchor; 
 ids reference existing nodes (`QualityRule`, `TermOutput`, `Policy`, `DataAsset`).
 
 ```graphql
-# platform-core OGM typedefs (new type; OGM-only, brightbot-written — Option B precedent
-# per lineage-aware-data-quality.md: no public mutation, raw-Cypher service).
+# platform-core GraphQL typedefs (new type; raw-Cypher service over a GOVERNED_BY edge).
 enum GovernanceArtifactKind { QUALITY_RULE  GLOSSARY_TERM  POLICY  PII_CLASSIFICATION }
 
 type GovernanceGateBinding {
@@ -140,9 +141,17 @@ type GovernanceGateBinding {
   createdAt: DateTime!
 }
 
-# Public read resolver (webapp consumes): every gate declared at a node, grouped by kind.
+# Read resolvers (webapp consumes): every gate declared at a node / across a project.
+# @authorized(requires: WORKSPACE_CONTRIBUTOR) — workspace-scoped (INV-7).
 gatesForNode(workspaceId: String!, projectId: String!, nodeUniqueId: String!): [GovernanceGateBinding!]!
 gatesForProject(workspaceId: String!, projectId: String!): [GovernanceGateBinding!]!
+
+# Declare mutation — the ONE core write reached by every declare surface (webapp node
+# drawer §2.2 + project-chat authoring tool), per ADR-015. Idempotent MERGE; returns null
+# when node or artifact is missing (never orphans — INV-2). Records the edge only; never
+# creates the artifact. @authorized(requires: WORKSPACE_CONTRIBUTOR, workspaceIdLoc input).
+input DeclareGovernanceGateInput { workspaceId: String!  projectId: String!  nodeUniqueId: String!  artifactKind: GovernanceArtifactKind!  artifactId: String! }
+declareGovernanceGate(input: DeclareGovernanceGateInput!): GovernanceGateBinding
 ```
 
 **Note:** binding is an *index*, not a new store — the artifacts already persist. `artifactId`
@@ -161,21 +170,34 @@ projection of that edge (via `gatesForNode`/`gatesForProject`), not a second per
 `nodeUniqueId` binds to the anchor node's `id` property (matched on `id` alone — INV-1 one
 identity, INV-3 engine-agnostic), which is what `LineageNode.uniqueId` resolves to in the graph.
 
+**Declare path (implementation, BH-1333):** the earlier draft framed the gate as a
+service-principal-only write with "no public mutation" (copied from the pipeline-lineage
+precedent, where brightbot writes lineage directly to Neo4j). That does not hold here: brightbot
+has **no** direct-to-Neo4j path for governance — every governance write already goes through a
+platform-core GraphQL mutation over HTTP (the `createQualityRule` / `updateGovernance` seam). So
+the declare surfaces *require* the `declareGovernanceGate` mutation above; it is the single core
+write, and both the webapp node drawer (§2.2) and the project-chat authoring tool call it (ADR-015,
+INV-9). Auth is `WORKSPACE_CONTRIBUTOR` (matching the read resolvers and `mergeGitHubPR`, both
+agent-reachable) — deliberately not `createQualityRule`'s `WORKSPACE_AGENT_GUEST`-prohibit, so the
+project-scope agent can declare gates.
+
 ### 2.2 Declare surface — per-node governance drawer (webapp, project page)
 
 Wires the **dormant** `onCreateRule` and adds sibling declare-actions on the lineage node.
 
 ```typescript
-// PipelineLineageSection.tsx — props already declared at :55; index.tsx:260-263 must PASS them.
+// PipelineLineageSection.tsx — onCreateRule prop already declared at :55; DataLineagePage.tsx:161
+// already wires it via openRuleForTargets (:76). The project page (index.tsx:260-263) must PASS it too.
 interface PipelineNodeGovernanceProps {
-  canCreateRule: boolean;                                  // exists (:470)
-  onCreateRule: (targets: NodeTarget[]) => void;           // exists (:55) — currently UNWIRED
-  onAttachTerm:   (node: NodeTarget) => void;              // NEW — glossary term → node
-  onAttachPolicy: (node: NodeTarget) => void;              // NEW — policy → node
-  onClassifyPii:  (node: NodeTarget) => void;              // NEW — PII class → node/asset
+  canCreateRule: boolean;                                  // = Boolean(onCreateRule) (:397)
+  onCreateRule: (targets: LineageRuleTarget[]) => void;    // exists (:55) — unwired on the PROJECT page
+  onAttachTerm:   (node: LineageRuleTarget) => void;       // NEW — glossary term → node
+  onAttachPolicy: (node: LineageRuleTarget) => void;       // NEW — policy → node
+  onClassifyPii:  (node: LineageRuleTarget) => void;       // NEW — PII class → node/asset
   gates: Record<string /* nodeUniqueId */, GovernanceGateBinding[]>;  // from gatesForProject (§2.1)
 }
-// NodeTarget carries { nodeUniqueId, displayName, tier, assetId? } — the node identity §2.1 binds.
+// LineageRuleTarget is the shipped shape { id, name } (:41) — `id` IS the node id §2.1 binds on
+// (→ nodeUniqueId at the mutation boundary, INV-1), `name` is display-only, never a binding key.
 ```
 
 `onCreateRule` opens the existing `QualityRuleDrawer.tsx` **pre-scoped** to the node: the drawer's
@@ -421,7 +443,7 @@ All children of epic **BH-1255**, `issueType=Task`.
 
 | Ticket | Summary | Size | PR step |
 |---|---|---|---|
-| BH-1333 | `feat(platform-core): GovernanceGateBinding + gatesForNode/Project resolvers` | M | 1 |
+| BH-1333 | `feat(platform-core): declareGovernanceGate mutation + GovernanceGateBinding gatesForNode/Project resolvers` | M | 1 |
 | BH-1334 | `feat(webapp): wire dormant onCreateRule + node scope in QualityRuleDrawer` | S | 2 |
 | BH-1335 | `feat(webapp): declare glossary/policy/PII gates on a lineage node` | M | 3 |
 | BH-1336 | `feat(webapp): observability per-node quality pass/fail + watchdog projection` | M | 4 |
