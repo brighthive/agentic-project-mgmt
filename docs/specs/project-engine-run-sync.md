@@ -128,7 +128,7 @@ run via `getLatestRun`). Sync needs the last N runs per job.
 ### 2.2 Sync orchestration (engine-agnostic, brightbot)
 
 ```python
-# brightbot/pipelines/project_sync.py  (NEW module)
+# brightbot/pipelines/sync/project_runs.py  (NEW module)
 @dataclass(frozen=True)
 class SyncedRun:
     run_id: str
@@ -157,31 +157,57 @@ async def sync_project_runs(
 
 ### 2.3 Platform-core sync surface (persist + register)
 
+**Direction (ADR-015): brightbot → platform-core, not the reverse.** brightbot has no
+direct-to-Neo4j path, so the graph write goes through this mutation — the SAME grain
+`updateWorkflowRunStep` / `updateTransformationRunStatus` already use. brightbot's
+`sync_project_runs` (which owns the `PipelineRunner` port + adapters, §2.2) enumerates the
+engine, pulls the runs + model outputs, and POSTs the assembled `SyncResult` here. Platform-core
+persists what it receives; it never re-enumerates the engine (that would hardcode a vendor and
+violate INV-1). The mutation is service-key guarded (`x-service-key`), not `@authorized` — an
+internal service with no Cognito session calls it.
+
 ```graphql
-# src/graphql/schema/typedefs.ts
-type Mutation {
+# src/graphql/schema/project-run-sync-typedefs.ts (own file — typedefs.ts is over the size limit)
+extend type Mutation {
   syncProjectRuns(input: SyncProjectRunsInput!): SyncProjectRunsResult!
 }
-input SyncProjectRunsInput { workspaceId: ID!, projectId: ID!, runsPerPipeline: Int = 20 }
+# Carries the pulled runs (brightbot → platform-core), not a fetch request.
+input SyncProjectRunsInput {
+  workspaceId: ID!
+  projectId: ID!
+  runs: [SyncedRunInput!]!
+  pipelinesSeen: Int!
+  reasonIfEmpty: String        # set by brightbot when the pull produced 0 runs
+}
+input SyncedRunInput {
+  runId: ID!
+  pipelineId: ID!
+  status: String!
+  startedAt: String
+  finishedAt: String
+  modelOutputs: [SyncedModelOutputInput!]   # data-product candidates for INV-5
+}
+input SyncedModelOutputInput { uniqueId: String!, status: String!, relationName: String }
 type SyncProjectRunsResult {
   runsSynced: Int!
   dataProductsRegistered: Int!
   pipelinesSeen: Int!
-  reasonIfEmpty: String        # stated when runsSynced == 0
+  reasonIfEmpty: String        # passed through when runsSynced == 0
 }
 ```
 
-The resolver calls the brightbot sync (over MCP / internal call), **upserts** each run into the
-project run store, and for each synced run with successful model outputs calls the existing
-`registerDbtOutputDataAssets` (`project.ts:335`) — bridging the `jobId`↔`TransformationNode`
-binding gap so registration is reachable from sync, not only from a Brighthive-triggered run.
+The resolver **upserts** each received run (updates `lastRunStatus`/`lastRunAt` per matched
+`TransformationNode` by `dbtModelName`), and for each synced run with successful model outputs
+calls the existing `registerDbtOutputDataAssets` (`project.ts:335`) — bridging the
+`jobId`↔`TransformationNode` binding gap so registration is reachable from sync, not only from a
+Brighthive-triggered run.
 
 ## 3. Invariants (DbC)
 
 Budget: 6.
 
 - **INV-1** — `sync_project_runs` depends ONLY on `PipelineRunner` + domain types. No vendor SDK,
-  no `dbt`-named symbol in `project_sync.py`. (Grep test PS-3/PS-4.)
+  no `dbt`-named symbol in `pipelines/sync/project_runs.py`. (Grep test PS-3/PS-4.)
 - **INV-2** — Idempotent. `IF a run with the same run_id was already synced, THEN re-sync updates
   it in place and creates no duplicate run and no duplicate data product.`
 - **INV-3** — Multi-tenant. `WHERE a run belongs to another workspace, THE System SHALL NOT
@@ -259,7 +285,7 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
 
 Sync is designed against the whole known Brighthive matrix — the reason it is a port composition,
 not a dbt function. Each engine is one adapter behind the registry (PS-3); adding one is a
-registry entry, never a change to `project_sync.py` (INV-1). Sync's `list_runs`/`get_run_detail`/
+registry entry, never a change to `pipelines/sync/project_runs.py` (INV-1). Sync's `list_runs`/`get_run_detail`/
 `get_run_logs` map onto each engine's native run/job history; where an engine has no enumerable
 run history, its adapter advertises `LIST_RUNS` absent and sync degrades (INV-6).
 
@@ -351,7 +377,7 @@ matching new test.
 | `list_runs` verb + `LIST_RUNS` capability on port + FakePipelineRunner | brightbot | L0 + contract |
 | dbt Cloud adapter: `list_runs` (map dbt Cloud run history) | brightbot | adapter test + live |
 | Snowflake-native adapter: `list_runs` (or advertise unsupported) | brightbot | adapter test |
-| `project_sync.py` — enumerate + pull + assemble SyncResult (engine-agnostic) | brightbot | L2 real-behavior |
+| `pipelines/sync/project_runs.py` — enumerate + pull + assemble SyncResult (engine-agnostic) | brightbot | L2 real-behavior |
 | `syncProjectRuns` mutation + resolver: upsert runs + reach registration | platform-core | L2 (idempotent, INV-5) |
 | Webapp "Sync" action on Observability tab + refresh | brighthive-webapp | component + e2e |
 | e2e: link → sync → runs + data products populate | brighthive-e2e | full Gherkin |
