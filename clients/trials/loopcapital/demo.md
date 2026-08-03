@@ -94,10 +94,19 @@ Each step: what to **do**, what to **say** to BrightAgent, and what **success** 
   the `LastPx money` ← `DT_STR` mismatch (TC-DTM-03). *This is the diagnostic capability — real.*
 
 ### 3. Read the live reference table 🟢
-* **Say:** `"Read the current TradeDW.dbo.ReconStaging on the SQL Server. How many rows, and what
+> **⚠️ Precondition — verify the reference table exists before you demo.** The verified-live
+> Loop Capital workspace (`e3fc0917-…`) is database **`LoopCapitalAM`** with 11 medallion assets
+> (`holdings_raw`, `raw_counterparties`, `stg_holdings`, `mart_compliance_breaches`, …) — see
+> `artifacts/AGENT_CAPABILITIES_NOTES.md`. `TradeDW.dbo.ReconStaging` from the `.xsd` is the
+> **contract we build to**, not a confirmed-present live table. If Frank has loaded it, use it as
+> the reference. **If not, pick the closest real `LoopCapitalAM` asset** (e.g. `raw_market_prices`
+> for a price-typed comparison) and align the `.xsd` build target to it. Confirm this with the SE
+> in the pre-flight; do not assume `TradeDW` is live.
+* **Say:** `"Read the current <reference table> on the SQL Server. How many rows, and what
   do the values look like?"`
 * **Success:** Agent SELECTs (read-only) from Frank's live table and reports a row count + sample.
-  This is the **reference** side of the 1:1.
+  This is the **reference** side of the 1:1. *(Backed live by `dataAssetPreview` — first-10 +
+  random-100 straight from the BYOW warehouse, not a cached snapshot.)*
 
 ### 4. Rebuild the pipeline as dbt, commit as BrightAgent[bot] 🟢
 * **Say:** `"Rebuild this as a dbt model that matches the contract but fixes the LastPx type and
