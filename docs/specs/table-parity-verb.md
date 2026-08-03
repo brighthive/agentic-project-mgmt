@@ -19,13 +19,20 @@ related:
 
 ## 1. Context
 
-The Loop Capital "3+1" demo (epic BH-1036, champion Frank Sung, VP Data Management) rebuilds a
-legacy SQL Server pipeline as version-controlled dbt models, materializes the rebuilt table into
-Azure Synapse via dbt Cloud, then — **Step 7 of the locked runbook**
-(`clients/trials/loopcapital/demo.md:132`) — must **compare the rebuilt Synapse table 1:1 against
-Frank's original live SQL Server table**: schema match? row-count match? and *why is the rebuilt one
-better?* For a VP of Data Management, this comparison is the trust proof-point of the entire rebuild
-story — it is the moment the agent proves the rebuild is faithful, not just plausible.
+The Loop Capital demo (epic BH-1036, champion Frank Sung, VP Data Management) attaches BrightHive to
+a legacy SQL Server via BYOW, rebuilds its pipelines as version-controlled dbt models, and
+materializes rebuilt tables into Azure Synapse via dbt Cloud
+(`clients/trials/loopcapital/DEMO_RUNBOOK_BEFORE_AFTER.md`, Acts 1–3, verified live 2026-07-17). The
+runbook's "after" proves monitor/detect/resolve, disk watchdog, and surfaced fixes — but it stops
+short of the one thing a data VP most needs before trusting a rebuild: a **1:1 comparison of the
+rebuilt Synapse table against Frank's original live SQL Server table** — schema match? row-count
+match? and *why is the rebuilt one better?* Today that step rides on LLM narration over two separate
+profiler/preview outputs; there is no deterministic verb. This spec adds that verb — the trust
+proof-point that makes the rebuild faithful, not just plausible.
+
+> **Runbook note:** the before/after story lives in `DEMO_RUNBOOK_BEFORE_AFTER.md`; `demo.md` is the
+> GC-14→17 proactive-loop demo. Neither yet pins a deterministic 1:1-compare step — this spec
+> introduces it. A follow-up doc edit should add the compare step to the runbook once the verb ships.
 
 ### Use Case / Goal
 
@@ -54,25 +61,27 @@ sequenceDiagram
 Every *other* lifecycle stage is built: `.xsd` intake (`read_project_schema_file`), source read
 (`introspect_warehouse_schema` + `run_warehouse_query`), dbt rebuild + commit, materialize
 (`run_models_to_stage`), govern (`register_transformation` + quality tools). Stage 7's comparison
-today rides on **LLM narration over two independent tool outputs** — `demo.md:190` marks it 🟢 but
-its evidence is literally "profiler + preview both sides." There is no verb that takes two table
-references and emits a structured, deterministic diff.
+today rides on **LLM narration over two independent tool outputs** ("profiler + preview both sides").
+There is no verb that takes two table references and emits a structured, deterministic diff.
 
 ### Hard Limitations
 
-- **No deterministic comparison exists.** Nearest primitives compare the wrong things:
-  `qc_semantic_view_pipeline` does within-warehouse lineage QC (heuristic "product < 50% of max
-  upstream rows"); `_compare_table_columns` / `_compare_table_row_count` in `redshiftTableCreation`
-  compare a pandas DataFrame against a Redshift load, not source-vs-target across engines.
-  `SPEC-QUALITY-RULE-FULL-TABLE-PARITY` (BH-1168) is full-table-vs-50-row-sample *execution* parity
-  for GX rules — unrelated.
+- **No deterministic comparison exists.** Nearest primitives (recon-confirmed) compare the wrong
+  things: `qc_semantic_view_pipeline` (`agents/dbt_agent/tools/sv_qc_tools.py:276`) compares one SV's
+  base tables against its data product **on the same warehouse** (row counts + per-column null rate +
+  freshness); `_compare_table_columns` (`tools/redshiftTableCreation.py:698`) and
+  `_compare_table_row_count` (`:739`) compare a **pandas DataFrame** against an existing Redshift
+  load, returning a bool — DataFrame-vs-table, single-side. None does two-warehouse
+  TDS-source-vs-TDS-target schema+rowcount+value diff. `SPEC-QUALITY-RULE-FULL-TABLE-PARITY`
+  (BH-1168) is full-table-vs-50-row-sample *execution* parity for GX rules — unrelated.
 - **Single-connection resolution.** `get_warehouse_config_from_secrets(workspace_id)` resolves
   exactly ONE warehouse: the underlying secret holds `warehouses` as a **dict keyed by
   warehouseId**, but every resolver collapses it with `next(iter(warehouses.values()))`. A parity
   verb needs TWO named connections (source SQL Server + target Synapse) from that same dict.
 - **Cross-dialect by design.** SQL Server is not a dbt Cloud target — the rebuilt table lands in
-  Synapse, not back in SQL Server (`demo.md:220-221`). So the comparison is inherently
-  cross-warehouse: `money` (SQL Server) vs `decimal(19,4)` (Synapse), `nvarchar` vs `varchar`. A
+  Synapse, not back in SQL Server (`DEMO_RUNBOOK_BEFORE_AFTER.md` §3.4). So the comparison is
+  inherently cross-warehouse: `money` (SQL Server) vs `decimal(19,4)` (Synapse), `nvarchar` vs
+  `varchar`. A
   naïve string-equality type check would report false mismatches.
 
 ### Gaps
@@ -87,6 +96,32 @@ references and emits a structured, deterministic diff.
 the **existing** warehouse connection port — no new vendor coupling. What's new is (a) a
 two-named-connection resolver and (b) the parity core impl + a cross-dialect type-compat map behind
 a small `TypeCompatibility` port so a third engine is a registry entry, not a code change.
+
+**Real seams (recon-confirmed file:line, all under `brightbot/brightbot/`):**
+- `WarehouseConnectionFactory.create_connection(params, warehouse_type)` — `tools/warehouse_connections.py:658`;
+  registry `CONNECTION_CLASSES` at `:646`.
+- `WarehouseConnection.execute_query(query) -> list[dict]` — `tools/warehouse_base.py:510`;
+  `list_tables(*, database, schema) -> tuple[IntrospectedTable, ...]` — `:538` (schema introspection).
+- `assert_read_only_sql(query, allowed_starts) -> str` (raises `ValueError`) — `tools/warehouse_base.py:213`.
+- `get_warehouse_config(workspace_id)` — `tools/aws/secrets_manager.py:287`; the bottleneck:
+  `warehouses = secret_data.get("warehouses", {})` (`:294`, a **dict**) collapsed by
+  `next(iter(warehouses.values()), None)` (`:302`). The new resolver reads the workspace secret
+  directly and indexes `warehouses` by warehouseId instead of collapsing.
+- chat `base_tools` list — `agents/super_agent/deep_agent.py:291-312` (tools dropped in by reference,
+  e.g. `read_project_schema_file` at `:310`).
+- MCP shared-impl + thin wrapper — `mcp/tools/fleet_health.py:107` (`_impl`) / `:140` (`register`);
+  `_CORE_TOOL_MODULES` at `mcp/server.py:54`; catalog `_t(...)` + `ToolPermission` at
+  `mcp/capabilities.py:65`, WAREHOUSE_READ-scoped perm.
+
+**Dialect nuance (recon-confirmed):** SQL Server is **not** a `WarehouseType` literal —
+`WarehouseType` is `redshift|snowflake|azure_synapse|postgres|databricks` (`utils/warehouse_types.py:20`).
+SQL Server exists only as a **secret-type string** `"SQL_SERVER"` (`SQL_SERVER_SECRET_TYPE`, `:34`) and
+rides `SynapseConnection` via the shared TDS chain (`TDS_SECRET_TYPES`, `:46`). Both source and target
+therefore build with `warehouse_type=AZURE_SYNAPSE`; the `TypeCompatibility` adapter keys on the
+**secret-type pair** (`SQL_SERVER`, `AZURE_SYNAPSE`), not on `WarehouseType`. The existing
+`DATA_TYPE_NORMALIZER` (`agents/dbt_agent/tools/atlas_semantic_view/constants.py:182`, has
+`MONEY→DECIMAL`, `NVARCHAR→TEXT`) normalizes *to* the semantic-view type system — it is **not** a
+SQL-Server↔Synapse equivalence map, so it is adjacent-but-not-reusable; the adapter is fresh.
 
 ```python
 # ── Domain types (Pydantic) ─────────────────────────────────────────────────
@@ -117,8 +152,8 @@ class ValueSampleParity(BaseModel):
     examples: list[dict]             # up to N example diffs, source vs target row
 
 class TableParityReport(BaseModel):
-    source: TableRef                 # {warehouse_id, database, schema, table, warehouse_type}
-    target: TableRef
+    source: TableRef                 # {warehouse_id, database, schema, table, secret_type}
+    target: TableRef                 # secret_type ∈ {"SQL_SERVER","AZURE_SYNAPSE",...}; both build via warehouse_type=AZURE_SYNAPSE
     schema_parity: SchemaParity
     row_count_parity: RowCountParity
     value_sample_parity: ValueSampleParity | None   # None if schema not aligned
@@ -146,8 +181,9 @@ def resolve_named_warehouses(
 class TypeCompatibility(Protocol):
     def compatible(self, *, source_type: str, target_type: str) -> bool: ...
 
-TYPE_COMPAT_ADAPTERS: Final[dict[tuple[WarehouseType, WarehouseType], TypeCompatibility]]
-# first adapter: (SQL_SERVER, AZURE_SYNAPSE) — the demo pair. NOT the design; the first adapter.
+# Keyed on the SECRET-TYPE pair (not WarehouseType — SQL Server has no WarehouseType literal).
+TYPE_COMPAT_ADAPTERS: Final[dict[tuple[str, str], TypeCompatibility]]
+# first adapter key: ("SQL_SERVER", "AZURE_SYNAPSE") — the demo pair. NOT the design; the first adapter.
 ```
 
 **Chat surface** (registered in `base_tools`, `deep_agent.py`): tool `compare_table_parity` with the
@@ -342,6 +378,7 @@ Generated from this spec. Every row is `issueType: "Task"` under BH-1036 — nev
 
 ## Related
 
-- **Demo runbook**: `clients/trials/loopcapital/demo.md` (Step 7, line 132)
+- **Demo runbook**: `clients/trials/loopcapital/DEMO_RUNBOOK_BEFORE_AFTER.md` (the before/after
+  rebuild story; the compare step is added by this spec)
 - **Shared-core pattern**: ADR-015 (`platform-saas-ai-context/docs/decisions/decisions.md`)
 - **Cross-dialect facts**: `docs/specs/azure-synapse-full-integration.md`, BH-1107 (TDS chain)
