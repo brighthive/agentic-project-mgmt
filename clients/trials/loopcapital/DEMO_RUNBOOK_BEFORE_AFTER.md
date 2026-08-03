@@ -95,6 +95,29 @@ connection and immediately understands it."*
   dbt Cloud service. **Databricks** uses the same PipelineSource adapter pattern
   (shipped) — so the BYOW story spans SQL Server source + dbt + Databricks.
 
+### 3.5 — Prove the rebuild is a faithful 1:1 (the trust proof-point)
+**Point to land:** *"You don't have to take our word that the rebuilt table matches
+the original — the agent proves it, deterministically, across two different engines."*
+
+- After a table is rebuilt on the target engine (SSIS SQL Server source → Synapse/dbt
+  target), ask the agent to **compare source and target 1:1** — or call the MCP verb
+  `compare_table_parity` directly.
+- It resolves **both** warehouse connections (source + target), reads each table
+  **SELECT-only**, and returns one **verdict**: `parity` / `schema_drift` /
+  `row_drift` / `value_drift`, backed by three blocks:
+  - **schema** — column-by-column, **cross-dialect type-aware** (`money`↔`decimal(19,4)`,
+    `nvarchar`↔`varchar` are a match, not a diff — it compares by type *class*, not string);
+  - **row count** — source vs target with the signed delta;
+  - **value sample** — a deterministically ordered sample diffed row-for-row.
+- The verdict is a **pure function** of those three blocks (most-severe-wins), so the
+  same two tables always yield the same answer — no eyeballing two profiler outputs,
+  no hand-written reconciliation SQL. GC-BH-1351, live-proven against **this EC2**'s
+  SQL Server as source.
+
+> ⚠️ **Deploy caveat:** the verb ships in chat + MCP; confirm it's on the staging
+> revision you demo before showing it live. If not yet deployed, narrate it from a
+> captured run rather than clicking it.
+
 > ⚠️ **Databricks caveat:** the adapter exists and is the same mechanism, but LC's
 > live demo warehouse is the **SQL Server** (that path is verified end-to-end).
 > Frame Databricks as "also supported, same mechanism," not "here's LC's live
