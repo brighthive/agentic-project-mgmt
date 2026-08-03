@@ -1,0 +1,1 @@
+{"_invocation_id": "ec25f533-6003-47b3-8b27-d73cc8095968", "linked": {"0": {"name": "source.loopcapital_disk_reclaim.loopcapital.holdings_snapshot_raw", "type": "source", "succ": [1]}, "1": {"name": "model.loopcapital_disk_reclaim.holdings_current", "type": "model"}}}
