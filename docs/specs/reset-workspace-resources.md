@@ -43,10 +43,17 @@ stateDiagram-v2
 
 Success = one `@superAdminOnly` mutation that takes a `workspaceId`, and leaves the workspace with
 **zero data assets, zero projects, zero orphaned child nodes, zero notification-inbox rows, zero
-orphan Redis embeddings, and no stale S3/Glue/OpenMetadata artifacts** — while the `WorkspaceNode`,
-its members, roles, and secret store are untouched. A `DeletionReport` records the outcome per store
-so partial failures are visible and the op is retryable. Beneficiary: whoever re-zeroes a pilot or
-demo workspace (Loop Capital first; reusable for every trial).
+orphan Redis embeddings, zero chat/agent sessions, and no stale S3/Glue/OpenMetadata artifacts** —
+while the `WorkspaceNode`, its members, roles, and secret store are untouched. A `DeletionReport`
+records the outcome per store so partial failures are visible and the op is retryable. Beneficiary:
+whoever re-zeroes a pilot or demo workspace (Loop Capital first; reusable for every trial).
+
+**Two modes, one code path.** The same mutation serves a **global admin nuke** (omit `resources` →
+every class purged) and an **independent per-element refresh** (name a subset → purge just that
+class — e.g. delete only the chat sessions, or only the notification inbox, leaving everything else
+intact). Each class is one entry in an ordered registry; a subset run preserves the fixed
+external-first / Neo4j-node-last order and reaches the *same* per-class purge the nuke uses (one
+impl, N entry points).
 
 ### How It Works Today
 
@@ -85,13 +92,27 @@ New `@superAdminOnly` GraphQL mutation. Reuses the existing `DeletionReport` sha
 SPEC-SUPERADMIN-RESOURCE-DELETION (extended with counts so a caller can assert zero-state).
 
 ```graphql
+# One independently-runnable purge class. Same set on the wire, in the model
+# (ResourceClass), and in the ordered registry — omit for the global nuke, or
+# name a subset for a single-element refresh (delete just sessions, just the
+# inbox, etc.). Order is fixed by the registry, NOT by the order named here.
+enum WorkspaceResourceClass {
+  DATA_ASSETS
+  PROJECTS
+  CHILD_NODES
+  NOTIFICATIONS
+  SESSIONS            # chat/agent threads (LangGraph Cloud — see §2.1)
+  ORPHAN_EMBEDDINGS
+}
+
 input ResetWorkspaceResourcesInput {
   workspaceId: ID!
   confirm: Boolean!            # must be true to purge; false/absent → dry-run report
+  resources: [WorkspaceResourceClass!]   # omit/empty → global nuke; else purge only these
 }
 
 type ResetDeletionStep {
-  system: String!              # NEO4J | SECRETS_MANAGER | OPENMETADATA | AIRBYTE | DYNAMODB | REDIS | S3 | GLUE
+  system: String!              # NEO4J | SECRETS_MANAGER | OPENMETADATA | AIRBYTE | DYNAMODB | REDIS | S3 | GLUE | SESSIONS
   status: String!              # OK | FAILED | SKIPPED
   detail: String               # never contains secret values (I-8)
   count: Int                   # resources affected by this step (0 for dry-run)
@@ -105,6 +126,7 @@ type ResetDeletionReport {
   projectsPurged: Int!
   inboxRowsPurged: Int!
   orphanEmbeddingsPurged: Int!
+  sessionsPurged: Int!         # chat/agent threads deleted (LangGraph Cloud)
   steps: [ResetDeletionStep!]!
 }
 
@@ -118,10 +140,33 @@ extend type Mutation {
 ```typescript
 AdminWorkspaceResetModel.resetWorkspaceResources(
   _parent: unknown,
-  { input }: { input: { workspaceId: string; confirm: boolean } },
+  { input }: { input: { workspaceId: string; confirm: boolean; resources?: ResourceClass[] | null } },
   context: Context,
 ): Promise<ResetDeletionReport>
 ```
+
+### 2.1 Chat/agent sessions live as LangGraph Cloud threads — scoped on two dimensions
+
+BrightAgent chat/agent sessions are **not** DynamoDB rows on staging/prod (the
+`brightagent-sessions-stg` / `brightbot-threads-stg` tables are empty) — they are **LangGraph
+Cloud threads** in the deployment's managed store, reached over the deployment's HTTP API
+(`POST /threads/search`, `DELETE /threads/{id}`) using `LANGGRAPH_BASE_URL` + `LANGGRAPH_API_KEY`
+(read read-only from Secrets Manager, never logged — I-8). A workspace owns threads in **two
+shapes**, and neither alone catches every thread:
+
+1. **Interactive chats** (`deep_agent` global / project / custom-agent) carry the workspace in
+   `metadata.workspace_id`, stamped on create by brightbot's `auth_handler`.
+2. **Background-task graphs** (`profiler_task`, `quality_check_task`, `detect_recurring_patterns`,
+   `pipeline_watchdog_task`, …) carry it in `values.workspace_id` (graph state), because the system
+   invokes them without the interactive-chat metadata stamping.
+
+`/threads/search` filters server-side on **metadata only**; `values` can't be filtered server-side.
+So the SESSIONS purge **full-scans and matches a thread when EITHER `metadata.workspace_id` OR
+`values.workspace_id` equals the target** — a metadata-only filter silently misses every task
+thread (verified against Loop Capital staging: metadata-only found 0 threads, two-dimension found 4).
+The reusable CLI mirror is `brightbot/scripts/purge_workspace_threads.py`; the resolver reaches the
+same threads via `WorkspaceThreads` (`service/aws/workspace-threads.ts`). Where the deployment isn't
+wired for an environment, the SESSIONS step is recorded **SKIPPED** (not FAILED).
 
 ## 3. Invariants (DbC)
 
@@ -147,6 +192,15 @@ AdminWorkspaceResetModel.resetWorkspaceResources(
   step outcomes, and success` (mirrors `admin-resource-deletion.ts` `auditLog`).
 - **I-11** `THE reset SHALL be scoped to exactly one workspaceId; no resource outside that workspace
   is read or deleted` (cross-tenant guard, mirrors I-10 of the per-resource deletes).
+- **I-12** `IF resources is omitted or empty, THEN THE System SHALL purge every class (global nuke);
+  ELSE THE System SHALL purge ONLY the named classes and SHALL NOT touch any un-named class`
+  (single-element refresh). Either way THE System SHALL run the selected classes in the fixed
+  registry order (external-first, Neo4j-node-last), not the order named in `resources`.
+- **I-13** `WHEN the SESSIONS class runs, THE System SHALL delete every LangGraph thread the
+  workspace owns on EITHER metadata.workspace_id OR values.workspace_id, and SHALL record the step
+  SKIPPED (not FAILED) where no LangGraph deployment is configured for the environment.`
+- **I-14** `WHERE one selected class throws, THE System SHALL record it FAILED and SHALL still run
+  the remaining selected classes` (a failed class never aborts the others; fail-isolation).
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -189,6 +243,32 @@ Feature: resetWorkspaceResources
     Given two workspaces A and B each with resources
     When a SUPERADMIN calls resetWorkspaceResources(workspaceId: A, confirm: true)
     Then workspace B's resources, children, and inbox rows are unchanged
+
+  Scenario: Single-element refresh — purge only chat/agent sessions
+    Given a workspace with data assets, projects, inbox rows, and chat/agent threads
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true, resources: [SESSIONS])
+    Then every LangGraph thread the workspace owns (interactive chats AND task graphs) is deleted
+    And the report sessionsPurged equals the number of threads that existed
+    And the data assets, projects, and inbox rows are all unchanged
+
+  Scenario: Global nuke — omit resources
+    Given a workspace with resources across every class
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true) with no resources
+    Then every class is purged in the fixed registry order
+    And the report success is true
+
+  Scenario: One failing class does not abort the others
+    Given a global reset where the NOTIFICATIONS step will throw
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true)
+    Then the NOTIFICATIONS step is recorded FAILED
+    And the SESSIONS and ORPHAN_EMBEDDINGS steps (later in the order) still run
+    And the report success is false
+
+  Scenario: Sessions skipped where LangGraph is not configured
+    Given an environment with no LANGGRAPH_BASE_URL / LANGGRAPH_API_KEY
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true, resources: [SESSIONS])
+    Then the SESSIONS step is recorded SKIPPED, not FAILED
+    And the report success is true
 ```
 
 ## 5. Out of Scope
@@ -206,10 +286,12 @@ Feature: resetWorkspaceResources
 |------------|------|--------|
 | `AdminResourceDeletionModel.deleteDataAssetAsAdmin` (S3+Dynamo+Glue+Redis+node per asset) | Non-blocking (reuse) | Ready |
 | `admin-cleanup.ts` `purgeOrphanEmbeddingsAsAdmin` (orphan Redis sweep) | Non-blocking (reuse) | Ready |
-| `NotificationInbox` service — needs new `deleteByWorkspace(workspaceId, memberUserIds)` | Blocking | Not started |
-| Workspace member-enumeration service method (users with inbox for the workspace) | Blocking | Recon in progress |
+| `NotificationInbox` service — needs new `deleteByWorkspace(workspaceId, memberUserIds)` | Blocking | Done |
+| Workspace member-enumeration service method (users with inbox for the workspace) | Blocking | Done (`Workspace.findAllMembersByWorkspaceId`) |
 | `@superAdminOnly` directive | Non-blocking (reuse) | Ready |
-| Per-workspace "list all assets/projects/services" service methods | Blocking | Recon in progress |
+| Per-workspace "list all assets/projects/services" service methods | Blocking | Done (`DataAsset.find` + `ProjectModel.fetchProjects`) |
+| `WorkspaceThreads` service — LangGraph two-dimension thread scan + delete-by-workspace | Blocking | Done (`service/aws/workspace-threads.ts`) |
+| `LANGGRAPH_BASE_URL` + `LANGGRAPH_API_KEY` in `staging/prod platform-core` secret bundle | Non-blocking (read-only) | Ready |
 
 ## 7. Correctness Properties
 
@@ -242,13 +324,32 @@ intact (or vice-versa) beyond what the external-first ordering guarantees.
 
 **Validates: §3 Invariant I-7; §4 Scenario "External teardown failure leaves that node intact and retryable"**
 
+### Property 5: Selector purges exactly the named classes, in registry order
+
+*For any* call naming a subset `resources`, exactly the named classes are purged and every un-named
+class is untouched; the selected classes always run in the fixed registry order (external-first,
+Neo4j-node-last), never the order named in `resources`. An omitted/empty `resources` purges all.
+
+**Validates: §3 Invariant I-12; §4 Scenarios "Single-element refresh" and "Global nuke"**
+
+### Property 6: One core purge per class, reached by every entry point
+
+*For any* resource class, there is exactly one purge implementation (its `RESET_STEPS` entry); the
+global nuke and every single-element refresh reach it through the same registry — no entry point
+re-implements a class's teardown. The reusable CLI (`purge_workspace_threads.py`) and the resolver's
+`WorkspaceThreads` service share the identical two-dimension thread-scoping rule.
+
+**Validates: §3 Invariants I-12, I-13; ADR-015 shared-core one-impl pattern**
+
 ## 9. Observability Contract
 
 - **Audit log**: one `[SUPERADMIN_AUDIT]` structured record per call — `{ mutation:
-  "resetWorkspaceResources", actorUserId, workspaceId, success, assetsPurged, projectsPurged,
-  inboxRowsPurged, orphanEmbeddingsPurged, steps }` (mirrors `admin-resource-deletion.ts`).
+  "resetWorkspaceResources", actorUserId, workspaceId, resources, success, dryRun, assetsPurged,
+  projectsPurged, inboxRowsPurged, orphanEmbeddingsPurged, sessionsPurged, steps }` (mirrors
+  `admin-resource-deletion.ts`; `resources` records the selected classes so a single-element
+  refresh is distinguishable from a global nuke).
 - **No secret values** in any `detail` (I-8).
-- **Log events**: `reset_workspace.started`, `reset_workspace.asset_purged`,
+- **Log events**: `reset_workspace.started` (carries `resources`), `reset_workspace.asset_purged`,
   `reset_workspace.inbox_flushed`, `reset_workspace.completed`, `reset_workspace.step_failed`.
 - **Metrics**: none.
 
@@ -256,7 +357,7 @@ intact (or vice-versa) beyond what the external-first ordering guarantees.
 
 | Repo | Suite | What to add |
 |---|---|---|
-| `brighthive-platform-core` | `brighthive-platform-core/tests/` | **L0 (contract):** one test per §2 field — mutation returns `ResetDeletionReport` with the declared fields; dry-run returns `dryRun:true`, counts, and mutates nothing. **L2 (behavior, real-backend):** against a real (or LocalStack) Neo4j + DynamoDB — seed a workspace with assets + child nodes + inbox rows, run reset, assert I-2/I-3/I-4/I-5 hold and I-1 (workspace + secrets survive). One test for I-7 (inject an S3 throw → node survives, report FAILED). One for I-11 (two workspaces → B untouched). One for `@superAdminOnly` rejection (I-9). |
+| `brighthive-platform-core` | `brighthive-platform-core/tests/unit/admin-workspace-reset.test.ts` | **L0/registry (delivered):** dry-run returns `dryRun:true` + counts and calls no destructive collaborator (I-6); global nuke (omit `resources`) runs every class in safe order (I-12); single-element refresh (`resources:[SESSIONS]` / `[NOTIFICATIONS]`) purges only the named class (I-12); one failing class is recorded FAILED without aborting later classes (I-14); SESSIONS SKIPPED when LangGraph unconfigured (I-13). **L2 (behavior, real-backend):** against a real (or LocalStack) Neo4j + DynamoDB — seed a workspace with assets + child nodes + inbox rows, run reset, assert I-2/I-3/I-4/I-5 hold and I-1 (workspace + secrets survive). One test for I-7 (inject an S3 throw → node survives, report FAILED). One for I-11 (two workspaces → B untouched). One for `@superAdminOnly` rejection (I-9). **Sessions real-behavior:** the `brightbot/scripts/purge_workspace_threads.py` two-dimension scan is verified against Loop Capital staging (metadata-only 0 → two-dimension 4 → purged → re-verify 0). |
 | `brighthive-e2e` | `brighthive-e2e/e2e/` | One feature test: populate the LC-shaped workspace, call `resetWorkspaceResources`, then assert via the real GraphQL API that `workspace.dataAssets == 0` AND the notification query returns 0 items — end-to-end across Neo4j + DynamoDB on staging. |
 
 **Real-behavior requirement** (`~/.claude/rules/test-behavior-real.md`): the L2 zero-state test MUST
@@ -271,14 +372,15 @@ the full platform-core suite green.
 
 | Area | Repo | Impact |
 |------|------|--------|
-| Platform Core | `brighthive-platform-core` | New `@superAdminOnly resetWorkspaceResources` mutation: typedef + resolver + `AdminWorkspaceResetModel` + `NotificationInbox.deleteByWorkspace` + child-node DETACH DELETE cascade + orphan Redis sweep. |
+| Platform Core | `brighthive-platform-core` | New `@superAdminOnly resetWorkspaceResources` mutation: `WorkspaceResourceClass` enum + `resources` selector, typedef + resolver + `AdminWorkspaceResetModel` (ordered `RESET_STEPS` registry) + `NotificationInbox.deleteByWorkspace` + child-node DETACH DELETE cascade + orphan Redis sweep + `WorkspaceThreads` LangGraph two-dimension thread purge. |
+| BrightBot | `brightbot` | Reusable CLI `scripts/purge_workspace_threads.py` (dry-run-first LangGraph thread purge; the sessions-class mirror). |
 | Cross-repo e2e | `brighthive-e2e` | One feature test asserting zero-state across Neo4j + DynamoDB. |
 
 ## Ticket Breakdown
 
 | Ticket | Summary | Points | Epic |
 |--------|---------|--------|------|
-| BH-1352 | resetWorkspaceResources mutation + model + inbox delete-by-workspace + cascade + tests | 5 | BH-1245 |
+| BH-1352 | resetWorkspaceResources mutation + `resources` selector (global nuke + per-element refresh) + model registry + inbox delete-by-workspace + child-node cascade + orphan Redis sweep + LangGraph session purge + tests | 5 | BH-1245 |
 
 ## Related
 
