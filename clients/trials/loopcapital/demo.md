@@ -94,10 +94,19 @@ Each step: what to **do**, what to **say** to BrightAgent, and what **success** 
   the `LastPx money` ← `DT_STR` mismatch (TC-DTM-03). *This is the diagnostic capability — real.*
 
 ### 3. Read the live reference table 🟢
-* **Say:** `"Read the current TradeDW.dbo.ReconStaging on the SQL Server. How many rows, and what
+> **⚠️ Precondition — verify the reference table exists before you demo.** The verified-live
+> Loop Capital workspace (`e3fc0917-…`) is database **`LoopCapitalAM`** with 11 medallion assets
+> (`holdings_raw`, `raw_counterparties`, `stg_holdings`, `mart_compliance_breaches`, …) — see
+> `artifacts/AGENT_CAPABILITIES_NOTES.md`. `TradeDW.dbo.ReconStaging` from the `.xsd` is the
+> **contract we build to**, not a confirmed-present live table. If Frank has loaded it, use it as
+> the reference. **If not, pick the closest real `LoopCapitalAM` asset** (e.g. `raw_market_prices`
+> for a price-typed comparison) and align the `.xsd` build target to it. Confirm this with the SE
+> in the pre-flight; do not assume `TradeDW` is live.
+* **Say:** `"Read the current <reference table> on the SQL Server. How many rows, and what
   do the values look like?"`
 * **Success:** Agent SELECTs (read-only) from Frank's live table and reports a row count + sample.
-  This is the **reference** side of the 1:1.
+  This is the **reference** side of the 1:1. *(Backed live by `dataAssetPreview` — first-10 +
+  random-100 straight from the BYOW warehouse, not a cached snapshot.)*
 
 ### 4. Rebuild the pipeline as dbt, commit as BrightAgent[bot] 🟢
 * **Say:** `"Rebuild this as a dbt model that matches the contract but fixes the LastPx type and
@@ -161,6 +170,37 @@ The class of request is the constant, the artifact type is swappable. The **same
 
 Hand it a different artifact, same request: *read → rebuild on dbt → materialize → compare →
 govern.*
+
+---
+
+## Live-readiness — proven vs. to-verify (grounded in `AGENT_CAPABILITIES_NOTES.md`)
+
+Every capacity below was **verified live** on the real LC staging workspace (`e3fc0917-…`) on
+2026-07-17 unless marked ⚠️/⚪. Use this to know what will "just work" vs. what the SE must confirm
+in pre-flight.
+
+| Demo step | Capability | Status | Evidence |
+|---|---|---|---|
+| 1 | Warehouse connection health | 🟢 proven | BYOW SQL Server `LoopCapitalAM` @ `54.197.188.168:1433`, self-signed TLS opt-in shipped (`#1089`) |
+| 2 | Read `.xsd` + flag type risk | 🟢 proven | deterministic `.dtsx`/`.rdl`/xsd parsers; SSIS/SSRS analyzer real |
+| 3 | Read live reference table | 🟢 proven | `dataAssetPreview` live first-10/random-100; 11/11 assets profiled |
+| 4 | Commit dbt models | 🟢 proven | GC-16 opened a real GitHub PR; ⚠️ BrightAgent[bot] author needs platform-core #1158 deployed |
+| 5 | Materialize via dbt Cloud | 🟢 proven | `run_models_to_stage`; ⚠️ target is **Synapse**, not SQL Server |
+| 6 | Query the rebuilt table | 🟢 proven | read-only warehouse query tool, dialect-aware |
+| 7 | 1:1 compare + reasoning | 🟢 proven | profiler + preview both sides; ⚠️ verify the reference table is loaded (Step 3 note) |
+| 8 — Monitoring | Profiler + quality | 🟢 proven | 11/11 assets carry real `profiling` + `quality_check` |
+| 8 — Lineage | `SEMANTIC_REFERENCES` edges | 🟢 proven | 11/11 semantic views; `hasSemanticView` resolver shipped (`#1094`) |
+| 8 — Control | Recent dbt runs | 🟢 proven | GC-14/15 watchdog live on the real EC2 box |
+| 8 — Governance | Attach quality rule / gate | 🟢 proven | `declareGovernanceGate` shipped (BH-1333/1334/1335) |
+| 8 — Provenance | Commit author + PR | 🟢 proven | GC-17 human-merge gate held live (`open`, `mergedAt: null`) |
+| 8 — Drift alert (optional) | Longitudinal anomaly | 🟢 proven | null-spike CRITICAL detected end-to-end; ⚠️ needs snapshot history |
+| — | Live schema-change → PR | ⚪ NOT demoable | only dbt build-failure error text routes to PR; value-drift does not |
+| — | Slack lifecycle verbs | ⚪ not built | task #48 |
+| — | Before+after run logs | ⚪ spec stage | BH-1329 |
+
+**The one honest gate:** the 3+1 is proven live *per capability*. The only unverified assumption is
+whether `TradeDW.dbo.ReconStaging` specifically is loaded on Frank's server — resolve that in
+pre-flight (Step 3 note) and the lifecycle is complete end-to-end.
 
 ---
 
