@@ -97,12 +97,20 @@ SPEC-SUPERADMIN-RESOURCE-DELETION (extended with counts so a caller can assert z
 # name a subset for a single-element refresh (delete just sessions, just the
 # inbox, etc.). Order is fixed by the registry, NOT by the order named here.
 enum WorkspaceResourceClass {
-  DATA_ASSETS
-  PROJECTS
-  CHILD_NODES
-  NOTIFICATIONS
+  DATA_ASSETS         # catalog assets + their S3/Dynamo/Glue/Redis/node teardown
+  SOURCES             # ingestion + warehouse services (Airbyte ws / OMD + secrets)
+  PROJECTS            # project nodes + owned subgraphs
+  SCHEMAS             # standalone/target schema contracts (INCLUDES edge)
+  GLOSSARY            # workspace-scoped glossary terms
+  CUSTOM_AGENTS       # workspace custom-agent templates
+  DOCUMENTS           # project files / uploaded documents (ResourceNodes)
+  POLICIES            # custom/monitored/asset policies (keeps GovernanceNode)
+  SETTINGS            # workspace-scoped RuntimeConfig (feature flags, never "*")
+  CONTEXT_WORKSPACE   # the workspace context node + its content
+  CHILD_NODES         # metric snapshots, anomaly events, quality rules + executions
+  NOTIFICATIONS       # notification-inbox rows across members
   SESSIONS            # chat/agent threads (LangGraph Cloud — see §2.1)
-  ORPHAN_EMBEDDINGS
+  ORPHAN_EMBEDDINGS   # Redis embedding keys with no live owning node
 }
 
 input ResetWorkspaceResourcesInput {
@@ -123,7 +131,15 @@ type ResetDeletionReport {
   dryRun: Boolean!             # true when confirm != true
   workspaceId: ID!
   assetsPurged: Int!
+  sourcesPurged: Int!          # ingestion + warehouse services torn down
   projectsPurged: Int!
+  schemasPurged: Int!
+  glossaryTermsPurged: Int!
+  customAgentsPurged: Int!
+  documentsPurged: Int!
+  policiesPurged: Int!
+  settingsPurged: Int!
+  contextWorkspacePurged: Int! # 0 or 1 (the workspace context node)
   inboxRowsPurged: Int!
   orphanEmbeddingsPurged: Int!
   sessionsPurged: Int!         # chat/agent threads deleted (LangGraph Cloud)
@@ -201,6 +217,18 @@ wired for an environment, the SESSIONS step is recorded **SKIPPED** (not FAILED)
   SKIPPED (not FAILED) where no LangGraph deployment is configured for the environment.`
 - **I-14** `WHERE one selected class throws, THE System SHALL record it FAILED and SHALL still run
   the remaining selected classes` (a failed class never aborts the others; fail-isolation).
+- **I-15** `WHEN the SOURCES class runs, THE System SHALL tear down each ingestion service (Airbyte
+  workspace cascade) and each warehouse service (OpenMetadata + secrets) external-first via the
+  existing per-service `*AsAdmin` deletes, and a single service's failure SHALL be recorded FAILED
+  without aborting the other services.`
+- **I-16** `WHEN the POLICIES class runs, THE System SHALL delete only CustomPolicy / MonitoredPolicy
+  / AssetPolicy nodes and SHALL NOT delete the GovernanceNode container` (the workspace keeps its
+  governance anchor so it stays usable for handover; policy set returns to empty).
+- **I-17** `WHEN the SETTINGS class runs, THE System SHALL delete only RuntimeConfig rows whose
+  `scope` equals the workspaceId and SHALL NEVER touch the global `"*"` scope row` (cross-tenant /
+  global-config guard).
+- **I-18** `WHEN the CONTEXT_WORKSPACE class runs and the workspace has no context node, THE System
+  SHALL record the step SKIPPED (count 0), not FAILED` (a missing context node is a no-op).
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
@@ -256,6 +284,26 @@ Feature: resetWorkspaceResources
     When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true) with no resources
     Then every class is purged in the fixed registry order
     And the report success is true
+
+  Scenario: Multi-class refresh — purge only glossary and documents
+    Given a workspace with data assets, glossary terms, and uploaded documents
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true, resources: [GLOSSARY, DOCUMENTS])
+    Then only the glossary terms and documents are deleted
+    And the data assets, projects, and sources are unchanged
+    And the report glossaryTermsPurged and documentsPurged reflect the counts deleted
+
+  Scenario: Policies purge keeps the governance container
+    Given a workspace with custom, monitored, and asset policies under its GovernanceNode
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true, resources: [POLICIES])
+    Then every CustomPolicy/MonitoredPolicy/AssetPolicy node is deleted
+    And the GovernanceNode container still exists
+    And the report policiesPurged reflects the count deleted
+
+  Scenario: Settings purge never touches the global config
+    Given a workspace with a scoped RuntimeConfig row and a global "*" RuntimeConfig row
+    When a SUPERADMIN calls resetWorkspaceResources(workspaceId, confirm: true, resources: [SETTINGS])
+    Then only the workspace-scoped RuntimeConfig row is deleted
+    And the global "*" RuntimeConfig row is unchanged
 
   Scenario: One failing class does not abort the others
     Given a global reset where the NOTIFICATIONS step will throw
@@ -357,7 +405,7 @@ re-implements a class's teardown. The reusable CLI (`purge_workspace_threads.py`
 
 | Repo | Suite | What to add |
 |---|---|---|
-| `brighthive-platform-core` | `brighthive-platform-core/tests/unit/admin-workspace-reset.test.ts` | **L0/registry (delivered):** dry-run returns `dryRun:true` + counts and calls no destructive collaborator (I-6); global nuke (omit `resources`) runs every class in safe order (I-12); single-element refresh (`resources:[SESSIONS]` / `[NOTIFICATIONS]`) purges only the named class (I-12); one failing class is recorded FAILED without aborting later classes (I-14); SESSIONS SKIPPED when LangGraph unconfigured (I-13). **L2 (behavior, real-backend):** against a real (or LocalStack) Neo4j + DynamoDB — seed a workspace with assets + child nodes + inbox rows, run reset, assert I-2/I-3/I-4/I-5 hold and I-1 (workspace + secrets survive). One test for I-7 (inject an S3 throw → node survives, report FAILED). One for I-11 (two workspaces → B untouched). One for `@superAdminOnly` rejection (I-9). **Sessions real-behavior:** the `brightbot/scripts/purge_workspace_threads.py` two-dimension scan is verified against Loop Capital staging (metadata-only 0 → two-dimension 4 → purged → re-verify 0). |
+| `brighthive-platform-core` | `brighthive-platform-core/tests/unit/admin-workspace-reset.test.ts` | **L0/registry (delivered, 10 cases):** dry-run returns `dryRun:true` + counts and calls no destructive collaborator (I-6); global nuke (omit `resources`) runs every class in safe order and populates every class count — assets/sources/schemas/glossary/agents/documents/context (I-12); single-element refresh (`resources:[SCHEMAS]` / `[SOURCES]` / `[SESSIONS]` / `[NOTIFICATIONS]`) purges only the named class, with SOURCES tearing down ingestion-then-warehouse (I-12, I-15); multi-class subset (`resources:[GLOSSARY, DOCUMENTS]`) purges exactly those two, leaving assets/agents untouched (I-12); CONTEXT_WORKSPACE recorded SKIPPED (count 0) when the workspace has no context node (I-18); one failing class is recorded FAILED without aborting later classes (I-14); SESSIONS SKIPPED when LangGraph unconfigured (I-13). **L2 (behavior, real-backend):** against a real (or LocalStack) Neo4j + DynamoDB — seed a workspace with assets + child nodes + inbox rows, run reset, assert I-2/I-3/I-4/I-5 hold and I-1 (workspace + secrets survive). One test for I-7 (inject an S3 throw → node survives, report FAILED). One for I-11 (two workspaces → B untouched). One for `@superAdminOnly` rejection (I-9). **Sessions real-behavior:** the `brightbot/scripts/purge_workspace_threads.py` two-dimension scan is verified against Loop Capital staging (metadata-only 0 → two-dimension 4 → purged → re-verify 0). |
 | `brighthive-e2e` | `brighthive-e2e/e2e/` | One feature test: populate the LC-shaped workspace, call `resetWorkspaceResources`, then assert via the real GraphQL API that `workspace.dataAssets == 0` AND the notification query returns 0 items — end-to-end across Neo4j + DynamoDB on staging. |
 
 **Real-behavior requirement** (`~/.claude/rules/test-behavior-real.md`): the L2 zero-state test MUST
