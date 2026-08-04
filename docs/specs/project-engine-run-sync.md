@@ -246,9 +246,66 @@ calls the existing `registerDbtOutputDataAssets` (`project.ts:335`) — bridging
 `jobId`↔`TransformationNode` binding gap so registration is reachable from sync, not only from a
 Brighthive-triggered run.
 
+### 2.4 Authorized trigger surface (webapp Sync → brightbot)
+
+`syncProjectRuns` (§2.3) is **service-key guarded, deliberately not `@authorized`** — a browser
+Apollo client carries a Cognito session and no `x-service-key`, so it can never call it (it would
+`ForbiddenError`). The operator's **Sync** action therefore does NOT call `syncProjectRuns`; it
+calls a **Cognito-authorized forwarder** that scopes the caller to the workspace/project and then
+asks brightbot to run its port-owning pull. This is the SAME shape platform-core already uses to
+trigger agent work: the AGENT workflow step POSTs `${LANGGRAPH_BASE_URL}/workflow/run` with the
+`X-Api-Key` header and gets a `202 { accepted, agentRunId }`
+(`service/workflow/runtime-adapters.ts:642`). The forwarder reuses that seam verbatim against a
+sibling brightbot route.
+
+```graphql
+# platform-core — project-run-sync-typedefs.ts, alongside syncProjectRuns.
+# @authorized: the human operator's mutation. Scopes to their workspace, forwards to brightbot.
+extend type Mutation {
+  """Ask brightbot to pull this project's engine run history and POST it back via syncProjectRuns.
+  Cognito-authorized (unlike syncProjectRuns). Returns immediately — the sync runs async in
+  brightbot; the surface refetches to see the persisted runs."""
+  triggerProjectRunSync(input: TriggerProjectRunSyncInput!): TriggerProjectRunSyncResult!
+}
+input TriggerProjectRunSyncInput { workspaceId: ID!  projectId: ID! }
+type TriggerProjectRunSyncResult {
+  accepted: Boolean!            # brightbot acknowledged the trigger (202)
+  reasonIfRejected: String      # set when accepted == false (engine unreachable, not linked, …)
+}
+```
+
+```
+# brightbot — http/routes/, a sibling of workflow_routes.py's POST /workflow/run.
+POST /project/run-sync
+  auth:    Depends(authenticate_request)   # existing X-Api-Key / WHITELISTED_LANGSMITH_API_KEYS
+  body:    { workspaceId, projectId }
+  202:     { accepted: true }               # then, in a BackgroundTask: sync_and_post_project_runs(...)
+  4xx:     { accepted: false, reasonIfRejected }
+```
+
+The forwarder holds **no sync logic** — it only bridges Cognito-auth → the existing
+`sync_and_post_project_runs` composition (§2.2), which owns the port and POSTs `syncProjectRuns`
+back (§2.3). Direction is preserved (ADR-015): platform-core still never touches the engine; it
+authorizes a human and hands off to brightbot, which owns the pull.
+
+```mermaid
+sequenceDiagram
+    participant U as Operator (browser)
+    participant W as webapp (Sync button)
+    participant P as platform-core (triggerProjectRunSync, @authorized)
+    participant B as brightbot (POST /project/run-sync, X-Api-Key)
+    U->>W: click Sync
+    W->>P: triggerProjectRunSync(workspaceId, projectId)   %% Cognito session
+    P->>B: POST /project/run-sync (X-Api-Key)              %% same seam as /workflow/run
+    B-->>P: 202 { accepted }
+    P-->>W: { accepted, reasonIfRejected }
+    Note over B: async — sync_and_post_project_runs() → syncProjectRuns (x-service-key, §2.3)
+    W->>W: on accepted, refetch() Observability (runs + data products appear)
+```
+
 ## 3. Invariants (DbC)
 
-Budget: 6.
+Budget: 7.
 
 - **INV-1** — `sync_project_runs` depends ONLY on `PipelineRunner` + domain types. No vendor SDK,
   no `dbt`-named symbol in `pipelines/sync/project_runs.py`. (Grep test PS-3/PS-4.)
@@ -266,6 +323,12 @@ Budget: 6.
   SHALL degrade (best-effort: latest run only) and state the limit — never error out.` Likewise,
   `WHERE the engine does not advertise RUN_OUTPUTS, THE System SHALL sync runs with no produced
   outputs (run_outputs = ()) and register no data products — never error out.`
+- **INV-7** — Trigger auth separation. `WHERE the caller is a browser (Cognito session, no
+  x-service-key), THE System SHALL route Sync through the @authorized triggerProjectRunSync
+  forwarder, never syncProjectRuns directly` — the latter throws ForbiddenError for a session with
+  no service key, so a webapp button that called it would always fail. The forwarder holds no sync
+  logic; it only authorizes the operator on the workspace/project and hands off to brightbot's
+  port-owning pull (§2.4).
 
 ## 4. Acceptance Criteria (BDD)
 
@@ -311,6 +374,19 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
     When Sync runs
     Then runsSynced is 0
     And reasonIfEmpty states the engine has no pipelines
+
+  Scenario: browser Sync routes through the authorized forwarder, never the service-key mutation
+    Given an operator with a Cognito session and no x-service-key on the project's Observability tab
+    When they press Sync
+    Then the webapp calls triggerProjectRunSync (authorized on this workspace/project)
+    And triggerProjectRunSync forwards to brightbot's /project/run-sync with the X-Api-Key
+    And it returns { accepted: true } without the browser ever calling syncProjectRuns
+
+  Scenario: a browser session cannot reach the service-key receiver directly
+    Given a Cognito session with no x-service-key header
+    When it calls syncProjectRuns directly
+    Then the resolver raises ForbiddenError
+    And no runs are synced
 ```
 
 ## 5. Out of Scope
@@ -360,7 +436,8 @@ each client engine comes online — no sync-path code change.
 
 ## 7. Correctness Properties
 
-Multi-tenant isolation boundary + a no-silent-failure guarantee, so this section applies.
+Multi-tenant isolation boundary + a browser/service-key auth boundary + a no-silent-failure
+guarantee, so this section applies.
 
 ### Property 1: tenant isolation
 *For any* run surfaced by sync, its workspace equals the requesting project's workspace.
@@ -374,6 +451,11 @@ for it.
 ### Property 3: no silent empty
 *For any* sync producing 0 runs, `reasonIfEmpty` is non-null.
 **Validates: §3 INV-4, INV-6, §4 Scenarios "cannot enumerate", "nothing to sync"**
+
+### Property 4: browser sync never reaches the service-key receiver
+*For any* caller with a Cognito session and no `x-service-key`, the only sync path that succeeds is
+`triggerProjectRunSync`; a direct `syncProjectRuns` call raises `ForbiddenError` and synces nothing.
+**Validates: §3 INV-7, §4 Scenarios "browser Sync routes through the authorized forwarder", "a browser session cannot reach the service-key receiver directly"**
 
 ## 8. Eval Criteria
 
@@ -411,15 +493,27 @@ Deterministic — no LLM judge (mirrors BH-1329 / BH-1092 evaluator design).
   no-RUN_OUTPUTS paths. Assert on the `SyncResult` (including `run_outputs`) + §9 spans/events.
 
 **platform-core (`tests/`):**
-- **L0** — `syncProjectRuns` mutation shape per §2.3.
-- **L2** — resolver upserts runs idempotently (INV-2) and reaches `registerDbtOutputDataAssets`
-  for a synced successful run (INV-5), scoped to the project's workspace (INV-3). Against a real
-  Neo4j test instance where the suite provides one.
+- **L0** — `syncProjectRuns` mutation shape per §2.3; `triggerProjectRunSync` mutation shape per §2.4.
+- **L2** — `syncProjectRuns` resolver upserts runs idempotently (INV-2) and reaches
+  `registerDbtOutputDataAssets` for a synced successful run (INV-5), scoped to the project's
+  workspace (INV-3). Against a real Neo4j test instance where the suite provides one.
+- **L2 (auth boundary, INV-7)** — `triggerProjectRunSync` is `@authorized`: an operator authorized
+  on the workspace/project gets `{ accepted: true }` and the forwarder POSTs
+  `/project/run-sync` with the `X-Api-Key`; a direct `syncProjectRuns` call from a Cognito session
+  (no `x-service-key`) raises `ForbiddenError`.
+
+**brightbot (`tests/`) — trigger route:**
+- **L0** — `POST /project/run-sync` accepts `{ workspaceId, projectId }`, returns `202 { accepted: true }`,
+  rejects a missing/invalid `X-Api-Key` (`Depends(authenticate_request)`).
+- **L2** — a 202 schedules the BackgroundTask that calls `sync_and_post_project_runs(...)` with the
+  posted workspace/project (assert the composition is invoked; no re-implementation of sync logic).
 
 ### b. Cross-repo e2e (`brighthive-e2e/`)
 
 - One feature test: link a project to a dbt Cloud sandbox that has run history, call
   `syncProjectRuns`, assert Observability shows the runs and Data Products populate.
+- Forwarder path: call `triggerProjectRunSync` with a Cognito session token, assert `{ accepted: true }`
+  and that runs + data products appear after the brightbot-side sync completes (the real browser path).
 - Idempotence: run sync twice, assert no duplicates.
 - Error-path: engine with zero jobs → `runsSynced: 0` + non-null `reasonIfEmpty`.
 
@@ -436,8 +530,10 @@ matching new test.
 | dbt Cloud adapter: `list_runs` (map dbt Cloud run history) | brightbot | adapter test + live |
 | Snowflake-native adapter: `list_runs` (or advertise unsupported) | brightbot | adapter test |
 | `pipelines/sync/project_runs.py` — enumerate + pull + assemble SyncResult (engine-agnostic) | brightbot | L2 real-behavior |
-| `syncProjectRuns` mutation + resolver: upsert runs + reach registration | platform-core | L2 (idempotent, INV-5) |
-| Webapp "Sync" action on Observability tab + refresh | brighthive-webapp | component + e2e |
+| `syncProjectRuns` mutation + resolver: upsert runs + reach registration (x-service-key receiver) | platform-core | L2 (idempotent, INV-5) |
+| `triggerProjectRunSync` @authorized mutation + resolver: authorize operator, forward to brightbot `/project/run-sync` (X-Api-Key), return `{ accepted }` — no sync logic (INV-7) | platform-core | L0 (contract) + L2 (auth) |
+| `POST /project/run-sync` route: `Depends(authenticate_request)`, 202 immediate, BackgroundTask → `sync_and_post_project_runs` | brightbot | L0 (contract) + L2 (background dispatch) |
+| Webapp "Sync" IconButton beside Refresh → `triggerProjectRunSync` → `refetch()` Observability | brighthive-webapp | component (MockedProvider) + e2e |
 | e2e: link → sync → runs + data products populate | brighthive-e2e | full Gherkin |
 | (follow-up) Flow-tab false "triggered" toast when no jobId-bound transformations | brighthive-webapp | bug |
 
