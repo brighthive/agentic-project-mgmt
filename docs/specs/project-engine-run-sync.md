@@ -67,27 +67,39 @@ from those runs' produced outputs. The same Sync works for a Snowflake-native en
 because the logic depends only on the `PipelineRunner` port. Success = a freshly-linked project
 reflects its engine's real history without Brighthive having triggered a single run.
 
+Direction matters (ADR-015): **brightbot owns the port and enumerates the engine**, then POSTs
+the assembled `SyncResult` to platform-core over the `x-service-key` seam — the same
+brightbot→platform-core direction `updateWorkflowRunStep`/`updateTransformationRunStatus` already
+use. Platform-core never calls the port (that would hardcode a vendor and violate INV-1); it only
+persists what brightbot pulled. The operator triggers the sync through a surface adapter (chat
+tool / MCP / a webapp action that invokes brightbot's `sync_project_runs`), never by calling the
+service-key-guarded `syncProjectRuns` mutation directly.
+
 ```mermaid
 sequenceDiagram
     participant U as Operator
-    participant C as Platform-core (SyncProject resolver)
-    participant P as PipelineRunner (port)
+    participant A as Surface (chat tool / MCP / webapp action)
+    participant B as brightbot (owns PipelineRunner port)
     participant E as Engine (dbt Cloud / Snowflake-native)
+    participant C as Platform-core (syncProjectRuns receiver, x-service-key)
     participant S as Project run store + DataAssets (Neo4j)
-    U->>C: syncProjectRuns(projectId)
-    C->>P: list_pipelines(owned)         %% enumerate the engine's jobs
-    P->>E: list jobs
-    E-->>C: jobs
+    U->>A: trigger Sync (workspaceId, projectId)
+    A->>B: sync_project_runs(runner, ctx)
+    B->>E: list_pipelines(owned)          %% enumerate the engine's jobs via the port
+    E-->>B: jobs
     loop per job, recent runs
-        C->>P: get_run_detail(run_id)
-        C->>P: get_run_logs(run_id)
-        P->>E: fetch detail + logs
-        E-->>C: RunDetail + RunLogs
-        C->>S: upsert run (idempotent)
-        C->>P: get_run_outputs(run_id)      %% RUN_OUTPUTS-gated; () if unsupported
-        C->>S: register data products from the run's produced outputs
+        B->>E: list_runs / get_run_detail / get_run_logs
+        E-->>B: RunHandle[] + RunDetail + RunLogs
+        B->>E: get_run_outputs(run_id)     %% RUN_OUTPUTS-gated; () if unsupported
+        E-->>B: RunOutput[]
     end
-    C-->>U: synced N runs, M data products (or stated reason for 0)
+    B->>C: syncProjectRuns(SyncResult)     %% brightbot → platform-core, x-service-key
+    loop per synced run
+        C->>S: upsert run (idempotent, INV-2)
+        C->>S: register data products from the run's produced outputs (INV-5)
+    end
+    C-->>B: runsSynced N, dataProductsRegistered M (or reasonIfEmpty)
+    B-->>U: synced N runs, M data products (or stated reason for 0)
 ```
 
 ## 2. Interface Contract (MDE)
