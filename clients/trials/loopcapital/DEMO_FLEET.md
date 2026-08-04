@@ -19,34 +19,62 @@ warehouse dialects. The BH-1330 receiver (`platform-core syncProjectRuns`) and t
 `sync_project_runs` port composition never branch on any of these — so the demo must actually
 exercise more than one to show that.
 
-## The fleet
+## One workspace, one warehouse — the fleet is per PROJECT
+
+**Loop Capital has ONE workspace and ONE warehouse: Snowflake** (plus their *legacy SQL Server
+source*, which is a data source, not a warehouse they run transformations on). The demo does NOT
+pretend LC runs on Redshift or any second warehouse — they don't. The heterogeneity Frank sees
+inside his workspace is **several projects, each linked to a different git repo, each running a
+different set of dbt jobs** — all landing on the one Snowflake warehouse he actually has.
+
+This still fully exercises BH-1330 sync + observability + the remediation-PR targeting: a
+warehouse binds *per project* in the model (`Project.transformationServiceId` →
+`transformationService` connection, `platform-core src/graphql/service/neo4j/project.ts:36,163`),
+but repo and dbt-job set are what vary here — because that's what varies for real.
 
 Legend: 🟢 live on staging · 🟡 fixture ready, staging-wiring pending · ⚪ planned
 
-| # | Project | Git repo (distinct) | dbt jobs / pipelines (distinct) | Engine | Warehouse | State |
-|---|---|---|---|---|---|---|
-| 1 | **Loop Capital — Asset Management** | `brighthive-dbt/loopcapital-dbt-demo` | nightly `stg_holdings_nightly` build (dbt Cloud job) | dbt Cloud | Snowflake | 🟢 |
-| 2 | **Student Matter-Scores — Snowflake** | `student-scores/engines/dbt-snowflake` (`student_scores_snowflake`) | `staging` views + `marts` tables build | dbt | Snowflake | 🟡 |
-| 3 | **Student Matter-Scores — Redshift** | `student-scores/engines/dbt-redshift` (`student_scores_redshift`) | same models, Redshift-retargeted profile | dbt | Redshift | 🟡 |
-| 4 | **Loop Capital — Legacy SSIS** | `student-scores/engines/ssis-sqlserver` (`.dtsx` packages) | SQL Agent nightly extract + report | SSIS | SQL Server | 🟡 |
+### Loop Capital's workspace — several projects, distinct repos + jobs, ONE Snowflake warehouse
 
-Projects 1–3 are all dbt but land on **two different warehouses through two different repos with
-two different job sets** — the cleanest proof that sync is repo- and warehouse-agnostic. Project
-4 is a non-dbt engine (SSIS) surfacing through the *same* `PipelineRunner` port with `LIST_RUNS`
-degraded per INV-6 — the proof that "engine-agnostic" isn't just "any dbt".
+| # | Project | Git repo (distinct) | dbt jobs / pipelines (distinct) | Warehouse | State |
+|---|---|---|---|---|---|
+| 1 | **Asset Management** | `brighthive-dbt/loopcapital-dbt-demo` | nightly `stg_holdings_nightly` build (dbt Cloud job) | Snowflake | 🟢 |
+| 2 | **Market Data** | a second distinct dbt repo | its own model tree + its own dbt Cloud job | Snowflake | ⚪ |
+| 3 | **Trade DW** | a third distinct dbt repo | its own model tree + its own dbt Cloud job | Snowflake | ⚪ |
 
-## What each project proves in the demo
+The three source families already declared in the one demo repo —
+`sources_loopcapital_dbo.yml`, `sources_market_data.yml`, `sources_trade_dw.yml`
+(`brighthive-dbt/loopcapital-dbt-demo/models`) — are the natural seams for three distinct
+projects, each promotable into its own repo with its own dbt Cloud job. Same warehouse, different
+repo + jobs per project: exactly the fleet you asked for, honest to LC's real single-warehouse
+estate.
+
+### Cross-WAREHOUSE agnosticism — a SEPARATE, non-LC story
+
+Proving the same sync path works on Snowflake *and* Redshift *and* SQL Server is a real capability
+claim — but it is **not** Loop Capital's workspace, because those connections don't exist there.
+It lives in the client-neutral **student-scores** fixture on a **throwaway/demo workspace**, never
+presented as LC's:
+
+| Project | Repo | Engine | Warehouse |
+|---|---|---|---|
+| Student Scores — Snowflake | `student-scores/engines/dbt-snowflake` | dbt | Snowflake |
+| Student Scores — Redshift | `student-scores/engines/dbt-redshift` | dbt | Redshift |
+| Student Scores — SSIS | `student-scores/engines/ssis-sqlserver` | SSIS | SQL Server |
+
+## What the LC fleet proves in the demo
 
 - **Distinct repos** → the project↔repo link (task #31, verified live #39) is per-project, and
-  the agent is aware of *which* repo a given project's transformations live in when it proposes a
-  remediation PR (BH-1329). Two projects → two repos → two PR targets, never cross-contaminated.
-- **Distinct dbt jobs** → `syncProjectRuns` pulls each project's *own* run history. Project 1's
-  nightly-holdings runs never leak into Project 2's Observability tab (INV-3 tenant/project
-  isolation, shown across real projects, not asserted in a unit test alone).
-- **Distinct warehouses** → the same sync path fills Observability for a Snowflake project and a
-  Redshift project identically; the dialect only ever lives inside the adapter.
-- **Fleet view** → the SystemAdmin fleet-health page (BH-1337, task #72) shows all four projects
-  side by side — the "one glance across the whole estate" surface Frank asked for.
+  the agent knows *which* repo a given project's transformations live in when it proposes a
+  remediation PR (BH-1329). Three projects → three repos → three PR targets, never cross-contaminated.
+- **Distinct dbt jobs** → `syncProjectRuns` pulls each project's *own* run history. Asset
+  Management's nightly-holdings runs never leak into Market Data's Observability tab (INV-3
+  project isolation, shown across real projects — not just asserted in a unit test).
+- **One warehouse, honestly** → all three land on LC's real Snowflake; no invented second
+  warehouse on their workspace. Cross-warehouse agnosticism is demonstrated on the student-scores
+  throwaway workspace, clearly labeled not-LC.
+- **Fleet view** → the SystemAdmin fleet-health page (BH-1337, task #72) shows LC's projects side
+  by side — the "one glance across the whole estate" surface Frank asked for.
 
 ## Live-wiring checklist (staging)
 
