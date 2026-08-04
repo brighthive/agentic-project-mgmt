@@ -63,7 +63,7 @@ core — nothing wires them into a project-level sync.
 A Loop Capital operator links a project to their dbt Cloud engine (which already runs nightly
 jobs), clicks **Sync**, and the project's Observability tab fills with the engine's real runs
 (models, run count, success rate, last run) and the Data Products / Data Asset views populate
-from those runs' successful model outputs. The same Sync works for a Snowflake-native engine
+from those runs' produced outputs. The same Sync works for a Snowflake-native engine
 because the logic depends only on the `PipelineRunner` port. Success = a freshly-linked project
 reflects its engine's real history without Brighthive having triggered a single run.
 
@@ -84,34 +84,44 @@ sequenceDiagram
         P->>E: fetch detail + logs
         E-->>C: RunDetail + RunLogs
         C->>S: upsert run (idempotent)
-        C->>S: register data products from successful model outputs
+        C->>P: get_run_outputs(run_id)      %% RUN_OUTPUTS-gated; () if unsupported
+        C->>S: register data products from the run's produced outputs
     end
     C-->>U: synced N runs, M data products (or stated reason for 0)
 ```
 
 ## 2. Interface Contract (MDE)
 
-**Port first (the design), then platform-core's sync surface — per docs/CLAUDE.md.** The port
-verbs already exist (BH-1255); this spec adds no new port verb — it *composes* the existing
-observe verbs into a sync. The one new capability is the capability *flag* that says an engine
-can be enumerated for backfill.
+**Port first (the design), then platform-core's sync surface — per docs/CLAUDE.md.** Most of the
+sync is a *composition* of existing observe verbs (BH-1255). It adds **two capability-negotiated
+port verbs** — one to discover historical run ids, one to read what a run produced — because
+neither is derivable from the existing verbs without parsing engine-shaped logs, which would put a
+vendor-shaped concern in the engine-agnostic path (INV-1). Both are guarded by a capability flag so
+an engine that lacks them degrades, never errors.
 
-### 2.1 Port — reused, plus one capability flag
+### 2.1 Port — reused verbs, plus two capability-negotiated additions
 
 ```python
-# brightbot/pipelines/runner_port.py — reused verbs (NO new verb):
-async def list_pipelines(self, *, ctx, owned_only: bool) -> list[PipelineSummary]: ...   # :223
-async def get_run_detail(self, *, run_id: str, ctx) -> RunDetail: ...                      # :265
-async def get_run_logs(self, *, run_id: str, ctx) -> RunLogs: ...                          # :251
+# brightbot/pipelines/core/port.py — reused verbs (unchanged):
+async def list_pipelines(self, *, ctx, owned_only: bool) -> tuple[Pipeline, ...]: ...      # :224
+async def get_run_detail(self, *, run_id: str, ctx) -> RunDetail: ...                       # :266
+async def get_run_logs(self, *, run_id: str, ctx) -> RunLogs: ...                           # :252
 
-# Two additions:
+# Additions — two capability flags + two verbs, engine-agnostic domain types only:
 class RunnerCapability(Enum):
     ...
-    LIST_RUNS = "list_runs"    # NEW — engine can enumerate a pipeline's run HISTORY, not just latest
+    LIST_RUNS = "list_runs"        # engine can enumerate a pipeline's run HISTORY, not just latest
+    RUN_OUTPUTS = "run_outputs"    # engine can report the data outputs a run produced
 
-async def list_runs(                         # NEW verb — history, not the single latest run
+@dataclass(frozen=True, slots=True)
+class RunOutput:                   # engine-agnostic — NOT a dbt 'model'; any engine's produced table
+    output_id: str                 # engine-stable id for the produced output (dbt unique_id, etc.)
+    status: str                    # RunDetail-grain status for this output ('success'/'error'/…)
+    relation_name: str | None      # fully-qualified table/view name, when the engine reports one
+
+async def list_runs(               # verb 1 — history, not the single latest run
     self, *, pipeline_id: str, limit: int, ctx: RequestContext
-) -> list[RunHandle]:
+) -> tuple[RunHandle, ...]:
     """Return the most recent `limit` runs for a pipeline (newest first).
 
     Raises:
@@ -119,38 +129,60 @@ async def list_runs(                         # NEW verb — history, not the sin
         ValueError: pipeline_id not found
     """
     ...
+
+async def get_run_outputs(         # verb 2 — the data-product candidates a run produced
+    self, *, run_id: str, ctx: RequestContext
+) -> tuple[RunOutput, ...]:
+    """Return the data outputs a run produced (engine-agnostic; empty when none).
+
+    Raises:
+        NotImplementedError: RUN_OUTPUTS not in capabilities()
+        ValueError: run_id not found
+    """
+    ...
 ```
 
-`list_runs` is the one genuine gap: today the port exposes `get_run_detail(run_id)` but no way
-to *discover* historical run ids for a pipeline (platform-core only ever had the single latest
-run via `getLatestRun`). Sync needs the last N runs per job.
+Two genuine gaps the existing verbs can't fill:
+
+- **`list_runs`** — today the port exposes `get_run_detail(run_id)` but no way to *discover*
+  historical run ids for a pipeline (platform-core only ever had the single latest run via
+  `getLatestRun`). Sync needs the last N runs per job.
+- **`get_run_outputs`** — sync must register the data products a run produced (INV-5), but the port
+  had no verb that reports them. The only alternative — regex-parsing `get_run_logs` output — would
+  bake a vendor's log format into the engine-agnostic sync path, violating INV-1. The adapter reads
+  the engine's own run-result record (dbt Cloud: the `run_results.json` artifact via the existing
+  `_fetch_artifact` helper) and translates it to `RunOutput`; the sync path only ever sees the
+  domain type. Engines that can't report outputs simply omit `RUN_OUTPUTS` and sync registers none.
 
 ### 2.2 Sync orchestration (engine-agnostic, brightbot)
 
 ```python
-# brightbot/pipelines/sync/project_runs.py  (NEW module)
-@dataclass(frozen=True)
+# brightbot/pipelines/sync/project_runs.py
+@dataclass(frozen=True, slots=True)
 class SyncedRun:
     run_id: str
     pipeline_id: str
-    status: str                 # RunDetail.status.value
+    status: str                        # RunDetail.status.value
     started_at: str | None
     finished_at: str | None
-    model_outputs: tuple[ModelOutput, ...]   # successful model.* nodes → data-product candidates
-    log_excerpt: RunLogExcerpt                # bounded, reuses the BH-1329 excerpt type
+    duration_s: float | None
+    log_excerpt: str                   # bounded, tail-preserving (_MAX_LOG_CHARS_PER_RUN)
+    run_outputs: tuple[RunOutput, ...] # data-product candidates from get_run_outputs (INV-5); () when RUN_OUTPUTS absent
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SyncResult:
     runs: tuple[SyncedRun, ...]
     pipelines_seen: int
-    reason_if_empty: str | None   # NEVER silently empty (INV-4)
+    degraded: bool = False             # LIST_RUNS absent → latest-only backfill (INV-6)
+    reason_if_empty: str | None = None # NEVER silently empty (INV-4)
 
 async def sync_project_runs(
     *, runner: PipelineRunner, runs_per_pipeline: int, ctx: RequestContext
 ) -> SyncResult:
-    """Enumerate the engine's pipelines, pull recent runs+logs, return a SyncResult.
+    """Enumerate the engine's pipelines, pull recent runs + logs + outputs, return a SyncResult.
 
-    Depends only on the port; branches on capabilities(), never adapter identity.
+    Depends only on the port; branches on capabilities(), never adapter identity. Reads
+    run outputs only when RUN_OUTPUTS is advertised — otherwise run_outputs is ().
     """
     ...
 ```
@@ -161,7 +193,7 @@ async def sync_project_runs(
 direct-to-Neo4j path, so the graph write goes through this mutation — the SAME grain
 `updateWorkflowRunStep` / `updateTransformationRunStatus` already use. brightbot's
 `sync_project_runs` (which owns the `PipelineRunner` port + adapters, §2.2) enumerates the
-engine, pulls the runs + model outputs, and POSTs the assembled `SyncResult` here. Platform-core
+engine, pulls the runs + their produced outputs, and POSTs the assembled `SyncResult` here. Platform-core
 persists what it receives; it never re-enumerates the engine (that would hardcode a vendor and
 violate INV-1). The mutation is service-key guarded (`x-service-key`), not `@authorized` — an
 internal service with no Cognito session calls it.
@@ -185,9 +217,9 @@ input SyncedRunInput {
   status: String!
   startedAt: String
   finishedAt: String
-  modelOutputs: [SyncedModelOutputInput!]   # data-product candidates for INV-5
+  runOutputs: [SyncedRunOutputInput!]   # data-product candidates for INV-5
 }
-input SyncedModelOutputInput { uniqueId: String!, status: String!, relationName: String }
+input SyncedRunOutputInput { outputId: String!, status: String!, relationName: String }
 type SyncProjectRunsResult {
   runsSynced: Int!
   dataProductsRegistered: Int!
@@ -214,12 +246,14 @@ Budget: 6.
   surface it in this project's sync.`
 - **INV-4** — No silent empty. `IF sync produces 0 runs, THEN reasonIfEmpty states why (engine
   empty / LIST_RUNS unsupported / no pipelines).` A bare empty tab is a contract violation.
-- **INV-5** — Registration reachable from sync. `IF a synced run has ≥1 successful model output,
+- **INV-5** — Registration reachable from sync. `IF a synced run has ≥1 successful produced output,
   THEN registerDbtOutputDataAssets is invoked for it` — not gated behind the
   `job_definition_id == TransformationNode.jobId` match that blocks fresh projects today
-  (`project.ts:2896`).
+  (`project.ts:2896`). Outputs come from `get_run_outputs` (the port verb), never from parsing logs.
 - **INV-6** — Capability-negotiated. `WHERE the engine does not advertise LIST_RUNS, THE System
-  SHALL degrade (best-effort: latest run only) and state the limit — never error out.`
+  SHALL degrade (best-effort: latest run only) and state the limit — never error out.` Likewise,
+  `WHERE the engine does not advertise RUN_OUTPUTS, THE System SHALL sync runs with no produced
+  outputs (run_outputs = ()) and register no data products — never error out.`
 
 ## 4. Acceptance Criteria (BDD)
 
@@ -233,9 +267,15 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
     And the runs were pulled from the engine, not triggered by Brighthive
 
   Scenario: synced successful run populates data products
-    Given a synced run that produced successful dbt model outputs
+    Given a synced run whose engine reports ≥1 successful produced output via get_run_outputs
     When sync registers data products for it
     Then the Data Products tab and Data Asset view are populated for that project
+
+  Scenario: engine cannot report produced outputs — runs still sync, no data products
+    Given the project's engine does not advertise RUN_OUTPUTS
+    When Sync runs
+    Then the runs sync with empty run_outputs and no data products are registered
+    And no error is raised
 
   Scenario: engine-agnostic — a non-dbt engine syncs through the same port
     Given the project's engine is snowflake-native
@@ -277,9 +317,12 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
 ## 6. Dependencies
 
 - `PipelineRunner` port + `list_pipelines`/`get_run_detail`/`get_run_logs` (BH-1255) — reused;
-  this spec adds `list_runs` + `LIST_RUNS`.
+  this spec adds two capability-negotiated verbs: `list_runs` (+ `LIST_RUNS`) and
+  `get_run_outputs` (+ `RUN_OUTPUTS`) with the `RunOutput` domain type.
 - `registerDbtOutputDataAssets` (`project.ts:335`) — reused, made reachable from sync (INV-5).
-- `RunLogExcerpt` — shared with BH-1329 (`remediation-pr-engine-run-logs.md`).
+- dbt Cloud `run_results.json` artifact via the existing `_fetch_artifact` helper
+  (`dbt_agent/tools/dbt_cloud_tools.py`) — the adapter's source for `get_run_outputs`; already used
+  by the remediation path, so no new dbt surface.
 
 ### Engine / warehouse / source matrix the port must cover
 
@@ -336,7 +379,8 @@ Deterministic — no LLM judge (mirrors BH-1329 / BH-1092 evaluator design).
 - **Attributes**: `workspace.id`, `project.id`, `brightagent.pipeline.engine`,
   `pipeline.count`, `pipeline.runs_synced`, `pipeline.products_registered`, `correlation_id`.
 - **Log events**: `sync.started`, `sync.pipelines_enumerated`, `sync.run_upserted`,
-  `sync.products_registered`, `sync.empty` (with reason), `sync.capability_degraded`.
+  `sync.outputs_read` (with count), `sync.products_registered`, `sync.empty` (with reason),
+  `sync.capability_degraded` (which capability: `LIST_RUNS` / `RUN_OUTPUTS`).
 - **Metrics**: reuse `brightagent.pipeline.verb.executions` / `.duration_ms` with `verb=sync`.
 
 ## 10. Test Coverage Update
@@ -344,13 +388,15 @@ Deterministic — no LLM judge (mirrors BH-1329 / BH-1092 evaluator design).
 ### a. In-repo layered evals
 
 **brightbot (`tests/`):**
-- **L0** — `list_runs` + `LIST_RUNS` present on `PipelineRunner` + `FakePipelineRunner`;
-  `SyncResult` shape (reason_if_empty present when empty).
-- **L1** — sync composes list_pipelines → list_runs → get_run_detail/get_run_logs in order;
-  degrades to latest-only when `LIST_RUNS` absent.
+- **L0** — `list_runs` + `LIST_RUNS` and `get_run_outputs` + `RUN_OUTPUTS` + `RunOutput` present on
+  `PipelineRunner` + `FakePipelineRunner`; `SyncedRun` carries `run_outputs`; `SyncResult` shape
+  (reason_if_empty present when empty).
+- **L1** — sync composes list_pipelines → list_runs → get_run_detail/get_run_logs/get_run_outputs
+  in order; degrades to latest-only when `LIST_RUNS` absent; skips output reads (run_outputs = ())
+  when `RUN_OUTPUTS` absent.
 - **L2 (real FakePipelineRunner, no patch())** — one case per §4 scenario using `FakePipelineRunner`
-  seeded with a run history + `InjectedFault` for the empty / no-LIST_RUNS paths. Assert on the
-  `SyncResult` + §9 spans/events.
+  seeded with a run history + produced outputs + `InjectedFault` for the empty / no-LIST_RUNS /
+  no-RUN_OUTPUTS paths. Assert on the `SyncResult` (including `run_outputs`) + §9 spans/events.
 
 **platform-core (`tests/`):**
 - **L0** — `syncProjectRuns` mutation shape per §2.3.
@@ -386,5 +432,6 @@ matching new test.
 ## Related
 
 - `pipeline-run-lifecycle.md` — owns the `PipelineRunner` port (BH-1255) this extends with `list_runs`.
-- `remediation-pr-engine-run-logs.md` — BH-1329; shares `RunLogExcerpt` + the port-first pattern.
+- `remediation-pr-engine-run-logs.md` — BH-1329; shares the bounded tail-preserving log-excerpt
+  convention + the port-first pattern.
 - `self-healing-pipelines.md` — BH-526; consumes the same run/observability substrate.
