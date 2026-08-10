@@ -1,7 +1,7 @@
 ---
 title: BrightRoutines — Per-Routine Delivery Target, Result Provenance (SQL + Artifact), and PDF Output
 epic: BH-876
-tickets: [BH-1401, BH-1402, BH-1403, BH-1404, BH-1405, BH-1406]
+tickets: [BH-1397, BH-1398, BH-1399, BH-1400, BH-1401, BH-1402]
 author: kuri
 status: proposed
 created: 2026-08-10
@@ -482,12 +482,12 @@ Ordered by dependency; one PR per repo per concern, each under the size ladder.
 
 | PR | Repo | Scope | Ticket | Size |
 |---|---|---|---|---:|
-| 1 | `brightbot` | `sink_config` on `ScheduleCreateRequest` + row; `InboxSink`/`SlackChannelSink`/`EmailSink` adapters behind the existing registry; forbidden-field guard on `sink_config` | BH-1401 | <400 |
-| 2 | `brightbot` | `ArtifactRenderer` port + `PdfRenderer` (reportlab); `store_artifact` branches on format; `signal_completion` carries `executed_sql` + `ArtifactRef` | BH-1402 | <400 |
-| 3 | `brighthive-platform-core` | `DeliveryTargetInput` on `scheduleRoutineSuggestion`; persist `delivery_target`; `createRoutineSchedule` carries `sinkType`+`sinkConfig`; `executedSql`/`artifacts` in the selection set + terminal-bridge write; `lastRunSql`/`lastRunArtifacts` on the SDL type | BH-1403 | <500 |
-| 4 | `brighthive-webapp` | delivery-target picker (mobile-first) on the schedule dialog; `deliveryTarget` in `SCHEDULE_MUTATION`; SQL disclosure + artifact links (incl. PDF) on the routine card | BH-1404 | <500 |
-| 5 | `brightbot-slack-server` | channel-post formatting for a routine result delivered to a specific channel (if the sink posts via slack-server rather than direct `chat.postMessage`) | BH-1405 | <300 |
-| 6 | `brighthive-e2e` | §10b feature + surface + error-path tests | BH-1406 | <300 |
+| 1 | `brightbot` | `sink_config` on `ScheduleCreateRequest` + row; `InboxSink`/`SlackChannelSink`/`EmailSink` adapters behind the existing registry; forbidden-field guard on `sink_config` | BH-1397 | <400 |
+| 2 | `brightbot` | `ArtifactRenderer` port + `PdfRenderer` (reportlab); `store_artifact` branches on format; `signal_completion` carries `executed_sql` + `ArtifactRef` | BH-1398 | <400 |
+| 3 | `brighthive-platform-core` | `DeliveryTargetInput` on `scheduleRoutineSuggestion`; persist `delivery_target`; `createRoutineSchedule` carries `sinkType`+`sinkConfig`; `executedSql`/`artifacts` in the selection set + terminal-bridge write; `lastRunSql`/`lastRunArtifacts` on the SDL type | BH-1399 | <500 |
+| 4 | `brighthive-webapp` | delivery-target picker (mobile-first) on the schedule dialog; `deliveryTarget` in `SCHEDULE_MUTATION`; SQL disclosure + artifact links (incl. PDF) on the routine card | BH-1400 | <500 |
+| 5 | `brightbot-slack-server` | channel-post formatting for a routine result delivered to a specific channel (if the sink posts via slack-server rather than direct `chat.postMessage`) | BH-1401 | <300 |
+| 6 | `brighthive-e2e` | §10b feature + surface + error-path tests | BH-1402 | <300 |
 
 Execution order: PR-1 and PR-2 (brightbot) can go in parallel; PR-3
 (platform-core) depends on both for the sink_type mapping + provenance fields;
