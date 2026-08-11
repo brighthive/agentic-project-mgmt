@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: loopcapital
+    database: LoopCapitalAM
+    schema: dbo
+    tables:
+      - name: holdings_snapshot_raw
+        description: >
+          The wide, uncompressed heap the nightly SSIS extract appends a full
+          denormalized holdings snapshot to every night. Never deduped, oversized
+          types, a redundant per-row JSON blob — the single biggest consumer on
+          the Loop Capital data volume. holdings_current rebuilds this cleanly.
