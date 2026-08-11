@@ -63,55 +63,77 @@ core — nothing wires them into a project-level sync.
 A Loop Capital operator links a project to their dbt Cloud engine (which already runs nightly
 jobs), clicks **Sync**, and the project's Observability tab fills with the engine's real runs
 (models, run count, success rate, last run) and the Data Products / Data Asset views populate
-from those runs' successful model outputs. The same Sync works for a Snowflake-native engine
+from those runs' produced outputs. The same Sync works for a Snowflake-native engine
 because the logic depends only on the `PipelineRunner` port. Success = a freshly-linked project
 reflects its engine's real history without Brighthive having triggered a single run.
+
+Direction matters (ADR-015): **brightbot owns the port and enumerates the engine**, then POSTs
+the assembled `SyncResult` to platform-core over the `x-service-key` seam — the same
+brightbot→platform-core direction `updateWorkflowRunStep`/`updateTransformationRunStatus` already
+use. Platform-core never calls the port (that would hardcode a vendor and violate INV-1); it only
+persists what brightbot pulled. The operator triggers the sync through a surface adapter (chat
+tool / MCP / a webapp action that invokes brightbot's `sync_project_runs`), never by calling the
+service-key-guarded `syncProjectRuns` mutation directly.
 
 ```mermaid
 sequenceDiagram
     participant U as Operator
-    participant C as Platform-core (SyncProject resolver)
-    participant P as PipelineRunner (port)
+    participant A as Surface (chat tool / MCP / webapp action)
+    participant B as brightbot (owns PipelineRunner port)
     participant E as Engine (dbt Cloud / Snowflake-native)
+    participant C as Platform-core (syncProjectRuns receiver, x-service-key)
     participant S as Project run store + DataAssets (Neo4j)
-    U->>C: syncProjectRuns(projectId)
-    C->>P: list_pipelines(owned)         %% enumerate the engine's jobs
-    P->>E: list jobs
-    E-->>C: jobs
+    U->>A: trigger Sync (workspaceId, projectId)
+    A->>B: sync_project_runs(runner, ctx)
+    B->>E: list_pipelines(owned)          %% enumerate the engine's jobs via the port
+    E-->>B: jobs
     loop per job, recent runs
-        C->>P: get_run_detail(run_id)
-        C->>P: get_run_logs(run_id)
-        P->>E: fetch detail + logs
-        E-->>C: RunDetail + RunLogs
-        C->>S: upsert run (idempotent)
-        C->>S: register data products from successful model outputs
+        B->>E: list_runs / get_run_detail / get_run_logs
+        E-->>B: RunHandle[] + RunDetail + RunLogs
+        B->>E: get_run_outputs(run_id)     %% RUN_OUTPUTS-gated; () if unsupported
+        E-->>B: RunOutput[]
     end
-    C-->>U: synced N runs, M data products (or stated reason for 0)
+    B->>C: syncProjectRuns(SyncResult)     %% brightbot → platform-core, x-service-key
+    loop per synced run
+        C->>S: upsert run (idempotent, INV-2)
+        C->>S: register data products from the run's produced outputs (INV-5)
+    end
+    C-->>B: runsSynced N, dataProductsRegistered M (or reasonIfEmpty)
+    B-->>U: synced N runs, M data products (or stated reason for 0)
 ```
 
 ## 2. Interface Contract (MDE)
 
-**Port first (the design), then platform-core's sync surface — per docs/CLAUDE.md.** The port
-verbs already exist (BH-1255); this spec adds no new port verb — it *composes* the existing
-observe verbs into a sync. The one new capability is the capability *flag* that says an engine
-can be enumerated for backfill.
+**Port first (the design), then platform-core's sync surface — per docs/CLAUDE.md.** Most of the
+sync is a *composition* of existing observe verbs (BH-1255). It adds **two capability-negotiated
+port verbs** — one to discover historical run ids, one to read what a run produced — because
+neither is derivable from the existing verbs without parsing engine-shaped logs, which would put a
+vendor-shaped concern in the engine-agnostic path (INV-1). Both are guarded by a capability flag so
+an engine that lacks them degrades, never errors.
 
-### 2.1 Port — reused, plus one capability flag
+### 2.1 Port — reused verbs, plus two capability-negotiated additions
 
 ```python
-# brightbot/pipelines/runner_port.py — reused verbs (NO new verb):
-async def list_pipelines(self, *, ctx, owned_only: bool) -> list[PipelineSummary]: ...   # :223
-async def get_run_detail(self, *, run_id: str, ctx) -> RunDetail: ...                      # :265
-async def get_run_logs(self, *, run_id: str, ctx) -> RunLogs: ...                          # :251
+# brightbot/pipelines/core/port.py — reused verbs (unchanged):
+async def list_pipelines(self, *, ctx, owned_only: bool) -> tuple[Pipeline, ...]: ...      # :224
+async def get_run_detail(self, *, run_id: str, ctx) -> RunDetail: ...                       # :266
+async def get_run_logs(self, *, run_id: str, ctx) -> RunLogs: ...                           # :252
 
-# Two additions:
+# Additions — two capability flags + two verbs, engine-agnostic domain types only:
 class RunnerCapability(Enum):
     ...
-    LIST_RUNS = "list_runs"    # NEW — engine can enumerate a pipeline's run HISTORY, not just latest
+    LIST_RUNS = "list_runs"        # engine can enumerate a pipeline's run HISTORY, not just latest
+    RUN_OUTPUTS = "run_outputs"    # engine can report the data outputs a run produced
 
-async def list_runs(                         # NEW verb — history, not the single latest run
+@dataclass(frozen=True, slots=True)
+class RunOutput:                   # engine-agnostic — NOT a dbt 'model'; any engine's produced table
+    output_id: str                 # engine-stable id for the produced output (dbt unique_id, etc.)
+    status: str                    # RunDetail-grain status for this output ('success'/'error'/…)
+    relation_name: str | None      # fully-qualified table/view name, when the engine reports one
+
+async def list_runs(               # verb 1 — history, not the single latest run
     self, *, pipeline_id: str, limit: int, ctx: RequestContext
-) -> list[RunHandle]:
+) -> tuple[RunHandle, ...]:
     """Return the most recent `limit` runs for a pipeline (newest first).
 
     Raises:
@@ -119,81 +141,194 @@ async def list_runs(                         # NEW verb — history, not the sin
         ValueError: pipeline_id not found
     """
     ...
+
+async def get_run_outputs(         # verb 2 — the data-product candidates a run produced
+    self, *, run_id: str, ctx: RequestContext
+) -> tuple[RunOutput, ...]:
+    """Return the data outputs a run produced (engine-agnostic; empty when none).
+
+    Raises:
+        NotImplementedError: RUN_OUTPUTS not in capabilities()
+        ValueError: run_id not found
+    """
+    ...
 ```
 
-`list_runs` is the one genuine gap: today the port exposes `get_run_detail(run_id)` but no way
-to *discover* historical run ids for a pipeline (platform-core only ever had the single latest
-run via `getLatestRun`). Sync needs the last N runs per job.
+Two genuine gaps the existing verbs can't fill:
+
+- **`list_runs`** — today the port exposes `get_run_detail(run_id)` but no way to *discover*
+  historical run ids for a pipeline (platform-core only ever had the single latest run via
+  `getLatestRun`). Sync needs the last N runs per job.
+- **`get_run_outputs`** — sync must register the data products a run produced (INV-5), but the port
+  had no verb that reports them. The only alternative — regex-parsing `get_run_logs` output — would
+  bake a vendor's log format into the engine-agnostic sync path, violating INV-1. The adapter reads
+  the engine's own run-result record (dbt Cloud: the `run_results.json` artifact via the existing
+  `_fetch_artifact` helper) and translates it to `RunOutput`; the sync path only ever sees the
+  domain type. Engines that can't report outputs simply omit `RUN_OUTPUTS` and sync registers none.
 
 ### 2.2 Sync orchestration (engine-agnostic, brightbot)
 
 ```python
-# brightbot/pipelines/project_sync.py  (NEW module)
-@dataclass(frozen=True)
+# brightbot/pipelines/sync/project_runs.py
+@dataclass(frozen=True, slots=True)
 class SyncedRun:
     run_id: str
     pipeline_id: str
-    status: str                 # RunDetail.status.value
+    status: str                        # RunDetail.status.value
     started_at: str | None
     finished_at: str | None
-    model_outputs: tuple[ModelOutput, ...]   # successful model.* nodes → data-product candidates
-    log_excerpt: RunLogExcerpt                # bounded, reuses the BH-1329 excerpt type
+    duration_s: float | None
+    log_excerpt: str                   # bounded, tail-preserving (_MAX_LOG_CHARS_PER_RUN)
+    run_outputs: tuple[RunOutput, ...] # data-product candidates from get_run_outputs (INV-5); () when RUN_OUTPUTS absent
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SyncResult:
     runs: tuple[SyncedRun, ...]
     pipelines_seen: int
-    reason_if_empty: str | None   # NEVER silently empty (INV-4)
+    degraded: bool = False             # LIST_RUNS absent → latest-only backfill (INV-6)
+    reason_if_empty: str | None = None # NEVER silently empty (INV-4)
 
 async def sync_project_runs(
     *, runner: PipelineRunner, runs_per_pipeline: int, ctx: RequestContext
 ) -> SyncResult:
-    """Enumerate the engine's pipelines, pull recent runs+logs, return a SyncResult.
+    """Enumerate the engine's pipelines, pull recent runs + logs + outputs, return a SyncResult.
 
-    Depends only on the port; branches on capabilities(), never adapter identity.
+    Depends only on the port; branches on capabilities(), never adapter identity. Reads
+    run outputs only when RUN_OUTPUTS is advertised — otherwise run_outputs is ().
     """
     ...
 ```
 
 ### 2.3 Platform-core sync surface (persist + register)
 
+**Direction (ADR-015): brightbot → platform-core, not the reverse.** brightbot has no
+direct-to-Neo4j path, so the graph write goes through this mutation — the SAME grain
+`updateWorkflowRunStep` / `updateTransformationRunStatus` already use. brightbot's
+`sync_project_runs` (which owns the `PipelineRunner` port + adapters, §2.2) enumerates the
+engine, pulls the runs + their produced outputs, and POSTs the assembled `SyncResult` here. Platform-core
+persists what it receives; it never re-enumerates the engine (that would hardcode a vendor and
+violate INV-1). The mutation is service-key guarded (`x-service-key`), not `@authorized` — an
+internal service with no Cognito session calls it.
+
 ```graphql
-# src/graphql/schema/typedefs.ts
-type Mutation {
+# src/graphql/schema/project-run-sync-typedefs.ts (own file — typedefs.ts is over the size limit)
+extend type Mutation {
   syncProjectRuns(input: SyncProjectRunsInput!): SyncProjectRunsResult!
 }
-input SyncProjectRunsInput { workspaceId: ID!, projectId: ID!, runsPerPipeline: Int = 20 }
+# Carries the pulled runs (brightbot → platform-core), not a fetch request.
+input SyncProjectRunsInput {
+  workspaceId: ID!
+  projectId: ID!
+  runs: [SyncedRunInput!]!
+  pipelinesSeen: Int!
+  reasonIfEmpty: String        # set by brightbot when the pull produced 0 runs
+}
+input SyncedRunInput {
+  runId: ID!
+  pipelineId: ID!
+  status: String!
+  startedAt: String
+  finishedAt: String
+  runOutputs: [SyncedRunOutputInput!]   # data-product candidates for INV-5
+}
+input SyncedRunOutputInput { outputId: String!, status: String!, relationName: String }
 type SyncProjectRunsResult {
   runsSynced: Int!
   dataProductsRegistered: Int!
   pipelinesSeen: Int!
-  reasonIfEmpty: String        # stated when runsSynced == 0
+  reasonIfEmpty: String        # passed through when runsSynced == 0
 }
 ```
 
-The resolver calls the brightbot sync (over MCP / internal call), **upserts** each run into the
-project run store, and for each synced run with successful model outputs calls the existing
-`registerDbtOutputDataAssets` (`project.ts:335`) — bridging the `jobId`↔`TransformationNode`
-binding gap so registration is reachable from sync, not only from a Brighthive-triggered run.
+The resolver **upserts** each received run (updates `lastRunStatus`/`lastRunAt` per matched
+`TransformationNode` by `dbtModelName`), and for each synced run with successful model outputs
+calls the existing `registerDbtOutputDataAssets` (`project.ts:335`) — bridging the
+`jobId`↔`TransformationNode` binding gap so registration is reachable from sync, not only from a
+Brighthive-triggered run.
+
+### 2.4 Authorized trigger surface (webapp Sync → brightbot)
+
+`syncProjectRuns` (§2.3) is **service-key guarded, deliberately not `@authorized`** — a browser
+Apollo client carries a Cognito session and no `x-service-key`, so it can never call it (it would
+`ForbiddenError`). The operator's **Sync** action therefore does NOT call `syncProjectRuns`; it
+calls a **Cognito-authorized forwarder** that scopes the caller to the workspace/project and then
+asks brightbot to run its port-owning pull. This is the SAME shape platform-core already uses to
+trigger agent work: the AGENT workflow step POSTs `${LANGGRAPH_BASE_URL}/workflow/run` with the
+`X-Api-Key` header and gets a `202 { accepted, agentRunId }`
+(`service/workflow/runtime-adapters.ts:642`). The forwarder reuses that seam verbatim against a
+sibling brightbot route.
+
+```graphql
+# platform-core — project-run-sync-typedefs.ts, alongside syncProjectRuns.
+# @authorized: the human operator's mutation. Scopes to their workspace, forwards to brightbot.
+extend type Mutation {
+  """Ask brightbot to pull this project's engine run history and POST it back via syncProjectRuns.
+  Cognito-authorized (unlike syncProjectRuns). Returns immediately — the sync runs async in
+  brightbot; the surface refetches to see the persisted runs."""
+  triggerProjectRunSync(input: TriggerProjectRunSyncInput!): TriggerProjectRunSyncResult!
+}
+input TriggerProjectRunSyncInput { workspaceId: ID!  projectId: ID! }
+type TriggerProjectRunSyncResult {
+  accepted: Boolean!            # brightbot acknowledged the trigger (202)
+  reasonIfRejected: String      # set when accepted == false (engine unreachable, not linked, …)
+}
+```
+
+```
+# brightbot — http/routes/, a sibling of workflow_routes.py's POST /workflow/run.
+POST /project/run-sync
+  auth:    Depends(authenticate_request)   # existing X-Api-Key / WHITELISTED_LANGSMITH_API_KEYS
+  body:    { workspaceId, projectId }
+  202:     { accepted: true }               # then, in a BackgroundTask: sync_and_post_project_runs(...)
+  4xx:     { accepted: false, reasonIfRejected }
+```
+
+The forwarder holds **no sync logic** — it only bridges Cognito-auth → the existing
+`sync_and_post_project_runs` composition (§2.2), which owns the port and POSTs `syncProjectRuns`
+back (§2.3). Direction is preserved (ADR-015): platform-core still never touches the engine; it
+authorizes a human and hands off to brightbot, which owns the pull.
+
+```mermaid
+sequenceDiagram
+    participant U as Operator (browser)
+    participant W as webapp (Sync button)
+    participant P as platform-core (triggerProjectRunSync, @authorized)
+    participant B as brightbot (POST /project/run-sync, X-Api-Key)
+    U->>W: click Sync
+    W->>P: triggerProjectRunSync(workspaceId, projectId)   %% Cognito session
+    P->>B: POST /project/run-sync (X-Api-Key)              %% same seam as /workflow/run
+    B-->>P: 202 { accepted }
+    P-->>W: { accepted, reasonIfRejected }
+    Note over B: async — sync_and_post_project_runs() → syncProjectRuns (x-service-key, §2.3)
+    W->>W: on accepted, refetch() Observability (runs + data products appear)
+```
 
 ## 3. Invariants (DbC)
 
-Budget: 6.
+Budget: 7.
 
 - **INV-1** — `sync_project_runs` depends ONLY on `PipelineRunner` + domain types. No vendor SDK,
-  no `dbt`-named symbol in `project_sync.py`. (Grep test PS-3/PS-4.)
+  no `dbt`-named symbol in `pipelines/sync/project_runs.py`. (Grep test PS-3/PS-4.)
 - **INV-2** — Idempotent. `IF a run with the same run_id was already synced, THEN re-sync updates
   it in place and creates no duplicate run and no duplicate data product.`
 - **INV-3** — Multi-tenant. `WHERE a run belongs to another workspace, THE System SHALL NOT
   surface it in this project's sync.`
 - **INV-4** — No silent empty. `IF sync produces 0 runs, THEN reasonIfEmpty states why (engine
   empty / LIST_RUNS unsupported / no pipelines).` A bare empty tab is a contract violation.
-- **INV-5** — Registration reachable from sync. `IF a synced run has ≥1 successful model output,
+- **INV-5** — Registration reachable from sync. `IF a synced run has ≥1 successful produced output,
   THEN registerDbtOutputDataAssets is invoked for it` — not gated behind the
   `job_definition_id == TransformationNode.jobId` match that blocks fresh projects today
-  (`project.ts:2896`).
+  (`project.ts:2896`). Outputs come from `get_run_outputs` (the port verb), never from parsing logs.
 - **INV-6** — Capability-negotiated. `WHERE the engine does not advertise LIST_RUNS, THE System
-  SHALL degrade (best-effort: latest run only) and state the limit — never error out.`
+  SHALL degrade (best-effort: latest run only) and state the limit — never error out.` Likewise,
+  `WHERE the engine does not advertise RUN_OUTPUTS, THE System SHALL sync runs with no produced
+  outputs (run_outputs = ()) and register no data products — never error out.`
+- **INV-7** — Trigger auth separation. `WHERE the caller is a browser (Cognito session, no
+  x-service-key), THE System SHALL route Sync through the @authorized triggerProjectRunSync
+  forwarder, never syncProjectRuns directly` — the latter throws ForbiddenError for a session with
+  no service key, so a webapp button that called it would always fail. The forwarder holds no sync
+  logic; it only authorizes the operator on the workspace/project and hands off to brightbot's
+  port-owning pull (§2.4).
 
 ## 4. Acceptance Criteria (BDD)
 
@@ -207,9 +342,15 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
     And the runs were pulled from the engine, not triggered by Brighthive
 
   Scenario: synced successful run populates data products
-    Given a synced run that produced successful dbt model outputs
+    Given a synced run whose engine reports ≥1 successful produced output via get_run_outputs
     When sync registers data products for it
     Then the Data Products tab and Data Asset view are populated for that project
+
+  Scenario: engine cannot report produced outputs — runs still sync, no data products
+    Given the project's engine does not advertise RUN_OUTPUTS
+    When Sync runs
+    Then the runs sync with empty run_outputs and no data products are registered
+    And no error is raised
 
   Scenario: engine-agnostic — a non-dbt engine syncs through the same port
     Given the project's engine is snowflake-native
@@ -233,6 +374,19 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
     When Sync runs
     Then runsSynced is 0
     And reasonIfEmpty states the engine has no pipelines
+
+  Scenario: browser Sync routes through the authorized forwarder, never the service-key mutation
+    Given an operator with a Cognito session and no x-service-key on the project's Observability tab
+    When they press Sync
+    Then the webapp calls triggerProjectRunSync (authorized on this workspace/project)
+    And triggerProjectRunSync forwards to brightbot's /project/run-sync with the X-Api-Key
+    And it returns { accepted: true } without the browser ever calling syncProjectRuns
+
+  Scenario: a browser session cannot reach the service-key receiver directly
+    Given a Cognito session with no x-service-key header
+    When it calls syncProjectRuns directly
+    Then the resolver raises ForbiddenError
+    And no runs are synced
 ```
 
 ## 5. Out of Scope
@@ -251,15 +405,18 @@ Feature: Sync a project with its transformation engine's existing runs (engine-a
 ## 6. Dependencies
 
 - `PipelineRunner` port + `list_pipelines`/`get_run_detail`/`get_run_logs` (BH-1255) — reused;
-  this spec adds `list_runs` + `LIST_RUNS`.
+  this spec adds two capability-negotiated verbs: `list_runs` (+ `LIST_RUNS`) and
+  `get_run_outputs` (+ `RUN_OUTPUTS`) with the `RunOutput` domain type.
 - `registerDbtOutputDataAssets` (`project.ts:335`) — reused, made reachable from sync (INV-5).
-- `RunLogExcerpt` — shared with BH-1329 (`remediation-pr-engine-run-logs.md`).
+- dbt Cloud `run_results.json` artifact via the existing `_fetch_artifact` helper
+  (`dbt_agent/tools/dbt_cloud_tools.py`) — the adapter's source for `get_run_outputs`; already used
+  by the remediation path, so no new dbt surface.
 
 ### Engine / warehouse / source matrix the port must cover
 
 Sync is designed against the whole known Brighthive matrix — the reason it is a port composition,
 not a dbt function. Each engine is one adapter behind the registry (PS-3); adding one is a
-registry entry, never a change to `project_sync.py` (INV-1). Sync's `list_runs`/`get_run_detail`/
+registry entry, never a change to `pipelines/sync/project_runs.py` (INV-1). Sync's `list_runs`/`get_run_detail`/
 `get_run_logs` map onto each engine's native run/job history; where an engine has no enumerable
 run history, its adapter advertises `LIST_RUNS` absent and sync degrades (INV-6).
 
@@ -279,7 +436,8 @@ each client engine comes online — no sync-path code change.
 
 ## 7. Correctness Properties
 
-Multi-tenant isolation boundary + a no-silent-failure guarantee, so this section applies.
+Multi-tenant isolation boundary + a browser/service-key auth boundary + a no-silent-failure
+guarantee, so this section applies.
 
 ### Property 1: tenant isolation
 *For any* run surfaced by sync, its workspace equals the requesting project's workspace.
@@ -293,6 +451,11 @@ for it.
 ### Property 3: no silent empty
 *For any* sync producing 0 runs, `reasonIfEmpty` is non-null.
 **Validates: §3 INV-4, INV-6, §4 Scenarios "cannot enumerate", "nothing to sync"**
+
+### Property 4: browser sync never reaches the service-key receiver
+*For any* caller with a Cognito session and no `x-service-key`, the only sync path that succeeds is
+`triggerProjectRunSync`; a direct `syncProjectRuns` call raises `ForbiddenError` and synces nothing.
+**Validates: §3 INV-7, §4 Scenarios "browser Sync routes through the authorized forwarder", "a browser session cannot reach the service-key receiver directly"**
 
 ## 8. Eval Criteria
 
@@ -310,7 +473,8 @@ Deterministic — no LLM judge (mirrors BH-1329 / BH-1092 evaluator design).
 - **Attributes**: `workspace.id`, `project.id`, `brightagent.pipeline.engine`,
   `pipeline.count`, `pipeline.runs_synced`, `pipeline.products_registered`, `correlation_id`.
 - **Log events**: `sync.started`, `sync.pipelines_enumerated`, `sync.run_upserted`,
-  `sync.products_registered`, `sync.empty` (with reason), `sync.capability_degraded`.
+  `sync.outputs_read` (with count), `sync.products_registered`, `sync.empty` (with reason),
+  `sync.capability_degraded` (which capability: `LIST_RUNS` / `RUN_OUTPUTS`).
 - **Metrics**: reuse `brightagent.pipeline.verb.executions` / `.duration_ms` with `verb=sync`.
 
 ## 10. Test Coverage Update
@@ -318,24 +482,38 @@ Deterministic — no LLM judge (mirrors BH-1329 / BH-1092 evaluator design).
 ### a. In-repo layered evals
 
 **brightbot (`tests/`):**
-- **L0** — `list_runs` + `LIST_RUNS` present on `PipelineRunner` + `FakePipelineRunner`;
-  `SyncResult` shape (reason_if_empty present when empty).
-- **L1** — sync composes list_pipelines → list_runs → get_run_detail/get_run_logs in order;
-  degrades to latest-only when `LIST_RUNS` absent.
+- **L0** — `list_runs` + `LIST_RUNS` and `get_run_outputs` + `RUN_OUTPUTS` + `RunOutput` present on
+  `PipelineRunner` + `FakePipelineRunner`; `SyncedRun` carries `run_outputs`; `SyncResult` shape
+  (reason_if_empty present when empty).
+- **L1** — sync composes list_pipelines → list_runs → get_run_detail/get_run_logs/get_run_outputs
+  in order; degrades to latest-only when `LIST_RUNS` absent; skips output reads (run_outputs = ())
+  when `RUN_OUTPUTS` absent.
 - **L2 (real FakePipelineRunner, no patch())** — one case per §4 scenario using `FakePipelineRunner`
-  seeded with a run history + `InjectedFault` for the empty / no-LIST_RUNS paths. Assert on the
-  `SyncResult` + §9 spans/events.
+  seeded with a run history + produced outputs + `InjectedFault` for the empty / no-LIST_RUNS /
+  no-RUN_OUTPUTS paths. Assert on the `SyncResult` (including `run_outputs`) + §9 spans/events.
 
 **platform-core (`tests/`):**
-- **L0** — `syncProjectRuns` mutation shape per §2.3.
-- **L2** — resolver upserts runs idempotently (INV-2) and reaches `registerDbtOutputDataAssets`
-  for a synced successful run (INV-5), scoped to the project's workspace (INV-3). Against a real
-  Neo4j test instance where the suite provides one.
+- **L0** — `syncProjectRuns` mutation shape per §2.3; `triggerProjectRunSync` mutation shape per §2.4.
+- **L2** — `syncProjectRuns` resolver upserts runs idempotently (INV-2) and reaches
+  `registerDbtOutputDataAssets` for a synced successful run (INV-5), scoped to the project's
+  workspace (INV-3). Against a real Neo4j test instance where the suite provides one.
+- **L2 (auth boundary, INV-7)** — `triggerProjectRunSync` is `@authorized`: an operator authorized
+  on the workspace/project gets `{ accepted: true }` and the forwarder POSTs
+  `/project/run-sync` with the `X-Api-Key`; a direct `syncProjectRuns` call from a Cognito session
+  (no `x-service-key`) raises `ForbiddenError`.
+
+**brightbot (`tests/`) — trigger route:**
+- **L0** — `POST /project/run-sync` accepts `{ workspaceId, projectId }`, returns `202 { accepted: true }`,
+  rejects a missing/invalid `X-Api-Key` (`Depends(authenticate_request)`).
+- **L2** — a 202 schedules the BackgroundTask that calls `sync_and_post_project_runs(...)` with the
+  posted workspace/project (assert the composition is invoked; no re-implementation of sync logic).
 
 ### b. Cross-repo e2e (`brighthive-e2e/`)
 
 - One feature test: link a project to a dbt Cloud sandbox that has run history, call
   `syncProjectRuns`, assert Observability shows the runs and Data Products populate.
+- Forwarder path: call `triggerProjectRunSync` with a Cognito session token, assert `{ accepted: true }`
+  and that runs + data products appear after the brightbot-side sync completes (the real browser path).
 - Idempotence: run sync twice, assert no duplicates.
 - Error-path: engine with zero jobs → `runsSynced: 0` + non-null `reasonIfEmpty`.
 
@@ -351,14 +529,17 @@ matching new test.
 | `list_runs` verb + `LIST_RUNS` capability on port + FakePipelineRunner | brightbot | L0 + contract |
 | dbt Cloud adapter: `list_runs` (map dbt Cloud run history) | brightbot | adapter test + live |
 | Snowflake-native adapter: `list_runs` (or advertise unsupported) | brightbot | adapter test |
-| `project_sync.py` — enumerate + pull + assemble SyncResult (engine-agnostic) | brightbot | L2 real-behavior |
-| `syncProjectRuns` mutation + resolver: upsert runs + reach registration | platform-core | L2 (idempotent, INV-5) |
-| Webapp "Sync" action on Observability tab + refresh | brighthive-webapp | component + e2e |
+| `pipelines/sync/project_runs.py` — enumerate + pull + assemble SyncResult (engine-agnostic) | brightbot | L2 real-behavior |
+| `syncProjectRuns` mutation + resolver: upsert runs + reach registration (x-service-key receiver) | platform-core | L2 (idempotent, INV-5) |
+| `triggerProjectRunSync` @authorized mutation + resolver: authorize operator, forward to brightbot `/project/run-sync` (X-Api-Key), return `{ accepted }` — no sync logic (INV-7) | platform-core | L0 (contract) + L2 (auth) |
+| `POST /project/run-sync` route: `Depends(authenticate_request)`, 202 immediate, BackgroundTask → `sync_and_post_project_runs` | brightbot | L0 (contract) + L2 (background dispatch) |
+| Webapp "Sync" IconButton beside Refresh → `triggerProjectRunSync` → `refetch()` Observability | brighthive-webapp | component (MockedProvider) + e2e |
 | e2e: link → sync → runs + data products populate | brighthive-e2e | full Gherkin |
 | (follow-up) Flow-tab false "triggered" toast when no jobId-bound transformations | brighthive-webapp | bug |
 
 ## Related
 
 - `pipeline-run-lifecycle.md` — owns the `PipelineRunner` port (BH-1255) this extends with `list_runs`.
-- `remediation-pr-engine-run-logs.md` — BH-1329; shares `RunLogExcerpt` + the port-first pattern.
+- `remediation-pr-engine-run-logs.md` — BH-1329; shares the bounded tail-preserving log-excerpt
+  convention + the port-first pattern.
 - `self-healing-pipelines.md` — BH-526; consumes the same run/observability substrate.
