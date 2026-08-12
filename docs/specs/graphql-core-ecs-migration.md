@@ -7,6 +7,9 @@ related:
   specs:
     - staging-graphql-neo4j-capacity.md
     - SPEC-BH-1365-graphql-lambda-provisioned-concurrency.md
+    - graphql-ecs-workspace-s3-trust.md
+  infrastructure:
+    - graphql-ecs-iam-trust.md
 ---
 
 # GraphQL Core — ECS Fargate migration
@@ -93,7 +96,30 @@ Feature: GraphQL Core on ECS Fargate
 4. Disable EventBridge warmer; keep Lambda 48h for rollback.
 5. Decommission GraphQL Lambda after soak.
 
-## 6. Implementation log
+## 6. Cross-account S3 trust automation (ECS cutover prerequisite)
+
+GraphQL presigned uploads call `sts:AssumeRole` on workspace/org S3 roles in
+data accounts. Those roles must trust **both** the Lambda role (`role_arn`) and
+the ECS task role (`ecs_task_role_arn`) published in `{env}/role/subgraph`.
+
+| Step | Owner | Behavior |
+|------|-------|----------|
+| Publish caller ARNs | `update_s3_role_arn.py` | Writes Lambda + webhook + ECS task role ARNs to Secrets Manager after CDK deploy |
+| Sync trust on all accounts | `sync_graphql_ecs_s3_trust.py` | Scans `PlatformS3BucketsByAccount`, patches each data-account S3 role trust via `cdk-admin-secret/{accountId}` |
+| New workspace/org (immediate) | `brighthive-data-workspace-cdk` / `-organization-cdk` | Trust `role_arn`, `webhook_role_arn`, and optional `ecs_task_role_arn` in `s3_stack.py` + `update_s3_role.py` post-deploy patch (organization-cdk: done; workspace-cdk: mirror same change) |
+
+CI runs both scripts after every platform-core deploy (including ECS-only
+`deploy-staging` branch). Re-runs are idempotent.
+
+```gherkin
+  Scenario: New workspace is ECS-upload-ready after platform deploy
+    Given a new workspace row exists in PlatformS3BucketsByAccount
+    And staging/role/subgraph contains ecs_task_role_arn
+    When sync_graphql_ecs_s3_trust runs for staging
+    Then the workspace data-account S3 role trusts the ECS task role
+```
+
+## 7. Implementation log
 
 | Item | Status |
 |------|--------|
@@ -102,4 +128,8 @@ Feature: GraphQL Core on ECS Fargate
 | Dockerfile | Done |
 | Catalog sync in-process queue | Done |
 | CDK ECS stack | Done (staging parallel deploy) |
+| ECS IAM parity (`graphql_api_iam.py`) | Done |
+| Subgraph secret + trust sync scripts | Done |
 | Staging cutover | Pending |
+| organization-cdk immediate trust on create | Done |
+| workspace-cdk immediate trust on create | Done |
