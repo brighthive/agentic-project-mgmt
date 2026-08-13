@@ -79,6 +79,10 @@ build/
 # Process IDs (make slack-start)
 .pids/
 
+# Redis dump (local dev artifact — never commit)
+dump.rdb
+*.rdb
+
 # OS
 .DS_Store
 Thumbs.db
