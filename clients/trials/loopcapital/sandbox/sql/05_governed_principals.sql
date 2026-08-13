@@ -142,6 +142,45 @@ ALTER ROLE SQLAgentReaderRole ADD MEMBER brightagent_engineer;
 GO
 
 -- ============================================================================
+-- The OTHER databases on the instance (sql/06_multi_database.sql).
+--
+-- Doc 1 grants read on "in-scope DBs" — plural. Both principals get SELECT on
+-- OMS and TradeDW so catalog, profiling and BH-172 cross-database parity work
+-- across the whole instance.
+--
+-- Note what is deliberately ABSENT: brightagent_engineer gets no write of any
+-- kind here. Its write authority stays confined to exactly one schema in one
+-- database (LoopCapitalAM.brightagent). Widening reads across the instance must
+-- not widen writes with them — that is the whole shape of the governed boundary.
+-- ============================================================================
+
+USE OMS;
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'brightagent_reader')
+  CREATE USER brightagent_reader FOR LOGIN brightagent_reader;
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'brightagent_engineer')
+  CREATE USER brightagent_engineer FOR LOGIN brightagent_engineer;
+GO
+GRANT SELECT ON SCHEMA::dbo TO brightagent_reader;
+GRANT SELECT ON SCHEMA::dbo TO brightagent_engineer;
+DENY INSERT, UPDATE, DELETE, ALTER ON SCHEMA::dbo TO brightagent_reader;
+DENY INSERT, UPDATE, DELETE, ALTER ON SCHEMA::dbo TO brightagent_engineer;
+GO
+
+USE TradeDW;
+GO
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'brightagent_reader')
+  CREATE USER brightagent_reader FOR LOGIN brightagent_reader;
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'brightagent_engineer')
+  CREATE USER brightagent_engineer FOR LOGIN brightagent_engineer;
+GO
+GRANT SELECT ON SCHEMA::dbo TO brightagent_reader;
+GRANT SELECT ON SCHEMA::dbo TO brightagent_engineer;
+DENY INSERT, UPDATE, DELETE, ALTER ON SCHEMA::dbo TO brightagent_reader;
+DENY INSERT, UPDATE, DELETE, ALTER ON SCHEMA::dbo TO brightagent_engineer;
+GO
+
+-- ============================================================================
 -- INV-4: neither principal may hold admin rights. Not asserted here — asserted
 -- by governed_write_check.py against the live server, because a check that
 -- lives in the same file that does the granting can only ever agree with

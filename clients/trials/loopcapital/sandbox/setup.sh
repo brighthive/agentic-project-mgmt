@@ -25,7 +25,7 @@ readonly SCENARIO="${LOOPCAPITAL_SCENARIO:-baseline}"
 # 0 on SQL errors and setup continues past a broken step (caught in review).
 readonly SQLCMD="docker exec -i loopcapital-sql-sandbox /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${MSSQL_SA_PASSWORD} -C -b"
 
-echo "[1/3] Starting SQL Server (Docker) — SQL Server Agent enabled, fixed-size data volume..."
+echo "[1/6] Starting SQL Server (Docker) — SQL Server Agent enabled, fixed-size data volume..."
 docker compose up -d
 echo "      Waiting for healthcheck (timeout ${HEALTHCHECK_TIMEOUT_S}s)..."
 elapsed=0
@@ -41,7 +41,7 @@ until [[ "$(docker inspect -f '{{.State.Health.Status}}' loopcapital-sql-sandbox
 done
 echo "      SQL Server is healthy."
 
-echo "[2/3] Confirming SQL Server Agent is running (required for GC-15's job-status query)..."
+echo "[2/6] Confirming SQL Server Agent is running (required for GC-15's job-status query)..."
 # ISNULL guards against sys.dm_server_services returning zero rows on some
 # Linux container builds — a bare "<> 4" comparison against a missing row
 # evaluates to UNKNOWN and silently skips the RAISERROR, letting setup
@@ -50,12 +50,12 @@ echo "[2/3] Confirming SQL Server Agent is running (required for GC-15's job-sta
 ${SQLCMD} -Q "IF ISNULL((SELECT status FROM sys.dm_server_services WHERE servicename LIKE 'SQL Server Agent%'), 0) <> 4
   RAISERROR('SQL Server Agent is not running (or its status row is missing) — check MSSQL_AGENT_ENABLED', 16, 1);"
 
-echo "[3/5] Seeding data — scenario '${SCENARIO}' (override with LOOPCAPITAL_SCENARIO=...)..."
+echo "[3/6] Seeding data — scenario '${SCENARIO}' (override with LOOPCAPITAL_SCENARIO=...)..."
 python3 reset.py --scenario "${SCENARIO}"
 
 # reset.py drops and recreates LoopCapitalAM, so everything below must run AFTER
 # it — database users do not survive a DROP DATABASE (server logins do).
-echo "[4/5] Applying the medallion bank schema (sql/03_bank_schema.sql)..."
+echo "[4/6] Applying the medallion bank schema (sql/03_bank_schema.sql)..."
 # Until now nothing in the automated path applied this file: setup.sh called only
 # reset.py, and reset.py applies 01 + 02. The medallion tables the README documents
 # therefore never existed unless someone ran the file by hand. Wiring it in here
@@ -67,7 +67,16 @@ echo "[4/5] Applying the medallion bank schema (sql/03_bank_schema.sql)..."
 # batching and `USE` context work exactly as written.
 ${SQLCMD} -d LoopCapitalAM < sql/03_bank_schema.sql
 
-echo "[5/5] Creating governed connection principals (sql/05_governed_principals.sql)..."
+echo "[5/6] Creating the instance's other databases — OMS + TradeDW (sql/06_multi_database.sql)..."
+# A SQL Server instance hosts many databases and Frank's box does too. These are
+# the ones the sandbox's own SSIS/SSRS/XSD artifacts already reference, so
+# creating them turns three orphaned diagnostic samples into live fixtures and
+# gives cross-database (three-part name) targeting something real to run against.
+# Anchor date is passed through so their seeded dates stay reproducible alongside
+# reset.py's.
+${SQLCMD} -v ANCHOR_DATE="${LOOPCAPITAL_ANCHOR_DATE:-$(date -u +%F)}" < sql/06_multi_database.sql
+
+echo "[6/6] Creating governed connection principals (sql/05_governed_principals.sql)..."
 # Passwords are generated per-run and exported for governed_write_check.py. These
 # are throwaway local sandbox credentials — never a real Loop Capital secret, and
 # never written to disk.

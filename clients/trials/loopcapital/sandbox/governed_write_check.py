@@ -361,6 +361,37 @@ def _drop_check_table(*, connection: pymssql.Connection) -> None:
         connection.rollback()
 
 
+def check_cross_database(*, engineer_password: str) -> list[Assertion]:
+    """The instance hosts more than one database — reads widen across it, writes must not.
+
+    Doc 1 grants read on "in-scope DBs" (plural), so catalog and cross-database parity need
+    SELECT on OMS and TradeDW. The risk that creates is obvious in hindsight and easy to ship
+    by accident: granting reads across the instance while quietly granting writes with them.
+    These assertions exist to make that regression impossible to miss.
+    """
+    results: list[Assertion] = []
+    with connect(user=ENGINEER, password=engineer_password) as connection:
+        for database, table in (("OMS", "OMS.dbo.Trades"), ("TradeDW", "TradeDW.dbo.FactTrade")):
+            results.append(
+                expect_allowed(
+                    connection=connection,
+                    statement=f"SELECT TOP 1 Symbol FROM {table}",
+                    invariant="INV-5",
+                    description=f"{ENGINEER} can read {table} (cross-database, three-part name)",
+                )
+            )
+            results.append(
+                expect_denied(
+                    connection=connection,
+                    statement=f"DELETE FROM {table}",
+                    invariant="INV-3",
+                    description=f"{ENGINEER} cannot write to {database} — reads widened, writes did not",
+                    target_object=table,
+                )
+            )
+    return results
+
+
 def check_no_admin_rights(*, reader_password: str, engineer_password: str) -> list[Assertion]:
     """INV-4: a principal that can grant itself more permission has no boundary at all."""
     results: list[Assertion] = []
@@ -414,6 +445,7 @@ def main() -> int:
         results = [
             *check_reader(password=reader_password),
             *check_engineer(password=engineer_password, keep=args.keep),
+            *check_cross_database(engineer_password=engineer_password),
             *check_no_admin_rights(reader_password=reader_password, engineer_password=engineer_password),
         ]
     except pymssql.Error as exc:

@@ -90,6 +90,40 @@ DB fixtures. Do not run them against the container.
   FIX reconciliation landing table (no PK; `LastPx money` fed a `DT_STR`,
   TC-DTM-03), the schema-parity + PII-classification target.
 
+## It's a server, not a database — three databases on the instance
+
+A SQL Server *instance* hosts many databases, and Frank's box does too: Doc 1 grants read on
+"in-scope DBs" — plural. A one-database sandbox cannot exercise criterion 1 ("connect &
+catalog"), three-part `DB.schema.table` naming, or BH-172's cross-database table parity.
+
+These databases are **not invented** — they are the ones the sandbox's own diagnostic artifacts
+already referenced while pointing at nothing:
+
+| Database | Tables | Role | Made live by |
+|---|---|---|---|
+| `LoopCapitalAM` | 11 — `holdings_raw` + medallion `raw_*`/`stg_*`/`mart_*` | Asset Management mart | — |
+| `OMS` | 3 — `Trades`, `Positions`, `SecurityMaster` | operational source SSIS extracts **from** | `ssis/02_LoadTradesFromOLTP.dtsx` |
+| `TradeDW` | 3 — `FactTrade`, `SecurityMaster`, `ReconStaging` | warehouse SSIS loads **into**, SSRS reports off | `ssrs/DailyTradeBlotter.rdl`, `contracts/TradeDW.ReconStaging.xsd` |
+
+`ReconStaging` is built to its XSD **defects included** — no primary key, `LastPx MONEY` fed a
+`DT_STR` (TC-DTM-03). Those are what a diagnostics skill is meant to find, so "fixing" them
+would delete the thing under test.
+
+There is also a deliberate, explainable gap for parity to discover:
+
+```
+OMS.dbo.Trades = 500   →   TradeDW.dbo.FactTrade = 467
+```
+
+The fact load lags by design (trades on/after the anchor aren't loaded yet) — a realistic
+source-vs-warehouse row-count difference rather than a broken fixture.
+
+> **File placement is load-bearing.** `OMS` and `TradeDW` sit on SQL Server's default data path
+> (the persistent volume), *not* the fixed-size tmpfs that `LoopCapitalAM` uses. GC-15 measures
+> free space on that tmpfs, so keeping the new databases off it leaves `fill_disk.sh`'s 18%
+> target untouched. Verified: the disk query still reports `LoopCapitalAM` at 99.22% baseline
+> while `OMS`/`TradeDW` sit on the host volume at 92.55%.
+
 ## On-prem read/write — the governed boundary
 
 Frank is off-cloud. The trial connects BrightAgent to **his own SQL Server 2019 box** with
