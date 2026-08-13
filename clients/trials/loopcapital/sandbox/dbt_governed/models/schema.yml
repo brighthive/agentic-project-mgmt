@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: portfolio_exposure_daily
+    description: >
+      Daily exposure per portfolio, rolled up from the raw holdings extract. Materialised
+      into the brightagent schema the engineer principal owns — never into the client's dbo.
+    columns:
+      - name: portfolio_id
+        description: The portfolio this exposure belongs to.
+        tests:
+          - not_null
+      - name: as_of_date
+        description: The date the holdings were extracted for.
+        tests:
+          - not_null
+      - name: position_count
+        description: How many holdings rolled into this row.
+        tests:
+          - not_null
+
+    # The grain assertion lives in tests/assert_one_row_per_portfolio_day.sql as a singular
+    # test. dbt_utils' unique_combination_of_columns would express it more tersely, but that
+    # package is not vendored here — and adding a dependency to a runner installed on a
+    # customer's network is a bigger decision than a one-line test is worth.
