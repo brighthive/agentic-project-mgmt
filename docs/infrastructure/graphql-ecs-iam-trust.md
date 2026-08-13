@@ -7,6 +7,8 @@ related:
   specs:
     - graphql-core-ecs-migration.md
     - graphql-ecs-workspace-s3-trust.md
+  infrastructure:
+    - graphql-ecs-production-deployment.md
 repos:
   - brighthive-platform-core
   - brighthive-data-workspace-cdk
@@ -263,6 +265,9 @@ GraphQL caller ARNs from the subgraph secret.
 ---
 
 ## 10. Production cutover checklist
+
+> **Full runbook:** `graphql-ecs-production-deployment.md` — phased deploy,
+> existing workspace/org backfill, validation, cutover, rollback, and known gaps.
 
 1. Add `GRAPHQL_ECS_ENABLED` and sizing keys to PROD in `configuration.py`
 2. Add prod `DATAPLANE_BRIGHTAGENT_ROLE_ARN` (not the staging demo org ARN)

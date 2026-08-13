@@ -90,6 +90,9 @@ Feature: GraphQL Core on ECS Fargate
 
 ## 5. Rollout
 
+See **`docs/infrastructure/graphql-ecs-production-deployment.md`** for the full
+production checklist (existing workspace/org backfill, cutover, rollback).
+
 1. Deploy ECS + ALB parallel to Lambda (no traffic).
 2. Validate via ALB DNS smoke tests.
 3. Cutover Route53 / custom domain to ALB.
