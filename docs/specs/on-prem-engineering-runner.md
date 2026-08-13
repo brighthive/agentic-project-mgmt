@@ -190,8 +190,20 @@ Not applicable — the runner executes instructions and performs no LLM inferenc
 |---|---|---|
 | L0 surface | Listing shape, file classification, truncation flag, refusal envelope | ✅ `tests/test_project_files.py` |
 | L1 routing | Refused paths never reach the filesystem; unconfigured roots read nothing | ✅ `tests/test_project_files.py` |
-| L2 behavior | Privilege refusal on a **real** SQL Server; containment against a **real** filesystem; dbt writing real rows | ✅ `tests/test_governed_login.py` + `tests/test_project_files.py` — **13 passing** |
-| e2e | Harness → runner → dbt → SQL Server → metadata synced | ⬜ Blocked on BH-1425 |
+| L2 behavior | Privilege refusal on a **real** SQL Server; containment against a **real** filesystem; dbt writing real rows | ✅ `tests/test_governed_login.py` + `tests/test_project_files.py` |
+| e2e | **Real MCP stdio session**: handshake, tool listing, file read, path refusal, dbt run with rows verified in the database, and a model that must fail | ✅ `tests/test_mcp_client_end_to_end.py` — **18 passing overall** |
+| e2e (metadata) | Run artifacts reaching the control plane | ⬜ Blocked on BH-1425 |
+
+**What the MCP e2e caught that nothing else could.** The server module had never successfully
+imported: it pulled `FastMCP` from `mcp.server.fastmcp`, which does not exist in mcp 2.0.0 — the
+SDK renamed it to `MCPServer`. Every prior test called the tool functions directly and never
+touched `server.py`, so 13 green tests coexisted with an MCP surface that could not start. Tool
+registration, schema generation, argument coercion and result serialisation all live between a
+Python function and an MCP caller, and none of them are exercised by calling the function.
+
+The failure path is proven **through dbt**, not merely at the connection: `governance_probe`'s
+pre-hook issues a `DELETE` against `dbo` and SQL Server refuses it. A boundary that stopped
+hand-written SQL but leaked through the transformation engine would be no boundary at all.
 
 Containment is tested against a real filesystem rather than a mocked `Path`, because the attacks
 that matter — `..` traversal and symlinks — *are* filesystem behaviour. The traversal case asserts
