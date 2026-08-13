@@ -220,7 +220,18 @@ Not applicable — the runner executes instructions and performs no LLM inferenc
 | L2 behavior | Privilege refusal on a **real** SQL Server; containment against a **real** filesystem; dbt writing real rows | ✅ `tests/test_governed_login.py` + `tests/test_project_files.py` |
 | e2e | **Real MCP stdio session**: handshake, tool listing, file read, path refusal, dbt run with rows verified in the database, and a model that must fail | ✅ `tests/test_mcp_client_end_to_end.py` — **18 passing overall** |
 | e2e (metadata) | Report built, guarded, delivered idempotently; queued and replayed when the destination is down | ✅ `tests/test_report_delivery.py` — **34 passing overall** |
-| e2e (control plane) | Delivered lineage landing in platform-core | ⬜ Receiving endpoint not built |
+| e2e (control plane) | Delivered lineage landing in platform-core | ⬜ **BH-1431** — receiving mutation not built |
+
+**Everything reachable from the customer's side is done and proven.** 48 tests cover a real MCP
+stdio session, a real filesystem, a real SQL Server 2019, a real HTTP listener, real subprocess
+boundaries, and a sandbox rebuilt from zero. Three bugs were found by testing at those boundaries
+rather than through the functions: the server module never imported (SDK rename), a dbt timeout
+raised out of the tool, and concurrent runs corrupted each other's artifacts.
+
+What remains is the receiving half — platform-core has `TransformationRunResult` and friends, but
+those are read-side, for polling runs the platform itself triggered. A run performed somewhere we
+do not control has no pipeline segment and an externally-supplied identity, so whether it extends
+those types or needs its own is a design decision BH-1431 opens rather than assumes.
 
 **What the MCP e2e caught that nothing else could.** The server module had never successfully
 imported: it pulled `FastMCP` from `mcp.server.fastmcp`, which does not exist in mcp 2.0.0 — the
