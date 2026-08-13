@@ -1,8 +1,30 @@
 # ADR-0001: Run dbt Core cloud-side against Frank's on-prem SQL Server
 
 **Date:** 2026-08-13
-**Status:** Proposed
+**Status:** Superseded — see the correction below, and ADR-0002
 **Who:** @drchinca (Kuri)
+
+> ## ⚠️ Correction (same day): this decision is wrong for engineering
+>
+> The reasoning below — *"dbt is ELT, so the warehouse computes wherever dbt runs"* — is true of
+> the **data** and irrelevant to the **files**. dbt Core is a filesystem tool before it is a SQL
+> tool: the project tree, the models, `target/`, and the git working tree all live on disk.
+> Running dbt cloud-side puts the customer's project on **our** filesystem, where their engineers
+> cannot see or edit their own models and any local change is invisible to us.
+>
+> The same over-extension applies to the legacy artifacts. SSISDB holds *deployed* packages, so
+> reading those over 1433 works — but the **source** `.dtsx` files engineers open in SSDT live on
+> the filesystem, not in the catalog.
+>
+> **The correct split:**
+>
+> | Activity | Where it runs | State |
+> |---|---|---|
+> | Monitoring — disk, Agent jobs, catalog, health | Cloud, over 1433 | Already ships (`SqlServerPipelineSource`) |
+> | Engineering — dbt project, SSIS/SSRS sources, git tree | **Must be local** | Nothing exists (BH-1421) |
+>
+> Everything below remains accurate **for monitoring**, which is what it was really arguing about.
+> It is wrong as a decision about the engineering path.
 
 ## The Problem
 
