@@ -1,6 +1,15 @@
 services:
   sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    # SQL Server 2019 — matches Frank's actual host (SQL Server 2019 on Windows
+    # Server 2019, per the trial doc), so T-SQL and compat-level differences
+    # surface HERE rather than on the live trial connection. Pinned to the
+    # latest CU plus its newest security GDR; override only with another real
+    # tag from mcr.microsoft.com/v2/mssql/server/tags/list.
+    #
+    # Downgrade warning: a 2019 engine CANNOT attach system databases written
+    # by 2022. Switching versions requires `docker compose down -v` first —
+    # the volume below is version-bound, not portable.
+    image: mcr.microsoft.com/mssql/server:${LOOPCAPITAL_MSSQL_IMAGE_TAG:-2019-CU32-GDR10-ubuntu-20.04}
     container_name: loopcapital-sql-sandbox
     platform: linux/amd64 # no native arm64 image; Rosetta/QEMU on Apple Silicon
     environment:

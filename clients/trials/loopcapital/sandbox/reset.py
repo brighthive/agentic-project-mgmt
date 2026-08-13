@@ -50,6 +50,11 @@ class ResetConfig:
     scenario: str
     rng_seed: int
     row_count: int
+    # The date the 30-day holdings window ends on. Defaults to today, which keeps
+    # the fixture looking current — but makes the seeded data differ between any
+    # two days, so a test pinning literal dates passes today and fails tomorrow.
+    # Pass an explicit date to get a baseline that is stable across days.
+    anchor_date: str | None = None
 
 
 def sqlcmd(*, database: str, query: str, password: str) -> str:
@@ -113,22 +118,27 @@ def drop_and_recreate_database(*, password: str) -> None:
     run_sql_file_respecting_use(path="sql/01_create_database.sql", password=password)
 
 
-def seed_baseline(*, password: str, row_count: int, rng_seed: int) -> None:
+def seed_baseline(*, password: str, row_count: int, rng_seed: int, anchor_date: str | None = None) -> None:
     """Deterministic seed — same shape as sql/01_create_database.sql's own
     seed block, but parameterized here so --seed changes the RNG without
     editing the SQL file. Mirrors Longaeva sandbox/seed/seed.py's
     RNG_SEED convention."""
-    print(f"Seeding {row_count} baseline rows (rng_seed={rng_seed})...")
+    # Anchor for the 30-day as_of_date window. CAST(SYSUTCDATETIME() AS DATE) makes
+    # the fixture slide with the calendar, so two rebuilds on different days produce
+    # different data — fine for a demo, fatal for a stable test baseline. Passing
+    # --anchor-date pins it, and the same anchor then yields an identical fixture on
+    # any day (verified by rebuilding twice and diffing content checksums).
+    anchor_sql = f"CAST('{anchor_date}' AS DATE)" if anchor_date else "CAST(SYSUTCDATETIME() AS DATE)"
+    print(f"Seeding {row_count} baseline rows (anchor={anchor_date or 'today'})...")
     sqlcmd(
         database="LoopCapitalAM",
         query=f"""
-        DECLARE @seed INT = {rng_seed};
         INSERT INTO holdings_raw (portfolio_id, instrument_id, quantity, as_of_date)
         SELECT
             'PORT-' + RIGHT('000' + CAST((n % 5) + 1 AS VARCHAR), 3),
             'INST-' + RIGHT('0000' + CAST(n AS VARCHAR), 4),
             1000.0 + (n * 12.5),
-            DATEADD(DAY, -1 * (n % 30), CAST(SYSUTCDATETIME() AS DATE))
+            DATEADD(DAY, -1 * (n % 30), {anchor_sql})
         FROM (SELECT TOP ({row_count}) ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS n
               FROM sys.all_objects) AS seq;
         """,
@@ -178,7 +188,12 @@ def create_agent_jobs_and_wait(*, password: str, timeout_s: int = 60) -> None:
 
 
 def apply_scenario(*, config: ResetConfig, password: str) -> None:
-    seed_baseline(password=password, row_count=config.row_count, rng_seed=config.rng_seed)
+    seed_baseline(
+        password=password,
+        row_count=config.row_count,
+        rng_seed=config.rng_seed,
+        anchor_date=config.anchor_date,
+    )
     create_agent_jobs_and_wait(password=password)
 
     if config.scenario == "baseline":
@@ -241,6 +256,16 @@ def main() -> int:
     parser.add_argument("--scenario", choices=SCENARIOS, default="baseline")
     parser.add_argument("--rows", type=int, default=2000, help="baseline row count (default: 2000)")
     parser.add_argument("--seed", type=int, default=42, help="RNG seed for the baseline data (default: 42)")
+    parser.add_argument(
+        "--anchor-date",
+        default=None,
+        metavar="YYYY-MM-DD",
+        help=(
+            "pin the end of the 30-day as_of_date window (env: LOOPCAPITAL_ANCHOR_DATE). "
+            "Defaults to today, which makes the fixture differ between days — pass a date "
+            "for a baseline that stays identical across rebuilds on any day."
+        ),
+    )
     args = parser.parse_args()
 
     password = os.environ.get("MSSQL_SA_PASSWORD")
@@ -248,7 +273,12 @@ def main() -> int:
         print("export MSSQL_SA_PASSWORD before running reset.py", file=sys.stderr)
         return 1
 
-    config = ResetConfig(scenario=args.scenario, rng_seed=args.seed, row_count=args.rows)
+    config = ResetConfig(
+        scenario=args.scenario,
+        rng_seed=args.seed,
+        row_count=args.rows,
+        anchor_date=args.anchor_date or os.environ.get("LOOPCAPITAL_ANCHOR_DATE"),
+    )
 
     drop_and_recreate_database(password=password)
     apply_scenario(config=config, password=password)

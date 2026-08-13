@@ -27,10 +27,13 @@ should not use) a provisioned cloud resource.
 ```
 sandbox/
 ├── README.md              ← you are here
-├── docker-compose.yml      ← mssql-server image, SQL Server Agent ON, fixed-size data volume
+├── docker-compose.yml      ← SQL Server 2019 image, SQL Server Agent ON, fixed-size data volume
 ├── sql/
 │   ├── 01_create_database.sql   ← LoopCapitalAM DB + holdings_raw (Asset Management shape)
-│   └── 02_create_agent_jobs.sql ← 2 SQL Server Agent jobs: one Succeeded, one Failed
+│   ├── 02_create_agent_jobs.sql ← 2 SQL Server Agent jobs: one Succeeded, one Failed
+│   ├── 03_bank_schema.sql       ← medallion model (raw_* → stg_* → mart_*)
+│   └── 05_governed_principals.sql ← the two scoped logins the trial implies
+├── governed_write_check.py ← proves the read/write boundary on a REAL server
 ├── ssis/
 │   ├── Extract_Holdings_Nightly.dtsx     ← Loop-specific SSIS package feeding holdings_raw
 │   └── Create_AssetManagement_MySQL.dtsx ← generic sample, MySQL-targeted, unrelated to GC-15
@@ -87,6 +90,115 @@ DB fixtures. Do not run them against the container.
   FIX reconciliation landing table (no PK; `LastPx money` fed a `DT_STR`,
   TC-DTM-03), the schema-parity + PII-classification target.
 
+## It's a server, not a database — three databases on the instance
+
+A SQL Server *instance* hosts many databases, and Frank's box does too: Doc 1 grants read on
+"in-scope DBs" — plural. A one-database sandbox cannot exercise criterion 1 ("connect &
+catalog"), three-part `DB.schema.table` naming, or BH-172's cross-database table parity.
+
+These databases are **not invented** — they are the ones the sandbox's own diagnostic artifacts
+already referenced while pointing at nothing:
+
+| Database | Tables | Role | Made live by |
+|---|---|---|---|
+| `LoopCapitalAM` | 11 — `holdings_raw` + medallion `raw_*`/`stg_*`/`mart_*` | Asset Management mart | — |
+| `OMS` | 3 — `Trades`, `Positions`, `SecurityMaster` | operational source SSIS extracts **from** | `ssis/02_LoadTradesFromOLTP.dtsx` |
+| `TradeDW` | 3 — `FactTrade`, `SecurityMaster`, `ReconStaging` | warehouse SSIS loads **into**, SSRS reports off | `ssrs/DailyTradeBlotter.rdl`, `contracts/TradeDW.ReconStaging.xsd` |
+
+`ReconStaging` is built to its XSD **defects included** — no primary key, `LastPx MONEY` fed a
+`DT_STR` (TC-DTM-03). Those are what a diagnostics skill is meant to find, so "fixing" them
+would delete the thing under test.
+
+There is also a deliberate, explainable gap for parity to discover:
+
+```
+OMS.dbo.Trades = 500   →   TradeDW.dbo.FactTrade = 467
+```
+
+The fact load lags by design (trades on/after the anchor aren't loaded yet) — a realistic
+source-vs-warehouse row-count difference rather than a broken fixture.
+
+> **File placement is load-bearing.** `OMS` and `TradeDW` sit on SQL Server's default data path
+> (the persistent volume), *not* the fixed-size tmpfs that `LoopCapitalAM` uses. GC-15 measures
+> free space on that tmpfs, so keeping the new databases off it leaves `fill_disk.sh`'s 18%
+> target untouched. Verified: the disk query still reports `LoopCapitalAM` at 99.22% baseline
+> while `OMS`/`TradeDW` sit on the host volume at 92.55%.
+
+## On-prem read/write — the governed boundary
+
+Frank is off-cloud. The trial connects BrightAgent to **his own SQL Server 2019 box** with
+"scoped read + optional governed-write (reviewable PRs only, nothing applied without
+approval)". His DBAs will not hand over `sa`, and a demo that runs as `sa` proves nothing —
+`sa` can do anything, so a write that succeeds says nothing about whether a boundary holds.
+
+`sql/05_governed_principals.sql` creates the two principals the trial actually implies:
+
+| Principal | Reads | Writes |
+|---|---|---|
+| `brightagent_reader` | all of `dbo`, disk stats, SQL Agent job history | **nothing, anywhere** |
+| `brightagent_engineer` | all of `dbo` | **only** the `brightagent` schema it owns |
+
+The boundary is enforced by SQL Server's permission engine — not by prompt wording, not by an
+agent behaving well, and not by a tool-layer guard a future refactor could quietly drop. The
+engineer's `DENY INSERT, UPDATE, DELETE, ALTER ON SCHEMA::dbo` is the load-bearing line: it is
+what makes "the agent cannot touch your data" a database fact rather than a claim in a deck.
+
+```bash
+export BRIGHTAGENT_READER_PASSWORD='...'    # printed by setup.sh
+export BRIGHTAGENT_ENGINEER_PASSWORD='...'
+uv run --with pymssql python governed_write_check.py
+```
+
+Every assertion runs against the real server over real TDS; a FAIL is a real privilege
+escalation. Denials are matched on SQL Server's **error number** (229/230/262/300), not on the
+mere fact that something raised — otherwise a missing table would report a triumphant PASS for
+a boundary that was never tested.
+
+### What actually writes: dbt Core, on his network
+
+dbt **Cloud** cannot serve this trial at all, for two independent reasons:
+
+1. **No SQL Server destination.** dbt Cloud hosts Snowflake, BigQuery, Databricks, Redshift,
+   Postgres, Fabric and Synapse. Plain SQL Server is the *community* `dbt-sqlserver` adapter,
+   which dbt Cloud does not run.
+2. **It could not reach him anyway.** dbt Cloud is SaaS; Frank's box is on-prem behind his
+   firewall. This is his own objection restated — *"if the SQL server does not have any MCP or
+   any other service to actually connect."*
+
+So **dbt Core runs on his network instead**. That is a deployment change, not an architecture
+change: dbt is still the thing that writes to the warehouse. BrightAgent keeps its existing
+role — author models, open governed PRs, orchestrate runs — and needs no raw write path of its
+own, so brightbot's SELECT-only enforcement stays intact.
+
+`dbt_governed/` is that path, proven end to end against this sandbox:
+
+```bash
+export BRIGHTAGENT_ENGINEER_PASSWORD='...'   # printed by setup.sh
+cd dbt_governed
+../disk_reclaim/.venv/bin/dbt run --profiles-dir . --project-dir .
+```
+
+The only lines that matter in `dbt_governed/profiles.yml` are `user: brightagent_engineer` and
+`schema: brightagent`. dbt inherits the database-enforced boundary for free: it reads the
+client's `dbo` tables as sources and materializes into the schema the engineer owns, and SQL
+Server rejects any model that tries to write into `dbo`. No dbt-side guard, no allowlist.
+
+> **dbt needs two metadata grants** beyond plain SELECT, both in
+> `sql/05_governed_principals.sql`. Its table materialization reads
+> `sys.sql_expression_dependencies`, which needs `VIEW DEFINITION` **and** an explicit
+> `SELECT` — the latter is granted to `db_owner` by default, and these principals deliberately
+> are not `db_owner`. Both are metadata-only; the boundary check still holds 13/13 after them.
+> This was found by running the real adapter, not by reading docs.
+
+> **`reset.py` drops the principals.** It drops and recreates `LoopCapitalAM`, and database
+> users do not survive `DROP DATABASE` (server logins do). After any bare `reset.py` run the
+> two users are gone and `governed_write_check.py` will fail to connect. Re-run `./setup.sh`
+> instead — it is idempotent, and `LOOPCAPITAL_SCENARIO=disk-pressure ./setup.sh` reseeds a
+> scenario *and* restores the principals in one pass.
+
+Contract, invariants and correctness properties:
+[`docs/specs/loopcapital-onprem-read-write-sandbox.md`](../../../../docs/specs/loopcapital-onprem-read-write-sandbox.md).
+
 ## Warehouse/DB profiler
 
 **`profile_warehouse.py`** runs a REAL profiling pass against `holdings_raw`
@@ -105,6 +217,37 @@ uv run --with pymssql python profile_warehouse.py
 Verified end-to-end against a real running container (not claimed): profiled
 2,000 real rows across 6 columns, correct null/cardinality math, real pymssql
 connection over the same TDS protocol the actual demo will use.
+
+## Reproducibility — nuke and recreate to a known baseline
+
+Verified by rebuilding twice from scratch and diffing content checksums, not assumed:
+
+```bash
+docker compose down -v && ./setup.sh     # ×2
+# rows=2000 chk=-246005068  dates 2026-07-15→2026-08-13  tables=11  both principals
+# → IDENTICAL
+```
+
+**One catch that matters for tests.** `as_of_date` is a 30-day window ending on the anchor date,
+which defaults to *today* — so the fixture slides with the calendar. Two rebuilds on the same day
+match exactly; rebuild tomorrow and every date shifts by one, changing the checksum. Fine for a
+demo, fatal for a test that pins literal dates.
+
+Pin the anchor to get a baseline that is identical on **any** day:
+
+```bash
+export LOOPCAPITAL_ANCHOR_DATE=2026-01-15   # or: reset.py --anchor-date 2026-01-15
+docker compose down -v && ./setup.sh
+# rows=2000 chk=-246005012  dates 2025-12-17→2026-01-15   ← stable across rebuilds, forever
+```
+
+Two more things to know before treating a rebuild as a clean baseline:
+
+| Gotcha | Effect | What to do |
+|---|---|---|
+| `setup.sh` generates **random** principal passwords when the env vars are unset | credentials differ every rebuild | export `BRIGHTAGENT_READER_PASSWORD` / `BRIGHTAGENT_ENGINEER_PASSWORD` |
+| `dbt run` output is **not** recreated by `setup.sh` | `brightagent` schema comes back empty | re-run `dbt run` after each rebuild (deterministic) |
+| `--seed` is currently a **no-op** in scenario mode | changing it changes nothing | ignore it; every value derives from the row number |
 
 ## Quick start
 

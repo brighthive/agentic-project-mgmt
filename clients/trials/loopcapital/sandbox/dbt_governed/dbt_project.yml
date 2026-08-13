@@ -1,0 +1,15 @@
+name: loopcapital_governed
+version: "1.0.0"
+config-version: 2
+
+profile: loopcapital_governed
+
+model-paths: ["models"]
+
+# No +schema override on purpose. dbt's default generate_schema_name appends a
+# custom schema to the target's, so `+schema: dbo` here would resolve to
+# `brightagent_dbo`, not `dbo` — leaving the target schema alone keeps every
+# model in `brightagent`, the one schema the engineer principal owns.
+models:
+  loopcapital_governed:
+    +materialized: table
