@@ -27,10 +27,13 @@ should not use) a provisioned cloud resource.
 ```
 sandbox/
 ├── README.md              ← you are here
-├── docker-compose.yml      ← mssql-server image, SQL Server Agent ON, fixed-size data volume
+├── docker-compose.yml      ← SQL Server 2019 image, SQL Server Agent ON, fixed-size data volume
 ├── sql/
 │   ├── 01_create_database.sql   ← LoopCapitalAM DB + holdings_raw (Asset Management shape)
-│   └── 02_create_agent_jobs.sql ← 2 SQL Server Agent jobs: one Succeeded, one Failed
+│   ├── 02_create_agent_jobs.sql ← 2 SQL Server Agent jobs: one Succeeded, one Failed
+│   ├── 03_bank_schema.sql       ← medallion model (raw_* → stg_* → mart_*)
+│   └── 05_governed_principals.sql ← the two scoped logins the trial implies
+├── governed_write_check.py ← proves the read/write boundary on a REAL server
 ├── ssis/
 │   ├── Extract_Holdings_Nightly.dtsx     ← Loop-specific SSIS package feeding holdings_raw
 │   └── Create_AssetManagement_MySQL.dtsx ← generic sample, MySQL-targeted, unrelated to GC-15
@@ -86,6 +89,45 @@ DB fixtures. Do not run them against the container.
 - **`contracts/TradeDW.ReconStaging.xsd`** — captured table contract for the
   FIX reconciliation landing table (no PK; `LastPx money` fed a `DT_STR`,
   TC-DTM-03), the schema-parity + PII-classification target.
+
+## On-prem read/write — the governed boundary
+
+Frank is off-cloud. The trial connects BrightAgent to **his own SQL Server 2019 box** with
+"scoped read + optional governed-write (reviewable PRs only, nothing applied without
+approval)". His DBAs will not hand over `sa`, and a demo that runs as `sa` proves nothing —
+`sa` can do anything, so a write that succeeds says nothing about whether a boundary holds.
+
+`sql/05_governed_principals.sql` creates the two principals the trial actually implies:
+
+| Principal | Reads | Writes |
+|---|---|---|
+| `brightagent_reader` | all of `dbo`, disk stats, SQL Agent job history | **nothing, anywhere** |
+| `brightagent_engineer` | all of `dbo` | **only** the `brightagent` schema it owns |
+
+The boundary is enforced by SQL Server's permission engine — not by prompt wording, not by an
+agent behaving well, and not by a tool-layer guard a future refactor could quietly drop. The
+engineer's `DENY INSERT, UPDATE, DELETE, ALTER ON SCHEMA::dbo` is the load-bearing line: it is
+what makes "the agent cannot touch your data" a database fact rather than a claim in a deck.
+
+```bash
+export BRIGHTAGENT_READER_PASSWORD='...'    # printed by setup.sh
+export BRIGHTAGENT_ENGINEER_PASSWORD='...'
+uv run --with pymssql python governed_write_check.py
+```
+
+Every assertion runs against the real server over real TDS; a FAIL is a real privilege
+escalation. Denials are matched on SQL Server's **error number** (229/230/262/300), not on the
+mere fact that something raised — otherwise a missing table would report a triumphant PASS for
+a boundary that was never tested.
+
+> **`reset.py` drops the principals.** It drops and recreates `LoopCapitalAM`, and database
+> users do not survive `DROP DATABASE` (server logins do). After any bare `reset.py` run the
+> two users are gone and `governed_write_check.py` will fail to connect. Re-run `./setup.sh`
+> instead — it is idempotent, and `LOOPCAPITAL_SCENARIO=disk-pressure ./setup.sh` reseeds a
+> scenario *and* restores the principals in one pass.
+
+Contract, invariants and correctness properties:
+[`docs/specs/loopcapital-onprem-read-write-sandbox.md`](../../../../docs/specs/loopcapital-onprem-read-write-sandbox.md).
 
 ## Warehouse/DB profiler
 
