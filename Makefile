@@ -831,6 +831,9 @@ help:  ## Show this help
 	@printf "\n  \033[1mLayer 5 — Longaeva trial tracker\033[0m  (refreshed manually + nightly cron)\n"
 	@grep -hE '^longaeva-tracker[a-zA-Z_-]*:.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@printf "\n  \033[1mLayer 6 — Loop Capital sandbox\033[0m  (git-only rebuild; needs MSSQL_SA_PASSWORD)\n"
+	@grep -hE '^[a-zA-Z_-]+:.*## ⑥' Makefile | \
+		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mLegacy — Slack integration\033[0m\n"
 	@grep -hE '^slack[a-zA-Z_-]*:.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -892,5 +895,31 @@ longaeva-tracker-install-cron:  ## ⑤ Install nightly tracker refresh in cronta
 longaeva-tracker-uninstall-cron:  ## ⑤ Remove the tracker cron entry
 	@crontab -l 2>/dev/null | grep -vF "longaeva-tracker" | crontab - && \
 		echo "[tracker] cron entry removed"
+
+# ── Loop Capital sandbox (manifest mode) ─────────────────────────────
+# Rebuild a local SQL Server whose shape mirrors staging, from git alone —
+# committed schema_manifest.json + deterministic synthetic rows. Never touches
+# Loop Capital's real server. See clients/trials/loopcapital/sandbox/manifest/README.md.
+
+.PHONY: capture-loopcapital sandbox-nuke sandbox-recreate sandbox-synthesize
+
+SANDBOX_DIR      := $(CURDIR)/clients/trials/loopcapital/sandbox
+SANDBOX_MANIFEST := $(SANDBOX_DIR)/manifest
+SANDBOX_ROWS     ?= 200
+SANDBOX_SEED     ?= 42
+# pymssql + pydantic pulled per-invocation by uv — no repo-level dependency footprint.
+SANDBOX_PY       := uv run --with pymssql --with pydantic python
+
+capture-loopcapital:  ## ⑥ READ-ONLY staging capture (SSO'd GraphQL + linked GitHub) → schema_manifest.json
+	@$(SANDBOX_PY) $(SANDBOX_MANIFEST)/capture_from_staging.py
+
+sandbox-nuke:  ## ⑥ Destroy the local SQL Server volume (docker compose down -v)
+	@cd $(SANDBOX_DIR) && docker compose down -v && echo "[sandbox] volume destroyed"
+
+sandbox-recreate:  ## ⑥ Boot container + rebuild schema/rows from manifest (git-only; needs MSSQL_SA_PASSWORD)
+	@$(SANDBOX_PY) $(SANDBOX_MANIFEST)/recreate.py --rows $(SANDBOX_ROWS) --seed $(SANDBOX_SEED)
+
+sandbox-synthesize:  ## ⑥ Re-seed deterministic rows into a running container (no restart)
+	@$(SANDBOX_PY) $(SANDBOX_MANIFEST)/synthesize.py --rows $(SANDBOX_ROWS) --seed $(SANDBOX_SEED)
 
 .DEFAULT_GOAL := help
