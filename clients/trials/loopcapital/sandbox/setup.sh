@@ -50,8 +50,33 @@ echo "[2/3] Confirming SQL Server Agent is running (required for GC-15's job-sta
 ${SQLCMD} -Q "IF ISNULL((SELECT status FROM sys.dm_server_services WHERE servicename LIKE 'SQL Server Agent%'), 0) <> 4
   RAISERROR('SQL Server Agent is not running (or its status row is missing) — check MSSQL_AGENT_ENABLED', 16, 1);"
 
-echo "[3/3] Seeding data — scenario '${SCENARIO}' (override with LOOPCAPITAL_SCENARIO=...)..."
+echo "[3/5] Seeding data — scenario '${SCENARIO}' (override with LOOPCAPITAL_SCENARIO=...)..."
 python3 reset.py --scenario "${SCENARIO}"
+
+# reset.py drops and recreates LoopCapitalAM, so everything below must run AFTER
+# it — database users do not survive a DROP DATABASE (server logins do).
+echo "[4/5] Applying the medallion bank schema (sql/03_bank_schema.sql)..."
+# Until now nothing in the automated path applied this file: setup.sh called only
+# reset.py, and reset.py applies 01 + 02. The medallion tables the README documents
+# therefore never existed unless someone ran the file by hand. Wiring it in here
+# closes that gap — and governed_write_check.py depends on these tables existing,
+# because a permission check against a missing table passes for the wrong reason.
+# Piped via stdin, not `-i`: SQLCMD runs INSIDE the container (docker exec), so a
+# `-i sql/...` path would resolve against the container filesystem, where the repo
+# is not mounted. Feeding the file on stdin keeps one sqlcmd session, so `GO`
+# batching and `USE` context work exactly as written.
+${SQLCMD} -d LoopCapitalAM < sql/03_bank_schema.sql
+
+echo "[5/5] Creating governed connection principals (sql/05_governed_principals.sql)..."
+# Passwords are generated per-run and exported for governed_write_check.py. These
+# are throwaway local sandbox credentials — never a real Loop Capital secret, and
+# never written to disk.
+export BRIGHTAGENT_READER_PASSWORD="${BRIGHTAGENT_READER_PASSWORD:-Reader-$(openssl rand -hex 8)!aA1}"
+export BRIGHTAGENT_ENGINEER_PASSWORD="${BRIGHTAGENT_ENGINEER_PASSWORD:-Engineer-$(openssl rand -hex 8)!aA1}"
+${SQLCMD} -d LoopCapitalAM \
+  -v BRIGHTAGENT_READER_PASSWORD="${BRIGHTAGENT_READER_PASSWORD}" \
+  -v BRIGHTAGENT_ENGINEER_PASSWORD="${BRIGHTAGENT_ENGINEER_PASSWORD}" \
+  < sql/05_governed_principals.sql
 
 echo ""
 echo "Setup complete."
@@ -59,3 +84,8 @@ echo "  ./validate.sh              — confirm both GC-15 queries return real da
 echo "  ./profile_warehouse.py     — run a real profiler pass against holdings_raw"
 echo "  ./reset.py --scenario X    — reset to ground zero + reseed against a named scenario"
 echo "  ssis/*.dtsx, ssrs/*.rdl    — real SSIS/SSRS artifacts for diagnostics skills"
+echo ""
+echo "Governed read/write boundary — export these, then prove it:"
+echo "  export BRIGHTAGENT_READER_PASSWORD='${BRIGHTAGENT_READER_PASSWORD}'"
+echo "  export BRIGHTAGENT_ENGINEER_PASSWORD='${BRIGHTAGENT_ENGINEER_PASSWORD}'"
+echo "  uv run --with pymssql python governed_write_check.py"
