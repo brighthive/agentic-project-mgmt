@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: loopcapital
+    database: LoopCapitalAM
+    schema: dbo
+    description: >
+      The client's own data. dbt reads these as sources and can never write to
+      them — brightagent_engineer holds SELECT on dbo plus an explicit DENY on
+      INSERT/UPDATE/DELETE/ALTER, enforced by SQL Server, not by dbt.
+    tables:
+      - name: holdings_raw
+        description: The holdings extract the nightly SSIS package appends to.

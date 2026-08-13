@@ -120,6 +120,42 @@ escalation. Denials are matched on SQL Server's **error number** (229/230/262/30
 mere fact that something raised — otherwise a missing table would report a triumphant PASS for
 a boundary that was never tested.
 
+### What actually writes: dbt Core, on his network
+
+dbt **Cloud** cannot serve this trial at all, for two independent reasons:
+
+1. **No SQL Server destination.** dbt Cloud hosts Snowflake, BigQuery, Databricks, Redshift,
+   Postgres, Fabric and Synapse. Plain SQL Server is the *community* `dbt-sqlserver` adapter,
+   which dbt Cloud does not run.
+2. **It could not reach him anyway.** dbt Cloud is SaaS; Frank's box is on-prem behind his
+   firewall. This is his own objection restated — *"if the SQL server does not have any MCP or
+   any other service to actually connect."*
+
+So **dbt Core runs on his network instead**. That is a deployment change, not an architecture
+change: dbt is still the thing that writes to the warehouse. BrightAgent keeps its existing
+role — author models, open governed PRs, orchestrate runs — and needs no raw write path of its
+own, so brightbot's SELECT-only enforcement stays intact.
+
+`dbt_governed/` is that path, proven end to end against this sandbox:
+
+```bash
+export BRIGHTAGENT_ENGINEER_PASSWORD='...'   # printed by setup.sh
+cd dbt_governed
+../disk_reclaim/.venv/bin/dbt run --profiles-dir . --project-dir .
+```
+
+The only lines that matter in `dbt_governed/profiles.yml` are `user: brightagent_engineer` and
+`schema: brightagent`. dbt inherits the database-enforced boundary for free: it reads the
+client's `dbo` tables as sources and materializes into the schema the engineer owns, and SQL
+Server rejects any model that tries to write into `dbo`. No dbt-side guard, no allowlist.
+
+> **dbt needs two metadata grants** beyond plain SELECT, both in
+> `sql/05_governed_principals.sql`. Its table materialization reads
+> `sys.sql_expression_dependencies`, which needs `VIEW DEFINITION` **and** an explicit
+> `SELECT` — the latter is granted to `db_owner` by default, and these principals deliberately
+> are not `db_owner`. Both are metadata-only; the boundary check still holds 13/13 after them.
+> This was found by running the real adapter, not by reading docs.
+
 > **`reset.py` drops the principals.** It drops and recreates `LoopCapitalAM`, and database
 > users do not survive `DROP DATABASE` (server logins do). After any bare `reset.py` run the
 > two users are gone and `governed_write_check.py` will fail to connect. Re-run `./setup.sh`

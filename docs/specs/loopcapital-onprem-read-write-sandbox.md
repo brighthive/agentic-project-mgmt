@@ -120,11 +120,35 @@ Feature: Governed write boundary on an on-prem-shaped SQL Server
     Then validate.sh passes both disk-pressure and job-status queries
 ```
 
+## 4a. What performs the write: dbt Core (decided 2026-08-13)
+
+dbt **Cloud** cannot serve this trial, for two independent reasons:
+
+1. It has **no SQL Server destination** — plain SQL Server is the community `dbt-sqlserver`
+   adapter, which dbt Cloud does not host.
+2. It is **SaaS and cannot reach an on-prem box** behind the client's firewall — Frank's own
+   objection, restated.
+
+The write is therefore performed by **dbt Core running on the client's own network**, connecting
+as `brightagent_engineer`. This preserves the platform pattern rather than breaking it: dbt is
+still what writes to the warehouse; only its deployment moves from Cloud to Core. BrightAgent
+keeps its existing role — author models, open governed PRs, orchestrate runs — and needs **no
+raw write path**, so brightbot's SELECT-only enforcement remains intact.
+
+Verified on 2026-08-13 against this sandbox: `dbt run` materialized
+`brightagent.portfolio_exposure_daily` (30 rows aggregated from `dbo.holdings_raw`) as the
+governed principal, with the boundary check still holding 13/13 afterwards.
+
+**Grant discovered by running the real adapter**: dbt's table materialization reads
+`sys.sql_expression_dependencies`, which requires `VIEW DEFINITION` **and** an explicit `SELECT`
+on that catalog view — the latter is granted to `db_owner` by default, and INV-4 forbids these
+principals from being `db_owner`. Both grants are metadata-only and do not widen write access.
+
 ## 5. Out of Scope
 
-- **Executing writes from brightbot.** `SynapseConnection` (`brightbot/tools/warehouse_connections.py`)
-  exposes `execute_query` only. Adding a governed write method is a separate spec + ticket in the
-  `brightbot` repo. This spec provides the *target* that work will write against.
+- **A raw write path in brightbot.** `SynapseConnection` (`brightbot/tools/warehouse_connections.py`)
+  exposes `execute_query` only, and per §4a it should stay that way — dbt Core performs the write,
+  so no governed write method is needed on that client.
 - **SSISDB / ReportServer catalogs.** Success criteria 5 and 6 describe reading those catalogs;
   this sandbox stays file-based (`.dtsx` / `.rdl` on disk). Tracked as an open gap.
 - **Windows / OS health monitoring** — explicitly not-this-trial per Doc 1.

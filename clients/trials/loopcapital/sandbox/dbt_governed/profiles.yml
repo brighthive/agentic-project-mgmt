@@ -1,0 +1,36 @@
+# dbt Core profile for the GOVERNED write path (BH-1403).
+#
+# The whole point of this file is the two lines that differ from every other dbt
+# profile in the sandbox: `user: brightagent_engineer` and `schema: brightagent`.
+#
+# dbt Cloud cannot serve this trial at all — it has no SQL Server destination
+# (plain SQL Server is the community dbt-sqlserver adapter, which dbt Cloud does
+# not host), and even if it did, it is SaaS and Frank's box is on-prem behind his
+# firewall. So dbt Core runs on HIS network instead. That is a deployment change,
+# not an architecture change: dbt is still what writes to the warehouse.
+#
+# Connecting as brightagent_engineer rather than sa is what makes the write
+# *governed*. dbt inherits the database-enforced boundary automatically — it can
+# read the client's dbo tables as sources and materialize into the brightagent
+# schema it owns, and SQL Server itself rejects any model that tries to write
+# into dbo. No dbt-side guard, no allowlist to maintain.
+loopcapital_governed:
+  target: sandbox
+  outputs:
+    sandbox:
+      type: sqlserver
+      driver: "ODBC Driver 18 for SQL Server"
+      # 127.0.0.1 (not localhost) — on macOS localhost resolves to IPv6 ::1
+      # first, whose TLS handshake stalls against the emulated container.
+      server: 127.0.0.1
+      port: 1433
+      database: LoopCapitalAM
+      # The agent's own workspace. Everything dbt materializes lands here.
+      schema: brightagent
+      user: brightagent_engineer
+      password: "{{ env_var('BRIGHTAGENT_ENGINEER_PASSWORD') }}"
+      encrypt: true
+      trust_cert: true
+      login_timeout: 180
+      query_timeout: 300
+      threads: 1

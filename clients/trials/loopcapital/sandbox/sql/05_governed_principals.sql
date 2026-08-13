@@ -88,6 +88,26 @@ ALTER AUTHORIZATION ON SCHEMA::brightagent TO brightagent_engineer;
 GRANT CREATE TABLE, CREATE VIEW TO brightagent_engineer;
 GO
 
+-- dbt Core is the write engine for this trial (dbt Cloud has no SQL Server
+-- destination, and could not reach an on-prem box even if it did — so dbt Core
+-- runs on the client's own network instead). Its table materialization reads
+-- sys.sql_expression_dependencies to find dependent objects before replacing a
+-- table, and that catalog view requires VIEW DEFINITION.
+--
+-- BOTH grants below are required, and VIEW DEFINITION alone is not enough:
+-- SELECT on sys.sql_expression_dependencies is granted to the db_owner fixed
+-- role by default, and these principals are deliberately not db_owner (INV-4).
+-- Found by running the real adapter — `dbt run` fails with error 229 on
+-- 'sql_expression_dependencies' with only the first grant, even though the
+-- write itself is permitted.
+--
+-- Both are metadata-only: they confer no data read and no write. Re-verified
+-- after granting — governed_write_check.py still holds 13/13, so the boundary
+-- above is unchanged.
+GRANT VIEW DEFINITION TO brightagent_engineer;
+GRANT SELECT ON OBJECT::sys.sql_expression_dependencies TO brightagent_engineer;
+GO
+
 -- ============================================================================
 -- Health monitoring rights — both principals (success criterion 4)
 --
