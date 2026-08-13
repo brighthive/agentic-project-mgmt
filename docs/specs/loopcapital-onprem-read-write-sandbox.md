@@ -120,7 +120,13 @@ Feature: Governed write boundary on an on-prem-shaped SQL Server
     Then validate.sh passes both disk-pressure and job-status queries
 ```
 
-## 4a. What performs the write: dbt Core (decided 2026-08-13)
+## 4a. What performs the write: dbt Core, on the customer's filesystem
+
+> **Corrected 2026-08-13.** An earlier version of this section argued the write should run
+> **cloud-side**, on the grounds that dbt is ELT so the warehouse computes wherever dbt runs.
+> That is true of the **data** and irrelevant to the **files**. See
+> [ADR-0002](../adr/0002-engineering-runs-on-the-customers-filesystem.md), which supersedes
+> [ADR-0001](../adr/0001-dbt-core-runs-cloud-side-against-on-prem-sql-server.md).
 
 dbt **Cloud** cannot serve this trial, for two independent reasons:
 
@@ -129,11 +135,23 @@ dbt **Cloud** cannot serve this trial, for two independent reasons:
 2. It is **SaaS and cannot reach an on-prem box** behind the client's firewall — Frank's own
    objection, restated.
 
-The write is therefore performed by **dbt Core running on the client's own network**, connecting
-as `brightagent_engineer`. This preserves the platform pattern rather than breaking it: dbt is
-still what writes to the warehouse; only its deployment moves from Cloud to Core. BrightAgent
-keeps its existing role — author models, open governed PRs, orchestrate runs — and needs **no
-raw write path**, so brightbot's SELECT-only enforcement remains intact.
+The write is performed by **dbt Core running on the customer's own network**, connecting as
+`brightagent_engineer`. It must run there rather than in our cloud because **dbt Core is a
+filesystem tool before it is a SQL tool**: the project tree, the models, `target/` artifacts and
+the git working tree all live on disk. Executing cloud-side would put the customer's project on
+*our* filesystem, where their engineers cannot open or edit their own models and any local change
+is invisible to us.
+
+This still preserves the platform pattern rather than breaking it: dbt remains what writes to the
+warehouse; only its deployment moves from Cloud to Core, and its host moves to the customer's
+network. BrightAgent keeps its existing role — author models, open governed PRs, orchestrate runs
+— and needs **no raw write path**, so brightbot's SELECT-only enforcement remains intact.
+
+**What does NOT move on-prem**: monitoring. Disk pressure, SQL Agent job status, catalog and
+connection health already run from our cloud over the warehouse connection with nothing installed
+on the customer's host (`SqlServerPipelineSource`, BH-1045/GC-15). Re-implementing those locally
+would duplicate a working capability and bypass the hosted MCP's workspace scoping and
+default-deny scopes. The split is by **what the work touches**, not by what computes it.
 
 Verified on 2026-08-13 against this sandbox: `dbt run` materialized
 `brightagent.portfolio_exposure_daily` (30 rows aggregated from `dbo.holdings_raw`) as the
@@ -148,7 +166,12 @@ principals from being `db_owner`. Both grants are metadata-only and do not widen
 
 - **A raw write path in brightbot.** `SynapseConnection` (`brightbot/tools/warehouse_connections.py`)
   exposes `execute_query` only, and per §4a it should stay that way — dbt Core performs the write,
-  so no governed write method is needed on that client.
+  so no governed write method is needed on that client. Verified 2026-08-13: no adapter in that
+  module exposes any write method, making SELECT-only a property of the code rather than a
+  convention.
+- **The on-prem engineering runner itself** (BH-1421). This spec covers the sandbox and the
+  governed principals it exercises; the runner that carries dbt Core onto the customer's network
+  is its own epic and needs its own spec.
 - **SSISDB / ReportServer catalogs.** Success criteria 5 and 6 describe reading those catalogs;
   this sandbox stays file-based (`.dtsx` / `.rdl` on disk). Tracked as an open gap.
 - **Windows / OS health monitoring** — explicitly not-this-trial per Doc 1.
