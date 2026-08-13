@@ -188,10 +188,17 @@ Not applicable — the runner executes instructions and performs no LLM inferenc
 
 | Layer | Coverage | State |
 |---|---|---|
-| L0 surface | Tool responses match §2; refusal envelope shape | ⬜ Partial — exercised manually, not committed |
-| L1 routing | Selector reaches dbt; refused paths never reach the filesystem | ⬜ Open |
-| L2 behavior | Privilege refusal, path-escape refusal, and dbt writing rows — all against a **real** SQL Server | ✅ `tests/test_governed_login.py` (4 passing) + verified run |
+| L0 surface | Listing shape, file classification, truncation flag, refusal envelope | ✅ `tests/test_project_files.py` |
+| L1 routing | Refused paths never reach the filesystem; unconfigured roots read nothing | ✅ `tests/test_project_files.py` |
+| L2 behavior | Privilege refusal on a **real** SQL Server; containment against a **real** filesystem; dbt writing real rows | ✅ `tests/test_governed_login.py` + `tests/test_project_files.py` — **13 passing** |
 | e2e | Harness → runner → dbt → SQL Server → metadata synced | ⬜ Blocked on BH-1425 |
+
+Containment is tested against a real filesystem rather than a mocked `Path`, because the attacks
+that matter — `..` traversal and symlinks — *are* filesystem behaviour. The traversal case asserts
+its own precondition (that the raw string still starts with the allowed root), so it fails loudly
+if someone later "simplifies" containment to a prefix comparison. The symlink case covers what
+`..` checking alone misses: a path that never textually leaves the allowed directory while its
+target does.
 
 Verified against the sandbox on 2026-08-13: 12 files listed and classified across 3 roots, an SSIS
 package read from disk, `/etc/passwd` and a `../../../../` traversal both refused, and `dbt run`
