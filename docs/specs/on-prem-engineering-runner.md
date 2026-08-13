@@ -133,7 +133,10 @@ Feature: Engineering work where the customer's files live
 - **Monitoring tools** (INV-3) — already ship from the cloud.
 - **Writing to the customer's working tree.** Reads only in v1; proposing edits goes through the
   governed PR path (BH-1414), never a direct write.
-- **Metadata sync to the control plane** — real and required, tracked as BH-1425, not yet built.
+- **Registering the delivered lineage in platform-core.** The runner now *sends* run metadata
+  (BH-1425 — outbound, idempotent on dbt's `invocation_id`, spooled and replayed when the link is
+  down). What does not yet exist is the receiving endpoint: today the default destination writes
+  to a local directory. Wiring the control-plane side is the remaining half.
 - **Packaging and install** for Windows Server or an adjacent Linux host — BH-1427.
 
 ## 6. Dependencies
@@ -164,7 +167,31 @@ resolution precedes containment, no `..` sequence or symlink yields a path outsi
 
 **Validates: §3 INV-2, INV-6, §4 Scenario "A path outside the roots is refused"**
 
-### Property 3: Privilege is verified, not asserted
+### Property 3: Nothing row-shaped leaves the customer's tenant
+
+*For any* report delivered to the control plane, the payload is assembled from an explicit field
+list and then re-checked recursively for row-bearing keys at the delivery boundary — the last
+point before data leaves. Two defenses in order: the allowlist means an unexpected artifact key
+never reaches the payload; the guard covers fields that are forwarded verbatim.
+
+`compiled_code` is the concrete case, not a hypothetical one. dbt writes fully compiled SQL into
+`run_results.json` today, and compiled SQL routinely embeds literal values from the customer's
+data through `where` clauses and rendered vars. dbt logs are excluded for the same reason.
+
+**Validates: §3 INV-5 (extended), §4 Scenario "the run report carries lineage and status"**
+
+### Property 4: A run is delivered at most once, and never lost
+
+*For any* report R, repeated delivery carries the same idempotency key — dbt's `invocation_id`,
+which only dbt can produce for a given invocation — so the control plane can dedupe. A delivery
+that fails is spooled and replayed on the next attempt rather than dropped.
+
+This matters because the runner sits on the customer's network: the link is theirs, and an outage
+must not mean lineage is silently missing for that window.
+
+**Validates: §3 INV-5, §4 Scenario "queued reports are replayed"**
+
+### Property 5: Privilege is verified, not asserted
 
 *For any* start-up, the refusal decision comes from the server's own `IS_SRVROLEMEMBER` /
 `IS_ROLEMEMBER` answer on the live session, never from the configured username. A blocklist of
@@ -192,7 +219,8 @@ Not applicable — the runner executes instructions and performs no LLM inferenc
 | L1 routing | Refused paths never reach the filesystem; unconfigured roots read nothing | ✅ `tests/test_project_files.py` |
 | L2 behavior | Privilege refusal on a **real** SQL Server; containment against a **real** filesystem; dbt writing real rows | ✅ `tests/test_governed_login.py` + `tests/test_project_files.py` |
 | e2e | **Real MCP stdio session**: handshake, tool listing, file read, path refusal, dbt run with rows verified in the database, and a model that must fail | ✅ `tests/test_mcp_client_end_to_end.py` — **18 passing overall** |
-| e2e (metadata) | Run artifacts reaching the control plane | ⬜ Blocked on BH-1425 |
+| e2e (metadata) | Report built, guarded, delivered idempotently; queued and replayed when the destination is down | ✅ `tests/test_report_delivery.py` — **34 passing overall** |
+| e2e (control plane) | Delivered lineage landing in platform-core | ⬜ Receiving endpoint not built |
 
 **What the MCP e2e caught that nothing else could.** The server module had never successfully
 imported: it pulled `FastMCP` from `mcp.server.fastmcp`, which does not exist in mcp 2.0.0 — the
