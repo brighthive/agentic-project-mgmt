@@ -109,3 +109,6 @@ sprint/archive/**/*.csv
 
 # Longaeva tracker per-machine snapshot (used for diff vs Slack)
 clients/trials/longaeva/.tracker-snapshot.json
+
+# Loop Capital sandbox — raw capture dumps (debug only, never commit)
+clients/trials/loopcapital/sandbox/_raw/
