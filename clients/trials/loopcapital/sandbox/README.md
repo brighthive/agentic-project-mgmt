@@ -184,6 +184,37 @@ Verified end-to-end against a real running container (not claimed): profiled
 2,000 real rows across 6 columns, correct null/cardinality math, real pymssql
 connection over the same TDS protocol the actual demo will use.
 
+## Reproducibility — nuke and recreate to a known baseline
+
+Verified by rebuilding twice from scratch and diffing content checksums, not assumed:
+
+```bash
+docker compose down -v && ./setup.sh     # ×2
+# rows=2000 chk=-246005068  dates 2026-07-15→2026-08-13  tables=11  both principals
+# → IDENTICAL
+```
+
+**One catch that matters for tests.** `as_of_date` is a 30-day window ending on the anchor date,
+which defaults to *today* — so the fixture slides with the calendar. Two rebuilds on the same day
+match exactly; rebuild tomorrow and every date shifts by one, changing the checksum. Fine for a
+demo, fatal for a test that pins literal dates.
+
+Pin the anchor to get a baseline that is identical on **any** day:
+
+```bash
+export LOOPCAPITAL_ANCHOR_DATE=2026-01-15   # or: reset.py --anchor-date 2026-01-15
+docker compose down -v && ./setup.sh
+# rows=2000 chk=-246005012  dates 2025-12-17→2026-01-15   ← stable across rebuilds, forever
+```
+
+Two more things to know before treating a rebuild as a clean baseline:
+
+| Gotcha | Effect | What to do |
+|---|---|---|
+| `setup.sh` generates **random** principal passwords when the env vars are unset | credentials differ every rebuild | export `BRIGHTAGENT_READER_PASSWORD` / `BRIGHTAGENT_ENGINEER_PASSWORD` |
+| `dbt run` output is **not** recreated by `setup.sh` | `brightagent` schema comes back empty | re-run `dbt run` after each rebuild (deterministic) |
+| `--seed` is currently a **no-op** in scenario mode | changing it changes nothing | ignore it; every value derives from the row number |
+
 ## Quick start
 
 Prereqs: Docker (Docker Desktop on Mac — no native Apple Silicon `mssql-server`
