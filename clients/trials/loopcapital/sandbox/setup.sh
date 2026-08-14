@@ -79,7 +79,30 @@ ${SQLCMD} -v ANCHOR_DATE="${LOOPCAPITAL_ANCHOR_DATE:-$(date -u +%F)}" < sql/06_m
 echo "[6/6] Creating governed connection principals (sql/05_governed_principals.sql)..."
 # Passwords are generated per-run and exported for governed_write_check.py. These
 # are throwaway local sandbox credentials — never a real Loop Capital secret, and
-# never written to disk.
+# this script still writes none of them to disk.
+#
+# But a recreate that regenerates them silently orphans anything already holding
+# them — notably an installed engineering runner, whose env file then fails with a
+# bare "Login failed for user 'brightagent_engineer'" that names no cause. So if
+# that env file exists, it is the source of truth and we reuse what it holds.
+# Explicit env vars still win over both, and a machine with no runner installed
+# behaves exactly as before.
+readonly RUNNER_ENV_FILE="${BRIGHTAGENT_ENV_FILE:-${HOME}/.brightagent/config/onprem.env}"
+
+password_from_runner_env() {
+  local key="${1:?password_from_runner_env requires a variable name}"
+  [[ -r "${RUNNER_ENV_FILE}" ]] || return 0
+  sed -n "s/^export ${key}=//p" "${RUNNER_ENV_FILE}" | tail -1 | tr -d "\"'"
+}
+
+if [[ -z "${BRIGHTAGENT_READER_PASSWORD:-}" || -z "${BRIGHTAGENT_ENGINEER_PASSWORD:-}" ]]; then
+  if [[ -r "${RUNNER_ENV_FILE}" ]]; then
+    echo "      reusing the logins an installed runner already holds (${RUNNER_ENV_FILE})"
+  fi
+  BRIGHTAGENT_READER_PASSWORD="${BRIGHTAGENT_READER_PASSWORD:-$(password_from_runner_env BRIGHTAGENT_ONPREM_SQL_READER_PASSWORD)}"
+  BRIGHTAGENT_ENGINEER_PASSWORD="${BRIGHTAGENT_ENGINEER_PASSWORD:-$(password_from_runner_env BRIGHTAGENT_ENGINEER_PASSWORD)}"
+fi
+
 export BRIGHTAGENT_READER_PASSWORD="${BRIGHTAGENT_READER_PASSWORD:-Reader-$(openssl rand -hex 8)!aA1}"
 export BRIGHTAGENT_ENGINEER_PASSWORD="${BRIGHTAGENT_ENGINEER_PASSWORD:-Engineer-$(openssl rand -hex 8)!aA1}"
 ${SQLCMD} -d LoopCapitalAM \
