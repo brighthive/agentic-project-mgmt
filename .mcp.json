@@ -12,6 +12,23 @@
         "JIRA_EMAIL": "${JIRA_USER}",
         "JIRA_API_TOKEN": "${JIRA_TOKEN}"
       }
+    },
+    "brightagent-engineering-runner": {
+      "type": "stdio",
+      "command": "/Users/bado/iccha/brighthive/brightagent-engineering-runner/.venv/bin/brightagent-onprem",
+      "args": [],
+      "env": {
+        "BRIGHTAGENT_ONPREM_SQL_HOST": "127.0.0.1",
+        "BRIGHTAGENT_ONPREM_SQL_PORT": "1433",
+        "BRIGHTAGENT_ONPREM_SQL_DATABASE": "LoopCapitalAM",
+        "BRIGHTAGENT_ONPREM_SQL_USER": "brightagent_engineer",
+        "BRIGHTAGENT_ONPREM_SQL_PASSWORD": "Engineer-7b077078461a60ea!aA1",
+        "BRIGHTAGENT_ONPREM_SQL_READER_USER": "brightagent_reader",
+        "BRIGHTAGENT_ONPREM_SQL_READER_PASSWORD": "Reader-00500fb1b89cb371!aA1",
+        "BRIGHTAGENT_ENGINEER_PASSWORD": "Engineer-7b077078461a60ea!aA1",
+        "BRIGHTAGENT_ONPREM_DBT_PROJECT_DIR": "/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/dbt_governed",
+        "BRIGHTAGENT_ONPREM_SOURCE_ROOTS": "/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/ssis:/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/ssrs:/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/dbt_governed"
+      }
     }
   }
 }
