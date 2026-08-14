@@ -1,353 +1,294 @@
 ---
-title: "BrightAgent Local Plugin — v1"
-epic: "BH-XXX"
+title: "BrightAgent off-cloud plugin"
+epic: "BH-1421"
 author: "drchinca"
 status: "Draft"
 created: "2026-08-12"
-generates: "epic"
-tags: ["agent-plugins", "mcp", "local-plugin", "loop-capital", "offline", "sql-server"]
+last-reviewed: "2026-08-14"
+generates: "tickets"
+tags: ["agent-plugins", "mcp", "off-cloud", "loop-capital", "sql-server"]
 related:
-  features: []
-  pocs: []
-  bedrock: []
+  specs:
+    - "on-prem-engineering-runner.md"
+    - "on-prem-sql-server-warehouse.md"
+    - "onprem-run-report-receiver.md"
+    - "onprem-outbound-job-queue.md"
+  adr:
+    - "0002-engineering-runs-on-the-customers-filesystem.md"
+    - "0003-runner-packaged-for-a-linux-host-not-the-sql-server-box.md"
+    - "0004-outbound-polling-queue-for-onprem-engineering-work.md"
 ---
 
-# BrightAgent Local Plugin — v1
+# BrightAgent off-cloud plugin
 
-> Full contract: `~/.claude/rules/spec-driven.md`. Sections 7–9 are conditional — keep them only
-> when they apply. §10 is mandatory. Engine-agnostic-by-default rule (`docs/CLAUDE.md`) applies:
-> the on-prem connection is a port with SQL Server as the first adapter, not a bespoke connector.
+> Rewritten 2026-08-14 against what shipped. The 2026-08-12 draft speculated two servers
+> (`brightagent-context`, `mssql-local`) before BH-1421 landed; the engineering half exists now
+> and is called `brightagent-engineering-runner`. Dependencies #1, #3 and #9 are resolved below
+> with fetched evidence, and §5's "sync is blocked" claim was simply wrong — outbound metadata
+> delivery ships, with zero-copy enforced in code.
 
 ## 1. Context
 
-Loop Capital's real environment (three SQL Servers — Dev/UAT/Prod, each with multiple databases,
-no cloud warehouse, no dbt Cloud) can't use BrightAgent's governed context today because the MCP
-server is cloud-only: every tool call requires a live Cognito-federated session validated against
-Platform Core GraphQL (`brightbot/brightbot/mcp/auth.py:1-16`). Frank's actual workflow — building
-database projects with Codex against Dev/UAT, and diagnosing failed SQL Agent jobs by hand today
-— has no governed-context assist, and no metadata/lineage/quality signal ever reaches Brighthive's
-cloud because nothing currently bridges an on-prem-only environment to it. This spec defines a
-locally-run BrightAgent package, conformant to the open **Agent Plugins 1.0.0** standard
-(`agent-plugins.org`), that runs the governed-context surface and data-engineering skills entirely
-against local files + a single on-prem SQL Server, syncing only metadata (never data) back to
-Brighthive Cloud.
+**The plugin is the exception, not the path.** Every BrightAgent customer connects to the hosted
+MCP surface at `brightagent-mcp.{env}.brighthive.net/mcp`, wired from the workspace Connect page.
+That is the product and it does not change. A minority of customers — Loop Capital among them —
+have no cloud warehouse at all: three SQL Servers on their own network, dbt Core that must run
+where the project tree is, SSIS/SSRS sources on a filesystem our cloud cannot see. For them, and
+only them, an extension gets installed inside their network.
 
-### Use Case / Goal
+What forced this spec's rewrite is a packaging problem, not an architecture one. The execution
+split is settled and correct: a server in our cloud cannot reach a customer's disk
+([ADR-0002](../adr/0002-engineering-runs-on-the-customers-filesystem.md)), and nothing dials in
+([ADR-0004](../adr/0004-outbound-polling-queue-for-onprem-engineering-work.md)). But a customer
+today wires **two unrelated MCP servers by hand** — the hosted surface copied from the Connect
+page, and the runner copied from `mcp.example.json`. Two entries, two names, two things to keep in
+sync. It reads as two products when it is one product plus an extension.
 
-Two goals, both from Frank's own workflow description:
+```mermaid
+flowchart LR
+  subgraph EVERY["Every customer"]
+    H["hosted BrightAgent MCP<br/>Connect page"]
+  end
+  subgraph OFF["Off-cloud customers only"]
+    P["brightagent-engineering-runner<br/>plugin, installed in their network"]
+    F[("project files<br/>dbt · .dtsx · .rdl · git")]
+    S[("SQL Server")]
+  end
+  H -.->|"baseline, unchanged"| OFF
+  P --- F
+  P --> S
+  P -->|"outbound metadata only<br/>row data refused in code"| H
+```
 
-1. **Development** — building data models against current on-prem state, faster and more
-   accurately, with Codex/Claude Code as the interface (create tables/procs/views as a SQL
-   Database Project, publish to Dev → UAT → Prod, whole project including a .NET/C# application
-   pushed to GitHub).
-2. **Operations** — instead of Frank getting a bare failure email from a SQL Agent job and
-   manually opening SSMS/Azure webUI to find the error code, BrightAgent connects with his
-   credentials, runs a read-only diagnostic, pinpoints which stored proc/SSIS package failed, and
-   proposes a fix — without ever installing an agent on the SQL Server or modifying a running job's
-   source.
+### What shipped since the first draft
 
-Success: Codex (and, once confirmed, Claude Code) loads this plugin, the developer gets governed
-catalog/glossary/lineage context locally, skills profile and diagnose the local SQL Server, and
-zero data rows ever leave the box.
+| Capability | State | Where |
+|---|---|---|
+| Engineering runner, 10 MCP tools over stdio | **Ships** (BH-1421) | `brightagent-engineering-runner` |
+| Linux-host packaging + installer | **Ships** (BH-1427) | `packaging/install.sh` |
+| Outbound run-report delivery, zero-copy enforced | **Ships** (BH-1425) | `report_delivery.py`, `assert_carries_no_row_data` |
+| Outbound polling worker (cloud reaches in without an inbound rule) | **Ships** (BH-1426) | `worker.py` |
+| Agent Plugins package (`plugin.json` + `mcp.json`) | **Ships** (BH-1442) | runner repo root |
+| Control-plane receiver for those reports | Spec'd, unbuilt (BH-1431) | `onprem-run-report-receiver.md` |
+| Governed context served offline (context-down cache) | **Unbuilt** | — |
 
-### How It Works Today
+The first draft's `mssql-local` is superseded: the runner is that server, built on the
+`WarehousePort`/`SqlServerConnection` adapter as intended. The first draft's `brightagent-context`
+local-cache mode is **not** superseded — it remains the real unbuilt gap.
 
-- **BrightAgent's MCP server is real but cloud-only.** `brightbot/brightbot/mcp/server.py:11`
-  builds a `FastMCP` instance, mounted at `/bh-mcp` on the main FastAPI app
-  (`brightbot/http/app.py:60,119`). Auth is two-layer: Cognito Hosted UI federated to the
-  customer's IdP (configured in `brighthive-platform-core` CDK), then the bearer JWT is validated
-  against Platform Core GraphQL's `currentUser` (`brightbot/brightbot/mcp/auth.py:1-16`). The only
-  non-cloud path is `LOCAL_DEV_USER`/`is_local_dev_mode` (`auth.py:30-33`) — an internal dev
-  shortcut, not a supported offline product mode.
-- **The tool surface differs from what's commonly assumed.** Real tools: `get_workspace_context`
-  and `get_schema_details` (`brightbot/brightbot/mcp/tools/workspace_governance.py:161-286`).
-  Names like `analyze_change_impact`, `search_catalog`, `query_governed_data`, `get_asset_quality`,
-  `list_policies`, `request_quality_suite`, `propose_transformation`, `register_data_product` do
-  **not** exist under those names — closest real analogues are `list_workspace_policies`,
-  `discover_data_assets`, `analyze_dtsx_package`, `execute_library_quality_rules`,
-  `register_transformation` (`brightbot/brightbot/mcp/server.py:56-150`, several gated behind
-  default-off `FeatureFlag`s). `get_lineage` exists only as a name BrightAgent calls *on*
-  OpenMetadata's own MCP server (`brightbot/brightbot/tools/mcp/servers/openmetadata_config.py:64-65`),
-  not a tool BrightAgent itself exposes.
-- **A portable skills convention already ships.** `brightbot/brightbot/skills/system/{ssis-diagnostics,
-  ssrs-diagnostics,storage-optimization,xsd-table-schema,xsd-nested-document}/SKILL.md` — YAML
-  frontmatter (`name`, `description`, `affinity`, `priority`) + markdown body referencing a tool
-  call, e.g. `ssis-diagnostics/SKILL.md:1-6` → `analyze_dtsx_package`. This is reusable, not
-  greenfield, and is a different thing from Claude Code's own `.claude/skills/` directory.
-- **No "agentless" read-only SQL Server pattern exists under that name.** Grepped
-  `../brightbot` and `clients/trials/loopcapital/` for "agentless" — zero matches. The read-only,
-  no-agent-installed-on-target connection this spec needs is new work, built on the
-  `WarehousePort`/`SqlServerConnection` adapter from `docs/specs/on-prem-sql-server-warehouse.md`
-  (§2 of that spec) — this spec reuses that port rather than inventing a second connector.
-- **No dbt-sqlserver adapter is vendored anywhere.** Grepped for `dbt-sqlserver`/`dbt_sqlserver` —
-  zero matches; only `dbt-snowflake`/`dbt-postgres` references exist in test/lineage code. Ties
-  directly to `on-prem-sql-server-warehouse.md`'s `DbtCoreRunner` gap (dbt Cloud cannot target
-  SQL Server at all).
-- **agent-plugins.org is real; some proposal claims about it are not corroborated.** Verified via
-  direct fetch: the manifest schema requires only `$schema` + `name` (additional properties
-  disallowed) — confirmed against `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`.
-  The two-component-type claim (Agent Skills in `skills/`, MCP servers via `mcp.json`) is
-  confirmed from the homepage text. **However**: the specific "launch-supported clients" list
-  (ChatGPT/Codex/Cursor/GitHub Copilot/Kiro/VS Code) and the claim that Claude Code is excluded
-  are **not found anywhere on the fetched site** — the only named organizations are Technical
-  Steering Committee members (Amazon, Cursor, Microsoft, OpenAI, Vercel); no client-application
-  support matrix exists on the pages fetched to check Claude Code against. Treat §0's "dual-package
-  for Claude Code" requirement as **unverified**, not a confirmed constraint, until re-checked
-  against `agent-plugins.org/client-implementers` (or equivalent) at spec-approval time — building
-  a Claude-Code-native wrapper based on an unsubstantiated exclusion claim is exactly the kind of
-  premise this rule set (`test-behavior-real.md`) exists to catch.
+### Correcting two claims from the first draft
 
-### Hard Limitations
+**"Zero-copy sync is blocked pending confirmation" — wrong.** Outbound metadata delivery ships.
+`report_delivery.py` spools failed sends to a disk-capped queue, keys idempotency on dbt's own
+`invocation_id`, and calls `assert_carries_no_row_data` before anything leaves the host. The
+direction is outbound-only by construction: nothing in that module listens. What remains open is
+the *other* direction — serving governed context to the runner when the cloud is unreachable.
 
-- No offline/local auth path exists in brightbot's MCP server today — every tool call assumes a
-  live Cognito + Platform Core round trip. This is the single largest blocker to "local-cache mode."
-- No zero-copy sync channel (context down / metadata-lineage-quality up) exists anywhere in
-  brightbot or platform-core — it would be entirely new infrastructure.
-- No local governance degradation path exists — today's write-gate tools (e.g.
-  `register_transformation`) assume an always-on cloud connection; there is no "local dbt PR +
-  queued cloud review" mode.
-- dbt Cloud cannot target SQL Server (established in `on-prem-sql-server-warehouse.md`) — the
-  `dbt-model-proposal` skill inherits this limitation until `DbtCoreRunner` ships.
-- We do not have Loop Capital's real Dev/UAT/Prod server details — same client-side blockers
-  listed in `TRIAL_STATEMENT.md` §3 apply here. This spec is validated against a local Docker SQL
-  Server / the existing EC2 stand-in, never a live connection to Frank's real servers.
-- The T-SQL dialect coverage of BrightAgent's existing NL→query generator against on-prem SQL
-  Server specifically has **not been verified by this spec's research** (carried over from the
-  proposal doc as an open question, not a confirmed fact) — flagged in Dependencies, not asserted.
-
-### Gaps
-
-- Local/offline auth mode for `brightagent-context` MCP server (net new).
-- Zero-copy sync channel, both directions (net new).
-- Local governance degradation mode (net new).
-- `mssql-local` MCP server: read-only T-SQL/SSMS transactions over the on-prem connection,
-  reusing the `WarehousePort`/`SqlServerConnection` adapter (net new wiring, not net new
-  connection logic).
-- Root plugin packaging (`plugin.json`, `mcp.json`) + Codex wiring (net new).
-- Claude Code loading path — blocked on the unverified exclusion claim above; needs its own
-  investigation before committing to a native-wrapper design.
-- New skills: `sqlserver-health`, `nl-to-tsql-query`, `change-impact`, `dbt-model-proposal` — the
-  first three can likely follow the existing `SKILL.md` convention directly; `dbt-model-proposal`
-  is blocked on the `DbtCoreRunner`/dbt-sqlserver adapter gap.
-- Physical home for the plugin package itself is undecided — neither `brightbot` nor
-  `agentic-project-mgmt` is described anywhere as the customer-facing plugin package location;
-  this needs a decision before implementation (see Dependencies).
+**INV-3 is about duplication, not about sync.** `on-prem-engineering-runner.md` INV-3 says the
+runner SHALL NOT expose monitoring tools, because disk/Agent-jobs/catalog/health already ship in
+the hosted MCP over the warehouse connection, and a second local copy is a weaker door onto the
+same data. It is a no-duplicate-tool-surface rule. It says nothing about whether on-prem metadata
+may reach the cloud — it may, it should, and it already does. Off-cloud is a topology fact, not a
+prohibition.
 
 ## 2. Interface Contract (MDE)
 
+Both schemas were fetched verbatim on 2026-08-14, resolving Dependency #1.
+
 ```
-# Port (this spec's on-prem connection is NOT a new connector — it reuses the port from
-# docs/specs/on-prem-sql-server-warehouse.md):
-WarehousePort.capabilities() -> frozenset[Capability]   # SqlServerConnection is the adapter
+# plugin.json — required: $schema, name. additionalProperties: false.
+# name pattern: ^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$  (max 64)
+# optional: version, description, author{name,email,url}, homepage, repository,
+#           license, keywords[], extensions{<reverse-domain>: {}}
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "brightagent-engineering-runner"
+}
 
-# Portable plugin manifest (root, confirmed shape via agent-plugins.org schema fetch)
-plugin.json:
-  { "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json", "name": "brightagent-local" }
-
-# Portable MCP config (root) — shape inferred from homepage text, [CONFIRM] full field schema
-mcp.json:
-  {
-    "mcpServers": {
-      "brightagent-context": { "command": "brightagent-context", "args": ["--mode", "local", "--cache", "${BRIGHTAGENT_CACHE}"] },
-      "mssql-local":         { "command": "mssql-local-mcp",     "args": ["--dialect", "tsql", "--read-default"] }
-    }
+# mcp.json — required: $schema, mcpServers. No other top-level field permitted.
+# server ∈ oneOf{stdio, streamable-http, sse}, each additionalProperties: false
+#   stdio:           required type, command;  optional args[], env{}, cwd
+#   streamable-http: required type, url;      optional headers{}
+#   sse:             required type, url;      optional headers{}
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "brightagent-engineering": { "type": "stdio", "command": "./bin/brightagent-onprem" }
   }
-
-# Portable skill (extends the EXISTING convention at brightbot/brightbot/skills/system/*/SKILL.md)
-skills/sqlserver-health/SKILL.md:
-  ---
-  name: sqlserver-health
-  description: "Diagnose SQL Agent job failures, disk pressure, blocked/long-running queries"
-  affinity: [analyst]
-  priority: 80
-  ---
-
-# New local-cache auth mode (net new, distinct from mcp/auth.py's Cognito path)
-BRIGHTAGENT_MODE=local-cache
-  Request:  MCP tool call with no Authorization header (local stdio transport)
-  Response: served from context-cache/ files; 4xx if a tool requires cloud-only capability
+}
 ```
+
+Two constraints in the standard's prose, not its schema — both fail silently when broken, because
+a non-conformant client simply accepts the config:
+
+| Constraint | Verbatim | Consequence here |
+|---|---|---|
+| `command` shape | *"MUST be either a bare executable name or a plugin-relative path beginning with `./`"*; expansion *"does not apply to `env` keys, `command`, or fixed component locations"* | An absolute path — what every hand-written config in our docs uses — is non-conformant. `${PLUGIN_ROOT}` does not help. |
+| No secrets in `env` | *"Configured `env` values are visible package data, not a portable secret mechanism. Plugins MUST NOT embed credentials or other secrets in `env`."* | The manifest carries no `env` at all. The installer's wrapper sources `/etc/brightagent-onprem/env` (mode `600`, service-user owned) before exec. |
+
+A plugin-relative `command` only resolves against the plugin root, so the **install directory is
+the plugin root**: `install.sh` writes `plugin.json`, `mcp.json` and `bin/brightagent-onprem`
+together under `INSTALL_DIR`.
+
+Runner tool surface (10 tools, unchanged by this spec — see `on-prem-engineering-runner.md` §2):
+`list_project_files`, `read_project_file`, `write_project_file`, `list_models`, `run_models`,
+`build_models`, `test_models`, `check_connection`, `run_report`, `send_run_report`.
 
 ## 3. Invariants (DbC)
 
-- WHILE running in local-cache mode, THE System SHALL NOT transmit row-level data across the sync
-  channel — only metadata, lineage edges, and quality results cross the boundary.
-- WHEN `mssql-local` is configured without an explicit write-gate override, THE System SHALL
-  execute read-only T-SQL only — mirroring `SynapseConnection`'s existing read-only enforcement
-  (`warehouse_connections.py:404-420`) as the enforcement precedent, applied identically here.
-- WHEN the confirmed-safe slice is deployed (Codex, offline, no sync), THE System SHALL require
-  zero live Brighthive-cloud connectivity for skill execution against the local SQL Server.
-- IF a skill or MCP tool call requires a capability outside the confirmed-safe slice (sync,
-  governance write, Claude Code native loading), THEN THE System SHALL return a typed
-  "capability not available in local-only mode" response — never a silent no-op or a fabricated
-  success.
-- `mssql-local-mcp` SHALL NOT require any agent, extended stored procedure, or service installed
-  on the target SQL Server — the connection is a standard TDS client connection only.
+| # | Invariant |
+|---|---|
+| INV-1 | `THE System SHALL declare exactly one MCP server in mcp.json` — the runner. The hosted surface is the customer's baseline; re-declaring it hands an off-cloud customer a duplicate of a connection they already have, with a bearer token the package cannot supply. |
+| INV-2 | `THE System SHALL NOT write any credential into plugin.json or mcp.json.` Required by the standard, and correct regardless: a SQL password belongs in a mode-`600` file the installer wrote, not in visible package data. |
+| INV-3 | `THE System SHALL declare command as a plugin-relative "./" path.` An absolute path is non-conformant and `${PLUGIN_ROOT}` does not expand there. |
+| INV-4 | `WHERE the manifests and the bin/ wrapper are installed, THE System SHALL place them under a single root` — a plugin-relative command resolves against the plugin root and nothing else. |
+| INV-5 | `THE System SHALL NOT transmit row-level data outbound` — enforced in code by `assert_carries_no_row_data` before delivery, not by convention. |
+| INV-6 | `IF a capability requires cloud connectivity that is unavailable, THEN THE System SHALL return a typed unavailable response` — never a silent no-op or a fabricated success. |
 
 ## 4. Acceptance Criteria (BDD — Gherkin)
 
 ```gherkin
-Feature: BrightAgent Local Plugin — confirmed-safe slice
+Feature: BrightAgent's off-cloud plugin
 
-  Scenario: Local-cache MCP serves governed context offline
-    Given the brightagent-context MCP server running in --mode local against a populated cache
-    When Codex calls get_workspace_context with no cloud connectivity
-    Then the response is served from the local cache with no outbound Brighthive API call
+  Scenario: The package validates as an Agent Plugins 1.0.0 package
+    Given plugin.json and mcp.json at the package root
+    When they are validated against the published 1.0.0 schemas
+    Then both pass with no additional properties
 
-  Scenario: mssql-local connects without installing anything on the server
-    Given a local Docker SQL Server (or the EC2 stand-in) with no agent installed on it
-    When mssql-local-mcp opens a TDS connection and calls list_tables/list_databases
-    Then results return successfully using only a standard client connection
+  Scenario: The command is plugin-relative
+    Given mcp.json's stdio server entry
+    When its command is inspected
+    Then it begins with "./" and is not an absolute path
 
-  Scenario: Read-only enforcement holds
-    Given mssql-local-mcp configured with --read-default
-    When a skill attempts a DDL/DML statement
-    Then the call is rejected before reaching the server, mirroring SynapseConnection's existing enforcement
+  Scenario: No credential is present in the package
+    Given the installed plugin directory
+    When every manifest in it is inspected
+    Then no env block is present and no credential appears in any file
 
-  Scenario: sqlserver-health skill diagnoses a failed job
-    Given a SQL Agent job seeded to a Failed state (loopcapital sandbox reset.py --scenario cancelled-run or equivalent)
-    When the sqlserver-health skill is invoked
-    Then it identifies the failed step and proposes a fix without modifying the job's source
+  Scenario: The relative command resolves to the installed wrapper
+    Given a host where packaging/install.sh has run
+    When a harness loads the plugin directory
+    Then the stdio server starts from the wrapper and serves the runner's tools
 
-  Scenario: Unsupported capability fails typed, not silent
-    Given the confirmed-safe slice deployment (no sync configured)
-    When a tool call requires the sync channel
-    Then the response is a typed capability-not-available error, not a hang or fabricated result
+  Scenario: The plugin does not duplicate the customer's hosted connection
+    Given an off-cloud customer already connected to the hosted BrightAgent MCP
+    When they install this plugin
+    Then exactly one additional server appears, and the hosted connection is untouched
 
-  @blocked-pending-confirmation
-  Scenario: Zero-copy sync pushes only metadata
-    Given local-cache mode with sync enabled
-    When new metadata, lineage, or quality results are produced locally
-    Then only those (never row data) are pushed to Brighthive Cloud
+  Scenario: Metadata leaves the host, row data does not
+    Given a completed dbt run on the customer's host
+    When the run report is delivered outbound to the control plane
+    Then it carries models, lineage and outcomes
+    And a payload containing row values is refused before it is sent
 
-  @blocked-pending-confirmation
-  Scenario: Claude Code loads the plugin natively
-    Given the portable plugin package (plugin.json, mcp.json, skills/)
-    When Claude Code is pointed at the plugin directory
-    Then it loads without a client-specific wrapper
+  Scenario: A delivery failure does not lose the run
+    Given the control plane is unreachable
+    When a run report is delivered
+    Then it spools to disk and is retried on the next delivery, keyed on dbt's invocation_id
 ```
 
 ## 5. Out of Scope
 
-- **Zero-copy sync channel** (context down / metadata up) — needs confirmation (Dependency #8).
-  Not implemented in the confirmed-safe slice.
-- **Claude Code native wrapper / dual-packaging** — blocked on re-verifying the exclusion claim
-  against `agent-plugins.org` directly (Dependency #3). Not implemented in the confirmed-safe
-  slice; Codex-only for v1.
-- **Write-gated governance in local mode** (`propose_transformation`-equivalent, local dbt PR +
-  queued cloud review) — needs confirmation (Dependencies #2, #9). Confirmed-safe slice is
-  read-only end to end.
-- **`dbt-model-proposal` skill** — blocked on a dbt-sqlserver adapter / `DbtCoreRunner`
-  (`on-prem-sql-server-warehouse.md`). Tracked there, not here.
-- **Any connection to Loop Capital's real Dev/UAT/Prod SQL Servers** — validated only against a
-  local Docker SQL Server or the existing Brighthive-owned EC2 stand-in. No real client data,
-  credentials, or server access in this spec.
-- **New repo creation for the plugin package** — this spec identifies the need for a decision
-  (Dependency #10) but does not create one.
+- **Context-down cache** — serving governed catalog/glossary/lineage to the runner with no cloud
+  connectivity. The real remaining gap; needs its own spec.
+- **Proxying engineering tools through the cloud** — the hosted MCP listing `run_models` and
+  dispatching over the outbound queue. [ADR-0004](../adr/0004-outbound-polling-queue-for-onprem-engineering-work.md)
+  rules this out for interactive turns: *"wrong for a human waiting on a chat turn."* The queue
+  carries autonomous work only.
+- **Re-declaring the hosted MCP inside the package** — INV-1. Deliberate, not an omission.
+- **New skills** (`sqlserver-health`, `change-impact`, `nl-to-tsql-query`) — the existing
+  `brightbot/brightbot/skills/system/*/SKILL.md` convention applies; separate tickets below.
+- **Governance write-gating in local mode** (local dbt PR + queued cloud review).
+- **Connect-page change** — offering the package to off-cloud workspaces instead of a raw JSON
+  snippet. Follow-up ticket below.
 
 ## 6. Dependencies
 
-| Dependency | Type | Status |
-|---|---|---|
-| #1 Exact `mcp.json` field-level schema (agent-plugins.org) | Blocking (root config can't be finalized without it) | Not started |
-| #2 `mssql-local` write posture (read-only vs gated DML/DDL) sign-off | Non-blocking for confirmed-safe slice (ships read-only-only) | Not started |
-| #3 Re-verify Claude Code's actual support/exclusion against agent-plugins.org directly | Blocking (for Claude Code wrapper work only, not for Codex slice) | Not started — prior claim unverified |
-| #4 Local/edge build of `brightagent-context` MCP (auth mode, cache format) sign-off | Blocking (confirmed-safe slice requires this) | Not started |
-| #5 dbt-sqlserver adapter for `dbt-model-proposal` | Blocking (for that skill only) | Not started — tracked in `on-prem-sql-server-warehouse.md` |
-| #6 T-SQL dialect coverage in the NL→query generator | Non-blocking for confirmed-safe slice's other skills | Not started — unverified, needs its own check |
-| #7 Zero-copy sync mechanism design | Blocking (for sync only) | Not started |
-| #8 Offline governance degradation preserves no-self-merge | Blocking (for write-gated governance only) | Not started |
-| #9 Physical home for the plugin package (new repo vs subdir of `brightbot`/`agentic-project-mgmt`) | Blocking (implementation can't start without a location) | Not started |
-| `on-prem-sql-server-warehouse.md` (`SqlServerConnection`, `WarehousePort` adapter) | Blocking (this spec's connection layer depends on it) | Draft |
+| Dependency | Status |
+|---|---|
+| #1 `mcp.json` field-level schema | **Resolved 2026-08-14** — fetched verbatim; root is `$schema` + `mcpServers` only, three server variants, all `additionalProperties: false`. |
+| #3 Claude Code's support for the standard | **Resolved 2026-08-14** — agent-plugins.org publishes conformance requirements for clients but **no support matrix at all**; it names no client application. The "Claude Code is excluded" claim was never grounded, and the dual-packaging requirement it justified is dropped. Separately: Claude Code loads stdio MCP servers via `.mcp.json` today, demonstrated against this runner. |
+| #9 Physical home for the package | **Resolved** — the runner repo, which already ships the wheel, the installer and `mcp.example.json`. |
+| BH-1427 packaging / install path | **Merged** — this builds on the wrapper it writes. |
+| BH-1431 control-plane receiver | Spec'd, unbuilt — the receiving half of delivery that already ships. |
+| T-SQL dialect coverage in the NL→query generator | Unverified — blocks `nl-to-tsql-query` only. |
 
 ## 7. Correctness Properties
 
-### Property 1: Zero-copy holds under sync
+### Property 1: No credential is ever visible package data
 
-*For any* sync event emitted while local-cache mode is active, the payload SHALL contain only
-metadata/lineage/quality fields — never a row value from the target SQL Server.
+*For any* file in the installed plugin directory, the file SHALL NOT contain a warehouse
+credential or control-plane API key. Configuration reaches the runner only through the
+installer-written env file.
 
-**Validates: §3 Invariant "WHILE running in local-cache mode...", §4 Scenario "Zero-copy sync
-pushes only metadata"**
+**Validates: §3 INV-2, §4 Scenario "No credential is present in the package"**
 
-### Property 2: No agent footprint on target server
+### Property 2: Zero-copy holds on every outbound delivery
 
-*For any* `mssql-local-mcp` deployment, the target SQL Server SHALL have no additional installed
-service, extended stored procedure, or agent beyond what SSMS itself requires to connect.
+*For any* payload delivered to the control plane, the content SHALL be metadata, lineage or run
+outcomes — never a row value read from the customer's warehouse. Enforced before send, not
+asserted after.
 
-**Validates: §3 Invariant "mssql-local-mcp SHALL NOT require any agent...", §4 Scenario
-"mssql-local connects without installing anything on the server"**
+**Validates: §3 INV-5, §4 Scenario "Metadata leaves the host, row data does not"**
+
+### Property 3: The declared command resolves to the installed wrapper
+
+*For any* install produced by `packaging/install.sh`, the plugin-relative `command` in `mcp.json`
+SHALL resolve to an executable wrapper under the same root as the manifests.
+
+**Validates: §3 INV-3 and INV-4, §4 Scenario "The relative command resolves to the installed wrapper"**
 
 ## 8. Eval Criteria
 
-| Evaluator | Node | Mode | Threshold | Method |
-|---|---|---|---|---|
-| CapabilityRoutingEvaluator | local-plugin skill/tool dispatch | GATE | 100% of cloud-only-capability calls return typed not-available, 0% silent no-op | Deterministic |
-| SqlServerHealthDiagnosisEvaluator | `sqlserver-health` skill | OBSERVE | score >= 0.8 on "correctly identifies failed step" against sandbox fixtures | LLM judge |
+Not applicable. This spec adds no LLM-powered behavior — it is packaging plus a conformance
+contract. The runner deliberately ships no LLM client (`on-prem-engineering-runner.md` INV-7:
+*"the agent reasons in our control plane; this executes"*).
 
 ## 9. Observability Contract
 
-- **Span**: `gen_ai.tool.execute` with `gen_ai.tool.name=mssql_local_query`, attribute
-  `plugin.mode=local-cache`
-- **Span**: `gen_ai.tool.execute` with `gen_ai.tool.name=sqlserver_health_diagnose`
-- **Attributes**: `workspace.id` (if bound), `plugin.mode`, `runner.capability_available`
-  (bool), `sync.enabled` (bool)
-- **Log events**: `local_plugin.capability_unavailable`, `sqlserver_health.job_failure_diagnosed`,
-  `mssql_local.readonly_violation_blocked`
-- **Metrics**: none
+Unchanged from `on-prem-engineering-runner.md`. Packaging emits no telemetry of its own; it
+changes how a process is launched, not what it reports.
 
 ## 10. Test Coverage Update
 
-| Repo | Suite | What to add |
+| Repo | Suite | What landed / what to add |
 |---|---|---|
-| `brightbot` | `brightbot/tests/` + `brightbot/brightbot/evals/` | L0: one case asserting `plugin.json`/`mcp.json` round-trip against the fetched agent-plugins.org schema. L1: one case per §4 non-blocked scenario for skill/tool routing (local-cache served from cache, capability-not-available typed response). L2: real-behavior test — `mssql-local-mcp` against a real local Docker SQL Server (or the EC2 stand-in), asserting read-only enforcement and a real `sqlserver-health` diagnosis against a seeded failed-job fixture. |
-| `brighthive-e2e` | `brighthive-e2e/e2e/` | One feature test: Codex-style MCP client loads the plugin package, calls `get_workspace_context` in local-cache mode with cloud connectivity disabled, then calls `mssql-local` against the real sandbox SQL Server end-to-end. |
+| `brightagent-engineering-runner` | `tests/test_plugin_manifests.py` | **Landed (BH-1442)** — 9 L0 cases: both manifests validate against the published schemas (vendored under `tests/schemas/`, plus a live check that the vendored copies still match); `command` is plugin-relative; no server carries `env`; the declared path matches the wrapper `install.sh` writes; `plugin.json` version tracks `pyproject.toml`. Guards were negative-checked — flipping `command` to absolute and adding a password to `env` fails three of them. |
+| `brightagent-engineering-runner` | `tests/test_mcp_client_end_to_end.py` | **Already exists** — a real MCP session against the real server. The L2 real-behavior layer this spec's L0 pass sits on top of. |
+| `brightagent-engineering-runner` | — | **To add**: an install-path case on a Linux host asserting that after `install.sh`, the plugin directory loads and the relative command resolves. Needs root + the ODBC driver, so it belongs with the container harness ADR-0004's prototype already uses, not the macOS unit run. |
+| `brighthive-e2e` | `brighthive-e2e/e2e/` | **To add**: one feature test where a client loads the installed plugin directory and calls a runner tool end-to-end against the sandbox SQL Server. |
 
-**Real-behavior requirement**: the L2 case must hit a real SQL Server (local Docker or EC2
-stand-in) and real skill execution — construct-only tests asserting `plugin.json` shape alone
-don't satisfy this row.
-
-Before opening the implementation PR: run `brightbot`'s full suite + evals and the new
-`brighthive-e2e` feature test, confirm each new §2/§3/§4/§8 entry (for the confirmed-safe slice
-only) has a corresponding new test case, and confirm all suites are green.
+**Known gap, stated rather than hidden**: the runner repo has **no `.github/workflows/`** — PRs
+#2–#6 merged with no automated test run, and #8's only check is a review bot that skips drafts.
+The suites above are real and green locally; nothing enforces them on push. Its own ticket below.
 
 ## Areas Involved
 
 | Area | Repo | Impact |
 |---|---|---|
-| MCP server local-cache mode | `brightbot` | New auth mode, new resource-serving path from `context-cache/` files, alongside existing Cognito-gated cloud mode |
-| `mssql-local` MCP server | `brightbot` | New MCP server wired to the existing `WarehousePort`/`SqlServerConnection` adapter (`on-prem-sql-server-warehouse.md`) |
-| New skills | `brightbot` | `sqlserver-health`, `nl-to-tsql-query`, `change-impact` added under the existing `skills/system/` convention |
-| Plugin packaging root | TBD — new repo or subdir (Dependency #9) | `plugin.json`, `mcp.json`, Codex wiring |
-| Governance / sync | `brighthive-platform-core` | Phase 2, needs confirmation — no change in confirmed-safe slice |
-| Validation target | `agentic-project-mgmt` (`clients/trials/loopcapital/sandbox/`, `infra/loopcapital_sqlserver_ec2`) | Validation only, no real client connection |
+| Plugin package + installer | `brightagent-engineering-runner` | `plugin.json`, `mcp.json`, `install_plugin_manifests`, conformance suite |
+| Connect page | `brighthive-webapp` | Offer the package to off-cloud workspaces instead of a raw snippet |
+| Run-report receiver | `brighthive-platform-core` | BH-1431, tracked in its own spec |
+| Skills | `brightbot` | New `SKILL.md` entries under the existing convention |
 
 ## Ticket Breakdown
 
-**Confirmed-safe slice (implementable now):**
-
 | Ticket | Summary | Points | Epic |
 |---|---|---|---|
-| — | Decide + provision physical home for the plugin package (Dependency #9) | 1 | BH-XXX |
-| — | Build `brightagent-context` MCP local-cache auth mode + file-backed resource serving | 5 | BH-XXX |
-| — | Build `mssql-local` MCP server wired to `WarehousePort`/`SqlServerConnection`, read-only enforced | 5 | BH-XXX |
-| — | Author `sqlserver-health` and `change-impact` skills under existing `skills/system/` convention | 3 | BH-XXX |
-| — | Root `plugin.json` + `mcp.json` + Codex wiring, validated against agent-plugins.org schema | 2 | BH-XXX |
-| — | Real-behavior L2 tests + `brighthive-e2e` feature test against local Docker SQL Server / EC2 stand-in | 3 | BH-XXX |
-
-**Blocked pending confirmation (do not start until the linked Dependency clears):**
-
-| Ticket | Summary | Points | Epic | Blocked on |
-|---|---|---|---|---|
-| — | Zero-copy sync channel (context down / metadata up) | 8 | BH-XXX | #7 |
-| — | Local governance degradation mode (local dbt PR + queued cloud review) | 5 | BH-XXX | #8 |
-| — | Claude Code native wrapper (or: confirm none needed) | 3 | BH-XXX | #3 |
-| — | `nl-to-tsql-query` skill (T-SQL dialect coverage check first) | 2 | BH-XXX | #6 |
-| — | `dbt-model-proposal` skill | 3 | BH-XXX | #5 (tracked in `on-prem-sql-server-warehouse.md`) |
+| BH-1442 | Ship the runner as one Agent Plugins package — **done**, PR #8 | 2 | BH-1421 |
+| — | CI for the runner repo: run pytest + ruff + shellcheck on every PR | 2 | BH-1421 |
+| — | Connect page offers the off-cloud package for off-cloud workspaces | 3 | BH-1421 |
+| — | Install-path test on a Linux host: plugin directory loads, relative command resolves | 2 | BH-1421 |
+| — | `brighthive-e2e` feature test: load the plugin, call a runner tool against the sandbox | 3 | BH-1421 |
+| — | Context-down cache — governed context with no cloud connectivity (needs its own spec first) | 8 | BH-1421 |
+| — | `sqlserver-health` + `change-impact` skills under the existing convention | 3 | BH-1421 |
+| — | `nl-to-tsql-query` skill — verify T-SQL dialect coverage first | 2 | BH-1421 |
 
 ## Related
 
-- **Dependency spec**: `docs/specs/on-prem-sql-server-warehouse.md` (`WarehousePort`/`SqlServerConnection`, `DbtCoreRunner`)
-- **Existing skills convention**: `brightbot/brightbot/skills/system/*/SKILL.md`
-- **Trial docs**: `docs/specs/loopcapital-trial-readiness.md`, `clients/trials/loopcapital/TRIAL_STATEMENT.md`
-- **Standard**: `https://agent-plugins.org` (verified 2026-08-12 — manifest + component-type claims confirmed; client-support-matrix claims NOT corroborated)
+- **The runner itself**: `on-prem-engineering-runner.md` (tool surface, INV-1..INV-7)
+- **The connection layer**: `on-prem-sql-server-warehouse.md` (`WarehousePort`/`SqlServerConnection`)
+- **The receiving half of sync**: `onprem-run-report-receiver.md` (BH-1431)
+- **How the cloud reaches in**: `onprem-outbound-job-queue.md` + [ADR-0004](../adr/0004-outbound-polling-queue-for-onprem-engineering-work.md)
+- **Standard**: `https://agent-plugins.org` — schemas and prose fetched 2026-08-14; both schemas
+  vendored at `brightagent-engineering-runner/tests/schemas/` with a live drift check
