@@ -16,9 +16,17 @@ machine, that survives reboot, reports health, and upgrades without uninstall/re
 ## Our Decision
 
 **The runner installs on a small dedicated Linux host inside the customer's network — never on
-the SQL Server machine.** Packaged as a systemd-managed service (`brightagent-onprem.service`),
-installed via a single idempotent shell script, talking to SQL Server over 1433 like any other
-client on the network.
+the SQL Server machine.** Installed via a single idempotent shell script into its own virtualenv,
+talking to SQL Server over 1433 like any other client on the network.
+
+**Correction made during implementation, not at proposal time:** the runner speaks MCP over
+**stdio** (`build_server(settings=settings).run()`, default transport) — it is spawned as a
+subprocess by the customer's own harness (Claude Code / Cortex / Codex) for the life of that
+harness session, the same way `mcp.example.json` already documents. It is not, and was never
+going to be, a standing network daemon. That makes "systemd-managed service" the wrong frame for
+this decision: there is no long-running process of ours to keep alive, restart on crash, or dial
+into over a port. What actually needed deciding — Linux host vs. Windows box vs. container — is
+unchanged; only the packaging mechanism below reflects the correction.
 
 ADR-0002 already established the deciding fact: "the plugin does not have to live ON the SQL
 Server, only inside the network." Filesystem access to the dbt project / SSIS sources is a
@@ -26,12 +34,23 @@ network-reachable-share concern (SMB mount, git clone, or a shared dev volume), 
 same-machine-as-SQL-Server concern. Once that's true, there is no reason to solve Windows Service
 packaging at all for v1.
 
+**What "survives reboot" and "reports health" mean for a stdio subprocess:**
+- *Survives reboot*: nothing daemon-shaped to restart — the venv and the installed package simply
+  sit on disk. The harness spawns a fresh process next time it starts, same as after any restart.
+- *Reports health*: satisfied by a standalone health-check the installer exposes
+  (`brightagent-onprem --check`), which runs the same privilege + connectivity assertion the
+  server checks at boot, WITHOUT starting the stdio loop — so an admin can confirm the install
+  works before ever wiring it into their harness.
+- *Upgrade without uninstall/reinstall*: re-running the installer upgrades the venv in place; the
+  next harness-spawned session picks up the new code automatically. No restart to orchestrate,
+  because there was never a standing process to restart.
+
 ## Why This Choice
 
-- **Zero new packaging technology.** systemd + a shell installer is what every other Brighthive
-  Linux service already uses. Windows Service packaging (NSSM wrapper or `pywin32`) would be new
-  surface area we cannot even test here — there is no Windows Server 2019 box in this environment,
-  so any Windows-native path would ship unverified.
+- **Zero new packaging technology.** A shell installer laying down a venv is standard, boring, and
+  fully testable on any Linux box. Windows Service packaging (NSSM wrapper or `pywin32`) would be
+  new surface area we cannot even test here — there is no Windows Server 2019 box in this
+  environment — and would be the wrong shape regardless, since there is no daemon to wrap.
 - **Preserves "nothing installed on the database server."** Doc 1's promise to the customer, and
   the one thing that survives a DBA's security review without a fight. A Linux host the customer
   stands up for this purpose (or an existing jump box) never touches the production SQL Server's
