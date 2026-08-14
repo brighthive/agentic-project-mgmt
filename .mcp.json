@@ -6,29 +6,28 @@
     "jira": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "mcp-jira-cloud"],
+      "args": [
+        "-y",
+        "mcp-jira-cloud"
+      ],
       "env": {
         "JIRA_BASE_URL": "${JIRA_BASE}",
         "JIRA_EMAIL": "${JIRA_USER}",
         "JIRA_API_TOKEN": "${JIRA_TOKEN}"
       }
     },
+    "brightagent": {
+      "type": "http",
+      "url": "https://brightagent-mcp.staging.brighthive.net/mcp",
+      "headers": {
+        "Authorization": "Bearer eyJraWQiOiJkdWpvd0Q2aW5yM3NiVnU0M1RnZXgwVXU0WWozNFFDa0xnN0tqaEt1ZVBJPSIsImFsZyI6IlJTMjU2In0.eyJvcmlnaW5fanRpIjoiNzAwZjg2NGItNTg1Zi00Yzc2LWIzMzctYjk1NzNlNWNlYTI5Iiwic3ViIjoiNDRlOGU0NTgtMTAxMS03MDIyLTY1YWYtY2UwYzEwZGQ3ZTRjIiwiYXVkIjoiM2pkNjRiZjExdTNjZjl2ZzA5NWQwMXZjam4iLCJldmVudF9pZCI6IjIyMDFmMGVjLTQ1NWEtNDIxNS04YWJkLWE2OTlmNDQ1M2U2YyIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzg2NjkyNTAzLCJpc3MiOiJodHRwczovL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3VzLWVhc3QtMV9FQVlVYlpQRmsiLCJjb2duaXRvOnVzZXJuYW1lIjoiNDRlOGU0NTgtMTAxMS03MDIyLTY1YWYtY2UwYzEwZGQ3ZTRjIiwiZXhwIjoxNzg2Njk2MTAzLCJpYXQiOjE3ODY2OTI1MDQsImp0aSI6IjBmNTg3ZjFjLWNkYzQtNGE5Yi05YjQxLTdjODg2YmFhZmQ1ZCJ9.iLcFtAaZ4GkcfzWVX67W1SwDofzDh14A26yrmDqjV1sdJYSMGCecpMjhQMPQ-cJS35r9qLB8zuGWoiCujl4hPVfU607WxowkW8q_rhZOsstHxa3oIlOJsWtK2oRm_heAKEJHKCT4IYrLkNhLaXUlODCd8MeM0-nidJaR0AIAAmKSCTCpsT9yEH7FUEDea84jDZqzZxvoICRYs0Yf687t7mOv7XdEeiUJPbvsdDNZgAgVR0_2zO0dLEaj3UPU7F3wSADkAU_MQJs1-k-yUngAt1l63SSU_oedE96_L0gVfxbhIMAkNoWODX0xs25jSDS4Xi8cb48acrbG3UGHAnM5Eg",
+        "X-Workspace-Id": "e3fc0917-03a6-4ac6-aad4-ac265329bfb9"
+      }
+    },
     "brightagent-engineering-runner": {
       "type": "stdio",
-      "command": "/Users/bado/iccha/brighthive/brightagent-engineering-runner/.venv/bin/brightagent-onprem",
-      "args": [],
-      "env": {
-        "BRIGHTAGENT_ONPREM_SQL_HOST": "127.0.0.1",
-        "BRIGHTAGENT_ONPREM_SQL_PORT": "1433",
-        "BRIGHTAGENT_ONPREM_SQL_DATABASE": "LoopCapitalAM",
-        "BRIGHTAGENT_ONPREM_SQL_USER": "brightagent_engineer",
-        "BRIGHTAGENT_ONPREM_SQL_PASSWORD": "Engineer-7b077078461a60ea!aA1",
-        "BRIGHTAGENT_ONPREM_SQL_READER_USER": "brightagent_reader",
-        "BRIGHTAGENT_ONPREM_SQL_READER_PASSWORD": "Reader-00500fb1b89cb371!aA1",
-        "BRIGHTAGENT_ENGINEER_PASSWORD": "Engineer-7b077078461a60ea!aA1",
-        "BRIGHTAGENT_ONPREM_DBT_PROJECT_DIR": "/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/dbt_governed",
-        "BRIGHTAGENT_ONPREM_SOURCE_ROOTS": "/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/ssis:/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/ssrs:/Users/bado/iccha/brighthive/agentic-project-mgmt/clients/trials/loopcapital/sandbox/dbt_governed"
-      }
+      "command": "/Users/bado/.brightagent/onprem/bin/brightagent-onprem",
+      "args": []
     }
   }
 }
