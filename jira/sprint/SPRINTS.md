@@ -1,8 +1,20 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 14 (released Aug 1, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 15 (released Aug 17, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 15 🍑 — On-Prem Runner, Warehouse Identity & Routines Delivery (Aug 2–17, 2026)
+- **Duration**: 16 days (date-range cut, unofficial — fifth unofficial sprint in a row)
+- **Focus**: On-Prem Engineering Runner for Loop Capital's dbt lifecycle (outbound-only queue, governed sandbox, multi-database, filesystem SSIS/SSRS reads), warehouse identity + multi-database targeting across platform-core/webapp/brightbot chat, BrightRoutines delivery-target + provenance into Slack, GraphQL Core ECS/CloudFront cutover with Neo4j pool hardening, BrightAgent SSE chat streaming
+- **Team**: Kuri, Marwan, Harbour
+- **PRs Merged**: 181 total (153 code + 28 release/promotion carriers, 8 repos)
+- **Lines Changed**: +87,472 / −44,270 (code-only; release re-merges excluded)
+- **Highlights**: governed on-prem dbt plugin with scoped reader/write-confined-engineer credentials and outbound-only transport (never opens an inbound port), warehouse register/verify/list-databases flow shipped end to end with `@warehouse`+database chat addressing, routines now show their delivery target and thread executed SQL + artifact links into Slack, GraphQL Core moved to ECS/CloudFront in staging, BrightAgent's chat bubble streams tokens live over SSE
+- **Sprint Health**: 8/9 tickets resolved (8 Done, 1 Canceled) against 181 PRs — the PR-ahead-of-Jira gap is now total: every resolved/in-flight ticket sits under the On-Prem Runner epic, while ~145 other code PRs carry no matching ticket transition this window. Concentration unchanged and rising: Kuri authored 75.2% of code PRs (115/153), up from 69.5% in Sprint 14. Fifth unofficial sprint running — a formal Jira sprint object is overdue. 5 tickets carrying to Sprint 16 (all On-Prem Runner).
+- [Details →](./15/)
 
 ---
 

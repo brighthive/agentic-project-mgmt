@@ -1,0 +1,53 @@
+{
+  "sprint": 15,
+  "name": "Sprint 15 🍑",
+  "dates": { "start": "2026-08-02", "end": "2026-08-17", "duration_days": 16 },
+  "unofficial": true,
+  "note": "No Jira sprint object exists for this window — fifth unofficial date-range cut in a row (11–15). Last release was Sprint 14 (🍯, Aug 1).",
+  "tickets": {
+    "resolved_in_window": 9,
+    "done": 8,
+    "canceled": 1,
+    "in_flight": 5,
+    "ready_for_staging": 2,
+    "in_progress": 2,
+    "needs_refinement": 1
+  },
+  "points": {
+    "note": "Team does not estimate — no story points set on in-window tickets. Velocity measured by PRs + resolved tickets, not points."
+  },
+  "team": ["Kuri", "Marwan", "Harbour"],
+  "prs": {
+    "total": 181,
+    "code_prs": 153,
+    "release_promotion_prs": 28,
+    "lines_changed_all": { "additions": 148185, "deletions": 86752 },
+    "lines_changed_code_only": { "additions": 87472, "deletions": 44270 },
+    "repos_touched": 8,
+    "repos": [
+      "brighthive-platform-core",
+      "brighthive-webapp",
+      "brightbot",
+      "brightbot-slack-server",
+      "brighthive-data-organization-cdk",
+      "agentic-project-mgmt",
+      "brighthive-e2e",
+      "platform-saas-ai-context"
+    ],
+    "by_repo": {
+      "brighthive-platform-core": { "total": 54, "code": 42, "release": 12, "code_lines": { "additions": 15912, "deletions": 1188 } },
+      "brighthive-webapp": { "total": 39, "code": 33, "release": 6, "code_lines": { "additions": 25445, "deletions": 40191 } },
+      "brightbot": { "total": 51, "code": 42, "release": 9, "code_lines": { "additions": 28362, "deletions": 1547 } },
+      "brightbot-slack-server": { "total": 4, "code": 4, "release": 0, "code_lines": { "additions": 1234, "deletions": 5 } },
+      "brighthive-data-organization-cdk": { "total": 2, "code": 1, "release": 1, "code_lines": { "additions": 233, "deletions": 8 } },
+      "agentic-project-mgmt": { "total": 22, "code": 22, "release": 0, "code_lines": { "additions": 13920, "deletions": 1306 } },
+      "brighthive-e2e": { "total": 8, "code": 8, "release": 0, "code_lines": { "additions": 1910, "deletions": 25 } },
+      "platform-saas-ai-context": { "total": 1, "code": 1, "release": 0, "code_lines": { "additions": 456, "deletions": 0 } }
+    },
+    "by_author_code_only": {
+      "Kuri (drchinca)": { "prs": 115, "additions": 74357, "deletions": 42726 },
+      "Marwan (Marwan-Samih-Brighthive)": { "prs": 19, "additions": 8175, "deletions": 1116 },
+      "Harbour (Nano-233)": { "prs": 19, "additions": 4940, "deletions": 428 }
+    }
+  }
+}

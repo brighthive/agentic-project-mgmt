@@ -1,0 +1,117 @@
+{
+  "resolved": [
+    {
+      "key": "BH-1424",
+      "summary": "SQL Server health tools on the MCP plugin — disk pressure + Agent job status (criterion 4)",
+      "status": "Canceled",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T12:29:26.126-0500",
+      "epic": "BH-1421"
+    },
+    {
+      "key": "BH-1418",
+      "summary": "Governed connection principals on the sandbox — scoped reader + write-confined engineer",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:54:37.657-0500",
+      "epic": "BH-1403"
+    },
+    {
+      "key": "BH-1419",
+      "summary": "Multi-database sandbox instance — OMS + TradeDW alongside LoopCapitalAM",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:54:38.776-0500",
+      "epic": "BH-1403"
+    },
+    {
+      "key": "BH-1422",
+      "summary": "MVP PoC: run the dbt MCP plugin locally against the Loop Capital sandbox",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:54:40.973-0500",
+      "epic": "BH-1421"
+    },
+    {
+      "key": "BH-1423",
+      "summary": "Governed execution: the MCP plugin runs dbt as the scoped engineer principal, never sa",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:54:43.765-0500",
+      "epic": "BH-1421"
+    },
+    {
+      "key": "BH-1429",
+      "summary": "Read legacy SSIS/SSRS sources from the customer's filesystem, not just the catalog",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:54:45.046-0500",
+      "epic": "BH-1421"
+    },
+    {
+      "key": "BH-1425",
+      "summary": "Artifact sync — local dbt run results flow back into platform-core lineage",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:55:02.631-0500",
+      "epic": "BH-1421"
+    },
+    {
+      "key": "BH-1414",
+      "summary": "propose_dbt_model tool on dbt_agent_react - PR-gated model proposal (never self-merge/direct write)",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:55:17.317-0500",
+      "epic": "BH-1403"
+    },
+    {
+      "key": "BH-1430",
+      "summary": "Let MCP callers choose WHICH warehouse connection to target",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Task",
+      "resolutiondate": "2026-08-13T17:56:11.295-0500",
+      "epic": "BH-1403"
+    }
+  ],
+  "in_flight": [
+    {
+      "key": "BH-1427",
+      "summary": "Package the plugin for Windows Server 2019 — the platform the customer actually runs",
+      "status": "Ready for Staging",
+      "assignee": "Kuri Chinca"
+    },
+    {
+      "key": "BH-1403",
+      "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server — local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
+      "status": "In Progress",
+      "assignee": "Kuri Chinca"
+    },
+    {
+      "key": "BH-1421",
+      "summary": "On-Prem Engineering Runner — filesystem-resident dbt + legacy artifact work inside the customer network",
+      "status": "In Progress",
+      "assignee": "Kuri Chinca"
+    },
+    {
+      "key": "BH-1426",
+      "summary": "Outbound-initiated transport — reach the on-prem plugin without opening an inbound port",
+      "status": "Ready for Staging",
+      "assignee": "Kuri Chinca"
+    },
+    {
+      "key": "BH-1428",
+      "summary": "Real-behavior e2e: MCP client → plugin → dbt Core → SQL Server → lineage synced",
+      "status": "Needs Refinement",
+      "assignee": "Kuri Chinca"
+    }
+  ]
+}
