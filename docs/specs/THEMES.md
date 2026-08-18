@@ -58,10 +58,10 @@ Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.m
 
 | Theme | Goal in one line | Merges | Size |
 |---|---|---|---|
-| **Blast-radius quality** | Trace a bad number downstream before a customer sees it | 1 spec (split into 4) | L |
-| **Project engine binding & activation** | Bind a project to its engine + repo; going ACTIVE pulls in real state | 3 specs | M |
-| **Observe-surface honesty** | What the UI shows is true — no lying dots, no thrashing cache, no thin cards | 4 specs | M |
-| **Cost & volume matrix** | Answer "what does this cost" for enterprise prospects | 3 specs | M |
+| [**Catch a bad number before your customers do**](THEME-blast-radius-quality.md) ✅ | An anomaly alert names what's downstream of it, worst tier first | 1 spec (rewrite as 4) | L |
+| [**Turn on a project and it knows its own history**](THEME-project-activation.md) ✅ | Activate a project and existing runs/models appear, instead of a blank page | 3 specs | M |
+| [**The screen never lies**](THEME-honest-surfaces.md) ✅ | Never-checked shows as unknown, a degraded badge names the culprit, logs are readable | 6 specs | M |
+| [**Answer what it costs**](THEME-cost-and-volume.md) ✅ | Give sales a real volume-and-cost picture per workspace | 3 specs | M |
 
 Standalone, unmerged, keep as-is: **platform-core develop→main reconciliation** (L),
 **workspace reset admin tool** (M), **decommission LangGraph Cloud** (M — rewrite as
