@@ -34,15 +34,15 @@ hierarchy source, so the live detector has no hierarchy check at all. Never lift
 ## Themes to delegate
 
 Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.md` (lean,
-150-line cap) before it's handed over.
+150-line cap) before it's handed over. ✅ = theme spec written and linked.
 
 ### Tier 1 — now
 
 | Theme | Goal in one line | Merges | Size | Blocked by |
 |---|---|---|---|---|
-| **Warehouse health you can trust** ✅ written | Every connected warehouse is really watched; the status on screen is true; alerts say something useful | 5 specs | L | Decision 1 |
-| **On-prem engineering** | Run dbt and read legacy files inside the customer's own network, where the files actually live | 2 specs | L | Decision 4 |
-| **Catalog & identity** | Browse warehouses → databases → tables, always know which one you're on, never a silent coin-flip | 6 specs | L | Decision 3 |
+| [**Warehouse health you can trust**](THEME-warehouse-health-truth.md) ✅ | Every connected warehouse is really watched; the status on screen is true; alerts say something useful | 5 specs | L | Decision 1 |
+| [**Work where the customer's data lives**](THEME-onprem-engineering.md) ✅ | Run dbt inside the customer's own network, where their files and database actually live | 2 specs | L | Decision 4 |
+| [**Always know which warehouse you're talking to**](THEME-catalog-and-identity.md) ✅ | Browse warehouses → databases → tables, always know which is default, never a silent coin-flip | 5 specs | L | Decision 3 |
 
 ### Tier 2 — next
 
@@ -52,7 +52,7 @@ Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.m
 | **Fleet self-healing** | Detect a broken pipeline, diagnose it, open a human-approved surgical PR | 2 specs | L | Decision 1 |
 | **Governance that's actually enforced** | A rule or contract you declare is one the platform applies and alerts on — the "declared but never enforced" gap, ×3 artifact types | 5 specs | L | — |
 | **Legacy file intake** | Drop in a `.dtsx`/`.rdl`/`.sql` and get diagnostics plus a GitHub PR | 4 specs | M | one extension registry, not three |
-| **Finish BrightRoutines** ✅ written | Close the short real tail behind a shipped feature — including the live P0 | 3 specs | S | Decision 5 + BH-914 approval |
+| [**Finish BrightRoutines**](THEME-brightroutines-closeout.md) ✅ | Close the short real tail behind a shipped feature — including the live P0 | 3 specs | S | Decision 5 + BH-914 approval |
 
 ### Tier 3 — later
 
