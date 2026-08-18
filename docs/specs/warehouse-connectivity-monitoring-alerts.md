@@ -11,7 +11,7 @@ tags: [warehouse, health, monitoring, alerts, slack, notifications, scheduling, 
 related:
   features: []
   pocs: []
-  specs: ["warehouse-health-snapshot.md", "sqlserver-health-watch.md", "hive-health-landing-indicator.md"]
+  specs: ["warehouse-health-snapshot.md", "sqlserver-health-watch.md", "hive-health-landing-indicator.md", "pipeline-connectivity-watchdog.md"]
 ---
 
 # Warehouse Connectivity — default monitoring, real alerts, on-demand check, staleness, and target existence
@@ -563,6 +563,7 @@ Feature: A dropped target is detected, not silently ignored
 | BH-1110 Slack/inbox renderer pattern (precedent) | Non-blocking | Shipped — this spec's §2a/§2b are additive entries following that exact pattern |
 | BH-1457 (Impact Capital SQLTest2019 incident) | Non-blocking | Live, 2026-08-18 confirmation that gaps 2 and 4 co-occur in production — not a code dependency, but the evidence this spec's §2e is scoped against |
 | BH-1368 (Data Estate badge — service attribution + UNKNOWN mislabel) | Non-blocking | Shares this spec's `"Unknown"` status vocabulary (§2e) — should land using consistent wording, not a separate label for the same concept |
+| `pipeline-connectivity-watchdog.md` (BH-1255/BH-1457) | Sequencing | Makes `SqlServerPipelineSource.poll_health()` "go implicit" (probes injected `self._config`, stops self-resolving via `_get_warehouse_connection_key`). This spec's §2f target-existence query lands *inside that same method* — implement §2f against the post-refactor implicit-adapter shape, not the current self-resolving one, or it needs rework. Also fixes the root cause of *why* BH-1457's on-demand tool probed the wrong warehouse (no `is_default` honoring, one-connection-per-workspace fan-out) — a different bug from this spec's staleness/target-existence gaps, not a duplicate of them |
 
 ## 7. Correctness Properties
 
@@ -683,6 +684,7 @@ Generated via `/create-jira-ticket` from this spec. Every row is an
 - **Fix (unmerged)**: BH-1363, `drchinca/BH-1363/watchdog-connection-failure-health-status` — the connection-failure signal this spec's renderer work is for
 - **Ticket**: BH-1368 — Data Estate badge service-attribution + `UNKNOWN`-mislabel fix; shares this spec's new `"Unknown"` status vocabulary
 - **Incident**: BH-1457 — Impact Capital "SQLTest2019", live confirmation of gaps 2 and 4 co-occurring in production (2026-08-18)
+- **Spec**: `pipeline-connectivity-watchdog.md` (BH-1255/BH-1457) — the enumeration/dispatch fix (probe every configured warehouse, honor `is_default`, never blanket-unreachable) that this spec's staleness/target-existence work sits downstream of; see §6 Dependencies for the shared-file sequencing note
 - **Precedent**: BH-1110 (SSIS/Snowflake/Databricks renderer gap closure) — the exact pattern §2a/§2b follow
 - **Precedent**: `MCPConnectivityCard.tsx` — the live-check UI pattern §2c's button follows
 - **Feature doc**: `docs/features/warehouse-connectivity-monitoring-alerts.md` (create after shipping)
