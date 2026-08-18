@@ -14,9 +14,19 @@ related:
 
 # [Feature/Migration Name]
 
+> **Start with `THEME_SPEC_TEMPLATE.md` instead unless you need this.** This full template is for
+> one implementation-level change that has a state machine, a security/tenancy boundary, or a
+> concurrency/time guarantee. For everything else — read paths, UI surfaces, config, new fields —
+> the lean theme spec plus a ticket is the right size, and this template's ceremony actively
+> obscures the work.
+>
 > Full contract: `~/.claude/rules/spec-driven.md`. Sections 7–9 are conditional — keep them only
 > when they apply (see each section's "Required when"); delete the heading if not applicable
 > rather than leaving it empty. §10 is mandatory for every spec.
+>
+> **Budgets are ceilings, not quotas.** ≤500 lines, ≤15 invariants, ≤20 scenarios. Hitting a
+> ceiling means split the spec, not defend the length. Fewer, sharper invariants beat fifteen
+> restatements of the same rule.
 
 ## 1. Context
 
@@ -38,7 +48,8 @@ What CANNOT be done with the current approach. Technical ceilings, architectural
 
 ### Gaps
 
-What's missing — functionality, integration points, data, UX, observability. Be exhaustive.
+What's missing — functionality, integration points, data, UX, observability. Only gaps this
+spec will actually close; a gap nobody is going to fix belongs in a ticket, not here.
 
 ## 2. Interface Contract (MDE)
 
