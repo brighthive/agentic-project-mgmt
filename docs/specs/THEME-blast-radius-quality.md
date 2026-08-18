@@ -29,8 +29,11 @@ downstream of it. The blast radius is the part a data leader actually cares abou
 
 1. `brightbot` — read lineage from the engine that already computes it, behind one provider so
    dbt is the first source and others can follow. Do not re-derive lineage ourselves.
-2. `brighthive-platform-core` — store those dependency edges in the graph so they can be walked
-   in both directions.
+2. `brighthive-platform-core` — store those dependency links in the graph so they can be walked in
+   both directions. **Decide and record:** dbt republishes its whole graph on every run, so settle
+   whether an update replaces all of a project's links or diffs them. Recommendation: replace all
+   links for that project in one transaction — simpler, and correct when a model is deleted, which
+   diffing tends to miss.
 3. `brightbot` — when an anomaly fires, walk downstream and attach the affected assets to the
    alert.
 4. `brightbot-slack-server` + `brighthive-webapp` — the alert says what broke *and* what it
@@ -39,7 +42,8 @@ downstream of it. The blast radius is the part a data leader actually cares abou
 ## Done when
 
 - [ ] A seeded anomaly on a source table produces an alert naming real downstream assets
-- [ ] The lineage edges come from dbt's own graph, not a name-matching heuristic
+- [ ] The links come from dbt's own graph, not from guessing by matching names
+- [ ] Deleting a model in dbt removes its links on the next update — no orphans left behind
 - [ ] An asset with no downstream dependents produces an alert that says so, rather than an
       empty section
 - [ ] Gold/Platinum impact appears above lower tiers in the alert
@@ -51,6 +55,8 @@ downstream of it. The blast radius is the part a data leader actually cares abou
   customer is actually on them, as new provider registrations.
 - **Re-deriving lineage from SQL parsing.** The engines publish it; read it.
 - **Anomaly detection itself** — it ships. This theme consumes its output.
+- **Quality rules and governance enforcement** — owned by
+  [Governance you declare is governance we enforce](THEME-governance-enforced.md).
 - **The webapp UI defect audit** bundled into the source spec as "Track D" (~130 lines on mobile
   responsiveness, dead legacy code, accessibility). It has **zero lineage dependency** and its own
   text admits it is "NOT yet a committed scope." It belongs in a webapp tech-debt ticket set.

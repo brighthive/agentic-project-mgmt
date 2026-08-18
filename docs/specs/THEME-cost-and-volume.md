@@ -2,7 +2,7 @@
 title: "Answer what it costs"
 epic: "BH-171"
 owner: "drchinca"
-status: "Draft"
+status: "Park — confirm the ask is still live before assigning"
 created: "2026-08-18"
 supersedes:
   - cost-allocation-tagging.md
@@ -36,15 +36,20 @@ is useless without the one before it.
    workspace. Nothing downstream works without this.
 2. `brighthive-platform-core` — aggregate usage per workspace on a schedule: rows processed,
    queries run, assets catalogued, agent calls.
-3. Join the two and produce the volume-and-cost view sales actually asked for.
+3. `brighthive-platform-core` — a script sales runs themselves, e.g.
+   `make volume-report WORKSPACE=<id> MONTH=2026-07`, emitting one CSV with a row per workspace per
+   month: rows processed, queries run, assets catalogued, agent calls, and attributed AWS spend.
+   No UI, no dashboard — one file they can attach to an email.
 
 ## Done when
 
 - [ ] AWS spend can be attributed to a specific workspace from tags alone
 - [ ] Usage numbers per workspace are stored and refreshed on a schedule
 - [ ] A volume matrix for one real workspace can be produced without an engineer touching it
-- [ ] Numbers reconcile against the AWS bill for that period — a report that doesn't tie out is
-      worse than none
+- [ ] Attributed spend is **within 5%** of the AWS bill for that period, with the unattributed
+      remainder shown as its own line rather than silently absorbed
+- [ ] Real-behavior test: the report runs against real AWS Cost Explorer data for a real
+      workspace, not a fixture
 
 ## Don't do
 
@@ -55,6 +60,8 @@ is useless without the one before it.
 - **Per-query cost attribution.** Workspace-level is what was asked for. Finer granularity is a
   later question.
 - **A dashboard.** A report sales can pull is the ask. A UI comes only if the report gets used.
+- **Reviving the 30-KPI analytics dashboard** — on mock data since April with every follow-on
+  ticket unstarted. Parked as its own decision; see [THEMES.md](THEMES.md).
 
 ## Where it lives
 

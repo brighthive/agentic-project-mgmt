@@ -22,16 +22,21 @@ reachable from our cloud, which for Loop Capital they are not.
 
 ## Why now
 
-Loop Capital's SQL Server is on their own Azure VM behind their firewall, and it is the live
-trial. The current staging setup only reaches it through a `bore.pub` tunnel — a demo prop, not a
-product. Two specs were written a day apart with **opposite architectures**, and the newer one
-says the older one is wrong (see the decision below); until that's settled, nobody can build.
+Loop Capital's SQL Server sits on their own machine behind their firewall, and it is the live
+trial. Today we only reach it by holding open a temporary public tunnel from a laptop — fine for a
+demo, not something a bank will run. Two specs were written a day apart with **opposite
+architectures**, and the newer one says the older is wrong (see the decision below); until that's
+settled, nobody can build.
 
 ## What to build
 
-1. `brightbot` — a runner that executes **inside the customer's network**, where the dbt project
-   files and the SQL Server both live. It pulls work, runs it locally, pushes results back. Our
-   cloud never needs inbound access to their network.
+1. `brightbot` — something the customer runs on their own machine, inside their network, where the
+   dbt files and the SQL Server both live. It asks our cloud for queued work over an ordinary
+   outbound HTTPS connection, runs it locally, and posts results back. **The customer never opens
+   an inbound port.** Four things to decide and write down before coding, because each changes the
+   shape of the thing: how it is packaged and delivered (a container is the obvious answer), how it
+   authenticates outbound and how that credential is issued and revoked, how often it asks for work,
+   and who is responsible for upgrading it. Scope it to one workspace per running copy.
 2. `brightbot` — governed model management: the agent proposes a dbt model change as a PR a human
    reviews and merges. It never writes to the customer's repo or warehouse directly.
 3. `brightbot` — a reproducible local SQL Server sandbox (Docker) with least-privilege logins, so
@@ -48,17 +53,21 @@ says the older one is wrong (see the decision below); until that's settled, nobo
 - [ ] The agent cannot write to the customer's warehouse or repo without a human merge — proven
       by a test that tries and fails
 - [ ] `make`-level sandbox recreate produces a working local SQL Server from scratch
-- [ ] The runner survives losing its connection mid-run and reports honestly, rather than
-      silently reporting success
+- [ ] Killing the network mid-run leaves the run marked failed with the reason, never "succeeded"
+      and never stuck in a running state forever
+- [ ] Real-behavior test: the full path runs against the real local SQL Server sandbox (item 3),
+      not a mocked connection
 
 ## Don't do
 
 - **Run dbt cloud-side against an on-prem server.** This is the corrected error — see the
   decision below. Do not carry it forward from `autonomous-dbt-project-lifecycle.md`.
-- **Ship the `bore.pub` tunnel as product.** It stays a local dev convenience.
-- **Add a new `sql_server` WarehouseType here** — that's the cross-engine theme, and it needs
-  the ADR in decision 3 of `THEMES.md` first.
-- **Legacy `.dtsx`/`.rdl` parsing** — separate theme (legacy file intake).
+- **Ship the public tunnel as product.** It stays a local dev convenience.
+- **Add a new `sql_server` WarehouseType here** — owned by
+  [Same answers on every warehouse engine](THEME-cross-engine-correctness.md), and it needs
+  decision 3 in [THEMES.md](THEMES.md) settled first.
+- **Legacy `.dtsx`/`.rdl` parsing** — owned by
+  [Drop in your legacy pipeline files](THEME-legacy-file-intake.md).
 - **New warehouse write/DDL abstraction** — deferred; nothing in this theme needs it.
 
 ## Where it lives
@@ -73,7 +82,7 @@ says the older one is wrong (see the decision below); until that's settled, nobo
 
 ---
 
-## ⚠️ One decision before code starts
+## ⚠️ Decision 4 in [THEMES.md](THEMES.md) — settle before code starts
 
 Two specs, written one day apart, build opposite architectures — and the newer one explicitly
 says the older is wrong:

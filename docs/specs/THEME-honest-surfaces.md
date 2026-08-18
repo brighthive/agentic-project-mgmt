@@ -39,8 +39,11 @@ only if someone thinks to ask for it.
    degraded, name which service caused it. An aggregate word with no detail is not information.
 3. `brighthive-webapp` — a health band on workspace entry: service health, a profiler roll-up,
    medallion mix, and how much of the catalog the agents have enriched.
-4. `brighthive-platform-core` — compute the expensive roll-ups behind that band cheaply, so the
-   band is a fast read rather than a live aggregation. First consumer is the profiler roll-up.
+4. `brighthive-platform-core` — the band reads its expensive numbers from a stored row refreshed
+   on a schedule, not by aggregating live on page load. Target: **first paint under 500ms at the
+   95th percentile on a workspace with 1,000+ assets**, refreshed every 15 minutes. When the stored
+   row is older than one refresh interval, show the number with its age — never hide staleness, and
+   never block the page waiting for a fresh one.
 5. `brighthive-webapp` — make run logs genuinely readable: wire the Observability tab to the real
    run data instead of partial fragments.
 6. `brightbot-slack-server` — push the fleet-health summary on a schedule instead of on request.
@@ -50,10 +53,12 @@ only if someone thinks to ask for it.
 - [ ] A never-checked service shows neutral, not "Degraded" — verified on real staging data
 - [ ] A "Degraded" badge names the responsible service
 - [ ] The health band loads on workspace entry with real numbers, not mock data
-- [ ] Roll-up numbers come from a stored computation, and the band's load time proves it
+- [ ] First paint under 500ms p95 on a 1,000+ asset workspace, measured on staging
+- [ ] A roll-up older than one refresh interval displays its age rather than passing as current
 - [ ] A run's logs are readable end-to-end in the Observability tab
 - [ ] The weekly fleet summary arrives in Slack unprompted
-- [ ] One cross-engine regression test covers the profiler numbers reaching the landing surface
+- [ ] Real-behavior test: profiler numbers reach the landing surface on two engines against real
+      staging data
 
 ## Don't do
 
@@ -65,6 +70,9 @@ only if someone thinks to ask for it.
   parked — it is not part of this theme.
 - **Author or edit medallion tiers** — tier is derived from lineage depth. Display only.
 - **New alert channels** — this theme is about existing surfaces telling the truth.
+- **Warehouse staleness detection itself** — owned by
+  [Warehouse health you can trust](THEME-warehouse-health-truth.md). **That theme lands first**;
+  this one adopts whatever label it ships.
 
 ## Where it lives
 
@@ -75,7 +83,8 @@ only if someone thinks to ask for it.
 | `brightbot-slack-server` | scheduled fleet summary |
 | `brighthive-e2e` | profiler-numbers-reach-the-landing regression test |
 
-**Tickets:** BH-1331, BH-1340, BH-1368 (badge attribution + the Unknown mislabel), BH-1036
+**Tickets:** BH-1331, BH-1340, BH-1368 (badge attribution + the Unknown mislabel — **this theme
+owns BH-1368**, not the warehouse-health one), BH-1036
 
 ---
 

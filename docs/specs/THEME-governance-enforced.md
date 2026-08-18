@@ -23,6 +23,14 @@ the platform actually applies it, tells someone when it's violated, and shows wh
 Today all three can be created and none are reliably applied. A data leader can build a whole
 governance posture in the UI and have it change nothing.
 
+## Why now
+
+Two separate audits, written in June, each confirmed the same thing by reading the code: the
+mutation that applies a governance rule exists, and **nothing ever calls it**. A customer can
+build a complete governance posture in the UI and change nothing about what the platform allows.
+This is the gap between what we show a data leader and what we actually do — the single most
+damaging kind for a governance product to have.
+
 ## The one pattern behind all of it
 
 Three different artifacts have the identical defect: **declared but never enforced.**
@@ -38,8 +46,13 @@ enforcement point that all three artifacts register against, then wire each arti
 
 ## What to build
 
-1. `brighthive-platform-core` — one enforcement point: given an artifact and an operation, decide
-   allow / block / warn, and record the decision. Every artifact type registers here.
+1. `brighthive-platform-core` — one place that answers "is this operation allowed?" Given the
+   artifact, the operation, and the workspace, it returns **allow / block / warn** and stores what
+   it decided as a record a customer can read back later. **Decide and record three things before
+   writing it:** (a) it runs synchronously, in-line with the operation — an async check can't block
+   anything; (b) it is called from the transform-run and query-execute paths *only* to start with,
+   not everywhere; (c) on its own internal error it **fails closed** — a blocked operation is
+   recoverable, an unchecked one isn't.
 2. `brightbot` — actually call it. The rule-creation mutation exists and the agent never invokes
    it; that gap is the whole bug for policies.
 3. `brightbot` — scope quality rules by tag and by group, so a customer can say "these rules apply
@@ -53,8 +66,11 @@ enforcement point that all three artifacts register against, then wire each arti
 
 ## Done when
 
-- [ ] A declared quality rule blocks or warns on a real violation, and the decision is recorded
-- [ ] A governance policy denies an operation it forbids — proven end-to-end, not unit-mocked
+- [ ] A declared quality rule blocks or warns on a real violation, and the stored decision is
+      readable afterwards through the API
+- [ ] A governance policy denies an operation it forbids — proven end-to-end against a real
+      backend, not unit-mocked
+- [ ] When the check itself errors, the operation is blocked, not allowed — proven by a test
 - [ ] A schema contract rejects a transform whose output shape drifted
 - [ ] All three go through the **same** enforcement point — one code path, three registrations
 - [ ] A customer can see, per lineage node, which governance applies and what it last decided
@@ -67,7 +83,8 @@ enforcement point that all three artifacts register against, then wire each arti
 - **Three separate enforcement paths.** If the design ends with one per artifact type, it's wrong.
 - **Let the UI author data-product tiers** — tier is derived from lineage depth, never from names
   or manual entry. Read-only surfacing only.
-- **Blast-radius / downstream impact analysis** — separate theme.
+- **Blast-radius / downstream impact analysis** — owned by
+  [Catch a bad number before your customers do](THEME-blast-radius-quality.md).
 - **New backend engines for quality or policy** — the convergence spec explicitly defers those;
   keep that boundary.
 
@@ -80,8 +97,11 @@ enforcement point that all three artifacts register against, then wire each arti
 | `brighthive-webapp` | enforcement visibility, tier badges |
 | `brightbot-slack-server` | violation alerts |
 
-**Tickets:** BH-766, BH-767, BH-768, BH-769, BH-624; `user-schema-contract-gates.md`'s five
-ticket rows have **no Jira IDs at all** — create them before starting
+**Tickets:** BH-766, BH-767, BH-768, BH-769, BH-624
+
+⚠️ **Not yet handable to an engineer:** `user-schema-contract-gates.md`'s five ticket rows have
+**no Jira IDs at all**. Create them (and confirm the BH-76x numbers above are still live) before
+this theme is assigned — status stays `Draft` until then.
 
 ---
 

@@ -22,18 +22,18 @@ of starting from an empty screen. They see their real estate on day one, not aft
 
 ## Why now
 
-Activation today does nothing. A customer connects dbt Cloud, activates a project, and the
-platform shows nothing until new runs happen — so the first impression of a working integration
-is a blank page. Separately, dbt Cloud project listing isn't scoped per tenant, so a customer can
-see projects that aren't theirs.
+Activation today does nothing. A customer connects dbt Cloud, activates a project, and sees nothing
+until new runs happen — so the first impression of a working integration is a blank page.
+Separately, **a customer can currently see other customers' dbt Cloud projects** in the picker.
 
 ## What to build
 
 1. `brighthive-platform-core` — bind a project to its engine and its repo, admin-gated. Support
    more than one repo per project; several customers have their models split.
-2. `brighthive-platform-core` — fix dbt Cloud project listing to be tenant-scoped, and make the
-   project ↔ service ↔ repo link reliable. Today `updateProject` persists the id but never writes
-   the graph edge, so the link looks set and isn't.
+2. `brighthive-platform-core` — make sure a customer only sees their own dbt Cloud projects, and
+   make the project ↔ engine ↔ repo link reliable. Today `updateProject` saves the id but never
+   writes the graph link, so the connection looks set and isn't. **Do this one first** — it's a
+   cross-customer visibility bug, not a feature.
 3. `brighthive-platform-core` + `brightbot` — **one** activation trigger (see the decision below).
    When a project goes active, it fires once.
 4. `brightbot` — on activation, pull the engine's existing run history and register what's found,
@@ -43,7 +43,8 @@ see projects that aren't theirs.
 
 ## Done when
 
-- [ ] Activating a project with existing dbt Cloud history shows that history within one cycle
+- [ ] Activating a project with existing dbt Cloud history shows that history within 5 minutes,
+      without the user reloading or re-activating
 - [ ] A customer sees only their own dbt Cloud projects
 - [ ] The project ↔ engine ↔ repo link survives a reload — the graph edge is really written
 - [ ] Activation fires exactly once; re-activating does not duplicate the pull
@@ -56,8 +57,11 @@ see projects that aren't theirs.
   works. Two source specs propose alternatives (`PipelineEnginePort`, `ProjectPipelineEngine`) that
   **appear nowhere in the codebase** — do not build a third port to sit beside a working one.
 - **Provisioning new engine resources** — this theme observes and binds; it does not create.
-- **On-prem runners** — separate theme.
-- **Legacy file parsing on activation** — separate theme; keep activation to engine state.
+- **On-prem runners** — owned by
+  [Work where the customer's data lives](THEME-onprem-engineering.md).
+- **Legacy file parsing on activation** — owned by
+  [Drop in your legacy pipeline files](THEME-legacy-file-intake.md). Keep activation to engine
+  state only.
 
 ## Where it lives
 
@@ -71,7 +75,7 @@ see projects that aren't theirs.
 
 ---
 
-## ⚠️ One decision before code starts
+## ⚠️ Decision 6 in [THEMES.md](THEMES.md) — settle before code starts
 
 **How does activation fire?** Two source specs each design a mechanism, neither is built:
 

@@ -36,6 +36,10 @@ hierarchy source, so the live detector has no hierarchy check at all. Never lift
 Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.md` (lean,
 150-line cap) before it's handed over. ✅ = theme spec written and linked.
 
+**All 12 are `status: Draft`, meaning none is `Ready to delegate` yet.** A theme flips to Ready
+when its blocking decision is settled and its tickets exist — not when its spec is written. The
+"Blocked by" column is what stands between the two.
+
 ### Tier 1 — now
 
 | Theme | Goal in one line | Merges | Size | Blocked by |
@@ -51,7 +55,7 @@ Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.m
 | [**Same answers on every warehouse engine**](THEME-cross-engine-correctness.md) ✅ | Read, write, lineage, and quality behave the same on every engine — starting with a silent Synapse sampling bug | 5 specs | L | Decision 3 |
 | [**Pipelines that fix themselves**](THEME-fleet-self-healing.md) ✅ | Detect a broken pipeline, diagnose it, open a human-approved PR — never self-merge | 2 specs | L | Decision 1 |
 | [**Governance you declare is governance we enforce**](THEME-governance-enforced.md) ✅ | One enforcement point, three artifact types — closes the "declared but never applied" gap | 5 specs | L | — |
-| [**Drop in your legacy pipeline files**](THEME-legacy-file-intake.md) ✅ | Upload a `.dtsx`/`.rdl`/`.sql`, get diagnostics and a reviewable PR | 4 specs | M | one extension lookup, not three |
+| [**Drop in your legacy pipeline files**](THEME-legacy-file-intake.md) ✅ | Upload a `.dtsx`/`.rdl`/`.sql`, get diagnostics and a reviewable PR | 4 specs | M | — (BH-1274 needs a named secrets approval) |
 | [**Finish BrightRoutines**](THEME-brightroutines-closeout.md) ✅ | Close the short real tail behind a shipped feature — including the live P0 | 3 specs | S | Decision 5 + BH-914 approval |
 
 ### Tier 3 — later
@@ -87,8 +91,12 @@ consolidation PR #793) · `skills-extension-deep-agent` (BH-860 `Done`) ·
 (CEMAF is the supervisor now) · `azure-synapse-full-integration` (April; still frames the
 deprecated Datapiary as a dependency) · `warehouse-extensibility-pattern` (same 7-layer registry
 as its sibling, 3 days apart, different variable name) · `inline-context-anchors` (collides with
-shipped `@`) · `pipeline-engine-full-lifecycle-control` (specs a port that was never built) ·
-`self-healing-pipelines` (superseded by the fleet spec)
+shipped `@`) · `pipeline-engine-full-lifecycle-control` (specs a port that was never built)
+
+`self-healing-pipelines` is **not** in this pile — archive it only *after*
+[Pipelines that fix themselves](THEME-fleet-self-healing.md) folds in its four data-shape failure
+modes as healer registrations. Its verification-loop design is superseded; its failure taxonomy is
+not.
 
 **Park — no confirmed demand.** Revisit on a real signal, not speculatively:
 `saas-mcp-bridge-integration` (no customer ask; no real file:line grounding) ·

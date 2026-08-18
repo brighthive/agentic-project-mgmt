@@ -5,6 +5,7 @@ owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"
 supersedes:
+  - pipeline-self-healing-fleet.md
   - self-healing-pipelines.md
 ---
 
@@ -54,7 +55,9 @@ it by hand every night.
 ## Don't do
 
 - **Auto-merge, under any framing.** This gate is unconditional across every healer.
-- **Warehouse connectivity / staleness** — separate theme; this theme consumes those signals.
+- **Warehouse connectivity and staleness** — owned by
+  [Warehouse health you can trust](THEME-warehouse-health-truth.md). This theme consumes the
+  signals it produces.
 - **Job-runtime failures without a data-shape signature** — alert only. Don't invent a healer
   for a failure class we can't reliably diagnose.
 - **The remediation-state prose in `self-healing-pipelines.md` §"Post-merge verification"** — the
@@ -75,8 +78,8 @@ it by hand every night.
 
 ## Notes for whoever picks this up
 
-**Blocked by decision 1 in [`THEMES.md`](THEMES.md)** — this theme's source spec defines a
-`ConnectionDirectory` port for warehouse fan-out, and the connectivity watchdog spec defines a
+**Blocked by decision 1 in [THEMES.md](THEMES.md)** — this theme's source spec defines a
+`ConnectionDirectory` port for polling every warehouse, and the connectivity watchdog spec defines a
 different mechanism for the same job. Settle that first; this theme should consume whichever wins
 rather than carrying its own.
 

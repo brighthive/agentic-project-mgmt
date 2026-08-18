@@ -25,16 +25,23 @@ engine and silently misbehave on another.
 
 ## Why now
 
-Quality checks on Synapse **silently sample instead of scanning**, because table names aren't
-quoted for the dialect. The customer gets a quality result that looks fine and is wrong — the
-worst class of bug, because nothing errors. Separately, the engineering agent can only write to
-Redshift, so on-prem SQL Server customers get read-only behaviour with no explanation.
+Quality checks on Synapse **check a sample instead of the whole table**, because we don't wrap
+table names the way Synapse requires. The customer gets a quality result that looks fine and is
+wrong — the worst kind of bug, because nothing fails or warns. Separately, the agent can only
+write models to Redshift, so a SQL Server customer silently gets read-only behaviour and no
+explanation of why.
 
 ## What to build
 
 1. `brightbot` — fix the Synapse dialect quoting so quality checks scan the real table instead of
    silently sampling. This is a correctness bug, not a feature; do it first.
-2. `brightbot` — a write path the engineering agent can use on any engine, not just Redshift.
+2. `brightbot` — let the engineering agent write on engines other than Redshift. **This theme owns
+   the write path**; [Always know which warehouse you're talking to](THEME-catalog-and-identity.md)
+   defers it here. Scope it to the writes the agent already performs on Redshift today — creating
+   and replacing models — and no more. **Decide and record:** whether this reuses the existing
+   connection classes per engine or needs one shared write interface. Recommendation: start with
+   the existing per-engine connections and only extract a shared one when the second engine
+   actually forces it.
 3. `brightbot` — lineage extraction for SQL Server / Synapse, behind the same lineage provider
    the other engines use.
 4. `brightbot` — resolve what `SQL_SERVER` *is* (see the decision below) and make
@@ -42,9 +49,10 @@ Redshift, so on-prem SQL Server customers get read-only behaviour with no explan
 5. `brightbot` — table parity across engines: compare a table in one warehouse to a table in
    another and report schema, row-count, and value differences honestly, including when the two
    engines' types aren't directly comparable.
-6. Confirm the onboarding playbook still holds: adding an engine touches the registry and config
-   only. If any of items 1–5 required editing engine-agnostic code, that's a defect in the
-   playbook — fix it there too.
+6. Confirm the onboarding rule still holds — adding an engine touches only its registry entry and
+   config, never engine-neutral code. The rule is written in `warehouse-agnostic-architecture.md`
+   (BH-172, Approved), which stays as the reference. If any of items 1–5 forced an edit to
+   engine-neutral code, that's a defect in the rule — fix it there too.
 
 ## Done when
 
@@ -54,13 +62,19 @@ Redshift, so on-prem SQL Server customers get read-only behaviour with no explan
 - [ ] `SQL_SERVER` resolves to one answer, and every caller agrees — no path disagrees
 - [ ] Table parity reports a real difference between two engines, and says clearly when types
       can't be compared rather than guessing
-- [ ] Real-behavior tests on **two different engines**, not one plus mocks
+- [ ] Real-behavior tests on **two real engines** — SQL Server (the local Docker sandbox from
+      [Work where the customer's data lives](THEME-onprem-engineering.md)) and Snowflake (the
+      existing staging connection). If CI can't reach both, that's a CI gap to fix, not a reason
+      to drop to mocks
 
 ## Don't do
 
 - **A second engine port.** `PipelineRunner` in `pipelines/core/port.py` is the real one; two
   other specs describe ports that don't exist in code. Don't add a third.
-- **Warehouse health / connectivity** — separate theme.
+- **Warehouse health, staleness, and connectivity** — owned by
+  [Warehouse health you can trust](THEME-warehouse-health-truth.md).
+- **Catalog browsing, database nodes, and default resolution** — owned by
+  [Always know which warehouse you're talking to](THEME-catalog-and-identity.md).
 - **New engines nobody has asked for** (Oracle, BigQuery). The playbook makes them cheap later;
   building them now is speculative.
 - **The full 7-layer integration audit per engine.** Snowflake's shipped and Synapse's is a stale
@@ -78,7 +92,7 @@ Redshift, so on-prem SQL Server customers get read-only behaviour with no explan
 
 ---
 
-## ⚠️ One decision before code starts
+## ⚠️ Decision 3 in [THEMES.md](THEMES.md) — settle before code starts
 
 **Is `SQL_SERVER` its own `WarehouseType`, or an alias for `azure_synapse`?** Three specs written
 within two weeks answer differently:

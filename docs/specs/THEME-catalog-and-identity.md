@@ -25,31 +25,37 @@ and database it came from. When a name is ambiguous, the platform asks instead o
 ## Why now
 
 Impact Capital has three registered warehouses, and **two parts of the platform disagree about
-which one is the default** (BH-1457): the warehouse list reports `ImpactCapitalAM` as default,
-while the health probe actually connects to `SQLTest2019`. Two code paths resolve "the default"
-differently, so an answer can silently come from a warehouse the customer didn't mean — and one
-of those three connections is a database that no longer exists. A wrong-warehouse answer is worse
-than no answer, because nobody catches it.
+which one is the default** (BH-1457): the warehouse list names one, while the health check
+connects to a different one — and that different one points at a database that no longer exists.
+So an answer can quietly come from a warehouse the customer didn't mean. A confidently wrong
+answer is worse than no answer, because nobody catches it.
 
 ## What to build
 
 1. `brightbot` — one catalog module with four read verbs: list warehouses, list databases, list
    schemas, list tables. Today this is specced across three separate documents for one Python
    file; it's one module with one set of verbs.
-2. `brightbot` — **one** default-resolution path, used by every caller. The warehouse list and the
-   connection probe must return the same answer for "which is default." This is the BH-1457 bug.
-3. `brighthive-platform-core` — model databases as real nodes so a warehouse's databases are
-   queryable, not inferred from strings.
+2. `brightbot` — **one** way of deciding which warehouse is the default, used by every caller.
+   Today the warehouse list and the connection check disagree, and that disagreement is the
+   BH-1457 bug. **The workspace's stored `is_default` flag is the answer**; the connection check's
+   independent guess (currently the first entry it finds) is the one to delete. Confirm on Impact
+   Capital's workspace before and after.
+3. `brighthive-platform-core` — store databases as real nodes so a warehouse's databases can be
+   queried instead of guessed from strings. **This needs a backfill** for every warehouse that
+   already exists — write it as part of this item, and make it re-runnable, because it will be run
+   more than once.
 4. `brighthive-platform-core` + `brightbot` — an ambiguity rule: when a table name matches in more
    than one database, ask which one. Never pick the first match silently.
 5. `brighthive-webapp` — show which warehouse is the default, and let an admin change it. The
    backend for this already exists; only the UI is missing.
-6. Every answer that touches a warehouse names the warehouse and database it used.
+6. `brightbot` — every answer that reads from a warehouse states which warehouse and database it
+   came from.
 
 ## Done when
 
-- [ ] The warehouse list and the connection probe agree on the default for Impact Capital's
-      workspace — the BH-1457 mismatch is gone
+- [ ] The warehouse list and the connection check agree on the default for Impact Capital's
+      workspace — the BH-1457 mismatch is gone, confirmed against real staging
+- [ ] The database backfill runs twice in a row without creating duplicates
 - [ ] A customer can drill warehouse → database → schema → table from chat and from the webapp
 - [ ] A table name present in two databases produces a question, not a guess — proven by a test
 - [ ] The default warehouse is visible in the webapp and changeable by an admin
@@ -58,16 +64,23 @@ than no answer, because nobody catches it.
 
 ## Don't do
 
-- **Adding a `sql_server` WarehouseType** — cross-engine theme, and it needs the ADR first
-  (decision 3 in `THEMES.md`).
+- **Adding a `sql_server` WarehouseType** — owned by
+  [Same answers on every warehouse engine](THEME-cross-engine-correctness.md), and it needs
+  decision 3 in [THEMES.md](THEMES.md) settled first.
 - **The five-level Resource/Job graph** from `warehouse-database-table-identity.md` §2 — its own
   §5 admits the registry driving it isn't being built this pass. Defer until a second consumer
   exists.
-- **The `WarehouseBuilder` write/DDL port** bolted onto that same spec mid-draft — no caller
-  needs it. Its own spec if it ever does.
+- **Any warehouse write path** — owned by
+  [Same answers on every warehouse engine](THEME-cross-engine-correctness.md). The
+  `WarehouseBuilder` write/DDL port bolted onto the identity spec mid-draft is superseded by that
+  theme's item 2; don't build it here and don't build it twice.
 - **The OpenMetadata service-identity collision fix** also bundled in there — that's a different
   system and belongs in its own bug ticket.
-- **Table parity comparison** — separate theme, and it depends on item 3 landing first.
+- **Table parity comparison** — owned by
+  [Same answers on every warehouse engine](THEME-cross-engine-correctness.md), and it depends on
+  item 3 landing first.
+- **Warehouse health and staleness** — owned by
+  [Warehouse health you can trust](THEME-warehouse-health-truth.md).
 
 ## Where it lives
 
