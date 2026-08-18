@@ -48,10 +48,10 @@ Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.m
 
 | Theme | Goal in one line | Merges | Size | Blocked by |
 |---|---|---|---|---|
-| **Cross-engine correctness** | Read, write, lineage, and quality behave the same on every warehouse engine | 6 specs | L | Decision 3 |
-| **Fleet self-healing** | Detect a broken pipeline, diagnose it, open a human-approved surgical PR | 2 specs | L | Decision 1 |
-| **Governance that's actually enforced** | A rule or contract you declare is one the platform applies and alerts on — the "declared but never enforced" gap, ×3 artifact types | 5 specs | L | — |
-| **Legacy file intake** | Drop in a `.dtsx`/`.rdl`/`.sql` and get diagnostics plus a GitHub PR | 4 specs | M | one extension registry, not three |
+| [**Same answers on every warehouse engine**](THEME-cross-engine-correctness.md) ✅ | Read, write, lineage, and quality behave the same on every engine — starting with a silent Synapse sampling bug | 5 specs | L | Decision 3 |
+| [**Pipelines that fix themselves**](THEME-fleet-self-healing.md) ✅ | Detect a broken pipeline, diagnose it, open a human-approved PR — never self-merge | 2 specs | L | Decision 1 |
+| [**Governance you declare is governance we enforce**](THEME-governance-enforced.md) ✅ | One enforcement point, three artifact types — closes the "declared but never applied" gap | 5 specs | L | — |
+| [**Drop in your legacy pipeline files**](THEME-legacy-file-intake.md) ✅ | Upload a `.dtsx`/`.rdl`/`.sql`, get diagnostics and a reviewable PR | 4 specs | M | one extension lookup, not three |
 | [**Finish BrightRoutines**](THEME-brightroutines-closeout.md) ✅ | Close the short real tail behind a shipped feature — including the live P0 | 3 specs | S | Decision 5 + BH-914 approval |
 
 ### Tier 3 — later
