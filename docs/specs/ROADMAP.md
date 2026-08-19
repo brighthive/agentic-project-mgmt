@@ -29,9 +29,9 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 | The dead "Enforced" toggle *(carve-out of governance)* | BH-172 | 0.5 pd | ✅ | Ships alone — remove the local-state toggle at `GovernancePolicyItem.tsx:55` |
 | [Warehouse health you can trust](THEME-warehouse-health-truth.md) | BH-1036 | 11 pd | 🟡 | Build the ~1 pd service-key `warehouseServices` query first — it gates items 1–2 |
 | [Drop in your legacy files](THEME-legacy-file-intake.md) | BH-1421 | 9–10 pd | 🟡 | 7 tickets exist but unassigned — give it an owner, then build **one** design, not three |
-| [Same answers on every engine](THEME-cross-engine-correctness.md) | BH-1168 | 9 pd | 🟡 | ~4 pd is a prod release of finished code — cut it; the SQL_SERVER ADR gates the rest |
+| [Same answers on every engine](THEME-cross-engine-correctness.md) | BH-1168 | 9 pd | 🟡 | ~4 pd is a prod release of finished code — cut it; the SQL_SERVER path is now settled ([ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md), Accepted) |
 | [Routine results land where teams work](THEME-routine-delivery.md) | ⚠️ new | 7–9 pd | 🔴 | Genuinely needs one open epic — BH-876 is `Done`. Pair with routine-authoring under a single *BrightRoutines next-phase* epic |
-| [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🔴 | **Decision 1** — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) is drafted; needs Accept |
+| [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🟡 | **Decision 1 settled** — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) Accepted; build PR #1 (identity member + lineage fix), then the capability refactor |
 | [Turn on a project](THEME-project-activation.md) | BH-1255 | 11 pd | 🔴 | **No new epic** — BH-1330/1343/1331 already sit under BH-1255; just reparent BH-1323 (now BH-172) **+** wire the activation-trigger call |
 | [Answer what it costs](THEME-cost-and-volume.md) | BH-118 | 14 pd | 🔴 | Confirm the enterprise ask is still live with sales (5 min); no child tickets yet |
 | [The screen never lies](THEME-honest-surfaces.md) | BH-1036 / BH-409 | 16 pd | 🔴 | **No new epic** — its 3 tickets already have homes (BH-1331→BH-1255, BH-1368→BH-1036); reparent orphan BH-1340 → BH-409. Track as a cross-cutting quality bar |
@@ -40,10 +40,13 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 | [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🔴 | **Decision 3** — does the largest theme start this quarter? 5–6 pd has no ticket |
 
 **Read it as a hand-off order.** The four ✅ rows (≈18 pd) go to engineers this week with no
-meeting. The three 🟡 rows each need one ~1 pd or near-zero-code move first. The eight 🔴 rows
-are blocked on **four 15-minute decisions, four missing Jira epics, and one "is this still worth
-doing?" check with sales** — not one is an engineering problem. Clear those and the whole board
-turns green.
+meeting. The four 🟡 rows each need one small move first — a ~1 pd query, a ticket assignment, a
+release cut, or building PR #1 now that [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md)
+is Accepted. The seven 🔴 rows are blocked on **two product decisions (governance scope,
+rebase-vs-rewrite), one genuine new epic (BrightRoutines next-phase, covering both routine themes)
+plus two ticket reparents, and one "is this still worth doing?" check with sales** — not one is an
+engineering problem. Decision 1 is now settled, which turned catalog-and-identity green. Clear the
+rest and the whole board turns green.
 
 ---
 
@@ -51,11 +54,13 @@ turns green.
 
 THEMES.md opens with **"seven decisions block delegation."** Verified against code, that is not
 the case: four were already settled by shipped code, one is a naming preference with no code
-behind either name, and one is stated backwards. **One is real.**
+behind either name, and one is stated backwards. **One was real — and it is now settled by
+[ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) (Accepted
+2026-08-19).** What remains are two product scope calls (rows 3–4).
 
 | # | Decision | Verified state | Gates | Cost to decide | Cost to defer |
 |---|---|---|---|---|---|
-| **1** | **`SQL_SERVER`: own `WarehouseType` or alias?** | 🔴 **genuinely open** | catalog-and-identity, cross-engine-correctness | 15-min ADR — every fact is in hand, nothing to measure | **highest of the seven.** 32 dispatch sites, persisted lineage labels, customer-visible for Loop Capital |
+| **1** | **`SQL_SERVER`: own `WarehouseType` or alias?** | ✅ **settled — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) Accepted** | catalog-and-identity, cross-engine-correctness | done | was the highest of the seven — 32 dispatch sites, persisted lineage labels, customer-visible for Loop Capital; now closed |
 | **2** | Correct the Project-ACTIVE row in THEMES.md | 🔴 **THEMES.md is factually wrong** | nothing — but the error is dangerous | 5 minutes | an engineer builds a second trigger → **duplicate activation runs in prod** |
 | 3 | Scope call: does governance-enforced start this quarter? | 🟡 open | 23–28 pd — the largest single theme | free | it will not fit if added late |
 | 4 | Scope call: rebase or rewrite the orphaned remediation branch? | 🟡 open | fleet-self-healing items 2/3/4 | free | ~7 pd of finished work rots further |
@@ -66,14 +71,18 @@ and **#1 warehouse fan-out** names two mechanisms that both return zero grep hit
 identical either way, so pick a name in the ticket and move on. That is one ~30-minute
 documentation pass, and it blocks nothing.
 
-### Decision 1 in detail — drafted as [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md), awaiting Accept
+### Decision 1 in detail — settled by [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) (Accepted 2026-08-19)
 
-**Drafted 2026-08-19.** Verifying against code narrowed it: platform-core *already* shipped this
-under BH-1107 (`SQL_SERVER` is its own member at `warehouse-provider-typedefs.ts:23`; the
-`MSSQL_FAMILY_PROVIDERS` set already exists at `warehouse-provider-mapping.ts:22`). So it is not an
-open design call — it is *ratify-and-propagate to brightbot's Python*, where the member is missing
-and an unmapped `sql_server` falls through to **Redshift** (`retrieval_agent/tools.py:471`). The ADR
-records the decision and the 37-site sweep; it needs a non-author Accept per `adr-culture.md`.
+**Accepted 2026-08-19** after two independent non-author review passes (architecture + product-voice),
+both of which found real defects that were fixed before the flip. Verifying against code narrowed it:
+platform-core *already* shipped this under BH-1107 (`SQL_SERVER` is its own member at
+`warehouse-provider-typedefs.ts:23`; the `MSSQL_FAMILY_PROVIDERS` set already exists at
+`warehouse-provider-mapping.ts:22`). So it was never an open design call — it is
+*ratify-and-propagate to brightbot's Python*, where the member is missing and an unmapped
+`sql_server` falls through to **Redshift** (`retrieval_agent/tools.py:471`). The ADR splits the work:
+**PR #1** adds the identity member + fixes the `lineage_refresh_task.py:95` hardcode (closes the live
+bug now), and the 37-site dispatch sweep onto adapter `capabilities()` is tracked separately under
+BH-1168 — the doctrine's destination, not a blocker on the fix.
 
 The two layers are not in conflict. They answer different questions and both shipped correctly:
 

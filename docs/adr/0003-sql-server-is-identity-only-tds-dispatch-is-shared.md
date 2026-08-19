@@ -1,8 +1,9 @@
 # ADR-0003: SQL_SERVER is an identity-only warehouse type; TDS dispatch is shared
 
 **Date:** 2026-08-19
-**Status:** Proposed
+**Status:** Accepted
 **Who:** @drchinca (Kuri)
+**Reviewed:** 2026-08-19 — independent non-author review, two passes: architecture (ACCEPT-WITH-FIXES) and product-voice/mission-coherence (COHERENT-WITH-FIXES). Both found real defects (actionability gap, cross-repo ambiguity, brand-casing, waypoint-calcification risk); all blocking items applied before this flip.
 
 ## The Problem
 
@@ -27,15 +28,32 @@ never a hardcoded literal branch.** Two parts:
 1. **Identity is explicit.** `SQL_SERVER` is its own `Warehouse` member so the UI/OMD reflects what
    the customer actually connected.
 2. **Dispatch is resolved, not branched.** No call site switches on `== "azure_synapse"` or
-   `== "sql_server"`. Each `Warehouse` adapter *declares its own dialect/connection capability*
-   (T-SQL bracket quoting, the TDS connection), and call sites ask the adapter. Adding SQL Server is
-   then registering an adapter, not editing 37 branches — the end state has **zero name-branches**.
+   `== "sql_server"`. Each `Warehouse` adapter *declares its own dialect/connection capability* via
+   `capabilities()` (per Ports & Adapters PS-15) — T-SQL bracket quoting, the TDS connection — and
+   call sites ask the adapter. Adding SQL Server is then registering an adapter, not editing 37
+   branches — the end state has **zero name-branches**.
 
-This honors the BrightHive doctrine: wrap every vendor in the main concept (`Warehouse`), opt off
+3. **Sequence — the urgent fix is not the refactor.** These are two efforts, not one, and bundling
+   them is what stalls the fix:
+   - **PR #1 (urgent, non-deferrable):** add the `sql_server` identity member to
+     `warehouse_types.py:20` and fix the `lineage_refresh_task.py:95` hardcode. This alone closes the
+     live Loop Capital wrong-answer bug (SQL Server → Redshift dialect). Small, isolated, ships now.
+   - **The refactor (tracked separately):** move the 37 `azure_synapse` dispatch sites onto
+     adapter-declared `capabilities()`. This is the doctrine's destination and gets its own tickets;
+     it does not gate the bug fix.
+
+This honors the Brighthive doctrine: wrap every vendor in the main concept (`Warehouse`), opt off
 hardcoded/deterministic dispatch, and let the adapter/capability — agent- and DAG-resolvable —
-decide. Platform-core already shipped the identity half under BH-1107; its `MSSQL_FAMILY_PROVIDERS`
-set is a valid *waypoint*, but the endpoint is capability-on-the-adapter, not a second hardcoded
-family list copied into Python.
+decide. **Cross-repo, both codebases share one destination: capability-on-the-adapter.** Platform-core
+already shipped the identity half under BH-1107; its `MSSQL_FAMILY_PROVIDERS` set is a valid *interim
+mechanism*, not a divergent end state — TS simply started closer to the line. The two repos must not
+permanently disagree on *mechanism* for the same concept: the family list is a waypoint on both sides,
+never a second hardcoded list copied into Python and left there.
+
+**Home:** identity member → BH-1370 (catalog-and-identity); the dispatch fall-through bug → BH-1168
+(BUGS-V3). PR #1 and the capability refactor are separate children under those epics — creating the
+child tickets is a Jira mutation held for sign-off, so this ADR names the epics rather than inventing
+ticket IDs.
 
 ## Why This Choice
 
@@ -91,9 +109,16 @@ Synapse behavior is unchanged and the SQL Server fall-through-to-Redshift closes
   about routing, not correctness — T-SQL bracket quoting is a fixed fact the adapter owns, never an
   LLM guess. The agent/DAG picks *which* adapter; the adapter guarantees the SQL is right.
 - **Lineage backfill.** Graphs already written under `azure_synapse` for a SQL Server workspace stay
-  mislabeled until re-run; the fix stops new mislabels but does not rewrite history.
-- **One more member for every future dialect switch to remember.** Mitigated by the family set:
-  new code branches on the set, so forgetting `SQL_SERVER` specifically becomes hard by construction.
+  mislabeled until re-run; the fix stops new mislabels but does not rewrite history. Until re-run,
+  those graphs should be **surfaced as suspect** (flagged "engine label predates the fix"), not shown
+  as confidently correct — silent-but-wrong provenance is the one honesty seam this decision leaves
+  open, and it closes on re-run, not on deploy.
+- **The waypoint tends to stick — name it, don't wish it away.** The most likely real-world failure
+  is: ship the interim family list, never fund the capability refactor, and you have institutionalized
+  the per-name determinism the doctrine opts off. This is temporary debt, not a fix. Its only offramp
+  is the tracked refactor ticket under BH-1168; without that ticket funded, the "waypoint" silently
+  becomes the destination. The family list buys correctness today at the cost of a debt someone must
+  retire — say so, so the retirement is a plan, not a hope.
 
 ## Alternatives We Considered
 
@@ -106,3 +131,12 @@ Synapse behavior is unchanged and the SQL Server fall-through-to-Redshift closes
 - **Leave Python as-is (default fall-through).** Rejected: a SQL Server workspace silently getting
   Redshift dialect is a live correctness bug for Loop Capital, documented in the code comments
   themselves.
+- **Stop at the family set as the *permanent* endpoint (rule-of-two).** Fairly considered, not
+  dismissed: with exactly two TDS providers whose T-SQL is byte-for-byte identical, `pluggable-scalable`'s
+  own rule-of-two says a frozenset can be enough until a third appears — an abstraction lands on the
+  *second* real implementation, and here both already exist. So this is defensible *for this narrow
+  case*. We still set the direction to capability-on-the-adapter because the 37 sites are already the
+  cost the doctrine warns about, and because capability negotiation is what lets a *future* TDS-family
+  member (or a dialect quirk between Synapse and on-prem SQL Server) be a config change, not a 38th
+  branch. The honest resolution: capability is the direction; consciously stopping at the frozenset is
+  a permitted rule-of-two call the refactor ticket can make with evidence — never a silent drift into it.
