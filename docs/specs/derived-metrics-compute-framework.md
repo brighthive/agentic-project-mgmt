@@ -1,11 +1,12 @@
 ---
 name: Derived Metrics — switchable serverless compute framework
 slug: derived-metrics-compute-framework
-status: draft
+status: Partial
 last_reviewed: 2026-07-19
 owner: drchinca
 jira_epic: BH-1036
 surfaces: [brighthive-platform-core, new-cdk-stack]
+roadmap: mixed — folded into THEME-honest-surfaces.md — derived metrics
 ---
 
 # Derived Metrics — switchable serverless compute framework

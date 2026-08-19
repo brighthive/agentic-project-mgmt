@@ -2,7 +2,7 @@
 title: "AWS Cost Allocation Tagging"
 epic: "BH-171"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-04-16"
 generates: "tickets"
 tags: [infrastructure, cost, observability, nestle]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-cost-and-volume.md — CDK Tags.of — first trustworthy month is after rollout
 ---
 
 # AWS Cost Allocation Tagging

@@ -3,7 +3,7 @@ title: BrightRoutines — Email Delivery Channel
 epic: BH-876
 tickets: [BH-1062]
 author: kuri
-status: proposed
+status: Partial
 created: 2026-07-13
 last-reviewed: 2026-07-13
 generates: tickets
@@ -19,6 +19,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-routine-delivery.md — email delivery target
 ---
 
 # SPEC: BrightRoutines — Email Delivery Channel

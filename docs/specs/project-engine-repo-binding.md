@@ -2,7 +2,7 @@
 title: "Project ↔ Transformation Engine ↔ Repo Binding + ACTIVE-triggered Observability"
 epic: "BH-172"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-07-31"
 generates: "tickets"
 tags: [projects, transformation, observability, rbac, warehouse-agnostic, multi-repo]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-project-activation.md — multi-repo binding — real schema change
 ---
 
 # Project ↔ Transformation Engine ↔ Repo Binding + ACTIVE-triggered Observability

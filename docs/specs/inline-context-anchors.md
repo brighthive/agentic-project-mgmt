@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — standalone; no @ collision; keep BH-1354-1358 (# and [ sigils) — real unbuilt work
+---
+
 # Spec: Context Anchors — inline entity references for BrightAgent chat
 
 - **Epic**: BH-1353

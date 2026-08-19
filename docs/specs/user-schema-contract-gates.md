@@ -2,7 +2,7 @@
 title: "User Schema Contracts as Enforcement Gates — input/output validation for transformations, analysis, visualization, joins"
 epic: "BH-624"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-06-24"
 last_reviewed: "2026-06-24"
 generates: "tickets"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-governance-enforced.md — schema-contract artifact type
 ---
 
 # User Schema Contracts as Enforcement Gates

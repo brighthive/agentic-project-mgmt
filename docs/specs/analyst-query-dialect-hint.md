@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — dialect hint (BH-1120 shipped)
+---
+
 # Spec: Analyst run_warehouse_query must name the dialect on failure (Synapse silent-degrade fix)
 
 **Ticket:** BH-1120 (BUGS-V3 epic) · **Status:** Draft · **Author:** Kuri · **Last-Reviewed:** 2026-07-31

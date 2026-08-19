@@ -2,11 +2,12 @@
 title: Default warehouse — surface the isDefault badge + Set-as-default action in the webapp
 epic: BH-172
 ticket: BH-1362
-status: draft
+status: Partial
 last-reviewed: 2026-08-07
 related:
   - warehouse-tables-mcp-surface.md
   - warehouse-agnostic-architecture.md
+roadmap: mixed — folded into THEME-catalog-and-identity.md — default badge
 ---
 
 # Spec: Default warehouse — surface it in the webapp

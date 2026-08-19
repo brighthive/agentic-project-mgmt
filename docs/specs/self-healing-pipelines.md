@@ -2,7 +2,7 @@
 title: "Self-Healing Pipelines — detect → diagnose → surgical PR loop"
 epic: "BH-526"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-06-15"
 generates: "tickets"
 tags: [self-healing, pipelines, dbt, observability, dagster, brightbot, snowflake, golden-cases]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["longitudinal-monitoring.md", "quality-rules-configurable.md", "dbt-react-migration.md", "byow-end-to-end-omd-native.md"]
+roadmap: mixed — folded into THEME-fleet-self-healing.md — keep failure taxonomy; verification-loop design superseded
 ---
 
 # Self-Healing Pipelines (Golden Case 11 / GAP-7)

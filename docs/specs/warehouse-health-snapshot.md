@@ -2,7 +2,7 @@
 title: "Warehouse Health Snapshot — engine-agnostic operational health surfaced to the data leader"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-31"
 generates: "tickets"
 tags: [health, snapshot, warehouse, engine-agnostic, governance, surfacing, hive-health]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["sqlserver-health-watch.md", "hive-health-landing-indicator.md", "pipeline-self-healing-fleet.md", "pipeline-run-lifecycle.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — staleness gate — healthPolledAt
 ---
 
 # Warehouse Health Snapshot

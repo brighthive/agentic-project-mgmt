@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — folded into THEME-honest-surfaces.md — digest push
+---
+
 # Fleet-Health Digest — Proactive Push (BH-1340)
 
 > **Status:** Draft · **Owner:** drchinca · **Epic:** BH-1331 (fleet-health companion)

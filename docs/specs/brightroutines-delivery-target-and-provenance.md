@@ -3,7 +3,7 @@ title: BrightRoutines — Per-Routine Delivery Target, Result Provenance (SQL + 
 epic: BH-876
 tickets: [BH-1397, BH-1398, BH-1399, BH-1400, BH-1401, BH-1402]
 author: kuri
-status: proposed
+status: Partial
 created: 2026-08-10
 last-reviewed: 2026-08-10
 generates: tickets
@@ -23,6 +23,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-routine-delivery.md — team-channel delivery + provenance
 ---
 
 # SPEC: BrightRoutines — Per-Routine Delivery Target, Result Provenance, and PDF Output

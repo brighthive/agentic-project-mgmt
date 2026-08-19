@@ -1,11 +1,12 @@
 ---
 name: Hive Health — landing value-added indicator
 slug: hive-health-landing-indicator
-status: draft
+status: Partial
 last_reviewed: 2026-07-17
 owner: drchinca
 jira_epic: BH-1036
 surfaces: [brighthive-webapp]
+roadmap: mixed — folded into THEME-honest-surfaces.md — landing indicator
 ---
 
 # Hive Health — landing value-added indicator

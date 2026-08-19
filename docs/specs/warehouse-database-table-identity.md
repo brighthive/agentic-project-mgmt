@@ -2,7 +2,7 @@
 title: "Warehouse → Database → Table hierarchical identity"
 epic: "BH-172"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-04"
 generates: "epic"
 tags: [warehouse, database, table, identity, lineage, registry, adapter]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-agnostic-architecture.md", "warehouse-extensibility-pattern.md", "engineering-agent-warehouse-agnostic.md"]
+roadmap: mixed — folded into THEME-catalog-and-identity.md — rewrite: ship DatabaseNode+isDefault slice (~300 lines), split rest
 ---
 
 > **Fast-tracked slice**: BH-1362 ("Show default-warehouse indicator on

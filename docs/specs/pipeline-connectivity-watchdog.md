@@ -2,7 +2,7 @@
 title: "Pipeline Connectivity Watchdog — probe every configured warehouse, never a blanket unreachable"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-17"
 last-reviewed: "2026-08-17"
 generates: "tickets"
@@ -18,6 +18,7 @@ related:
     - "warehouse-connectivity-monitoring-alerts.md"
     - "warehouse-health-snapshot.md"
     - "proactive-pipeline-ingestion-monitoring.md"
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — connectivity sweep
 ---
 
 # Pipeline Connectivity Watchdog — probe every configured warehouse, never a blanket unreachable

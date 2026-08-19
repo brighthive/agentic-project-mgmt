@@ -2,7 +2,7 @@
 title: "Table Parity — structured multi-warehouse, multi-database targeting"
 epic: "BH-172"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-04"
 generates: "tickets"
 tags: [warehouse, database, table, parity, comparison, dialect]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-database-table-identity.md", "warehouse-agnostic-architecture.md", "engineering-agent-warehouse-agnostic.md"]
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — parity checks
 ---
 
 # Table Parity — structured multi-warehouse, multi-database targeting

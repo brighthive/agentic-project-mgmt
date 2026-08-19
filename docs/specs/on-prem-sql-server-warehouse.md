@@ -2,7 +2,7 @@
 title: "On-Premise SQL Server Support for BrightAgent"
 epic: "BH-1036"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-11"
 generates: "tickets"
 tags: ["warehouse", "sql-server", "dbt", "loop-capital"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — WarehousePort SQL Server adapter
 ---
 
 # On-Premise SQL Server Support for BrightAgent

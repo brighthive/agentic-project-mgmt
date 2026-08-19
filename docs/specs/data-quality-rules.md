@@ -2,7 +2,7 @@
 title: "Data Quality Rules on Assets — by Tag / Group, on a Routine"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-29"
 last-reviewed: "2026-07-29"
 generates: "tickets"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   specs: ["pipeline-self-healing-fleet.md", "brightroutine-approve-schedule.md", "sqlserver-health-watch.md"]
+roadmap: mixed — folded into THEME-governance-enforced.md — quality artifact type
 ---
 
 # Data Quality Rules on Assets — by Tag / Group, on a Routine

@@ -2,7 +2,7 @@
 title: "resetWorkspaceResources — purge a workspace to zero-state, zero orphans, keep the workspace"
 epic: "BH-1245"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-08-03"
 generates: "tickets"
 tags: [platform-core, admin, cascade-delete, loop-capital, orphan-safety]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — standalone; resetWorkspaceResources (M); platform-core PR #1161
 ---
 
 # resetWorkspaceResources — purge a workspace to zero-state, zero orphans, keep the workspace

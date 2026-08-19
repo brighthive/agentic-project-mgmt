@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — un-fixed 2nd copy of Synapse quoting bug (Track 3)
+---
+
 # Spec: Quality-rule batch SQL must quote the table dialect-aware (Synapse fix)
 
 **Ticket:** BH-1168 (BUGS-V3 epic) · **Status:** Draft · **Author:** Kuri · **Last-Reviewed:** 2026-07-31

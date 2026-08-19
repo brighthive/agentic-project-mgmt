@@ -2,7 +2,7 @@
 title: "Governance & Quality Policy Enforcement — close the create→persist→apply→alert loop"
 epic: "BH-172"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-06-24"
 last_reviewed: "2026-06-24"
 generates: "tickets"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-governance-enforced.md — the enforcement point; fake Enforced toggle to remove
 ---
 
 # Governance & Quality Policy Enforcement

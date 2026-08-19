@@ -2,7 +2,7 @@
 title: "Warehouse Connectivity — default monitoring, real alerts, on-demand check"
 epic: "BH-1036"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-05"
 generates: "tickets"
 tags: [warehouse, health, monitoring, alerts, slack, notifications, scheduling]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-health-snapshot.md", "sqlserver-health-watch.md", "hive-health-landing-indicator.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — useful alerts
 ---
 
 # Warehouse Connectivity — default monitoring, real alerts, on-demand check

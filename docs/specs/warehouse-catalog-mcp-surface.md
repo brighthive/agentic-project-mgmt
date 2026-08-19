@@ -2,12 +2,13 @@
 title: Warehouse catalog — MCP surface (list warehouses + databases from chat/A2A)
 epic: BH-1370
 ticket: BH-1395
-status: draft
+status: Partial
 last-reviewed: 2026-08-06
 related:
   - warehouse-catalog-enumeration.md
   - warehouse-health-snapshot.md
   - chat-addressing-context-injection.md
+roadmap: mixed — folded into THEME-catalog-and-identity.md — catalog MCP verbs
 ---
 
 # Spec: Warehouse catalog — surface the WORKSPACE→WAREHOUSE→DATABASE ladder over MCP

@@ -2,7 +2,7 @@
 title: "Warehouse-Agnostic Platform Architecture"
 epic: "BH-172"
 author: "drchinca"
-status: "Approved"
+status: Partial
 created: "2026-04-09"
 generates: "tickets"
 tags: [warehouse, architecture, registry, adapter, synapse, extensibility]
@@ -10,6 +10,7 @@ related:
   specs: ["azure-synapse-full-integration.md", "warehouse-extensibility-pattern.md"]
   pocs: []
   features: []
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — foundational port design
 ---
 
 # Warehouse-Agnostic Platform Architecture

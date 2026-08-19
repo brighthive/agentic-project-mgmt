@@ -2,7 +2,7 @@
 title: "BrightRoutines — AI-Authored WorkflowSpec Generation from Intent"
 epic: "BH-897"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-01"
 generates: "tickets"
 tags:
@@ -14,6 +14,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-routine-authoring.md — describe-a-routine-get-one (~20pd)
 ---
 
 # BrightRoutines — AI-Authored WorkflowSpec Generation from Intent

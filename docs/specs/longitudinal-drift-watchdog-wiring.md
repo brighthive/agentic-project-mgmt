@@ -3,7 +3,7 @@ title: "Longitudinal Drift Watchdog Wiring — the drift source fires on a caden
 epic: "BH-1255"
 ticket: "BH-1346"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-02"
 generates: "tickets"
 tags: [drift, watchdog, longitudinal, engine-agnostic, scheduler, seeding, governance, hive-health]
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "warehouse-health-snapshot.md", "pipeline-self-healing-fleet.md", "proactive-pipeline-ingestion-monitoring.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — watchdog wiring
 ---
 
 # Longitudinal Drift Watchdog Wiring

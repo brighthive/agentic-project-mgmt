@@ -1,12 +1,13 @@
 ---
 title: Warehouse catalog — enumerate warehouses → databases → schemas → tables
 epic: BH-1370
-status: draft
+status: Partial
 last-reviewed: 2026-08-06
 related:
   - chat-addressing-context-injection.md
   - warehouse-agnostic-architecture.md
   - warehouse-health-snapshot.md
+roadmap: mixed — folded into THEME-catalog-and-identity.md — browse warehouses->tables
 ---
 
 # Spec: Warehouse catalog — enumerate a workspace's warehouses and walk the addressing ladder

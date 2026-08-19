@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — blocked on SQL_SERVER ADR
+---
+
 # Spec: Lineage adapter for SQL Server / Azure Synapse (close the 3-of-4-engine coverage gap)
 
 **Ticket:** BH-1121 (BUGS-V3 epic) · **Status:** Draft · **Author:** Kuri · **Last-Reviewed:** 2026-07-31

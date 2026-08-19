@@ -2,12 +2,13 @@
 title: Warehouse catalog — SCHEMA + TABLE rungs over MCP (list tables from chat/A2A)
 epic: BH-1370
 ticket: BH-1396
-status: draft
+status: Partial
 last-reviewed: 2026-08-06
 related:
   - warehouse-catalog-mcp-surface.md
   - warehouse-catalog-enumeration.md
   - warehouse-health-snapshot.md
+roadmap: mixed — folded into THEME-catalog-and-identity.md — table MCP verbs
 ---
 
 # Spec: Warehouse catalog — surface the SCHEMA + TABLE rungs over MCP

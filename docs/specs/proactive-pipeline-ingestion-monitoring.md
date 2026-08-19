@@ -2,7 +2,7 @@
 title: "Proactive Pipeline & Ingestion Monitoring — job/run-status watchdog + surgical remediation"
 epic: "BH-1036"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-10"
 generates: "tickets"
 tags: [monitoring, observability, dbt, databricks, etl, ingestion, brightsignals, self-healing, brightbot, platform-core, watchdog]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md", "golden-cases-loopcapital.md"]
+roadmap: mixed — standalone; rewrite: keep Start Here, archive rest as decision log
 ---
 
 # Proactive Pipeline & Ingestion Monitoring

@@ -2,12 +2,13 @@
 title: "Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact"
 epic: "BH-1061"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-12"
 generates: "tickets"
 tags: [lineage, data-quality, longitudinal-monitoring, dbt, databricks, gold, diamond, brightbot, neo4j]
 related:
   specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "proactive-pipeline-ingestion-monitoring.md", "golden-cases-loopcapital.md"]
+roadmap: mixed — folded into THEME-blast-radius-quality.md — rewrite: split 2282 lines into 4 specs <=500
 ---
 
 # Lineage-Aware Data Quality
