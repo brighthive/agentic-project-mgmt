@@ -2,7 +2,7 @@
 title: "Autonomous dbt Project Lifecycle Management (Local + On-Prem)"
 epic: "BH-1403"
 author: "drchinca"
-status: "Draft"
+status: Superseded
 created: "2026-08-12"
 generates: "epic"
 tags: ["dbt", "pipeline-runner", "governance", "loop-capital", "local-plugin", "on-prem", "github", "sandbox"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — decision 4: superseded by on-prem-engineering-runner (ADR-0002 Accepted)
 ---
 
 # Autonomous dbt Project Lifecycle Management (Local + On-Prem)

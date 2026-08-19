@@ -2,7 +2,7 @@
 title: "Canonical UserActivityEvent Store"
 epic: "BH-942"
 author: "drchinca"
-status: "Draft"
+status: Parked
 created: "2026-07-03"
 generates: "epic"
 tags: ["foundational", "storage", "brightroutines", "observability"]
@@ -10,6 +10,7 @@ related:
   features: ["BH-876 BrightRoutines intent-loop", "BH-885 Suggested Routines webapp", "BH-926 Prompt Catalog (proposed)"]
   pocs: []
   bedrock: []
+roadmap: closed — no confirmed demand
 ---
 
 # Canonical UserActivityEvent Store

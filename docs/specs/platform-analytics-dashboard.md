@@ -2,7 +2,7 @@
 title: "Platform Analytics, Monitoring & Reporting Dashboard"
 epic: "BH-359"
 author: "drchinca"
-status: "In Progress"
+status: Parked
 created: "2026-04-13"
 generates: "tickets"
 tags: [analytics, monitoring, dashboard, enterprise, kpi, observability]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — April spec, still on mock data
 ---
 
 # Platform Analytics, Monitoring & Reporting Dashboard

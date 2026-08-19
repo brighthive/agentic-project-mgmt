@@ -3,7 +3,7 @@ title: Loop Capital Trial Readiness — proving the 9 success criteria on their 
 epic: BH-1245
 tickets: [BH-1246, BH-1247, BH-1248, BH-1249, BH-1250, BH-1251, BH-1252, BH-1253, BH-1254]
 author: kuri
-status: draft
+status: Relocated
 created: 2026-07-28
 last-reviewed: 2026-07-28
 generates: tickets
@@ -24,6 +24,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — -> clients/trials/loopcapital/
 ---
 
 # SPEC: Loop Capital Trial Readiness

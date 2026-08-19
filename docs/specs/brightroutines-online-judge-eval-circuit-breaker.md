@@ -2,7 +2,7 @@
 title: "BrightRoutines online judge eval + live circuit breaker"
 epic: "BH-876"
 author: "Kuri Chinca"
-status: "Draft"
+status: Parked
 created: "2026-07-07"
 generates: "tickets"
 tags: ["brightroutines", "eval", "judge", "online-eval"]
@@ -12,6 +12,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — no confirmed demand
 ---
 
 # BrightRoutines online judge eval + live circuit breaker

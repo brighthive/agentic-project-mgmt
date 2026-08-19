@@ -2,7 +2,7 @@
 title: "Legacy Pipeline Regenerator — SSIS/SSRS → dbt"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Parked
 created: "2026-07-29"
 generates: "tickets"
 scope: "MODERNIZE / POC — OUT OF TRIAL SCOPE"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   specs: ["ssis-ssrs-proactive-pipeline-source.md", "pipeline-self-healing-fleet.md"]
+roadmap: closed — 643 lines for out-of-scope work; cut to a 1-page concept note
 ---
 
 # SPEC: Legacy Pipeline Regenerator — SSIS/SSRS → dbt

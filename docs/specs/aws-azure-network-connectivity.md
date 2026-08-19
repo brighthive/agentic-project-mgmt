@@ -2,7 +2,7 @@
 title: "AWS to Azure Network Connectivity for Synapse Integration"
 epic: "BH-171"
 author: "drchinca"
-status: "Draft"
+status: Relocated
 created: "2026-04-09"
 generates: "tickets"
 tags: [aws, azure, networking, synapse, cross-cloud, vpn, security]
@@ -10,6 +10,7 @@ related:
   specs: ["azure-synapse-full-integration.md"]
   pocs: []
   features: []
+roadmap: closed — -> ADR
 ---
 
 # AWS to Azure Network Connectivity for Synapse Integration

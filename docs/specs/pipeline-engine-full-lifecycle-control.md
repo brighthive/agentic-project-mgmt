@@ -2,7 +2,7 @@
 title: "Full-lifecycle pipeline-engine control from BrightAgent — observe, control, provision (engine-agnostic)"
 epic: "BH-1323"
 author: "drchinca"
-status: "Draft"
+status: Superseded
 created: "2026-07-31"
 generates: "tickets"
 tags: [pipeline-engine, port-adapter, dbt-cloud, snowflake-pipelines, mcp, provisioning, engineering-agent, brightbot, platform-core]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — specs a port never built; decision 2 keeps PipelineRunner
 ---
 
 # Full-lifecycle pipeline-engine control from BrightAgent

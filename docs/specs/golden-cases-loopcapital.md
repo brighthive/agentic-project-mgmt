@@ -1,3 +1,8 @@
+---
+status: Relocated
+roadmap: closed — -> clients/trials/loopcapital/
+---
+
 <!--
   Frontmatter intentionally uses brightbot's SPEC-GOLDEN-CASES.md template
   (spec-id/status/owner/trial), NOT docs/specs/SPEC_TEMPLATE.md's shape

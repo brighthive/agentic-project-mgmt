@@ -2,7 +2,7 @@
 title: "Detach BrightAgent from LangGraph Cloud / LangSmith — two-track execution"
 epic: "BH-453"
 author: "Kuri Chinca"
-status: "Draft"
+status: Superseded
 created: "2026-07-09"
 generates: "tickets"
 tags: ["langgraph-cloud", "langsmith", "cemaf", "agentcore", "migration", "detach"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: ["docs/bedrock/"]
+roadmap: closed — Track A closed unmerged; CEMAF won — rewrite as one current-state decommission doc
 ---
 
 # Detach BrightAgent from LangGraph Cloud / LangSmith — two-track execution

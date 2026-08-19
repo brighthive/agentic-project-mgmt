@@ -2,7 +2,7 @@
 title: "BrightRoutines DTO naming proposal — decision doc for Marwan/Nano review"
 epic: "BH-876"
 author: "Kuri Chinca"
-status: "Draft"
+status: Parked
 created: "2026-07-07"
 generates: "tickets"
 tags: ["brightroutines", "naming", "refactor"]
@@ -12,6 +12,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — not a spec — a decision doc; move to ADR or delete once BH-953 resolves
 ---
 
 # BrightRoutines DTO naming proposal

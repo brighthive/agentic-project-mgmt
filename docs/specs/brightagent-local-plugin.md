@@ -2,7 +2,7 @@
 title: "BrightAgent Local Plugin — v1"
 epic: "BH-XXX"
 author: "drchinca"
-status: "Draft"
+status: Parked
 created: "2026-08-12"
 generates: "epic"
 tags: ["agent-plugins", "mcp", "local-plugin", "loop-capital", "offline", "sql-server"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — half its scenarios @blocked-pending-confirmation
 ---
 
 # BrightAgent Local Plugin — v1
