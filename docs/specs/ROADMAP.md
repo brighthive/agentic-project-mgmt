@@ -30,13 +30,13 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 | [Warehouse health you can trust](THEME-warehouse-health-truth.md) | BH-1036 | 11 pd | 🟡 | Build the ~1 pd service-key `warehouseServices` query first — it gates items 1–2 |
 | [Drop in your legacy files](THEME-legacy-file-intake.md) | BH-1421 | 9–10 pd | 🟡 | 7 tickets exist but unassigned — give it an owner, then build **one** design, not three |
 | [Same answers on every engine](THEME-cross-engine-correctness.md) | BH-1168 | 9 pd | 🟡 | ~4 pd is a prod release of finished code — cut it; the SQL_SERVER ADR gates the rest |
-| [Routine results land where teams work](THEME-routine-delivery.md) | ⚠️ TBD | 7–9 pd | 🔴 | Needs a new open epic — BH-876 is `Done` |
+| [Routine results land where teams work](THEME-routine-delivery.md) | ⚠️ new | 7–9 pd | 🔴 | Genuinely needs one open epic — BH-876 is `Done`. Pair with routine-authoring under a single *BrightRoutines next-phase* epic |
 | [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🔴 | **Decision 1** — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) is drafted; needs Accept |
-| [Turn on a project](THEME-project-activation.md) | ⚠️ TBD | 11 pd | 🔴 | Needs its own epic (BH-1255 is the pipeline-runs epic) **+** the activation-trigger call |
+| [Turn on a project](THEME-project-activation.md) | BH-1255 | 11 pd | 🔴 | **No new epic** — BH-1330/1343/1331 already sit under BH-1255; just reparent BH-1323 (now BH-172) **+** wire the activation-trigger call |
 | [Answer what it costs](THEME-cost-and-volume.md) | BH-118 | 14 pd | 🔴 | Confirm the enterprise ask is still live with sales (5 min); no child tickets yet |
-| [The screen never lies](THEME-honest-surfaces.md) | ⚠️ TBD | 16 pd | 🔴 | Needs a trust/honest-surfaces epic (BH-1331 is a Task, not an epic) |
+| [The screen never lies](THEME-honest-surfaces.md) | BH-1036 / BH-409 | 16 pd | 🔴 | **No new epic** — its 3 tickets already have homes (BH-1331→BH-1255, BH-1368→BH-1036); reparent orphan BH-1340 → BH-409. Track as a cross-cutting quality bar |
 | [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🔴 | **Decision 4** — rebase or rewrite the orphaned 3.2k-line branch before anyone edits |
-| [Describe a routine and get one](THEME-routine-authoring.md) | ⚠️ TBD | ~20 pd | 🔴 | Needs a new open epic (BH-897 is a Task under `Done` BH-876) — largest un-started |
+| [Describe a routine and get one](THEME-routine-authoring.md) | ⚠️ new | ~20 pd | 🔴 | Same *BrightRoutines next-phase* epic as routine-delivery (BH-897 is a Task under `Done` BH-876) — largest un-started |
 | [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🔴 | **Decision 3** — does the largest theme start this quarter? 5–6 pd has no ticket |
 
 **Read it as a hand-off order.** The four ✅ rows (≈18 pd) go to engineers this week with no
