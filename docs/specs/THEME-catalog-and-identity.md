@@ -30,6 +30,22 @@ A customer with several warehouses can see all of them, drill from warehouse →
 and always tell which one is the default. When they ask a question, the answer names the warehouse
 and database it came from. When a name is ambiguous, the platform asks instead of guessing.
 
+```mermaid
+flowchart LR
+  NODES["platform-core<br/>databases as real nodes (re-runnable backfill)"] --> CAT["brightbot<br/>one catalog: list warehouses, databases, schemas, tables"]
+  CAT --> DEFAULT["brightbot<br/>one default rule: the stored is_default"]
+  DEFAULT --> ASK{"table name in<br/>two databases?"}
+  ASK -->|yes| Q["ask which one,<br/>never guess"]
+  ASK -->|no| ANS["brightbot<br/>the answer names its warehouse and database"]
+  DEFAULT --> BADGE["webapp<br/>show the default, admin can change it"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  class CAT,DEFAULT,ANS bot
+  class NODES core
+  class BADGE web
+```
+
 ## Why now
 
 Impact Capital has three registered warehouses, and **two parts of the platform disagree about

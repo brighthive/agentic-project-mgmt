@@ -29,6 +29,19 @@ something useful: what these pipelines do, what's broken or risky in them, and â
 request they can review. They learn something about their legacy estate without rewriting it
 first.
 
+```mermaid
+flowchart LR
+  UP["webapp + platform-core<br/>upload .dtsx, .rdl, .sql"] --> LOOKUP["brightbot<br/>one extension-to-analyser lookup"]
+  LOOKUP --> DIAG["the diagnosis<br/>shows in the UI"]
+  LOOKUP -->|a .sql file| PRV["a reviewable PR,<br/>never a direct repo write"]
+  LOOKUP -->|a .rdl file| MON["added as a<br/>monitored source"]
+  LOOKUP -->|unsupported| ERR["a clear error,<br/>never silence"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  class LOOKUP bot
+  class UP web
+```
+
 ## Why now
 
 This is the "we have thousands of these and no idea what's in them" conversation, and the parsing

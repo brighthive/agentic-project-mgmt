@@ -25,6 +25,21 @@ channel, not just the person who set it up — and it says where the numbers cam
 to take it on trust. A recurring report becomes something a team relies on rather than something one
 person forwards.
 
+```mermaid
+flowchart LR
+  DEST["platform-core<br/>the routine stores its destination: a Slack channel, the inbox, or both"] --> RUN["the routine runs"]
+  RUN --> PROV["brightbot<br/>attach provenance: the query and any file"]
+  PROV --> CARD["slack-server<br/>the card shows the numbers and the query behind them"]
+  PROV --> PDF["a digest-shaped result<br/>is delivered as a PDF"]
+  CARD -.->|channel gone,<br/>bot removed| FAILM["the failure is reported<br/>to the routine owner"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef slack fill:#fff3e0,stroke:#e65100
+  class PROV bot
+  class DEST core
+  class CARD slack
+```
+
 ## Why now
 
 Today a routine's result reaches whoever created it. That makes it a personal reminder, not a team
