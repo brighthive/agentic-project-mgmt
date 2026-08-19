@@ -10,6 +10,11 @@ supersedes:
   - lineage-adapter-sql-server.md
   - quality-rules-synapse-table-quoting.md
   - warehouse-extensibility-pattern.md
+  - table-parity-verb.md
+  - table-parity-cross-warehouse-database.md
+  - analyst-query-dialect-hint.md
+reference:
+  - warehouse-agnostic-architecture.md   # the engine-onboarding rule — keep, don't archive
 ---
 
 # Same answers on every warehouse engine
@@ -33,8 +38,10 @@ explanation of why.
 
 ## What to build
 
-1. `brightbot` — fix the Synapse dialect quoting so quality checks scan the real table instead of
-   silently sampling. This is a correctness bug, not a feature; do it first.
+1. `brightbot` — fix the Synapse table-name wrapping so quality checks scan the real table instead
+   of a sample. This is a correctness bug, not a feature; do it first. The same wrapping bug also
+   makes analyst queries pick the wrong dialect — one fix, both symptoms
+   (`analyst-query-dialect-hint.md` is the second half of this).
 2. `brightbot` — let the engineering agent write on engines other than Redshift. **This theme owns
    the write path**; [Always know which warehouse you're talking to](THEME-catalog-and-identity.md)
    defers it here. Scope it to the writes the agent already performs on Redshift today — creating

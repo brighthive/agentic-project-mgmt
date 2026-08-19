@@ -1,4 +1,4 @@
-# Spec consolidation — 92 specs → 12 themes
+# Spec consolidation — 92 specs → 14 themes
 
 Audit date 2026-08-18. Every spec in `docs/specs/` was read and classified. This file is the
 delegation map: what to build, what to archive, and what needs a decision from Kuri first.
@@ -62,14 +62,19 @@ when its blocking decision is settled and its tickets exist — not when its spe
 
 | Theme | Goal in one line | Merges | Size |
 |---|---|---|---|
+| [**Routine results land where the team already works**](THEME-routine-delivery.md) ✅ | A routine reports to a team channel with its provenance, not just to its creator | 2 specs | M |
+| [**Describe a routine and get one**](THEME-routine-authoring.md) ✅ | Say what you want in your own words, get a working multi-step routine | 1 spec | L |
 | [**Catch a bad number before your customers do**](THEME-blast-radius-quality.md) ✅ | An anomaly alert names what's downstream of it, worst tier first | 1 spec (rewrite as 4) | L |
 | [**Turn on a project and it knows its own history**](THEME-project-activation.md) ✅ | Activate a project and existing runs/models appear, instead of a blank page | 3 specs | M |
 | [**The screen never lies**](THEME-honest-surfaces.md) ✅ | Never-checked shows as unknown, a degraded badge names the culprit, logs are readable | 6 specs | M |
 | [**Answer what it costs**](THEME-cost-and-volume.md) ✅ | Give sales a real volume-and-cost picture per workspace | 3 specs | M |
 
-Standalone, unmerged, keep as-is: **platform-core develop→main reconciliation** (L),
-**workspace reset admin tool** (M), **decommission LangGraph Cloud** (M — rewrite as
-current-state; CEMAF won, the old plan didn't execute).
+Standalone, unmerged, keep as-is — each is already one coherent spec and needs no theme wrapper:
+`platform-core-develop-main-reconciliation.md` (L), `reset-workspace-resources.md` (M),
+`byow-end-to-end-omd-native.md` (M — make the BYOW catalog scan actually populate, and retire the
+dead scanner lambdas), and **decommission LangGraph Cloud** (M — rewrite `langgraph-cloud-detach.md`
++ `agentcore-deployment-migration.md` as one current-state doc; CEMAF won, the old plan didn't
+execute).
 
 ---
 
@@ -84,7 +89,10 @@ consolidation PR #793) · `skills-extension-deep-agent` (BH-860 `Done`) ·
 `dbt-react-migration` (only Phase-3 deletion left → one ticket) · `pipeline-run-lifecycle` ·
 `project-engine-run-sync` · `remediation-pr-engine-run-logs` · `chat-addressing-context-injection` ·
 `warehouse-selection-on-mcp-tools` (BH-1430 `Done`) · `snowflake-full-integration` (Phase 1) ·
-`chat-session-notifications`
+`chat-session-notifications` · `warehouse-connection-health` (BH-1341 shipped — it is the
+on-demand probe the warehouse-health theme reuses; keep as reference, don't rebuild) ·
+`longitudinal-monitoring-capability` + `longitudinal-monitoring-deployment` (staging-verified with
+their parent)
 
 **Dead or superseded.** Delete or rewrite:
 `langgraph-cloud-detach` (Track A closed unmerged; Track B won) · `agentcore-deployment-migration`
@@ -101,10 +109,16 @@ not.
 **Park — no confirmed demand.** Revisit on a real signal, not speculatively:
 `saas-mcp-bridge-integration` (no customer ask; no real file:line grounding) ·
 `brightagent-local-plugin` (half its scenarios are `@blocked-pending-confirmation`) ·
-`user-activity-event-store` · `detector-fanout-fairness` (designs for hundreds of workspaces;
-staging runs 3–5) · `online-judge-eval-circuit-breaker` · `platform-analytics-dashboard` (April,
-still on mock data) · `ssis-ssrs-to-dbt-regeneration` (643 lines for explicitly out-of-scope work
-→ cut to a 1-page concept note)
+`user-activity-event-store` · `brightroutines-detector-fanout-fairness` (designs for hundreds of
+workspaces; staging runs 3–5) · `brightroutines-online-judge-eval-circuit-breaker` ·
+`platform-analytics-dashboard` (April, still on mock data) · `ssis-ssrs-to-dbt-regeneration`
+(643 lines for explicitly out-of-scope work → cut to a 1-page concept note) ·
+`brightroutines-naming-proposal` (self-described as "not a spec — a decision doc"; move to an ADR
+or delete once BH-953 resolves)
+
+**Superseded by a decision, not by a theme.** `brightroutine-approve-schedule` and
+`slack-routine-suggestion-scheduling` are the two competing approval write paths in decision 5 —
+whichever loses gets deleted, the winner becomes reference. Neither is a theme on its own.
 
 **Relocate — not implementation specs:**
 `golden-cases-loopcapital` + `loopcapital-trial-readiness` → `clients/trials/loopcapital/`
