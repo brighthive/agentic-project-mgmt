@@ -23,6 +23,19 @@ loaded, compare it to last week, and tell the team if anything looks off"* — a
 the multi-step routine that does it. Today only single-step routines can be created this way;
 anything with more than one step has to be assembled by hand.
 
+```mermaid
+flowchart LR
+  ASK["brightbot<br/>gather context: tables, warehouse, schedule (ask if unclear)"] --> DRAFT["brightbot<br/>draft the multi-step routine"]
+  DRAFT --> VALID{"validate: tables exist,<br/>steps wired, schedule works"}
+  VALID -->|fails| BACK["not offered — say what<br/>was missing, and ask"]
+  VALID -->|passes| SHOW["webapp<br/>show the steps in plain language before accept"]
+  EVAL["a scored eval before<br/>customers rely on it"] -.-> VALID
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  class ASK,DRAFT bot
+  class SHOW web
+```
+
 ## Why now
 
 The platform already spots that someone keeps asking for the same thing and offers to automate it.

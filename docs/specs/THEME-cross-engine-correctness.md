@@ -39,6 +39,18 @@ whether the customer is on SQL Server, Synapse, Snowflake, Redshift, or Databric
 next engine is a config entry, not a code change. Today several of these silently work on one
 engine and silently misbehave on another.
 
+```mermaid
+flowchart LR
+  ANY[("SQL Server, Synapse, Snowflake,<br/>Redshift, Databricks")] --> CORE["brightbot<br/>engine-neutral behavior"]
+  CORE --> QUALITY["quality checks scan the full<br/>table (Synapse quoting fix)"]
+  CORE --> WRITE["the engineering agent writes<br/>on any engine, not just Redshift"]
+  CORE --> LINEAGE["lineage through one provider,<br/>incl. SQL Server and Synapse"]
+  CORE --> PARITY["table parity across engines,<br/>honest when types cannot compare"]
+  ADD["the next engine is a<br/>config entry, not code"] -.-> CORE
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  class CORE,QUALITY,WRITE,LINEAGE,PARITY bot
+```
+
 ## Why now
 
 Quality checks on Synapse **check a sample instead of the whole table**, because we don't wrap

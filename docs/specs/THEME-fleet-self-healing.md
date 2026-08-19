@@ -25,6 +25,20 @@ small, reviewable pull request with the fix — then waits for a human to merge.
 up to a proposed fix with evidence, not a red dashboard. Adding a new fixable failure type is a
 registry entry, not a rewrite.
 
+```mermaid
+flowchart LR
+  FAIL["the watchdog detects<br/>a known failure"] --> HEALER["brightbot healer registry<br/>diagnose and propose a fix"]
+  HEALER --> PR["open a small,<br/>reviewable PR"]
+  PR --> HUMAN{"a human reviews<br/>and merges"}
+  HUMAN --> VERIFY["brightbot re-checks honestly,<br/>including 'it did not work'"]
+  HEALER -.->|merge tool absent<br/>from the toolset| NOSELF["the agent cannot<br/>merge its own PR"]
+  STATE["platform-core<br/>persist each state, detected to verified"] --- HEALER
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  class HEALER,VERIFY bot
+  class STATE core
+```
+
 ## Why now
 
 Detection already works: the watchdog spots failures across engines today. What's missing is the

@@ -28,6 +28,21 @@ BrightRoutines works today: the platform spots a recurring request, offers to tu
 routine, and runs it on a schedule. Four things are still loose behind that — one of them is a
 live correctness risk. Close them and the feature is genuinely finished.
 
+```mermaid
+flowchart LR
+  SHIPPED["BrightRoutines: detect, offer,<br/>schedule, run (already shipped)"] --> LOOSE{"4 loose ends left"}
+  LOOSE --> P0["brightbot — P0<br/>manager check: wire to a real source, or remove it"]
+  LOOSE --> TRACE["brightbot<br/>traces on the intent-capture path"]
+  LOOSE --> UI["webapp<br/>show the trigger quote + Adjust before accept"]
+  LOOSE --> MOVE["move the 3 shipped specs<br/>out of the spec queue"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  classDef done fill:#eceff1,stroke:#455a64
+  class P0,TRACE bot
+  class UI web
+  class SHIPPED,MOVE done
+```
+
 ## Why now
 
 The three source specs total 2,593 lines and all read as shipped, which hides that real items are

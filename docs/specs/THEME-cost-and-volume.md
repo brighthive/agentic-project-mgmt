@@ -26,6 +26,19 @@ When an enterprise prospect asks "what will this cost us at our volume?", we ans
 numbers from our own platform instead of an estimate. Sales can pull a per-customer volume and
 cost picture without an engineer.
 
+```mermaid
+flowchart LR
+  TAGS["cdk<br/>tag AWS resources per workspace"] --> AGG["platform-core<br/>aggregate usage on a schedule"]
+  AGG --> REPORT["platform-core<br/>make volume-report: one CSV sales can pull"]
+  REPORT -.-> PARK["⚠ parked — confirm the<br/>sales ask is still live first"]
+  classDef infra fill:#eceff1,stroke:#455a64
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef park fill:#ffebee,stroke:#c62828
+  class TAGS infra
+  class AGG,REPORT core
+  class PARK park
+```
+
 ## Why now
 
 This blocks enterprise deals — a named prospect asked for a volume matrix and we had nothing to

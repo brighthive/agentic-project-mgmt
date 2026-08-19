@@ -32,6 +32,22 @@ Everything the platform shows a customer is either true or honestly marked as un
 workspace answers "is my data estate healthy?" at a glance, run logs are actually readable, and a
 weekly summary arrives without anyone asking. No green dot that means "we didn't check."
 
+```mermaid
+flowchart LR
+  ROW["platform-core<br/>roll-up refreshed on a schedule (shows its age)"] --> BAND["webapp<br/>health band on entry, first paint under 500ms"]
+  BAND --> STATE{"was it<br/>actually checked?"}
+  STATE -->|never| NEUTRAL["neutral 'Unknown',<br/>never 'Degraded'"]
+  STATE -->|degraded| NAMED["the badge names the<br/>service that caused it"]
+  LOGS["webapp<br/>run logs actually readable"] --- BAND
+  DIGEST["slack-server<br/>weekly fleet summary, unprompted"] --- ROW
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  classDef slack fill:#fff3e0,stroke:#e65100
+  class ROW core
+  class BAND,LOGS web
+  class DIGEST slack
+```
+
 ## Why now
 
 Several surfaces currently state things they haven't verified: a status indicator shows healthy
