@@ -75,7 +75,7 @@ flowchart TD
     XENG["Same answers on every engine<br/>9 pd"]
     ONPREM["Work where the data lives<br/>9.5 pd · already In Progress"]
 
-    PARKED[/"⚠️ 40 tickets parked in<br/>Code Review / Staging QC<br/>34 on one owner"/]
+    PARKED["⚠️ 40 tickets parked in<br/>Code Review · Staging QC<br/>34 on one owner"]
 
     FIX --> T0
     T0 --> QUERY
