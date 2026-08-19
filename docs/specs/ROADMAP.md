@@ -31,7 +31,7 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 | [Drop in your legacy files](THEME-legacy-file-intake.md) | BH-1421 | 9–10 pd | 🟡 | 7 tickets exist but unassigned — give it an owner, then build **one** design, not three |
 | [Same answers on every engine](THEME-cross-engine-correctness.md) | BH-1168 | 9 pd | 🟡 | ~4 pd is a prod release of finished code — cut it; the SQL_SERVER ADR gates the rest |
 | [Routine results land where teams work](THEME-routine-delivery.md) | ⚠️ TBD | 7–9 pd | 🔴 | Needs a new open epic — BH-876 is `Done` |
-| [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🔴 | **Decision 1** — the SQL_SERVER ADR (15 min) |
+| [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🔴 | **Decision 1** — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) is drafted; needs Accept |
 | [Turn on a project](THEME-project-activation.md) | ⚠️ TBD | 11 pd | 🔴 | Needs its own epic (BH-1255 is the pipeline-runs epic) **+** the activation-trigger call |
 | [Answer what it costs](THEME-cost-and-volume.md) | BH-118 | 14 pd | 🔴 | Confirm the enterprise ask is still live with sales (5 min); no child tickets yet |
 | [The screen never lies](THEME-honest-surfaces.md) | ⚠️ TBD | 16 pd | 🔴 | Needs a trust/honest-surfaces epic (BH-1331 is a Task, not an epic) |
@@ -66,7 +66,14 @@ and **#1 warehouse fan-out** names two mechanisms that both return zero grep hit
 identical either way, so pick a name in the ticket and move on. That is one ~30-minute
 documentation pass, and it blocks nothing.
 
-### Decision 1 in detail — the only one worth a meeting
+### Decision 1 in detail — drafted as [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md), awaiting Accept
+
+**Drafted 2026-08-19.** Verifying against code narrowed it: platform-core *already* shipped this
+under BH-1107 (`SQL_SERVER` is its own member at `warehouse-provider-typedefs.ts:23`; the
+`MSSQL_FAMILY_PROVIDERS` set already exists at `warehouse-provider-mapping.ts:22`). So it is not an
+open design call — it is *ratify-and-propagate to brightbot's Python*, where the member is missing
+and an unmapped `sql_server` falls through to **Redshift** (`retrieval_agent/tools.py:471`). The ADR
+records the decision and the 37-site sweep; it needs a non-author Accept per `adr-culture.md`.
 
 The two layers are not in conflict. They answer different questions and both shipped correctly:
 
