@@ -21,12 +21,21 @@ The roadmap flagged this as the one genuinely-open decision. Verifying it agains
 
 ## Our Decision
 
-**`SQL_SERVER` is its own identity member. It is never its own dispatch branch. Every place that
-switches on dialect/connection routes both `SQL_SERVER` and `AZURE_SYNAPSE` through one TDS family
-set — never a bare equality on either name.**
+**`SQL_SERVER` is a member of the one `Warehouse` concept — never a bespoke per-vendor service,
+never a hardcoded literal branch.** Two parts:
 
-This ratifies the choice platform-core already shipped under BH-1107 and extends the same pattern
-into brightbot's Python, where it is currently missing.
+1. **Identity is explicit.** `SQL_SERVER` is its own `Warehouse` member so the UI/OMD reflects what
+   the customer actually connected.
+2. **Dispatch is resolved, not branched.** No call site switches on `== "azure_synapse"` or
+   `== "sql_server"`. Each `Warehouse` adapter *declares its own dialect/connection capability*
+   (T-SQL bracket quoting, the TDS connection), and call sites ask the adapter. Adding SQL Server is
+   then registering an adapter, not editing 37 branches — the end state has **zero name-branches**.
+
+This honors the BrightHive doctrine: wrap every vendor in the main concept (`Warehouse`), opt off
+hardcoded/deterministic dispatch, and let the adapter/capability — agent- and DAG-resolvable —
+decide. Platform-core already shipped the identity half under BH-1107; its `MSSQL_FAMILY_PROVIDERS`
+set is a valid *waypoint*, but the endpoint is capability-on-the-adapter, not a second hardcoded
+family list copied into Python.
 
 ## Why This Choice
 
@@ -60,21 +69,27 @@ hardcode at `lineage_refresh_task.py:95` (`engine = "azure_synapse"`), which tod
 Loop Capital lineage graph under Synapse regardless of what was connected. Fixing that is part of
 this decision, not a separate one.
 
-**A family set makes the sweep mechanical, not 37 judgment calls.** `grep -rn azure_synapse
-brightbot --include='*.py'` returns **37 sites** (dialect branches at `table_name_utils.py:74`,
-the internal-engine list at `warehouse_catalog.py:48`, and the rest). Routing them through a shared
-`MSSQL_FAMILY`/`TDS_FAMILY` frozenset — mirroring the TypeScript name already in production — turns
-a 37-site rename into one constant plus call sites that read `provider in TDS_FAMILY`. Zero behavior
-change for Synapse; the SQL Server fall-through closes.
+**Resolving via the adapter kills the name-branches instead of adding another.** `grep -rn
+azure_synapse brightbot --include='*.py'` returns **37 sites** (dialect branches at
+`table_name_utils.py:74`, the internal-engine list at `warehouse_catalog.py:48`, and the rest). The
+doctrine-aligned fix lets the `Warehouse` adapter own its dialect and has those sites ask it — so
+SQL Server is a registered adapter, not a 38th literal. A shared `TDS_FAMILY` frozenset (mirroring
+platform-core's shipped `MSSQL_FAMILY_PROVIDERS`) is the pragmatic first hop *if* the full
+adapter-capability refactor is too large for one PR — but it is a waypoint, not the destination:
+copying a hardcoded family list into Python is the very per-name determinism we opt off. Either way,
+Synapse behavior is unchanged and the SQL Server fall-through-to-Redshift closes.
 
 ## The Cost
 
 - **A cross-repo naming commitment.** `SQL_SERVER`/`sql_server` is now a real, permanent member on
   both sides. Dropping it later means another 37-site sweep — this is the kind of choice ADR-0001
   got wrong by conflating layers, so we name the layers explicitly here.
-- **A migration touch, not a redesign.** The 37 Python sites must move to the family set in one pass;
-  a half-done sweep leaves the exact "only checks one name" bug the platform-core comment warns
-  about. It ships as a single change, not incrementally.
+- **A migration touch, not a redesign.** The 37 Python sites move to adapter-resolved dialect (or,
+  as a waypoint, one family set) in a single pass; a half-done sweep leaves the exact "only checks
+  one name" bug the platform-core comment warns about.
+- **The dialect contract stays deterministic *inside* the adapter.** "Resolve, don't branch" is
+  about routing, not correctness — T-SQL bracket quoting is a fixed fact the adapter owns, never an
+  LLM guess. The agent/DAG picks *which* adapter; the adapter guarantees the SQL is right.
 - **Lineage backfill.** Graphs already written under `azure_synapse` for a SQL Server workspace stay
   mislabeled until re-run; the fix stops new mislabels but does not rewrite history.
 - **One more member for every future dialect switch to remember.** Mitigated by the family set:
