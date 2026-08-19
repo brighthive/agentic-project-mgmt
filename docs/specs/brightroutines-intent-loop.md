@@ -23,7 +23,7 @@ related:
 > Scope: P2-P4 for BrightRoutines. This spec adds cross-session,
 > workspace-scoped learning that detects repeated schedulable intent and offers
 > a Routine. The manual execution substrate is specified in
-> `brightroutines-execute-workflow-schedule.md`.
+> [`brightroutines-execute-workflow-schedule.md`](./brightroutines-execute-workflow-schedule.md).
 
 ## Jira Tickets
 

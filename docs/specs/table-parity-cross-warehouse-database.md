@@ -30,7 +30,7 @@ precisely. Two things stand between "mechanically possible" and "reliably
 correct": database targeting is smuggled through a free-text dotted string
 instead of a structured id, and cross-engine type compatibility is validated
 for exactly one warehouse-type pair. Both gaps get worse, not better, once
-`warehouse-database-table-identity.md` ships the real `DatabaseNode` — this
+[`warehouse-database-table-identity.md`](./warehouse-database-table-identity.md) ships the real `DatabaseNode` — this
 spec is the on-ramp that lets table parity consume that model directly instead
 of continuing to hand-parse strings.
 

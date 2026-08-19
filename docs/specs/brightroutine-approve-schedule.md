@@ -52,7 +52,7 @@ Three pieces already exist in `brightbot`; the seam that joins them does not.
 **no routine-proposal-approval graph** — nothing consumes a Slack approval and converts an
 OFFERED `RoutineSuggestion` into a `ScheduleRoutineRequest` and a `create_schedule` call. The
 approval identity + service-key auth mechanics across slack-server → platform-core → brightbot
-are specified in `slack-routine-suggestion-scheduling.md` (BH-876) and are **not re-specified
+are specified in [`slack-routine-suggestion-scheduling.md`](./slack-routine-suggestion-scheduling.md) (BH-876) and are **not re-specified
 here**; this spec defines the *approval-gate seam* inside brightbot and the
 `ScheduleRoutineRequest → create_schedule` conversion.
 

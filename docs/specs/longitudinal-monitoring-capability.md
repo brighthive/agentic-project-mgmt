@@ -15,7 +15,7 @@ related:
 
 ## 1. Context
 
-GC-12 detection (`longitudinal_detect.py`) + metric SQL (`metric_snapshot_sql.py`) are shipped pure functions called only in tests. This spec is the interface contract for wiring them into the platform **as a capability of the quality agent**, reachable through the three trigger surfaces that already exist (`run_context ∈ {INGESTION, SCHEDULED, ON_DEMAND}`), configured through BH-503's `QualityRule`, and queryable on-demand. It complements the parent `longitudinal-monitoring.md` (which holds Problem/AC/Ticket-breakdown) — this doc fixes the typed boundaries before code.
+GC-12 detection (`longitudinal_detect.py`) + metric SQL (`metric_snapshot_sql.py`) are shipped pure functions called only in tests. This spec is the interface contract for wiring them into the platform **as a capability of the quality agent**, reachable through the three trigger surfaces that already exist (`run_context ∈ {INGESTION, SCHEDULED, ON_DEMAND}`), configured through BH-503's `QualityRule`, and queryable on-demand. It complements the parent [`longitudinal-monitoring.md`](./longitudinal-monitoring.md) (which holds Problem/AC/Ticket-breakdown) — this doc fixes the typed boundaries before code.
 
 ```mermaid
 stateDiagram-v2

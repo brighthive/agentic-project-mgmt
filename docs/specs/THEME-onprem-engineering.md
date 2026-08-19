@@ -11,6 +11,11 @@ supersedes:
 
 # Work where the customer's data lives
 
+> **Superseded specs:**
+> - [autonomous-dbt-project-lifecycle.md](./autonomous-dbt-project-lifecycle.md)
+> - [loopcapital-onprem-read-write-sandbox.md](./loopcapital-onprem-read-write-sandbox.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal
@@ -61,7 +66,7 @@ settled, nobody can build.
 ## Don't do
 
 - **Run dbt cloud-side against an on-prem server.** This is the corrected error — see the
-  decision below. Do not carry it forward from `autonomous-dbt-project-lifecycle.md`.
+  decision below. Do not carry it forward from [`autonomous-dbt-project-lifecycle.md`](./autonomous-dbt-project-lifecycle.md).
 - **Ship the public tunnel as product.** It stays a local dev convenience.
 - **Add a new `sql_server` WarehouseType here** — owned by
   [Same answers on every warehouse engine](THEME-cross-engine-correctness.md), and it needs
@@ -87,17 +92,17 @@ settled, nobody can build.
 Two specs, written one day apart, build opposite architectures — and the newer one explicitly
 says the older is wrong:
 
-- `autonomous-dbt-project-lifecycle.md` (2026-08-12) — `DbtCoreRunner.run_on_ref` shells out to
+- [`autonomous-dbt-project-lifecycle.md`](./autonomous-dbt-project-lifecycle.md) (2026-08-12) — `DbtCoreRunner.run_on_ref` shells out to
   `dbt build` **from brightbot in our cloud**, pointed at the customer's SQL Server.
-- `on-prem-engineering-runner.md` (2026-08-13) — its ADR-0002 states that cloud-side execution
+- [`on-prem-engineering-runner.md`](./on-prem-engineering-runner.md) (2026-08-13) — its ADR-0002 states that cloud-side execution
   against an on-prem server was **"the error"** of ADR-0001, and moves execution into the
   customer's network.
 
 Recommendation: **ADR-0002 wins.** Cloud-side execution requires the customer to expose their
 database to us, which is the thing enterprise buyers refuse. Mark
-`autonomous-dbt-project-lifecycle.md` superseded, and salvage only its sandbox tooling and
+[`autonomous-dbt-project-lifecycle.md`](./autonomous-dbt-project-lifecycle.md) superseded, and salvage only its sandbox tooling and
 governed-model-proposal halves — both are architecture-neutral.
 
-Housekeeping while you're in there: `on-prem-engineering-runner.md`'s Test Coverage section is a
+Housekeeping while you're in there: [`on-prem-engineering-runner.md`](./on-prem-engineering-runner.md)'s Test Coverage section is a
 **completion report** (48 passing tests, ✅ rows) sitting inside a doc marked `Draft`. That
 belongs in a feature doc — a spec that reports its own tests as already passing is not a spec.

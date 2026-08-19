@@ -56,8 +56,8 @@ Consumers today:
    Kuri's "1-shot 95%-value prompts" question) — reads every meaningful
    turn, not just schedulable-classified ones; scores by value not just
    repetition.
-4. **Platform analytics + cost attribution** (per `usage-metering-pipeline.md`
-   and `platform-analytics-dashboard.md` — both explicitly named as
+4. **Platform analytics + cost attribution** (per [`usage-metering-pipeline.md`](./usage-metering-pipeline.md)
+   and [`platform-analytics-dashboard.md`](./platform-analytics-dashboard.md) — both explicitly named as
    unbuilt today).
 
 ### How It Works Today

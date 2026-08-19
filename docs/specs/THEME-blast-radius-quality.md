@@ -10,6 +10,10 @@ supersedes:
 
 # Catch a bad number before your customers do
 
+> **Superseded specs:**
+> - [lineage-aware-data-quality.md](./lineage-aware-data-quality.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal
@@ -77,7 +81,7 @@ BH-1068, BH-1074 (non-dbt providers)
 
 ## ⚠️ Rewrite the source spec, don't extend it
 
-`lineage-aware-data-quality.md` is **2,282 lines** — four and a half times the house cap — with
+[`lineage-aware-data-quality.md`](./lineage-aware-data-quality.md) is **2,282 lines** — four and a half times the house cap — with
 **23 invariants** (cap 15) and **21 scenarios** (cap 20). Its real scope is the 9 tickets above:
 roughly 250 lines of spec per ticket, against ~55 for a healthy spec.
 

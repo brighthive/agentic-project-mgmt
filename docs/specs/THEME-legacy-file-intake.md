@@ -13,6 +13,13 @@ supersedes:
 
 # Drop in your legacy pipeline files, get answers back
 
+> **Superseded specs:**
+> - [project-files-pipeline-artifact-intake.md](./project-files-pipeline-artifact-intake.md)
+> - [project-files-dbt-github-bridge.md](./project-files-dbt-github-bridge.md)
+> - [pipeline-artifact-parser-registry.md](./pipeline-artifact-parser-registry.md)
+> - [ssis-ssrs-proactive-pipeline-source.md](./ssis-ssrs-proactive-pipeline-source.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal

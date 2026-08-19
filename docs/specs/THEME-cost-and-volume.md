@@ -12,6 +12,12 @@ supersedes:
 
 # Answer what it costs
 
+> **Superseded specs:**
+> - [cost-allocation-tagging.md](./cost-allocation-tagging.md)
+> - [usage-metering-pipeline.md](./usage-metering-pipeline.md)
+> - [volume-matrix-report.md](./volume-matrix-report.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal

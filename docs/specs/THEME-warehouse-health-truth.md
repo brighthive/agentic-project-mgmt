@@ -14,6 +14,14 @@ supersedes:
 
 # Warehouse health you can trust
 
+> **Superseded specs:**
+> - [sqlserver-health-watch.md](./sqlserver-health-watch.md)
+> - [warehouse-health-snapshot.md](./warehouse-health-snapshot.md)
+> - [warehouse-connectivity-monitoring-alerts.md](./warehouse-connectivity-monitoring-alerts.md)
+> - [pipeline-connectivity-watchdog.md](./pipeline-connectivity-watchdog.md)
+> - [longitudinal-drift-watchdog-wiring.md](./longitudinal-drift-watchdog-wiring.md)
+
+
 > Delegation unit. One engineer, one theme. Cap 150 lines.
 
 ## The goal
@@ -114,12 +122,12 @@ the page still said it was fine. Same failure as the earlier Loop Capital outage
 Two specs independently invented a way to poll every warehouse for item 1, and each defers to the
 other:
 
-- `pipeline-self-healing-fleet.md` §2.2 — a `ConnectionDirectory` port + `build_sources_for_workspace`, keyed by `source_type`
-- `pipeline-connectivity-watchdog.md` §2.3 — `poll_configured_warehouses` + `WAREHOUSE_TYPE_TO_SOURCE_TYPE`, keyed by warehouse and honoring `is_default`
+- [`pipeline-self-healing-fleet.md`](./pipeline-self-healing-fleet.md) §2.2 — a `ConnectionDirectory` port + `build_sources_for_workspace`, keyed by `source_type`
+- [`pipeline-connectivity-watchdog.md`](./pipeline-connectivity-watchdog.md) §2.3 — `poll_configured_warehouses` + `WAREHOUSE_TYPE_TO_SOURCE_TYPE`, keyed by warehouse and honoring `is_default`
 
 Pick one and delete the other from its spec. Recommendation: **the warehouse-keyed one**, because
 honoring `is_default` is the actual BH-1457 bug and `source_type` keying cannot express it.
 
-Second, smaller conflict: `sqlserver-health-watch.md` INV-11 says `source_type` is a closed
-`Literal` by design; `pipeline-self-healing-fleet.md` §2.2 widens it to `str`. The widening won —
+Second, smaller conflict: [`sqlserver-health-watch.md`](./sqlserver-health-watch.md) INV-11 says `source_type` is a closed
+`Literal` by design; [`pipeline-self-healing-fleet.md`](./pipeline-self-healing-fleet.md) §2.2 widens it to `str`. The widening won —
 INV-11 needs deleting, not honoring.

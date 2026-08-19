@@ -16,7 +16,7 @@ related:
 
 # BrightRoutines online judge eval + live circuit breaker
 
-> Binds `brightroutines-intent-loop.md` §11's named-but-unimplemented circuit breaker to a
+> Binds [`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md) §11's named-but-unimplemented circuit breaker to a
 > concrete live-precision metric, a CLOSED/OPEN state machine, and a canary-cohort rollout path
 > for judge-model swaps. Full contract: `~/.claude/rules/spec-driven.md`.
 

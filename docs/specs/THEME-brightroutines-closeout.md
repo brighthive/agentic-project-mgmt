@@ -12,6 +12,12 @@ supersedes:
 
 # Finish BrightRoutines
 
+> **Superseded specs:**
+> - [brightroutines-intent-loop.md](./brightroutines-intent-loop.md)
+> - [brightroutines-execute-workflow-schedule.md](./brightroutines-execute-workflow-schedule.md)
+> - [brightroutines-your-routines-persistence.md](./brightroutines-your-routines-persistence.md)
+
+
 > Delegation unit. Cap 150 lines. **BH-876 is already `Done` in Jira and the three source
 > specs say `implemented-verified-staging`** — this theme is the short tail of real work
 > left behind them, not a rebuild.
@@ -56,16 +62,16 @@ ticket, which is exactly why this consolidation is happening.
 - **Rebuild anything in the three source specs** — capture, detector, judge, suggestion API,
   scheduling substrate, and read-back all ship. Read them as reference, not as work.
 - **Edit-in-place, Slack read-back parity, PAUSED state** — explicitly out of scope in
-  `brightroutines-your-routines-persistence.md` §5. Leave them out.
+  [`brightroutines-your-routines-persistence.md`](./brightroutines-your-routines-persistence.md) §5. Leave them out.
 - **Detector fan-out / queueing / per-tenant fairness**
-  (`brightroutines-detector-fanout-fairness.md`) — premature. It designs for hundreds of
+  ([`brightroutines-detector-fanout-fairness.md`](./brightroutines-detector-fanout-fairness.md)) — premature. It designs for hundreds of
   simultaneous workspaces; staging runs 3–5. Park until workspace count or a real incident
   justifies it.
-- **Online judge circuit breaker** (`brightroutines-online-judge-eval-circuit-breaker.md`) —
+- **Online judge circuit breaker** ([`brightroutines-online-judge-eval-circuit-breaker.md`](./brightroutines-online-judge-eval-circuit-breaker.md)) —
   same call. Park until there is a live judge-quality incident.
 - **Routine delivery channels (Slack channel target, provenance, PDF, email)** — a separate
-  BrightRoutines delivery theme not yet written; `brightroutines-delivery-target-and-provenance.md`
-  and `brightroutines-email-delivery.md` remain its source specs. Email is lowest priority: it is
+  BrightRoutines delivery theme not yet written; [`brightroutines-delivery-target-and-provenance.md`](./brightroutines-delivery-target-and-provenance.md)
+  and [`brightroutines-email-delivery.md`](./brightroutines-email-delivery.md) remain its source specs. Email is lowest priority: it is
   the second unshipped email-channel effort here, and no adapter has ever sent a real message.
 
 ## Where it lives
@@ -88,10 +94,10 @@ cannot be confirmed live until it clears.
 Two specs build **competing write paths for "human approves a routine → it gets scheduled"**,
 and only one can exist:
 
-- `slack-routine-suggestion-scheduling.md` (BH-1001–1004, **largely shipped**) — Slack button →
+- [`slack-routine-suggestion-scheduling.md`](./slack-routine-suggestion-scheduling.md) (BH-1001–1004, **largely shipped**) — Slack button →
   slack-server → platform-core `scheduleRoutineSuggestion` mutation → brightbot. Goes through
   platform-core, so Neo4j ownership edges get written.
-- `brightroutine-approve-schedule.md` (BH-1255, Draft) — a **second, parallel** OFFERED →
+- [`brightroutine-approve-schedule.md`](./brightroutine-approve-schedule.md) (BH-1255, Draft) — a **second, parallel** OFFERED →
   SCHEDULING → SCHEDULED state machine using LangGraph `interruptible()` that POSTs straight to
   brightbot's `create_schedule`, **bypassing platform-core's mutation and the ownership edges
   entirely**.
@@ -100,6 +106,6 @@ Recommendation: **keep the shipped platform-core path**. Bypassing it loses the 
 and splits the audit trail — and BH-1255's own §5 already assumes the Slack path resolved the
 approver identity. Do not hand both to engineers in parallel.
 
-Also: `brightroutines-naming-proposal.md` is self-described on line 19 as *"not a spec — a
+Also: [`brightroutines-naming-proposal.md`](./brightroutines-naming-proposal.md) is self-described on line 19 as *"not a spec — a
 decision doc"*. Move it to an ADR or delete it once BH-953 resolves; it should not hold a slot
 in the spec queue.

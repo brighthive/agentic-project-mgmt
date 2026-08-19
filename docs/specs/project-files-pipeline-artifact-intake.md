@@ -41,7 +41,7 @@ related:
 > `read_file`-driven chat skill, `ssrs-diagnostics/SKILL.md:17-18`) its first real intake path.
 >
 > **Not in scope:** rewriting `analyze_dtsx_package`/`analyze_rdl_report` (unchanged), building the
-> SSRS `PipelineSource` itself (that's BH-1275/`ssis-ssrs-proactive-pipeline-source.md`), or the
+> SSRS `PipelineSource` itself (that's BH-1275/[`ssis-ssrs-proactive-pipeline-source.md`](./ssis-ssrs-proactive-pipeline-source.md)), or the
 > dbt-to-GitHub bridge (separate spec — different trust boundary, see Related).
 
 ## 1. Context

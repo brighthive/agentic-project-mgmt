@@ -14,6 +14,14 @@ supersedes:
 
 # Governance you declare is governance we enforce
 
+> **Superseded specs:**
+> - [governance-policy-enforcement.md](./governance-policy-enforcement.md)
+> - [user-schema-contract-gates.md](./user-schema-contract-gates.md)
+> - [project-governance-observability-convergence.md](./project-governance-observability-convergence.md)
+> - [data-quality-rules.md](./data-quality-rules.md)
+> - [data-product-tier-surfacing.md](./data-product-tier-surfacing.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal
@@ -99,7 +107,7 @@ enforcement point that all three artifacts register against, then wire each arti
 
 **Tickets:** BH-766, BH-767, BH-768, BH-769, BH-624
 
-⚠️ **Not yet handable to an engineer:** `user-schema-contract-gates.md`'s five ticket rows have
+⚠️ **Not yet handable to an engineer:** [`user-schema-contract-gates.md`](./user-schema-contract-gates.md)'s five ticket rows have
 **no Jira IDs at all**. Create them (and confirm the BH-76x numbers above are still live) before
 this theme is assigned — status stays `Draft` until then.
 
@@ -107,9 +115,9 @@ this theme is assigned — status stays `Draft` until then.
 
 ## Notes for whoever picks this up
 
-Two of the source specs are audits rather than designs: `governance-policy-enforcement.md` (119
+Two of the source specs are audits rather than designs: [`governance-policy-enforcement.md`](./governance-policy-enforcement.md) (119
 lines) documents four confirmed gaps between what BH-503 designed and what shipped, and
-`user-schema-contract-gates.md` (140 lines) does the same for contracts and explicitly names the
+[`user-schema-contract-gates.md`](./user-schema-contract-gates.md) (140 lines) does the same for contracts and explicitly names the
 policy gap as its sibling. They are the evidence for this theme, and they already identified the
 shared pattern — the consolidation here is finishing that thought, not discovering it.
 

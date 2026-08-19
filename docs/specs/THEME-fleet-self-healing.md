@@ -11,6 +11,11 @@ supersedes:
 
 # Pipelines that fix themselves, with a human in the loop
 
+> **Superseded specs:**
+> - [pipeline-self-healing-fleet.md](./pipeline-self-healing-fleet.md)
+> - [self-healing-pipelines.md](./self-healing-pipelines.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal
@@ -60,7 +65,7 @@ it by hand every night.
   signals it produces.
 - **Job-runtime failures without a data-shape signature** — alert only. Don't invent a healer
   for a failure class we can't reliably diagnose.
-- **The remediation-state prose in `self-healing-pipelines.md` §"Post-merge verification"** — the
+- **The remediation-state prose in [`self-healing-pipelines.md`](./self-healing-pipelines.md) §"Post-merge verification"** — the
   fleet spec already types this properly. Delete that section when folding, don't merge both.
 - **SSIS/SSRS → dbt regeneration.** Explicitly out of trial scope and parked.
 
@@ -88,6 +93,6 @@ code-level enforcement** — the agent was told not to merge, and nothing stoppe
 tool-level exclusion as the actual requirement and the prompt as a courtesy. A test that asserts
 the prompt contains the words "never merge" does not satisfy this.
 
-**Fold, don't merge wholesale:** `self-healing-pipelines.md` (BH-526) contributes its four
+**Fold, don't merge wholesale:** [`self-healing-pipelines.md`](./self-healing-pipelines.md) (BH-526) contributes its four
 sandboxed data-shape failure modes as healer registrations. Everything else in it — particularly
 its verification-loop design — is superseded by the fleet spec's typed version.

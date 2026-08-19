@@ -21,7 +21,7 @@ related:
 > paths. Reference architecture:
 > `platform-saas-ai-context/docs/architecture/DBT_CLOUD_ACCOUNT_AND_PROJECT_LINKS.md` +
 > `DBT_TRANSFORMATION_ARCHITECTURE.md` (BH-332 auto-provisioning plan) + `DBT_CLOUD_LEARNINGS.md`.
-> Companion spec: `dbt-cloud-project-links.md` (tenant-scoped listing + project linkage — the
+> Companion spec: [`dbt-cloud-project-links.md`](./dbt-cloud-project-links.md) (tenant-scoped listing + project linkage — the
 > dbt-Cloud-adapter view of §2's port contract).
 
 ## 1. Context

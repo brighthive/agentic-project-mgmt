@@ -14,6 +14,14 @@ supersedes:
 
 # Always know which warehouse you're talking to
 
+> **Superseded specs:**
+> - [warehouse-catalog-enumeration.md](./warehouse-catalog-enumeration.md)
+> - [warehouse-catalog-mcp-surface.md](./warehouse-catalog-mcp-surface.md)
+> - [warehouse-tables-mcp-surface.md](./warehouse-tables-mcp-surface.md)
+> - [default-warehouse-ui-surfacing.md](./default-warehouse-ui-surfacing.md)
+> - [warehouse-database-table-identity.md](./warehouse-database-table-identity.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal
@@ -67,7 +75,7 @@ answer is worse than no answer, because nobody catches it.
 - **Adding a `sql_server` WarehouseType** — owned by
   [Same answers on every warehouse engine](THEME-cross-engine-correctness.md), and it needs
   decision 3 in [THEMES.md](THEMES.md) settled first.
-- **The five-level Resource/Job graph** from `warehouse-database-table-identity.md` §2 — its own
+- **The five-level Resource/Job graph** from [`warehouse-database-table-identity.md`](./warehouse-database-table-identity.md) §2 — its own
   §5 admits the registry driving it isn't being built this pass. Defer until a second consumer
   exists.
 - **Any warehouse write path** — owned by
@@ -100,13 +108,13 @@ answer is worse than no answer, because nobody catches it.
 **Read the source specs for facts, not for scope.** Their combined 1,958 lines collapse to the six
 items above. Specifically:
 
-- `warehouse-database-table-identity.md` is 880 lines with **16 invariants** (over the 15 cap) and
+- [`warehouse-database-table-identity.md`](./warehouse-database-table-identity.md) is 880 lines with **16 invariants** (over the 15 cap) and
   bundles five separable concerns. Only two of them — database nodes and the default/ambiguity
   ladder — are in this theme. The other three are listed under "Don't do" above.
 - The three catalog specs (`-enumeration`, `-mcp-surface`, `-tables-mcp-surface`) are 835 lines of
   full template ceremony for three thin pass-through read verbs on one module. They are correctly
   *layered* — each defers its follow-on to the next — but that layering describes one piece of
   work, not three.
-- `warehouse-selection-on-mcp-tools.md` (BH-1430) is **already `Done`** in Jira and self-discloses
+- [`warehouse-selection-on-mcp-tools.md`](./warehouse-selection-on-mcp-tools.md) (BH-1430) is **already `Done`** in Jira and self-discloses
   as "spec-after-code." Treat it as reference for how selection already threads through
   `get_database_size`; don't rebuild it.

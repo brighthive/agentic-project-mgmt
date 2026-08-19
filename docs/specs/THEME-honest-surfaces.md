@@ -15,6 +15,15 @@ supersedes:
 
 # The screen never lies
 
+> **Superseded specs:**
+> - [hive-health-landing-indicator.md](./hive-health-landing-indicator.md)
+> - [honest-observe-surface.md](./honest-observe-surface.md)
+> - [fleet-health-digest-push.md](./fleet-health-digest-push.md)
+> - [pipeline-run-logs-observability-surfacing.md](./pipeline-run-logs-observability-surfacing.md)
+> - [derived-metrics-compute-framework.md](./derived-metrics-compute-framework.md)
+> - [profiler-metrics-landing-e2e.md](./profiler-metrics-landing-e2e.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal

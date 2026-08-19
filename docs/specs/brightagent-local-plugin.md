@@ -81,7 +81,7 @@ zero data rows ever leave the box.
   (§2 of that spec) — this spec reuses that port rather than inventing a second connector.
 - **No dbt-sqlserver adapter is vendored anywhere.** Grepped for `dbt-sqlserver`/`dbt_sqlserver` —
   zero matches; only `dbt-snowflake`/`dbt-postgres` references exist in test/lineage code. Ties
-  directly to `on-prem-sql-server-warehouse.md`'s `DbtCoreRunner` gap (dbt Cloud cannot target
+  directly to [`on-prem-sql-server-warehouse.md`](./on-prem-sql-server-warehouse.md)'s `DbtCoreRunner` gap (dbt Cloud cannot target
   SQL Server at all).
 - **agent-plugins.org is real; some proposal claims about it are not corroborated.** Verified via
   direct fetch: the manifest schema requires only `$schema` + `name` (additional properties
@@ -106,7 +106,7 @@ zero data rows ever leave the box.
 - No local governance degradation path exists — today's write-gate tools (e.g.
   `register_transformation`) assume an always-on cloud connection; there is no "local dbt PR +
   queued cloud review" mode.
-- dbt Cloud cannot target SQL Server (established in `on-prem-sql-server-warehouse.md`) — the
+- dbt Cloud cannot target SQL Server (established in [`on-prem-sql-server-warehouse.md`](./on-prem-sql-server-warehouse.md)) — the
   `dbt-model-proposal` skill inherits this limitation until `DbtCoreRunner` ships.
 - We do not have Loop Capital's real Dev/UAT/Prod server details — same client-side blockers
   listed in `TRIAL_STATEMENT.md` §3 apply here. This spec is validated against a local Docker SQL

@@ -12,6 +12,12 @@ supersedes:
 
 # Turn on a project and it knows its own history
 
+> **Superseded specs:**
+> - [project-engine-repo-binding.md](./project-engine-repo-binding.md)
+> - [project-activate-sync-golden-nuggets.md](./project-activate-sync-golden-nuggets.md)
+> - [dbt-cloud-project-links.md](./dbt-cloud-project-links.md)
+
+
 > Delegation unit. Cap 150 lines.
 
 ## The goal
@@ -79,8 +85,8 @@ Separately, **a customer can currently see other customers' dbt Cloud projects**
 
 **How does activation fire?** Two source specs each design a mechanism, neither is built:
 
-- `project-engine-repo-binding.md` §2.2 — a direct `on_project_activated` hook.
-- `project-activate-sync-golden-nuggets.md` §2.1 — a `project.activated` pub/sub event that fans
+- [`project-engine-repo-binding.md`](./project-engine-repo-binding.md) §2.2 — a direct `on_project_activated` hook.
+- [`project-activate-sync-golden-nuggets.md`](./project-activate-sync-golden-nuggets.md) §2.1 — a `project.activated` pub/sub event that fans
   out to a `SYNC()` routine.
 
 They are different epics (BH-172 vs BH-1255) and were written a day apart. Pick one. Recommendation:

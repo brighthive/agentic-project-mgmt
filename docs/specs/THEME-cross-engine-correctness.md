@@ -10,9 +10,25 @@ supersedes:
   - lineage-adapter-sql-server.md
   - quality-rules-synapse-table-quoting.md
   - warehouse-extensibility-pattern.md
+  - table-parity-verb.md
+  - table-parity-cross-warehouse-database.md
+  - analyst-query-dialect-hint.md
+reference:
+  - warehouse-agnostic-architecture.md   # the engine-onboarding rule — keep, don't archive
 ---
 
 # Same answers on every warehouse engine
+
+> **Superseded specs:**
+> - [engineering-agent-warehouse-agnostic.md](./engineering-agent-warehouse-agnostic.md)
+> - [on-prem-sql-server-warehouse.md](./on-prem-sql-server-warehouse.md)
+> - [lineage-adapter-sql-server.md](./lineage-adapter-sql-server.md)
+> - [quality-rules-synapse-table-quoting.md](./quality-rules-synapse-table-quoting.md)
+> - [warehouse-extensibility-pattern.md](./warehouse-extensibility-pattern.md)
+> - [table-parity-verb.md](./table-parity-verb.md)
+> - [table-parity-cross-warehouse-database.md](./table-parity-cross-warehouse-database.md)
+> - [analyst-query-dialect-hint.md](./analyst-query-dialect-hint.md)
+
 
 > Delegation unit. Cap 150 lines.
 
@@ -33,8 +49,10 @@ explanation of why.
 
 ## What to build
 
-1. `brightbot` — fix the Synapse dialect quoting so quality checks scan the real table instead of
-   silently sampling. This is a correctness bug, not a feature; do it first.
+1. `brightbot` — fix the Synapse table-name wrapping so quality checks scan the real table instead
+   of a sample. This is a correctness bug, not a feature; do it first. The same wrapping bug also
+   makes analyst queries pick the wrong dialect — one fix, both symptoms
+   ([`analyst-query-dialect-hint.md`](./analyst-query-dialect-hint.md) is the second half of this).
 2. `brightbot` — let the engineering agent write on engines other than Redshift. **This theme owns
    the write path**; [Always know which warehouse you're talking to](THEME-catalog-and-identity.md)
    defers it here. Scope it to the writes the agent already performs on Redshift today — creating
@@ -50,7 +68,7 @@ explanation of why.
    another and report schema, row-count, and value differences honestly, including when the two
    engines' types aren't directly comparable.
 6. Confirm the onboarding rule still holds — adding an engine touches only its registry entry and
-   config, never engine-neutral code. The rule is written in `warehouse-agnostic-architecture.md`
+   config, never engine-neutral code. The rule is written in [`warehouse-agnostic-architecture.md`](./warehouse-agnostic-architecture.md)
    (BH-172, Approved), which stays as the reference. If any of items 1–5 forced an edit to
    engine-neutral code, that's a defect in the rule — fix it there too.
 
@@ -97,11 +115,11 @@ explanation of why.
 **Is `SQL_SERVER` its own `WarehouseType`, or an alias for `azure_synapse`?** Three specs written
 within two weeks answer differently:
 
-- `lineage-adapter-sql-server.md` writes its invariant assuming SQL-Server-shaped secrets route to
+- [`lineage-adapter-sql-server.md`](./lineage-adapter-sql-server.md) writes its invariant assuming SQL-Server-shaped secrets route to
   a provider whose `engine == "azure_synapse"`.
-- `engineering-agent-warehouse-agnostic.md` has a scenario where the type *is* `SQL_SERVER` but it
+- [`engineering-agent-warehouse-agnostic.md`](./engineering-agent-warehouse-agnostic.md) has a scenario where the type *is* `SQL_SERVER` but it
   connects via `SynapseConnection` — implying the type already resolves.
-- `on-prem-sql-server-warehouse.md` states flatly that no `sql_server` member exists today and
+- [`on-prem-sql-server-warehouse.md`](./on-prem-sql-server-warehouse.md) states flatly that no `sql_server` member exists today and
   proposes adding one, changing `warehouse_type_from_secret()` so SQL Server no longer maps to
   `azure_synapse`.
 

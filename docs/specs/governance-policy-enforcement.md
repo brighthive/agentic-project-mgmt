@@ -38,7 +38,7 @@ Success = the four scenarios below pass against a real workspace, and the `ENFOR
 
 - **Custom policies**: created via the UI (`updateGovernance` mutation) → stored as `CustomPolicyNode` in Neo4j. Read by the agent (`getWorkspaceCustomPoliciesTool`) and counted by `analytics-resolver.ts` for a dashboard tile. That is the entire lifecycle.
 - **Quality rules**: defined in the UI → `QualityRuleNode` (`createQualityRule` mutation, `CreateQualityRuleInput` at `platform-core schema.graphql:4202/4644`). The governance subagent (`brightbot/agents/governance_agent/`) can *profile* a dataset (`analyze_dataset_structure`) and *generate* Great Expectations recommendations (`generate_quality_expectations`), then runs saved rules on demand (`execute_library_quality_rules`, confirm-gated) — the only path that writes a `QualityRuleExecution` node back.
-- The BH-503 spec (`quality-rules-configurable.md`) already designed the rule library + named `createQualityRule` and EventBridge scheduling. **This spec documents the gap between that design and what shipped.**
+- The BH-503 spec ([`quality-rules-configurable.md`](./quality-rules-configurable.md)) already designed the rule library + named `createQualityRule` and EventBridge scheduling. **This spec documents the gap between that design and what shipped.**
 
 ### Hard Limitations
 

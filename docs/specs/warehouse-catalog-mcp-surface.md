@@ -14,7 +14,7 @@ related:
 
 ## 1. Context
 
-The warehouse catalog data layer (BH-1370, `warehouse-catalog-enumeration.md`) can
+The warehouse catalog data layer (BH-1370, [`warehouse-catalog-enumeration.md`](./warehouse-catalog-enumeration.md)) can
 already, in-process, do the one thing the whole addressing story rests on: enumerate
 every warehouse a workspace owns (`list_workspace_warehouses`) and walk down to the
 databases on any one of them (`WarehouseConnection.list_databases`). But that layer

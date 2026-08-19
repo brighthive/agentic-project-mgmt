@@ -20,7 +20,7 @@ related:
 > products" even when the engine already has jobs, run history, and logs — because nothing
 > pulls that history into the project. This spec adds ONE capability: an engine-agnostic
 > **Sync** that enumerates the connected engine's jobs, pulls their runs + logs through the
-> `PipelineRunner` port (`pipeline-run-lifecycle.md`, BH-1255), persists them to the project's
+> `PipelineRunner` port ([`pipeline-run-lifecycle.md`](./pipeline-run-lifecycle.md), BH-1255), persists them to the project's
 > run store, and registers data products from each synced run. Every claim in §1 is anchored
 > to traced `file:line` so no ticket re-derives the gap.
 

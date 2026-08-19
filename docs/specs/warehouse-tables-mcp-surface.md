@@ -14,7 +14,7 @@ related:
 
 ## 1. Context
 
-BH-1395 (`warehouse-catalog-mcp-surface.md`) gave the addressing ladder its first two
+BH-1395 ([`warehouse-catalog-mcp-surface.md`](./warehouse-catalog-mcp-surface.md)) gave the addressing ladder its first two
 reachable rungs over MCP: `list_workspace_warehouses` (WORKSPACE→WAREHOUSE) and
 `list_warehouse_databases` (WAREHOUSE→DATABASE). Its §5 deferred the **SCHEMA + TABLE
 rungs** to a follow-on tool "once the UI needs them." The UI needs them now (the

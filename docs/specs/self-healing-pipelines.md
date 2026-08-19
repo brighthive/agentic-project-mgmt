@@ -22,7 +22,7 @@ BrightHive's observability agent **alerts** on pipeline failures today, but stop
 
 ## Use Case / Goal
 
-A pipeline run fails (or a monitor flags an anomaly — see `longitudinal-monitoring.md`). The Engineering agent reads the run logs + asset lineage + schema, identifies which of the four failure modes it is, and opens a GitHub PR containing **only the surgical fix** plus a plain-language diagnosis. A reviewer approves; nothing is auto-merged. Success = GC-11 flips `skip → live`: for each of the 4 sandbox failure modes, the agent produces the same surgical fix the fixture encodes.
+A pipeline run fails (or a monitor flags an anomaly — see [`longitudinal-monitoring.md`](./longitudinal-monitoring.md)). The Engineering agent reads the run logs + asset lineage + schema, identifies which of the four failure modes it is, and opens a GitHub PR containing **only the surgical fix** plus a plain-language diagnosis. A reviewer approves; nothing is auto-merged. Success = GC-11 flips `skip → live`: for each of the 4 sandbox failure modes, the agent produces the same surgical fix the fixture encodes.
 
 ## Current Situation
 
@@ -83,7 +83,7 @@ BH-1092 verifies the PR gets OPENED at all after the agent run starts. Both are 
 "verify, don't assume" principle applied to different points in the same pipeline.
 
 **Eval criterion for BH-1092, closing a gap found on review**: `RemediationScopeEvaluator`
-(`proactive-pipeline-ingestion-monitoring.md` §8) checks diff-SCOPING on a PR that already
+([`proactive-pipeline-ingestion-monitoring.md`](./proactive-pipeline-ingestion-monitoring.md) §8) checks diff-SCOPING on a PR that already
 exists — it says nothing about whether a PR exists at all. Neither evaluator exists as code
 yet (both are spec-prose, confirmed by grep against `brightbot`), but the DESIGN should not
 conflate the two concerns. BH-1092 needs its OWN deterministic check, not a reuse of
@@ -120,7 +120,7 @@ BH-1092's own implementation rather than a new abstraction.
 | Diagnosis | brightbot | read run logs + lineage + schema → classify + root-cause |
 | Surgical PR | brightbot dbt agent (scoped-PR path) | open PR with surgical DDL + diagnosis, no auto-merge |
 | Lineage/run-log read path | brightbot + platform-core | Dagster/OpenLineage equivalent surface |
-| Trigger | longitudinal monitor (`longitudinal-monitoring.md`) or pipeline-failure event | fire the loop |
+| Trigger | longitudinal monitor ([`longitudinal-monitoring.md`](./longitudinal-monitoring.md)) or pipeline-failure event | fire the loop |
 | Acceptance | brightbot `tests/integration/golden_cases/test_gc_11_self_healing.py` | flip skip → live |
 
 ## Acceptance Criteria

@@ -18,7 +18,7 @@ related:
 
 ## Context
 
-LangGraph Cloud / LangSmith's hosted SaaS is being cut off. `agentcore-deployment-migration.md` v3 already tracks the target end-state (AgentCore leaf runtimes + a to-be-decided supervisor host, BH-454, still open) but that path's two hardest pieces — the supervisor's own host and the DynamoDB checkpointer (BH-456) — had zero code as of this spec's writing, and no timeline that fits an urgent SaaS shutoff. Two tracks were opened in parallel to close that gap without regressing production behavior:
+LangGraph Cloud / LangSmith's hosted SaaS is being cut off. [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) v3 already tracks the target end-state (AgentCore leaf runtimes + a to-be-decided supervisor host, BH-454, still open) but that path's two hardest pieces — the supervisor's own host and the DynamoDB checkpointer (BH-456) — had zero code as of this spec's writing, and no timeline that fits an urgent SaaS shutoff. Two tracks were opened in parallel to close that gap without regressing production behavior:
 
 - **Track A (fast path, `brightbot`)**: replace the ~10 `langgraph_sdk.get_client()` call sites with a DynamoDB-backed `ThreadStore`/`AssistantStore` and an in-process SSE endpoint, leaving `BBState`, the deepagents middleware stack, and the LangGraph supervisor completely untouched. This removes the SaaS dependency without redesigning working production behavior.
 - **Track B (CEMAF pivot, `brightagent-v3`)**: un-park the CEMAF rewrite as the actual long-term supervisor replacement. Real progress already exists here that AgentCore-alone doesn't have: a working `DAGExecutor`, an already-built webapp-compatible SSE endpoint, and (as of this session) a wired DynamoDB `SessionStore` and a ported AgentCore-invocation transport client.
@@ -27,7 +27,7 @@ LangGraph Cloud / LangSmith's hosted SaaS is being cut off. `agentcore-deploymen
 
 **Success**: LangGraph Cloud / LangSmith's hosted SaaS is decommissioned with zero customer-visible regression in webapp chat, BrightAgent Studio, and scheduled agent runs. Both tracks converge: Track A removes the immediate outage risk; Track B becomes the durable replacement for the supervisor once its remaining gaps (below) close.
 
-**Who benefits**: Same audiences as `agentcore-deployment-migration.md` (Sales/GTM co-sell unlock, AWS partnership) plus immediate risk reduction for whoever owns the LangGraph Cloud contract/shutdown timeline.
+**Who benefits**: Same audiences as [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) (Sales/GTM co-sell unlock, AWS partnership) plus immediate risk reduction for whoever owns the LangGraph Cloud contract/shutdown timeline.
 
 ## Current Situation
 
@@ -49,14 +49,14 @@ LangGraph Cloud / LangSmith's hosted SaaS is being cut off. `agentcore-deploymen
 - Per-agent status against brightbot parity: **retrieval and analyst are `done`** (captured fixtures `run1_retrieval.sse`, `run3_analyst.sse`, proven live streaming UX) — no rewrap needed. **Governance is `partial`** with real native work + fixture (`run2_governance.sse`) in progress. **Engineering (dbt) is `missing`** (stubs only) — the only agent where wrapping the deployed AgentCore runtime is the right call, since no CEMAF-native alternative exists.
 - New DynamoDB table (`BrightagentSessionsDataStack`, `brighthive-platform-core`, branch `drchinca/BH-453/brightagent-sessions-dynamodb-stack`, PR #1033, draft) synth-verified this session — partition key `session_id`, GSI `tenant_id-updated_at-index`, TTL on `ttl_epoch_seconds` — not deployed yet.
 
-**AgentCore leaf runtimes (unchanged from `agentcore-deployment-migration.md`):** 4 sub-agents (retrieval, analyst, governance, dbt) live in Staging on branch `origin/agentcore-migration` in `brightbot`, unmerged, diverged 209 commits from `develop` since 2026-05-11.
+**AgentCore leaf runtimes (unchanged from [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md)):** 4 sub-agents (retrieval, analyst, governance, dbt) live in Staging on branch `origin/agentcore-migration` in `brightbot`, unmerged, diverged 209 commits from `develop` since 2026-05-11.
 
 ### Hard Limitations
 
 1. **CEMAF's `DAGExecutor` has no interrupt/pause/resume primitive.** The webapp's `streamHITLHandler` sends `command.resume` to `POST /threads/{id}/runs/stream`; today that path hits `_resume_stub()` — a no-op stream. This is the same gap already tracked as `hitl_approval` (`missing`, BH-172, 3D estimate) in `brightagent-v3/docs/MIGRATION_MAP.md`, now cross-referenced.
 2. **Track B's test suite is currently uncollectable.** `MemoryScope.BRAND` (referenced in `bright_autonomy/context_health/computers.py`) does not exist in `cemaf` v3.0.1 (only `GLOBAL/TENANT/PROJECT/USER/SESSION/STRATEGY`) — introduced by this session's `cemaf>=3.0.0` dependency bump. Blocks `pytest` collection for the entire repo until fixed.
 3. **Track B's `BBState`/middleware parity gap is real and unscoped.** Brightbot's ~40-field `BBState` and its 12-entry middleware stack (feature flags, OTel, streaming, prompt-caching, intent-capture) have no CEMAF equivalent — needs redesign as Goal/Result DTOs + `AgentRoutingTable`, not mechanical port. Parity-fixture coverage (10.3%) is the honest measure of how much of this remains.
-4. **Track A does not by itself close the June-1-class business deadline** in `agentcore-deployment-migration.md` (AWS co-sell "Deployed on AWS" badge) — it removes the LangGraph Cloud *SaaS* dependency but keeps the `langgraph`/`deepagents` Python libraries and the existing LangGraph supervisor topology. That AWS-native badge still depends on Track B (or AgentCore's supervisor-hosting work, BH-454) landing.
+4. **Track A does not by itself close the June-1-class business deadline** in [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) (AWS co-sell "Deployed on AWS" badge) — it removes the LangGraph Cloud *SaaS* dependency but keeps the `langgraph`/`deepagents` Python libraries and the existing LangGraph supervisor topology. That AWS-native badge still depends on Track B (or AgentCore's supervisor-hosting work, BH-454) landing.
 5. **`brighthive-platform-core`'s scheduled-agent dispatcher Lambda** (`lambdas/scheduled_agent_dispatcher/actions/langgraph_action.py`) creates a real LangGraph thread + relies on a completion webhook for `quality_check_task`/`profiler_task` dispatch — this is a *third*, separate LangGraph Cloud dependency, in a third repo, not covered by either track in this spec.
 
 ### Gaps
@@ -80,7 +80,7 @@ Run both tracks to completion, in the order that removes risk fastest:
 
 | Approach | Pros | Cons | Why Not |
 |---|---|---|---|
-| AgentCore-only (as v3 of `agentcore-deployment-migration.md` originally scoped) | Single target architecture, AWS-native end to end | Supervisor host (BH-454) and checkpointer (BH-456) were both zero-code with no near-term timeline; doesn't solve an urgent shutoff | Too slow for the forcing deadline |
+| AgentCore-only (as v3 of [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) originally scoped) | Single target architecture, AWS-native end to end | Supervisor host (BH-454) and checkpointer (BH-456) were both zero-code with no near-term timeline; doesn't solve an urgent shutoff | Too slow for the forcing deadline |
 | CEMAF-only, skip Track A | Converges directly on the real long-term target | `BBState`/middleware redesign (Hard Limitation 3) is unscoped and risks behavior drift under time pressure | Too risky to rush |
 | Self-host OSS `langgraph-api` (considered and dropped this session) | Zero webapp changes, identical wire protocol | No self-hosting infra exists anywhere in the org; still leaves the org on `langgraph`/`deepagents` as the permanent architecture, not aligned with the AWS-native goal | Solves the SaaS problem but not the strategic one |
 | **Track A + Track B in parallel** ✅ | De-risks the urgent deadline immediately (Track A) without forcing the long-term rewrite (Track B) to rush | Two active branches/PRs to keep in sync; some duplicate DynamoDB table design work (brightbot's ThreadStore vs. brightagent-v3's SessionStore are separate tables) | Best trade-off; duplication is small and each table serves a different service |
@@ -93,7 +93,7 @@ Run both tracks to completion, in the order that removes risk fastest:
 | BrightAgent v2 / CEMAF (Track B) | `brightagent-v3` | Fix `MemoryScope.BRAND` collection break, implement HITL/interrupt resume in `DAGExecutor`, wire the ported AgentCore transport into a CEMAF Tool/Agent for `dbt`, continue BBState/middleware parity work per `MIGRATION_MAP.md` |
 | Platform Core (infra) | `brighthive-platform-core` | New `BrightagentSessionsDataStack` (Track B's session table, drafted this session) + a separate new stack for Track A's brightbot thread/assistant tables (not yet built); scheduled-agent dispatcher's own LangGraph dependency (Hard Limitation 5) is a follow-up, not in this spec's scope |
 | Web App | `brighthive-webapp` | No code changes expected for Track A if the SSE contract is matched exactly (confirmed field-for-field this session); Track B's webapp-facing behavior is already designed to match the same contract |
-| CI/CD, canary, MCP Fargate, egress audit, cost, DR | `brighthive-platform-core`, `brightbot`, `brightbot-slack-server` | Unchanged from `agentcore-deployment-migration.md` — those tickets (BH-459–BH-476) proceed independently of this spec |
+| CI/CD, canary, MCP Fargate, egress audit, cost, DR | `brighthive-platform-core`, `brightbot`, `brightbot-slack-server` | Unchanged from [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) — those tickets (BH-459–BH-476) proceed independently of this spec |
 
 ## Acceptance Criteria
 
@@ -110,14 +110,14 @@ Run both tracks to completion, in the order that removes risk fastest:
 
 - The scheduled-agent dispatcher Lambda's own LangGraph Cloud dependency (`brighthive-platform-core/lambdas/scheduled_agent_dispatcher/actions/langgraph_action.py`) — tracked separately, not blocking either track here.
 - Full BBState/middleware parity completion for Track B — that's the multi-week continuation tracked in `brightagent-v3/docs/MIGRATION_MAP.md`/`MIGRATION_STATE.md`, not a deliverable of this spec.
-- AgentCore's own AC-1 through AC-14 (canary routing, MCP Fargate, cost/DR, CI/CD tag-driven deploys) — those remain exactly as scoped in `agentcore-deployment-migration.md` and are unaffected by this spec.
+- AgentCore's own AC-1 through AC-14 (canary routing, MCP Fargate, cost/DR, CI/CD tag-driven deploys) — those remain exactly as scoped in [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) and are unaffected by this spec.
 - Merging `origin/agentcore-migration` into `brightbot/develop` — tracked separately given the 209-commit divergence; not a dependency of either track's near-term acceptance criteria.
 
 ## Dependencies
 
 | Dependency | Type | Status |
 |---|---|---|
-| `agentcore-deployment-migration.md` (BH-453 v3) | Non-blocking | Live, this spec updates rather than replaces it |
+| [`agentcore-deployment-migration.md`](./agentcore-deployment-migration.md) (BH-453 v3) | Non-blocking | Live, this spec updates rather than replaces it |
 | 4 AgentCore leaf runtimes in Staging (`origin/agentcore-migration`) | Non-blocking | Live, reused by both tracks |
 | `BrightagentSessionsDataStack` CDK stack (Track B's DynamoDB table) | Blocking (Track B AC-3 equivalent) | Drafted, synth-verified, not deployed |
 | New brightbot thread/assistant DynamoDB table (Track A) | Blocking (AC-1, AC-3) | Not yet designed/built |

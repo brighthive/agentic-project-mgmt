@@ -26,7 +26,7 @@ related:
 
 ## 1. Context
 
-`warehouse-health-snapshot.md` (BH-1255, shipped) built the mechanism that
+[`warehouse-health-snapshot.md`](./warehouse-health-snapshot.md) (BH-1255, shipped) built the mechanism that
 turns a watchdog signal into a workspace-level `Down`/`Degraded`/`Healthy`
 snapshot. BH-1363 (unmerged) is the first bug fix riding on top of it — it
 makes a genuine network/firewall failure actually produce that signal instead

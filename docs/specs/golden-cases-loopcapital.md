@@ -125,7 +125,7 @@ real dbt Cloud job failure is detected without a human prompting the agent, and 
 visible on both Slack and the webapp within one poll cycle.
 
 ### Status today
-**Spec landed, zero code.** `proactive-pipeline-ingestion-monitoring.md` fully specifies the
+**Spec landed, zero code.** [`proactive-pipeline-ingestion-monitoring.md`](./proactive-pipeline-ingestion-monitoring.md) fully specifies the
 contract (§2 `PipelineSource` Protocol, `PIPELINE_SOURCE_ADAPTERS` registry, `PipelineHealthSignal`
 DTO — BH-1042) and 18 invariants, but BH-1043 (dbt poller), BH-1046 (dual-write alert path), and
 BH-1054 (watchdog node registration on the existing scheduled dispatcher) are all unimplemented.
@@ -157,7 +157,7 @@ correcting comments to BH-1046 and BH-1067 so this gap doesn't silently fall thr
 ticket's scope a third time.
 
 ### Code path
-No code. Contract only: `proactive-pipeline-ingestion-monitoring.md` §2 (`PipelineSource`,
+No code. Contract only: [`proactive-pipeline-ingestion-monitoring.md`](./proactive-pipeline-ingestion-monitoring.md) §2 (`PipelineSource`,
 `PipelineHealthSignal`, `PIPELINE_SOURCE_ADAPTERS`).
 
 ### Interface contract
