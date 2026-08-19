@@ -2,7 +2,7 @@
 title: "Snowflake — Full Platform Integration (extends warehouse-agnostic pattern)"
 epic: "BH-503-snowflake"
 author: "drchinca"
-status: "Phase 1 Shipped — PRs in review"
+status: Shipped
 created: "2026-06-01"
 last_reviewed: "2026-06-01"
 amended:
@@ -18,6 +18,7 @@ related:
     - warehouse-agnostic-architecture.md
     - warehouse-extensibility-pattern.md
     - azure-synapse-full-integration.md
+roadmap: done — Phase 1 shipped
 ---
 
 # Snowflake — Full Platform Integration

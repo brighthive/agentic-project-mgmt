@@ -8,10 +8,11 @@ tickets:
   - BH-864 (unit/integration tests)
   - BH-865 (e2e tests)
   - BH-866 (staging/demo)
-status: draft
+status: Shipped
 author: drchinca
 created: 2026-06-29
 last-reviewed: 2026-06-29
+roadmap: done — BH-860 Done
 ---
 
 # SPEC: Skills Extension for deep_agent (Phase 1 — SSIS/SSRS Diagnostics POC)

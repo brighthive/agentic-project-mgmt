@@ -2,7 +2,7 @@
 title: "Scheduled, Versioned, Lineage-Aware Pipeline Runs — configured & monitored through BrightAgent"
 epic: "BH-1255"
 author: "Kuri"
-status: "Draft"
+status: Shipped
 created: "2026-07-29"
 generates: "tickets"
 tags: [pipeline, runs, lineage, routines, dbt, databricks, loopcapital]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — shipped; PipelineRunner port live cross-repo
 ---
 
 # Scheduled, Versioned, Lineage-Aware Pipeline Runs

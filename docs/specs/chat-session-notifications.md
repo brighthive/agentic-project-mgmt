@@ -2,7 +2,7 @@
 title: "Notify me on this chat session — completion + interrupt alerts for BrightAgent threads"
 epic: "BH-409"
 author: "Marwan Samih"
-status: "Approved"
+status: Shipped
 created: "2026-07-14"
 generates: "tickets"
 tags: ["brightsignals", "brightagent", "notifications", "cross-repo"]
@@ -12,6 +12,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — shipped; BrightSignals bell live
 ---
 
 # Notify me on this chat session

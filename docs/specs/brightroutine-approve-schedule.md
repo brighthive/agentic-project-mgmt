@@ -2,7 +2,7 @@
 title: "BrightRoutine approve-and-schedule — the Slack-approval → schedule wire"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-07-29"
 last-reviewed: "2026-07-29"
 generates: "tickets"
@@ -15,6 +15,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — decision 5 winner — shipped Slack->platform-core->brightbot path; keep as reference
 ---
 
 # BrightRoutine approve-and-schedule — the Slack-approval → schedule wire

@@ -3,7 +3,7 @@ title: BrightRoutines — "Your routines" Persistence
 epic: BH-876
 tickets: [BH-885]
 author: kuri
-status: implemented-verified-staging
+status: Shipped
 created: 2026-07-04
 last-reviewed: 2026-07-08
 generates: tickets
@@ -18,6 +18,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-876 Done, verified staging
 ---
 
 # SPEC: BrightRoutines — "Your routines" Persistence

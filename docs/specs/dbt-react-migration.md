@@ -2,7 +2,7 @@
 title: "dbt Agent ReAct Migration"
 epic: "BH-172"
 author: "drchinca"
-status: "In Progress"
+status: Shipped
 created: "2026-04-12"
 generates: "tickets"
 tags: [dbt, react, migration, agents, langgraph]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — shipped; only Phase-3 deletion ticket remains
 ---
 
 # dbt Agent ReAct Migration

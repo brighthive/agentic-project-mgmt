@@ -3,7 +3,7 @@ title: BrightRoutines Intent Loop
 epic: BH-876
 tickets: [BH-882, BH-883, BH-884, BH-885, BH-886, BH-887, BH-888, BH-889, BH-944, BH-945, BH-946, BH-948, BH-949, BH-950, BH-954, BH-955, BH-956, BH-957, BH-958, BH-959, BH-960, BH-961, BH-962, BH-963, BH-964, BH-965, BH-966, BH-967, BH-968, BH-969, BH-970, BH-1001, BH-1002, BH-1003, BH-1004]
 author: codex
-status: implemented-verified-staging
+status: Shipped
 created: 2026-06-30
 last-reviewed: 2026-07-13
 generates: tickets
@@ -16,6 +16,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-876 Done; live P0 fixed BH-991 2026-07-12
 ---
 
 # SPEC: BrightRoutines Intent Loop

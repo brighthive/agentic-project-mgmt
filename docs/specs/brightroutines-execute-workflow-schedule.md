@@ -3,7 +3,7 @@ title: BrightRoutines Execute Workflow Scheduling
 epic: BH-876
 tickets: [BH-877, BH-878, BH-879, BH-880, BH-881, BH-908, BH-909, BH-910, BH-911, BH-914, BH-915, BH-916]
 author: codex
-status: implemented-verified-staging
+status: Shipped
 created: 2026-06-30
 last-reviewed: 2026-07-08
 generates: tickets
@@ -16,6 +16,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-876 Done, verified staging
 ---
 
 # SPEC: BrightRoutines Execute Workflow Scheduling

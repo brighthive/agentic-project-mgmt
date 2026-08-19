@@ -3,12 +3,13 @@ title: "Longitudinal Monitoring as an Agentic Capability — interface contract"
 epic: "BH-601"
 parent_spec: "longitudinal-monitoring.md"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-06-17"
 generates: "code"
 tags: [quality, monitoring, longitudinal, anomaly, agentic-capability, brightbot, platform-core, webapp]
 related:
   specs: ["longitudinal-monitoring.md", "quality-rules-configurable.md"]
+roadmap: done — staging-verified with parent 2026-06-18
 ---
 
 # Longitudinal Monitoring as an Agentic Capability

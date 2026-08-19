@@ -3,7 +3,7 @@ title: "Surgical Remediation PRs carry the engine's before+after run logs — th
 epic: "BH-1255"
 ticket: "BH-1329"
 author: "Kuri"
-status: "Draft"
+status: Shipped
 created: "2026-07-31"
 generates: "tickets"
 tags: [pipeline, remediation, self-healing, run-logs, dbt, engine-agnostic, loopcapital, GC-16]
@@ -12,6 +12,7 @@ related:
   pocs: []
   bedrock: []
   specs: ["self-healing-pipelines.md", "pipeline-run-lifecycle.md", "proactive-pipeline-ingestion-monitoring.md"]
+roadmap: done — shipped (BH-1329); run_on_ref port verb live
 ---
 
 # Surgical Remediation PRs carry the engine's before+after run logs

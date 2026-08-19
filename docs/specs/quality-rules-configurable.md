@@ -2,7 +2,7 @@
 title: "Configurable Quality Agent — workspace rule library, curation, and history"
 epic: "BH-503"
 author: "drchinca"
-status: "Ready"
+status: Shipped
 created: "2026-05-16"
 last_reviewed: "2026-05-24"
 generates: "tickets"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-503 Done
 ---
 
 # Configurable Quality Agent
