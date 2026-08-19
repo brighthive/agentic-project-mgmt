@@ -16,7 +16,7 @@ design was never built while the real capability shipped under a different name.
 **Verified 2026-08-19:** only **one** of those seven is a live decision (#3, `SQL_SERVER`). Four
 were already answered by shipped code, one (#6) is stated backwards, and one (#1) names two
 mechanisms that both return zero grep hits. The cleanup is still worth doing; it is a
-~30-minute documentation pass, not a blocker on eleven of the twelve themes.
+~30-minute documentation pass, not a blocker on thirteen of the fourteen themes.
 
 ---
 
@@ -61,7 +61,7 @@ independently.
 Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.md` (lean,
 150-line cap) before it's handed over. ✅ = theme spec written and linked.
 
-**All 12 are `status: Draft`, meaning none is `Ready to delegate` yet.** A theme flips to Ready
+**All 14 are `status: Draft`, meaning none is `Ready to delegate` yet.** A theme flips to Ready
 when **five** gates hold, not one: its blocking decision is settled (**D**), real tickets exist
 (**T**), they are refined rather than `Needs Refinement` (**R**), they are assigned (**A**), and
 they do not collide with work already in flight (**C**). Verified 2026-08-19, **T/R/A/C fail on
