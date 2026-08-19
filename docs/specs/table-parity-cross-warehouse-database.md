@@ -2,7 +2,7 @@
 title: "Table Parity — structured multi-warehouse, multi-database targeting"
 epic: "BH-172"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-04"
 generates: "tickets"
 tags: [warehouse, database, table, parity, comparison, dialect]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-database-table-identity.md", "warehouse-agnostic-architecture.md", "engineering-agent-warehouse-agnostic.md"]
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — parity checks
 ---
 
 # Table Parity — structured multi-warehouse, multi-database targeting
@@ -30,7 +31,7 @@ precisely. Two things stand between "mechanically possible" and "reliably
 correct": database targeting is smuggled through a free-text dotted string
 instead of a structured id, and cross-engine type compatibility is validated
 for exactly one warehouse-type pair. Both gaps get worse, not better, once
-`warehouse-database-table-identity.md` ships the real `DatabaseNode` — this
+[`warehouse-database-table-identity.md`](./warehouse-database-table-identity.md) ships the real `DatabaseNode` — this
 spec is the on-ramp that lets table parity consume that model directly instead
 of continuing to hand-parse strings.
 

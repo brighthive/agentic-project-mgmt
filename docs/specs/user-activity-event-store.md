@@ -2,7 +2,7 @@
 title: "Canonical UserActivityEvent Store"
 epic: "BH-942"
 author: "drchinca"
-status: "Draft"
+status: Parked
 created: "2026-07-03"
 generates: "epic"
 tags: ["foundational", "storage", "brightroutines", "observability"]
@@ -10,6 +10,7 @@ related:
   features: ["BH-876 BrightRoutines intent-loop", "BH-885 Suggested Routines webapp", "BH-926 Prompt Catalog (proposed)"]
   pocs: []
   bedrock: []
+roadmap: closed — no confirmed demand
 ---
 
 # Canonical UserActivityEvent Store
@@ -56,8 +57,8 @@ Consumers today:
    Kuri's "1-shot 95%-value prompts" question) — reads every meaningful
    turn, not just schedulable-classified ones; scores by value not just
    repetition.
-4. **Platform analytics + cost attribution** (per `usage-metering-pipeline.md`
-   and `platform-analytics-dashboard.md` — both explicitly named as
+4. **Platform analytics + cost attribution** (per [`usage-metering-pipeline.md`](./usage-metering-pipeline.md)
+   and [`platform-analytics-dashboard.md`](./platform-analytics-dashboard.md) — both explicitly named as
    unbuilt today).
 
 ### How It Works Today

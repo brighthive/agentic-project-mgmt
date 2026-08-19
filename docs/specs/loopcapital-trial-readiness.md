@@ -3,7 +3,7 @@ title: Loop Capital Trial Readiness — proving the 9 success criteria on their 
 epic: BH-1245
 tickets: [BH-1246, BH-1247, BH-1248, BH-1249, BH-1250, BH-1251, BH-1252, BH-1253, BH-1254]
 author: kuri
-status: draft
+status: Relocated
 created: 2026-07-28
 last-reviewed: 2026-07-28
 generates: tickets
@@ -24,6 +24,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — -> clients/trials/loopcapital/
 ---
 
 # SPEC: Loop Capital Trial Readiness
@@ -31,7 +32,7 @@ related:
 > Scope: this spec adds **no new Port/Protocol and no new adapter code**. Every mechanism
 > referenced here (`PipelineSource`, `SqlServerPipelineSource`, `analyze_dtsx_package`,
 > `analyze_rdl_report`, the surgical-PR remediation loop) already exists and is already proven —
-> against a Docker sandbox and a stand-in EC2 SQL Server, per `golden-cases-loopcapital.md` and
+> against a Docker sandbox and a stand-in EC2 SQL Server, per [`golden-cases-loopcapital.md`](./golden-cases-loopcapital.md) and
 > `clients/trials/loopcapital/demo.md`. What doesn't exist is proof any of it works against **Loop
 > Capital's actual environment** — the Trial has not started; access is blocked on 5 items Loop
 > Capital hasn't provided (§6). This spec's only new artifact is a verification-record contract
@@ -51,7 +52,7 @@ Two client-facing documents were sent to Frank Sung (Loop Capital, VP Data Manag
 - **"Your Brighthive Demo — What to Expect"** ("Doc 2") — a *separate* pre-POC walkthrough in
   Brighthive's hosted demo workspace, on representative/synthetic data. Not the live connection.
 
-**The discrepancy this spec resolves.** `LOOPCAPITAL.md` and `golden-cases-loopcapital.md` were
+**The discrepancy this spec resolves.** `LOOPCAPITAL.md` and [`golden-cases-loopcapital.md`](./golden-cases-loopcapital.md) were
 written for an internal 7/17 rehearsal scoped to **dbt Cloud** (GC-14..17: a dbt job fails →
 detected → alerted → surgical PR → merged → verified). Doc 1 describes **SQL Server 2019 / SSIS /
 SSRS** — no dbt Cloud anywhere. GC-14..17 proved the *remediation mechanism* works; they were

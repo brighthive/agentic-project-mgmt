@@ -2,7 +2,7 @@
 title: "Project Governance–Observability Convergence — declare governance at lineage nodes, show it enforced in observability"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-01"
 last-reviewed: "2026-08-01"
 generates: "tickets"
@@ -16,6 +16,7 @@ related:
     - "project-engine-run-sync.md"             # BH-1330 — project↔engine run/log sync (item #4 substrate)
   features: []
   pocs: []
+roadmap: mixed — folded into THEME-governance-enforced.md — convergence
 ---
 
 # Project Governance–Observability Convergence

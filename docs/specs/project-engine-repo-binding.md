@@ -2,7 +2,7 @@
 title: "Project ↔ Transformation Engine ↔ Repo Binding + ACTIVE-triggered Observability"
 epic: "BH-172"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-07-31"
 generates: "tickets"
 tags: [projects, transformation, observability, rbac, warehouse-agnostic, multi-repo]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-project-activation.md — multi-repo binding — real schema change
 ---
 
 # Project ↔ Transformation Engine ↔ Repo Binding + ACTIVE-triggered Observability
@@ -18,9 +19,9 @@ related:
 > (BH-1244), which specced a single-engine/single-repo edit form with the backend "assumed
 > available" and no role gate. This spec is the 3-repo superset: multi-repo, pluggable engine,
 > workspace-admin gating, ACTIVE→observability, and read-only provenance on the observability view.
-> Reuses (does not re-derive) the ports/registries in `pipeline-run-lifecycle.md`,
-> `pipeline-self-healing-fleet.md`, `github-enterprise-host-config.md`, and the watchdog backend
-> in `proactive-pipeline-ingestion-monitoring.md`.
+> Reuses (does not re-derive) the ports/registries in [`pipeline-run-lifecycle.md`](./pipeline-run-lifecycle.md),
+> [`pipeline-self-healing-fleet.md`](./pipeline-self-healing-fleet.md), [`github-enterprise-host-config.md`](./github-enterprise-host-config.md), and the watchdog backend
+> in [`proactive-pipeline-ingestion-monitoring.md`](./proactive-pipeline-ingestion-monitoring.md).
 
 ## 1. Context
 

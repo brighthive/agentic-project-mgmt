@@ -3,19 +3,20 @@ title: "Longitudinal Monitoring as an Agentic Capability — interface contract"
 epic: "BH-601"
 parent_spec: "longitudinal-monitoring.md"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-06-17"
 generates: "code"
 tags: [quality, monitoring, longitudinal, anomaly, agentic-capability, brightbot, platform-core, webapp]
 related:
   specs: ["longitudinal-monitoring.md", "quality-rules-configurable.md"]
+roadmap: done — staging-verified with parent 2026-06-18
 ---
 
 # Longitudinal Monitoring as an Agentic Capability
 
 ## 1. Context
 
-GC-12 detection (`longitudinal_detect.py`) + metric SQL (`metric_snapshot_sql.py`) are shipped pure functions called only in tests. This spec is the interface contract for wiring them into the platform **as a capability of the quality agent**, reachable through the three trigger surfaces that already exist (`run_context ∈ {INGESTION, SCHEDULED, ON_DEMAND}`), configured through BH-503's `QualityRule`, and queryable on-demand. It complements the parent `longitudinal-monitoring.md` (which holds Problem/AC/Ticket-breakdown) — this doc fixes the typed boundaries before code.
+GC-12 detection (`longitudinal_detect.py`) + metric SQL (`metric_snapshot_sql.py`) are shipped pure functions called only in tests. This spec is the interface contract for wiring them into the platform **as a capability of the quality agent**, reachable through the three trigger surfaces that already exist (`run_context ∈ {INGESTION, SCHEDULED, ON_DEMAND}`), configured through BH-503's `QualityRule`, and queryable on-demand. It complements the parent [`longitudinal-monitoring.md`](./longitudinal-monitoring.md) (which holds Problem/AC/Ticket-breakdown) — this doc fixes the typed boundaries before code.
 
 ```mermaid
 stateDiagram-v2

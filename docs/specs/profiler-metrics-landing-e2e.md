@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — folded into THEME-honest-surfaces.md — profiler landing proven; e2e guard shipped
+---
+
 # Spec: Profiler metrics-landing e2e across all BYOW engines
 
 **Ticket:** BH-XXXX (BUGS-V3 / e2e-coverage) · **Status:** Draft · **Author:** Kuri · **Last-Reviewed:** 2026-07-31

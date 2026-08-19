@@ -2,7 +2,7 @@
 title: "BrightRoutines — AI-Authored WorkflowSpec Generation from Intent"
 epic: "BH-897"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-01"
 generates: "tickets"
 tags:
@@ -14,6 +14,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-routine-authoring.md — describe-a-routine-get-one (~20pd)
 ---
 
 # BrightRoutines — AI-Authored WorkflowSpec Generation from Intent
@@ -47,7 +48,7 @@ scheduling machinery is useful — every routine still starts with human authori
 The `#releases` post announcing P1 named this out loud as the next gap: AI generation of workflow
 content itself — steps, bindings, SQL/agent config — rather than a human hand-building the
 WorkflowSpec DAG before it can be scheduled. This spec owns that gap. It sits between the P2
-intent-loop spec (`brightroutines-intent-loop.md`, BH-882–889 — detects *that* a routine should
+intent-loop spec ([`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md), BH-882–889 — detects *that* a routine should
 exist) and the P1 scheduling substrate (BH-876, merged — runs a routine once it exists): P2 says
 "the user keeps asking for X," this spec turns that into a runnable, compiled WorkflowSpec, and
 P1 schedules it.

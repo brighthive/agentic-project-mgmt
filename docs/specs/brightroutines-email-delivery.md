@@ -3,7 +3,7 @@ title: BrightRoutines — Email Delivery Channel
 epic: BH-876
 tickets: [BH-1062]
 author: kuri
-status: proposed
+status: Partial
 created: 2026-07-13
 last-reviewed: 2026-07-13
 generates: tickets
@@ -19,6 +19,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-routine-delivery.md — email delivery target
 ---
 
 # SPEC: BrightRoutines — Email Delivery Channel
@@ -33,7 +34,7 @@ related:
 **Terms.** The `RoutineSuggestion` DTO, its status lifecycle, the
 `brightroutines-{env}` single-table layout, and the notification fan-out from
 brightbot's detector through platform-core's `notifications` model are all
-defined in `brightroutines-intent-loop.md` §3–§6 — this spec does not redefine
+defined in [`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md) §3–§6 — this spec does not redefine
 them. `DeliveryHint` is the enum on the `RoutineSuggestion`/intent DTOs
 (`brightbot/brightbot/routines/dtos.py`) that today has members
 `WEBAPP | SLACK | BOTH`. The one net-new term is **`DeliveryHint.EMAIL`** and

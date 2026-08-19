@@ -2,7 +2,7 @@
 title: "BrightHive Engineering-Leader Onboarding — Layered Idempotent Bootstrap"
 epic: "BH-TBD"
 author: "Kuri Chinca"
-status: "Draft"
+status: Relocated
 created: "2026-05-15"
 generates: "epic"
 tags: ["onboarding", "dx", "bootstrap", "idempotent", "multi-repo", "vaults", "make"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — -> internal-tooling backlog (Makefile runbook in spec clothing)
 ---
 
 # BrightHive Engineering-Leader Onboarding — Layered Idempotent Bootstrap

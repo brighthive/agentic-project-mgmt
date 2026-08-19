@@ -2,7 +2,7 @@
 title: "Deterministic table-parity verb — 1:1 source↔target comparison"
 epic: "BH-1036"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-02"
 generates: "tickets"
 tags: [warehouse, parity, loop-capital, demo, shared-core, engine-agnostic]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — parity tri-state verb
 ---
 
 # Deterministic table-parity verb — 1:1 source↔target comparison

@@ -3,7 +3,7 @@ title: "GitHub Enterprise via Platform Core proxy (PyGithub removed from BrightB
 epic: "BH-526"
 ticket: "BH-529"
 author: "drchinca"
-status: "Implementation in progress — REQUEST CHANGES on both PRs"
+status: Shipped
 created: "2026-06-02"
 last_reviewed: "2026-06-02"
 generates: "feature-doc"
@@ -14,6 +14,7 @@ related:
   bedrock: []
   specs:
     - snowflake-full-integration.md
+roadmap: done — shipped via consolidation PR #793
 ---
 
 # GitHub Enterprise via Platform Core proxy

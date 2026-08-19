@@ -2,7 +2,7 @@
 title: "Autonomous dbt Project Lifecycle Management (Local + On-Prem)"
 epic: "BH-1403"
 author: "drchinca"
-status: "Draft"
+status: Superseded
 created: "2026-08-12"
 generates: "epic"
 tags: ["dbt", "pipeline-runner", "governance", "loop-capital", "local-plugin", "on-prem", "github", "sandbox"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — decision 4: superseded by on-prem-engineering-runner (ADR-0002 Accepted)
 ---
 
 # Autonomous dbt Project Lifecycle Management (Local + On-Prem)
@@ -20,7 +21,7 @@ related:
 
 ## 1. Context
 
-`on-prem-sql-server-warehouse.md`'s draft `DbtCoreRunner` only sketches `run_on_ref()` against a
+[`on-prem-sql-server-warehouse.md`](./on-prem-sql-server-warehouse.md)'s draft `DbtCoreRunner` only sketches `run_on_ref()` against a
 dbt project that's assumed to already exist. For Loop Capital (no cloud warehouse, no dbt Cloud, no
 pre-existing dbt project targeting their on-prem SQL Server), nothing creates that project, nothing
 proposes/manages the models inside it over time, and nothing decides when a build actually runs
@@ -40,7 +41,7 @@ makes the whole thing testable without ever touching Frank's real server.
 
 ### Use Case / Goal
 
-Frank uses Codex, backed by BrightAgent's local plugin (`brightagent-local-plugin.md`). When no dbt
+Frank uses Codex, backed by BrightAgent's local plugin ([`brightagent-local-plugin.md`](./brightagent-local-plugin.md)). When no dbt
 project targets his on-prem SQL Server yet, BrightAgent provisions one — a real
 `dbt_project.yml`/`profiles.yml`/model folder in a real GitHub repo, wired to
 `ProjectOutput.gitRepoUrl` the same way any BrightAgent-managed project is. BrightAgent then

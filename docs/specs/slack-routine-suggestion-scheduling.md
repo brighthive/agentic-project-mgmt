@@ -2,7 +2,7 @@
 title: "Slack routine-suggestion scheduling — acting-user auth across brightbot + platform-core"
 epic: "BH-876"
 author: "Kuri Chinca"
-status: "Review"
+status: Superseded
 created: "2026-07-07"
 generates: "tickets"
 tags: ["brightroutines", "slack", "auth"]
@@ -12,6 +12,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — decision 5 loser — interruptible() has zero routine callers
 ---
 
 # Slack routine-suggestion scheduling — acting-user auth

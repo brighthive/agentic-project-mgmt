@@ -2,7 +2,7 @@
 title: "Migrate BrightAgent Runtime to Amazon Bedrock AgentCore"
 epic: "BH-453"
 author: "Kuri Chinca"
-status: "Review (v3 — per-sub-agent architecture)"
+status: Superseded
 created: "2026-05-08"
 revised: "2026-05-27"
 generates: "epic"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   bedrock: ["docs/bedrock/"]
+roadmap: closed — CEMAF is the supervisor now; plan did not execute
 ---
 
 # Migrate BrightAgent Runtime to Amazon Bedrock AgentCore

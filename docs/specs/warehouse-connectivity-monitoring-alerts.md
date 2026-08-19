@@ -2,7 +2,7 @@
 title: "Warehouse Connectivity — default monitoring, real alerts, on-demand check"
 epic: "BH-1036"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-05"
 generates: "tickets"
 tags: [warehouse, health, monitoring, alerts, slack, notifications, scheduling]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-health-snapshot.md", "sqlserver-health-watch.md", "hive-health-landing-indicator.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — useful alerts
 ---
 
 # Warehouse Connectivity — default monitoring, real alerts, on-demand check
@@ -26,7 +27,7 @@ related:
 
 ## 1. Context
 
-`warehouse-health-snapshot.md` (BH-1255, shipped) built the mechanism that
+[`warehouse-health-snapshot.md`](./warehouse-health-snapshot.md) (BH-1255, shipped) built the mechanism that
 turns a watchdog signal into a workspace-level `Down`/`Degraded`/`Healthy`
 snapshot. BH-1363 (unmerged) is the first bug fix riding on top of it — it
 makes a genuine network/firewall failure actually produce that signal instead

@@ -2,7 +2,7 @@
 title: "Snowflake — Full Platform Integration (extends warehouse-agnostic pattern)"
 epic: "BH-503-snowflake"
 author: "drchinca"
-status: "Phase 1 Shipped — PRs in review"
+status: Shipped
 created: "2026-06-01"
 last_reviewed: "2026-06-01"
 amended:
@@ -18,6 +18,7 @@ related:
     - warehouse-agnostic-architecture.md
     - warehouse-extensibility-pattern.md
     - azure-synapse-full-integration.md
+roadmap: done — Phase 1 shipped
 ---
 
 # Snowflake — Full Platform Integration
@@ -37,7 +38,7 @@ The result: brightbot agents cannot query a customer's Snowflake at all, even th
 
 A workspace admin attaches a Snowflake warehouse (BYOW) via the webapp, brightbot agents query it for the retrieval, quality, dbt, and semantic-view agents, and the org-side ingestion SFn lands data into Snowflake destinations — all using the same warehouse-agnostic pattern Azure Synapse follows.
 
-Success: every layer of the 7-layer warehouse pattern (per `warehouse-agnostic-architecture.md`) has a Snowflake-equivalent that mirrors Synapse exactly — same registry entries, same secret-store shape, same test coverage.
+Success: every layer of the 7-layer warehouse pattern (per [`warehouse-agnostic-architecture.md`](./warehouse-agnostic-architecture.md)) has a Snowflake-equivalent that mirrors Synapse exactly — same registry entries, same secret-store shape, same test coverage.
 
 ## Current Situation
 
@@ -45,7 +46,7 @@ This section is the synthesis of the 4-agent audit completed 2026-06-01. The pat
 
 ### The 7 Warehouse-Agnostic Layers (the pattern)
 
-Per `warehouse-agnostic-architecture.md` (BH-172, Approved), a new warehouse must touch these layers. Type-string contract: `SNOWFLAKE` (uppercase) flows through `WarehouseServiceProvider` enum → workspace secret store → every downstream layer.
+Per [`warehouse-agnostic-architecture.md`](./warehouse-agnostic-architecture.md) (BH-172, Approved), a new warehouse must touch these layers. Type-string contract: `SNOWFLAKE` (uppercase) flows through `WarehouseServiceProvider` enum → workspace secret store → every downstream layer.
 
 | # | Layer | Repo | What it does |
 |---|---|---|---|
@@ -66,7 +67,7 @@ Per `warehouse-agnostic-architecture.md` (BH-172, Approved), a new warehouse mus
 | 3 | OMD Ingestion Source Config | **Gap** | `openmetadata_ingestion_lambda/config_loader.py` has `@register_source("synapse", ...)` (lines 156-209) but **no equivalent for Snowflake**. `main.py:38` service-type map has no `"snowflake"` entry. | Add `SnowflakeSourceConfig` class with `@register_source("snowflake", ...)`. Mirror Synapse structure. |
 | 4 | OMD Service Type Mapping | **Shipped** | `warehouse-service.ts:145` translates `AZURE_SYNAPSE` → `Mssql`. Snowflake passes through unchanged (Snowflake's OMD service-type IS `Snowflake`). | None. |
 | 5 | Brightbot Connection + Dialect | **Gap (critical — blocks Longaeva)** | (a) `tools/warehouse_connections.py:484-488` `CONNECTION_CLASSES` dict missing `"snowflake"` entry. (b) No `SnowflakeConnection(WarehouseConnection)` class. (c) `prompts/retrieval_agent_prompts.py:10` dialect rule is one-liner placeholder. (d) `prompts/retrieval_agent_prompts.py:14-41` `DIALECT_EXAMPLES` has no Snowflake entry — falls back to Redshift. (e) `utils/warehouse.py:351-359` Snowflake branch reads env vars only, no `warehouse_config` path. | Full set: new `SnowflakeConnection` class, factory registration, fleshed-out dialect rules + examples, `warehouse_config` parsing path. |
-| 6 | Webapp Registry | **Shipped (verified 2026-06-01)** | Snowflake form is already wired. `AddWarehouse.tsx:61` lists Snowflake in the dropdown, `AddWarehouseConfig.tsx:42-72` defines fields (`accountId`, `username`, `password`, `apiEndpoint=Warehouse Name`, `apiKey=Role`). No UI changes needed. **Caveat — generic-field naming**: webapp posts the GraphQL `WarehouseConfigInput` shape (`accountId`, `apiKey`, `apiEndpoint`) and the destination handler at `destination_service/snowflake.ts:32-38` reads `config.account_id`, `config.warehouse`, `config.role`. The mapping `accountId→account_id`, `apiKey→role`, `apiEndpoint→warehouse` lives in platform-core validators. Brightbot's secret-store reader at `secrets_manager.py` expects already-translated `account` field (uppercase casing). **Document this mapping in `warehouse-agnostic-architecture.md`** so the next warehouse contributor doesn't reinvent it. | None for UI; doc-only follow-up. |
+| 6 | Webapp Registry | **Shipped (verified 2026-06-01)** | Snowflake form is already wired. `AddWarehouse.tsx:61` lists Snowflake in the dropdown, `AddWarehouseConfig.tsx:42-72` defines fields (`accountId`, `username`, `password`, `apiEndpoint=Warehouse Name`, `apiKey=Role`). No UI changes needed. **Caveat — generic-field naming**: webapp posts the GraphQL `WarehouseConfigInput` shape (`accountId`, `apiKey`, `apiEndpoint`) and the destination handler at `destination_service/snowflake.ts:32-38` reads `config.account_id`, `config.warehouse`, `config.role`. The mapping `accountId→account_id`, `apiKey→role`, `apiEndpoint→warehouse` lives in platform-core validators. Brightbot's secret-store reader at `secrets_manager.py` expects already-translated `account` field (uppercase casing). **Document this mapping in [`warehouse-agnostic-architecture.md`](./warehouse-agnostic-architecture.md)** so the next warehouse contributor doesn't reinvent it. | None for UI; doc-only follow-up. |
 | 7 | Org CDK Ingestion Pipeline | **Shipped (but pattern-drift)** | `snowflake_ingestion.py` full stack with JWT lambda, parse API GW lambda, ~470 lines. Registered in `app.py:329` `{"SNOWFLAKE": snowflake_ingestion.snowflake_state_machine}`. S3 role wired in `post_deployment_scripts/update_s3_role.py:41,222-265`. | **Pattern drift**: Snowflake ingestion predates the workspace-secret-store pattern Synapse migrated to. Stack reads from deprecated Datapiary instead of `workspace_secret_store/{workspaceId}`. Optional migration to align both warehouses on the same source-of-truth. |
 
 ### Hard Limitations (today, before this work)

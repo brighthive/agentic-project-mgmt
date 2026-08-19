@@ -3,7 +3,7 @@ title: BrightRoutines Execute Workflow Scheduling
 epic: BH-876
 tickets: [BH-877, BH-878, BH-879, BH-880, BH-881, BH-908, BH-909, BH-910, BH-911, BH-914, BH-915, BH-916]
 author: codex
-status: implemented-verified-staging
+status: Shipped
 created: 2026-06-30
 last-reviewed: 2026-07-08
 generates: tickets
@@ -16,6 +16,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-876 Done, verified staging
 ---
 
 # SPEC: BrightRoutines Execute Workflow Scheduling
@@ -23,7 +24,7 @@ related:
 > Scope: P1 foundation for BrightRoutines. This spec makes an existing
 > WorkflowSpec executable on a schedule, with no ML/proactive detection. The
 > proactive automation-intent learning loop is specified separately in
-> `brightroutines-intent-loop.md`.
+> [`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md).
 >
 > **Status (2026-07-08)**: the P1 core (BH-877–881) is Done and verified live
 > on staging. BH-908/909 (Teams channel adapter) and BH-910/911 (AI-authored
@@ -90,7 +91,7 @@ scope (§9-13) produced 29 tickets (BH-917–940); 26 are resolved and merged.
   (`brightbot/scripts/demo_workflow_from_intent.py`) proving BH-897's future
   "AI-authored WorkflowSpec from a prompt" direction works against real
   local infra — explicitly NOT shippable BH-897 code, see
-  `brightroutines-ai-authored-workflowspec.md`.
+  [`brightroutines-ai-authored-workflowspec.md`](./brightroutines-ai-authored-workflowspec.md).
 - **BH-911**: `checkPolicies()` in `compiler.ts` gained a deterministic
   BLOCKER for DBT/PYTHON/INGEST runtimes (their `checkStatus()` adapters
   never reach a terminal state — see Real Bugs Found below) and a WARNING

@@ -2,7 +2,7 @@
 title: "Data Products by Tier — surfaced in-app, in the sidebar, and in Slack"
 epic: "BH-1255"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-07-30"
 last-reviewed: "2026-07-30"
 generates: "tickets"
@@ -15,6 +15,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-governance-enforced.md — tier surfacing
 ---
 
 # Data Products by Tier — surfaced in-app, in the sidebar, and in Slack

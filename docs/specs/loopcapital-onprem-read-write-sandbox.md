@@ -1,3 +1,8 @@
+---
+status: Partial
+roadmap: mixed — folded into THEME-onprem-engineering.md — sandbox spec
+---
+
 # Spec — On-Prem Read/Write Sandbox for Loop Capital (BH-1403)
 
 > **Status**: Draft · **Owner**: Kuri · **Last-Reviewed**: 2026-08-13
