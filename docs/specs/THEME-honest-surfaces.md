@@ -1,6 +1,6 @@
 ---
 title: "The screen never lies"
-epic: "BH-1331"
+epic: "TBD — BH-1331 is a Task under BH-1255, not an epic; needs a trust/honest-surfaces epic or fold under BH-1168 (BUGS-V3)"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"

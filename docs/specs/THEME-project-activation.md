@@ -1,6 +1,6 @@
 ---
 title: "Turn on a project and it knows its own history"
-epic: "BH-1255"
+epic: "TBD — BH-1255 is the pipeline-runs epic, not this; needs its own epic or BH-332 (dbt Cloud Auto-Provisioning)"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"

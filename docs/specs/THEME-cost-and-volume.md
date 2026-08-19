@@ -1,6 +1,6 @@
 ---
 title: "Answer what it costs"
-epic: "BH-171"
+epic: "BH-118"
 owner: "drchinca"
 status: "Park — confirm the ask is still live before assigning"
 created: "2026-08-18"
@@ -76,8 +76,9 @@ is useless without the one before it.
 | `brighthive-data-organization-cdk`, `brighthive-data-workspace-cdk` | cost-allocation tags |
 | `brighthive-platform-core` | usage aggregation on a schedule |
 
-**Tickets:** BH-171, BH-172 — all three source specs' tickets are unstarted; re-scope them to the
-three items above rather than carrying 3 separate backlogs
+**Tickets:** BH-118 (epic — Workspace/Orgs usage & pricing reporting, the exact-fit parent; was
+under generic BH-171 infra) — no real child tickets exist yet; the three source specs' work is
+unstarted, so file the three items above as fresh children rather than carrying 3 separate backlogs
 
 ---
 

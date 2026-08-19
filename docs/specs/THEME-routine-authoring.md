@@ -1,6 +1,6 @@
 ---
 title: "Describe a routine and get one"
-epic: "BH-897"
+epic: "TBD — BH-897 is a Task under Done-epic BH-876; needs a new open BrightRoutines-authoring epic"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"
@@ -70,7 +70,8 @@ capable than what the customer asked for. This is the gap between the promise an
 | `brightbot` | context gathering, multi-step drafting, validation before offer |
 | `brighthive-webapp` | plain-language step preview before accept |
 
-**Tickets:** BH-897 (`Needs Refinement`, 0 of 7 started — genuinely greenfield)
+**Tickets:** BH-897 (`Needs Refinement`, 0 of 7 started — genuinely greenfield). Note: BH-897 is a
+Task, not an epic, and its parent BH-876 is `Done` — a new open epic is needed before children land.
 
 ---
 
