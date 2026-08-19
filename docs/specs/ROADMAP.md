@@ -21,6 +21,63 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 
 **✅ ready today · 🟡 one small unblock away · 🔴 needs a decision or a real epic first**
 
+The same 14 solutions, grouped under their **main epics** and colored by readiness. One artifact
+(🔷 the service-key `warehouseServices` query) gates the most work; the single hard dependency is
+warehouse-health shipping its "Unknown" label before honest-surfaces adopts it.
+
+```mermaid
+flowchart TB
+    classDef ready fill:#1b5e20,stroke:#2e7d32,color:#fff
+    classDef oneMove fill:#8d6e00,stroke:#f9a825,color:#fff
+    classDef blocked fill:#8b1a1a,stroke:#c62828,color:#fff
+    classDef gate fill:#0d47a1,stroke:#1565c0,color:#fff,stroke-dasharray:4 3
+
+    Q["🔑 warehouseServices query<br/>service-key · ~1 pd · platform-core<br/><i>unblocks the most work</i>"]:::gate
+
+    subgraph E1036["BH-1036 · Monitoring Agents"]
+        WHT["Warehouse health you can trust<br/>11 pd · Tier 1"]:::oneMove
+    end
+    subgraph E1370["BH-1370 · Warehouse catalog & identity"]
+        CAT["Always know which warehouse<br/>you're talking to<br/>10 pd · Tier 1"]:::oneMove
+    end
+    subgraph E1421["BH-1421 · Legacy & on-prem engineering"]
+        ONP["Work where the customer's<br/>data lives<br/>9.5 pd · Tier 1 · In Progress"]:::ready
+        LEG["Drop in your legacy<br/>pipeline files<br/>9–10 pd · Tier 2"]:::oneMove
+    end
+    subgraph E1168["BH-1168 · Cross-engine correctness"]
+        XE["Same answers on every<br/>warehouse engine<br/>9 pd · Tier 2"]:::oneMove
+    end
+    subgraph E1255["BH-1255 · Scheduled, versioned, lineage-aware runs"]
+        FSH["Pipelines that fix themselves<br/>18 pd · Tier 2 · rebase landed → brightbot #1043"]:::oneMove
+        PROJ["Turn on a project & it knows<br/>its own history<br/>11 pd · Tier 3"]:::oneMove
+    end
+    subgraph E172["BH-172 · Platform features"]
+        GOV["Governance you declare is<br/>governance we enforce<br/>23–28 pd · Tier 2"]:::oneMove
+    end
+    subgraph E876["BH-876 · BrightRoutines (Done)"]
+        CLO["Finish BrightRoutines<br/>0.75 pd · Tier 2"]:::ready
+    end
+    subgraph E1463["BH-1463 · BrightRoutines next-phase"]
+        RDEL["Routine results land where<br/>the team works<br/>7–9 pd · Tier 3"]:::oneMove
+        RAUT["Describe a routine, get one<br/>~20 pd · Tier 3"]:::oneMove
+    end
+    subgraph E1061["BH-1061 · Data quality"]
+        BRQ["Catch a bad number before<br/>your customers do<br/>6–9 pd · Tier 3"]:::ready
+    end
+    subgraph E409["BH-409 · BrightSignals"]
+        HON["The screen never lies<br/>16 pd · Tier 3"]:::oneMove
+    end
+    subgraph E118["BH-118 · Cost & volume"]
+        COST["Answer what it costs<br/>14 pd · Tier 3"]:::blocked
+    end
+
+    Q --> WHT
+    Q --> CAT
+    WHT -. "shares 'Unknown' label" .-> HON
+```
+
+*Board: 3🟢 / 10🟡 / 1🔴 across the 14 (the 4th 🟢 below is the standalone dead-toggle removal, not an epic theme). 🔷 = shared prerequisite.*
+
 | Theme | Epic | Size | Start? | The one thing in the way (or first move) |
 |---|---|---|:---:|---|
 | [Finish BrightRoutines](THEME-brightroutines-closeout.md) | BH-876 | 0.75 pd | ✅ | Nothing to build — verify the three shipped items and close the tail |
@@ -35,13 +92,14 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 | [Turn on a project](THEME-project-activation.md) | BH-1255 | 11 pd | 🟡 | Epic exists; claim corrected. BH-1323 reparent → BH-1255 needs a **manual UI move** (team-managed project — the parent field isn't API-settable via our tools). Then wire the activation-trigger call |
 | [Answer what it costs](THEME-cost-and-volume.md) | BH-118 | 14 pd | 🔴 | Confirm the enterprise ask is still live with sales (5 min); no child tickets yet |
 | [The screen never lies](THEME-honest-surfaces.md) | BH-1036 / BH-409 | 16 pd | 🟡 | Epic homes exist. BH-1340 reparent → BH-409 needs a **manual UI move** (team-managed API limit). Real work: the item-5 run-history store across three repos |
-| [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🟡 | **Decision 4 settled → rebase.** Unblock: rebase `remediation-layer0-classifier-recall-gaps` onto master + open its PR in `brightbot` (non-trivial conflicts), then delegate the remainder |
+| [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🟡 | **Decision 4 done → rebase landed.** The orphaned ~3,200 lines are recovered onto `develop` (layers 0–1, gate default OFF, 157 tests) — **brightbot #1043**, draft. One follow-up left: wire `evaluate_after_poll` into the watchdog poll cycle, then delegate the remainder |
 | [Describe a routine and get one](THEME-routine-authoring.md) | BH-1463 | ~20 pd | 🟡 | Epic **created** 2026-08-19. Largest un-started; the one gate before build is a scored eval (spec item 6) |
 | [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🟡 | **Decision 3 settled → yes, this quarter.** Cut the missing 5–6 pd child ticket; capacity note below (it displaces other Sep-30 scope) |
 
 **Read it as a hand-off order.** The four ✅ rows (≈18 pd) go to engineers this week with no
 meeting. **Ten 🟡 rows** each need one first move — a ~1 pd query, a ticket assignment, a release
-cut, a child ticket, a manual epic reparent, or landing the rebase PR — **none of them a decision**.
+cut, a child ticket, or a manual epic reparent — **none of them a decision**. (The rebase that
+gated `fleet-self-healing` is already landed as brightbot #1043.)
 Only **one 🔴 remains: `cost-and-volume`**, waiting on a 5-minute "is this still worth doing?" check
 with sales. Every product decision that gated this board is now made: SQL_SERVER
 ([ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md), Accepted), the
