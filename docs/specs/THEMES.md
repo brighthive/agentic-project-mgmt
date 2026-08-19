@@ -61,7 +61,33 @@ independently.
 Tier 1 is client-driven and should start now. Each theme gets its own `THEME-*.md` (lean,
 150-line cap) before it's handed over. ✅ = theme spec written and linked.
 
-**All 14 are `status: Draft`, meaning none is `Ready to delegate` yet.** A theme flips to Ready
+### The whole quarter in one picture
+
+One promise. Six things we're building. Plain English — no IDs, no sizes here (those are in
+[ROADMAP.md](ROADMAP.md)). If you read nothing else, read this:
+
+```mermaid
+flowchart TB
+    classDef pillar fill:#4a148c,stroke:#7b1fa2,color:#fff
+    classDef root fill:#0d47a1,stroke:#1565c0,color:#fff,font-weight:bold
+
+    ROOT["🐝 BrightAgent keeps your data estate<br/>healthy, honest, and hands-off"]:::root
+
+    ROOT --> P1 & P2 & P3
+    ROOT --> P4 & P5 & P6
+
+    P1["🔭 See the truth<br/>every screen is true,<br/>or it says 'not checked'"]:::pillar
+    P2["🔁 One answer, every engine<br/>same result on Snowflake,<br/>Redshift, SQL Server"]:::pillar
+    P3["🩹 Fix itself<br/>spot a break, propose a fix,<br/>wait for a human yes"]:::pillar
+    P4["🛡️ Govern for real<br/>the rules you declare<br/>actually block what they say"]:::pillar
+    P5["🤖 Automate in plain words<br/>describe a routine,<br/>get a working one"]:::pillar
+    P6["🏛️ Meet you where you are<br/>legacy files, on-prem,<br/>honest cost answers"]:::pillar
+```
+
+Each pillar breaks into two or three **delegatable themes** — that's the tiered tables below.
+Sizes, readiness, and the dated order of work all live in [ROADMAP.md](ROADMAP.md).
+
+**All 14 themes are `status: Draft`, meaning none is `Ready to delegate` yet.** A theme flips to Ready
 when **five** gates hold, not one: its blocking decision is settled (**D**), real tickets exist
 (**T**), they are refined rather than `Needs Refinement` (**R**), they are assigned (**A**), and
 they do not collide with work already in flight (**C**). Verified 2026-08-19, **T/R/A/C fail on
