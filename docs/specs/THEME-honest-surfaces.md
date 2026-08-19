@@ -1,6 +1,6 @@
 ---
 title: "The screen never lies"
-epic: "TBD — BH-1331 is a Task under BH-1255, not an epic; needs a trust/honest-surfaces epic or fold under BH-1168 (BUGS-V3)"
+epic: "BH-409 — BrightSignals: proactive Slack notifications (decided home per ROADMAP board 2026-08-19; the degraded-badge/alert work fits BrightSignals. Tracked under consolidation epic BH-1036. BH-1340 reparent into BH-409 is a ~30s manual Jira UI move — team-managed project)"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"

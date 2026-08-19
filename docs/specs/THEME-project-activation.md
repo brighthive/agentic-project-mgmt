@@ -1,6 +1,6 @@
 ---
 title: "Turn on a project and it knows its own history"
-epic: "TBD — BH-1255 is the pipeline-runs epic, not this; needs its own epic or BH-332 (dbt Cloud Auto-Provisioning)"
+epic: "BH-1255 — Scheduled, Versioned, Lineage-Aware Pipeline Runs (decided home per ROADMAP board 2026-08-19; activating a project surfaces its runs, so it fits this epic. BH-1323 reparent into it is a ~30s manual Jira UI move — the parent field isn't API-settable on this team-managed project)"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"
