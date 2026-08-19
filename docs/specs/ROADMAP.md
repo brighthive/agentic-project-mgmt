@@ -12,6 +12,41 @@ does not fit in the quarter. What follows is what fits, and why.
 
 ---
 
+## 🗂️ Delegation board — what an engineer can pick up today
+
+The one question a hand-off has to answer: *for each theme, can someone start it now, and if
+not, what single thing is in the way?* This orders the same 14 themes by **readiness**, not size
+(sizes are the frontier table further down). Every theme is already classified done / closed /
+mixed in [THEMES.md](THEMES.md); this says who can take it.
+
+**✅ ready today · 🟡 one small unblock away · 🔴 needs a decision or a real epic first**
+
+| Theme | Epic | Size | Start? | The one thing in the way (or first move) |
+|---|---|---|:---:|---|
+| [Finish BrightRoutines](THEME-brightroutines-closeout.md) | BH-876 | 0.75 pd | ✅ | Nothing to build — verify the three shipped items and close the tail |
+| [Catch a bad number](THEME-blast-radius-quality.md) | BH-1061 | 6–9 pd | ✅ | Lineage port + 6 adapters already shipped — build the blast-radius walk on top |
+| [Work where the data lives](THEME-onprem-engineering.md) | BH-1421 | 9.5 pd | ✅ | Already In Progress — wire the one missing caller: `enqueueOnPremJob` has zero |
+| The dead "Enforced" toggle *(carve-out of governance)* | BH-172 | 0.5 pd | ✅ | Ships alone — remove the local-state toggle at `GovernancePolicyItem.tsx:55` |
+| [Warehouse health you can trust](THEME-warehouse-health-truth.md) | BH-1036 | 11 pd | 🟡 | Build the ~1 pd service-key `warehouseServices` query first — it gates items 1–2 |
+| [Drop in your legacy files](THEME-legacy-file-intake.md) | BH-1421 | 9–10 pd | 🟡 | 7 tickets exist but unassigned — give it an owner, then build **one** design, not three |
+| [Same answers on every engine](THEME-cross-engine-correctness.md) | BH-1168 | 9 pd | 🟡 | ~4 pd is a prod release of finished code — cut it; the SQL_SERVER ADR gates the rest |
+| [Routine results land where teams work](THEME-routine-delivery.md) | ⚠️ TBD | 7–9 pd | 🔴 | Needs a new open epic — BH-876 is `Done` |
+| [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🔴 | **Decision 1** — the SQL_SERVER ADR (15 min) |
+| [Turn on a project](THEME-project-activation.md) | ⚠️ TBD | 11 pd | 🔴 | Needs its own epic (BH-1255 is the pipeline-runs epic) **+** the activation-trigger call |
+| [Answer what it costs](THEME-cost-and-volume.md) | BH-118 | 14 pd | 🔴 | Confirm the enterprise ask is still live with sales (5 min); no child tickets yet |
+| [The screen never lies](THEME-honest-surfaces.md) | ⚠️ TBD | 16 pd | 🔴 | Needs a trust/honest-surfaces epic (BH-1331 is a Task, not an epic) |
+| [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🔴 | **Decision 4** — rebase or rewrite the orphaned 3.2k-line branch before anyone edits |
+| [Describe a routine and get one](THEME-routine-authoring.md) | ⚠️ TBD | ~20 pd | 🔴 | Needs a new open epic (BH-897 is a Task under `Done` BH-876) — largest un-started |
+| [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🔴 | **Decision 3** — does the largest theme start this quarter? 5–6 pd has no ticket |
+
+**Read it as a hand-off order.** The four ✅ rows (≈18 pd) go to engineers this week with no
+meeting. The three 🟡 rows each need one ~1 pd or near-zero-code move first. The eight 🔴 rows
+are blocked on **four 15-minute decisions, four missing Jira epics, and one "is this still worth
+doing?" check with sales** — not one is an engineering problem. Clear those and the whole board
+turns green.
+
+---
+
 ## 🚦 Decide first
 
 THEMES.md opens with **"seven decisions block delegation."** Verified against code, that is not
