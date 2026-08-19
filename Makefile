@@ -838,7 +838,7 @@ help:  ## Show this help
 	@grep -hE '^slack[a-zA-Z_-]*:.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  \033[1mUtilities\033[0m\n"
-	@grep -hE '^(status|help):.*## ' Makefile | \
+	@grep -hE '^(status|help|check-specs-classified):.*## ' Makefile | \
 		awk 'BEGIN {FS = ":.*## "}; {printf "    \033[36m%-22s\033[0m %s\n", $$1, $$2}'
 	@printf "\n  See ONBOARDING.md for the linear new-leader walkthrough.\n\n"
 
@@ -921,5 +921,17 @@ sandbox-recreate:  ## ⑥ Boot container + rebuild schema/rows from manifest (gi
 
 sandbox-synthesize:  ## ⑥ Re-seed deterministic rows into a running container (no restart)
 	@$(SANDBOX_PY) $(SANDBOX_MANIFEST)/synthesize.py --rows $(SANDBOX_ROWS) --seed $(SANDBOX_SEED)
+
+# ══════════════════════════════════════════════════════════════
+# Docs — roadmap hygiene
+# ══════════════════════════════════════════════════════════════
+# Prove the spec roadmap is clean enough to hand to another engineer: every
+# spec in docs/specs/ is classified (status + roadmap pointer). Fails closed
+# on any unmapped spec. See docs/specs/THEMES.md (BH-1036).
+
+.PHONY: check-specs-classified
+
+check-specs-classified:  ## Verify every spec in docs/specs/ is classified (done/closed/mixed + roadmap pointer)
+	@./scripts/check_specs_classified.sh
 
 .DEFAULT_GOAL := help

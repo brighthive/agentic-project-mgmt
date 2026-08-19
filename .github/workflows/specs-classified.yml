@@ -1,0 +1,24 @@
+name: Specs classified
+
+# Keep the spec roadmap delegatable: any PR that touches docs/specs/ must leave
+# every spec classified (status + roadmap pointer). Fails closed on an unmapped
+# spec so a hand-off engineer's PR can't quietly dirty the roadmap. See
+# docs/specs/THEMES.md (BH-1036).
+
+on:
+  pull_request:
+    paths:
+      - "docs/specs/**"
+      - "scripts/check_specs_classified.sh"
+      - ".github/workflows/specs-classified.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  check-specs-classified:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify every spec is classified
+        run: make check-specs-classified
