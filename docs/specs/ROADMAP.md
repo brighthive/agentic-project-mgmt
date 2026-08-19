@@ -61,7 +61,7 @@ behind either name, and one is stated backwards. **One was real — and it is no
 | # | Decision | Verified state | Gates | Cost to decide | Cost to defer |
 |---|---|---|---|---|---|
 | **1** | **`SQL_SERVER`: own `WarehouseType` or alias?** | ✅ **settled — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) Accepted** | catalog-and-identity, cross-engine-correctness | done | was the highest of the seven — 32 dispatch sites, persisted lineage labels, customer-visible for Loop Capital; now closed |
-| **2** | Correct the Project-ACTIVE row in THEMES.md | 🔴 **THEMES.md is factually wrong** | nothing — but the error is dangerous | 5 minutes | an engineer builds a second trigger → **duplicate activation runs in prod** |
+| **2** | Correct the Project-ACTIVE row in THEMES.md | ✅ **already corrected** (THEMES.md row 6) | nothing | done | the row now names the live mechanism (`project_activation_check_routes.py`, 7 tests) and warns against building the specced pub/sub → no duplicate-activation trap |
 | 3 | Scope call: does governance-enforced start this quarter? | 🟡 open | 23–28 pd — the largest single theme | free | it will not fit if added late |
 | 4 | Scope call: rebase or rewrite the orphaned remediation branch? | 🟡 open | fleet-self-healing items 2/3/4 | free | ~7 pd of finished work rots further |
 
