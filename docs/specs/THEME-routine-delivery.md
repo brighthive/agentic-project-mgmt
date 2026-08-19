@@ -1,6 +1,6 @@
 ---
 title: "Routine results land where the team already works"
-epic: "TBD — BH-876 (BrightRoutines) is Done; next-phase delivery needs a new open epic"
+epic: "BH-1463 — BrightRoutines next-phase (opened 2026-08-19; BH-876 is Done, cannot host new work)"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"

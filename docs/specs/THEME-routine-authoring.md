@@ -1,6 +1,6 @@
 ---
 title: "Describe a routine and get one"
-epic: "TBD — BH-897 is a Task under Done-epic BH-876; needs a new open BrightRoutines-authoring epic"
+epic: "BH-1463 — BrightRoutines next-phase (opened 2026-08-19; BH-897 was a Task under Done-epic BH-876)"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"

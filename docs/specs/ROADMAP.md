@@ -30,23 +30,25 @@ mixed in [THEMES.md](THEMES.md); this says who can take it.
 | [Warehouse health you can trust](THEME-warehouse-health-truth.md) | BH-1036 | 11 pd | 🟡 | Build the ~1 pd service-key `warehouseServices` query first — it gates items 1–2 |
 | [Drop in your legacy files](THEME-legacy-file-intake.md) | BH-1421 | 9–10 pd | 🟡 | 7 tickets exist but unassigned — give it an owner, then build **one** design, not three |
 | [Same answers on every engine](THEME-cross-engine-correctness.md) | BH-1168 | 9 pd | 🟡 | ~4 pd is a prod release of finished code — cut it; the SQL_SERVER path is now settled ([ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md), Accepted) |
-| [Routine results land where teams work](THEME-routine-delivery.md) | ⚠️ new | 7–9 pd | 🔴 | Genuinely needs one open epic — BH-876 is `Done`. Pair with routine-authoring under a single *BrightRoutines next-phase* epic |
+| [Routine results land where teams work](THEME-routine-delivery.md) | BH-1463 | 7–9 pd | 🟡 | Epic **created** 2026-08-19 (BrightRoutines next-phase). One move left: cut the child ticket for the `sink_config`-has-no-consumers gap |
 | [Always know which warehouse](THEME-catalog-and-identity.md) | BH-1370 | 10 pd | 🟡 | **Decision 1 settled** — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) Accepted; build PR #1 (identity member + lineage fix), then the capability refactor |
-| [Turn on a project](THEME-project-activation.md) | BH-1255 | 11 pd | 🔴 | **No new epic** — BH-1330/1343/1331 already sit under BH-1255; just reparent BH-1323 (now BH-172) **+** wire the activation-trigger call |
+| [Turn on a project](THEME-project-activation.md) | BH-1255 | 11 pd | 🟡 | Epic exists; claim corrected. BH-1323 reparent → BH-1255 needs a **manual UI move** (team-managed project — the parent field isn't API-settable via our tools). Then wire the activation-trigger call |
 | [Answer what it costs](THEME-cost-and-volume.md) | BH-118 | 14 pd | 🔴 | Confirm the enterprise ask is still live with sales (5 min); no child tickets yet |
-| [The screen never lies](THEME-honest-surfaces.md) | BH-1036 / BH-409 | 16 pd | 🔴 | **No new epic** — its 3 tickets already have homes (BH-1331→BH-1255, BH-1368→BH-1036); reparent orphan BH-1340 → BH-409. Track as a cross-cutting quality bar |
-| [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🔴 | **Decision 4** — rebase or rewrite the orphaned 3.2k-line branch before anyone edits |
-| [Describe a routine and get one](THEME-routine-authoring.md) | ⚠️ new | ~20 pd | 🔴 | Same *BrightRoutines next-phase* epic as routine-delivery (BH-897 is a Task under `Done` BH-876) — largest un-started |
-| [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🔴 | **Decision 3** — does the largest theme start this quarter? 5–6 pd has no ticket |
+| [The screen never lies](THEME-honest-surfaces.md) | BH-1036 / BH-409 | 16 pd | 🟡 | Epic homes exist. BH-1340 reparent → BH-409 needs a **manual UI move** (team-managed API limit). Real work: the item-5 run-history store across three repos |
+| [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🟡 | **Decision 4 settled → rebase.** Unblock: rebase `remediation-layer0-classifier-recall-gaps` onto master + open its PR in `brightbot` (non-trivial conflicts), then delegate the remainder |
+| [Describe a routine and get one](THEME-routine-authoring.md) | BH-1463 | ~20 pd | 🟡 | Epic **created** 2026-08-19. Largest un-started; the one gate before build is a scored eval (spec item 6) |
+| [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🟡 | **Decision 3 settled → yes, this quarter.** Cut the missing 5–6 pd child ticket; capacity note below (it displaces other Sep-30 scope) |
 
 **Read it as a hand-off order.** The four ✅ rows (≈18 pd) go to engineers this week with no
-meeting. The four 🟡 rows each need one small move first — a ~1 pd query, a ticket assignment, a
-release cut, or building PR #1 now that [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md)
-is Accepted. The seven 🔴 rows are blocked on **two product decisions (governance scope,
-rebase-vs-rewrite), one genuine new epic (BrightRoutines next-phase, covering both routine themes)
-plus two ticket reparents, and one "is this still worth doing?" check with sales** — not one is an
-engineering problem. Decision 1 is now settled, which turned catalog-and-identity green. Clear the
-rest and the whole board turns green.
+meeting. **Ten 🟡 rows** each need one first move — a ~1 pd query, a ticket assignment, a release
+cut, a child ticket, a manual epic reparent, or landing the rebase PR — **none of them a decision**.
+Only **one 🔴 remains: `cost-and-volume`**, waiting on a 5-minute "is this still worth doing?" check
+with sales. Every product decision that gated this board is now made: SQL_SERVER
+([ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md), Accepted), the
+project-active claim (corrected), governance scope (**yes, this quarter** — 2026-08-19), and the
+orphaned branch (**rebase** — 2026-08-19). The one new epic the board needed — *BrightRoutines
+next-phase* — is created as **BH-1463**. What's left is execution and two manual Jira reparents
+(BH-1323 → BH-1255, BH-1340 → BH-409) the parent-field API can't set on this team-managed project.
 
 ---
 
@@ -54,16 +56,17 @@ rest and the whole board turns green.
 
 THEMES.md opens with **"seven decisions block delegation."** Verified against code, that is not
 the case: four were already settled by shipped code, one is a naming preference with no code
-behind either name, and one is stated backwards. **One was real — and it is now settled by
-[ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) (Accepted
-2026-08-19).** What remains are two product scope calls (rows 3–4).
+behind either name, and one is stated backwards. **One was real — settled by
+[ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) (Accepted 2026-08-19).
+The two product scope calls (rows 3–4) are now made too (2026-08-19): governance-enforced starts
+this quarter, and the orphaned branch is rebased.** No decision now blocks the board.
 
 | # | Decision | Verified state | Gates | Cost to decide | Cost to defer |
 |---|---|---|---|---|---|
 | **1** | **`SQL_SERVER`: own `WarehouseType` or alias?** | ✅ **settled — [ADR-0003](../adr/0003-sql-server-is-identity-only-tds-dispatch-is-shared.md) Accepted** | catalog-and-identity, cross-engine-correctness | done | was the highest of the seven — 32 dispatch sites, persisted lineage labels, customer-visible for Loop Capital; now closed |
 | **2** | Correct the Project-ACTIVE row in THEMES.md | ✅ **already corrected** (THEMES.md row 6) | nothing | done | the row now names the live mechanism (`project_activation_check_routes.py`, 7 tests) and warns against building the specced pub/sub → no duplicate-activation trap |
-| 3 | Scope call: does governance-enforced start this quarter? | 🟡 open | 23–28 pd — the largest single theme | free | it will not fit if added late |
-| 4 | Scope call: rebase or rewrite the orphaned remediation branch? | 🟡 open | fleet-self-healing items 2/3/4 | free | ~7 pd of finished work rots further |
+| 3 | Scope call: does governance-enforced start this quarter? | ✅ **settled — yes, this quarter** (2026-08-19) | governance-enforced | done | n/a — decided; capacity tradeoff acknowledged (detail below) |
+| 4 | Scope call: rebase or rewrite the orphaned remediation branch? | ✅ **settled — rebase onto master** (2026-08-19) | fleet-self-healing items 2/3/4 | done | n/a — decided; rebasing preserves the ~7 pd already written |
 
 Everything else THEMES.md lists as a decision is archive work: **#2 engine port**, **#4 on-prem
 dbt**, **#5 routine approval**, **#7 `@` sigil** were each answered by code that already shipped,
@@ -108,6 +111,27 @@ One correction to THEMES.md's framing: the claimed `lineage-adapter-sql-server.m
 narrower than stated. Provider selection keys on the **raw** secret type
 (`lineage_provider_selection.py:52`), so it survives a new member untouched. Only the emitted
 label breaks.
+
+### Decision 3 in detail — governance-enforced starts this quarter (settled 2026-08-19)
+
+The call was made: **yes, start the full theme this quarter.** The 0.5 pd dead-"Enforced"-toggle
+removal (a carve-out, already ✅ on the board) is the first slice; the remaining 23–28 pd is now
+in-scope. **Honest capacity note:** Tracks 0–3 already total ~45 pd against the Sep-30 frontier.
+Adding governance-enforced pushes committed scope to **~68–73 pd** — which fits only with more
+parallel engineers, or by letting it displace lower-priority Sep-30 work, or by moving the date. It
+does not fit *and* leave Tracks 0–3 whole on one engineer's throughput. Saying so now is the point
+of deciding early: the theme is in; what moves out (or how far the date moves) is a sprint-planning
+call, not a week-five discovery.
+
+### Decision 4 in detail — rebase the orphaned remediation branch (settled 2026-08-19)
+
+The call was made: **rebase, not rewrite.** `origin/remediation-layer0-classifier-recall-gaps`
+(HEAD `5339c784`, 2026-07-27) carries 21 files + 9 new test files implementing most of
+fleet-self-healing, and no PR was ever opened. Rebasing it onto `master` preserves that ~7 pd of
+finished work instead of re-spending it. **Execution lives in the `brightbot` repo, not here** — a
+fresh feature branch off the orphan, rebased onto master, conflicts resolved, tests green, draft PR
+opened per the branch-protection rule. It is the first move on the fleet-self-healing row, tracked
+on its own branch and PR — not part of this docs PR.
 
 ---
 
@@ -243,8 +267,10 @@ fleet-self-healing items 2, 3 and 4 — `verifying_loop.py`, `remediation_decisi
 **no PR was ever opened.** It references a spec that isn't in `docs/specs/`, which is why the
 theme was written unaware of it. Sizing items 3/4 as fresh builds would double-spend ~7 pd. It is
 also only half-wired — `evaluate_after_poll` has no caller, so the state machine enters
-`VERIFYING` and nothing advances it. **Decide rebase-vs-rewrite before anyone opens an editor**;
-`develop` moved under it when BH-1329 landed on 07-31 in adjacent files.
+`VERIFYING` and nothing advances it. **Decided (2026-08-19): rebase, not rewrite** — preserve the
+~7 pd by rebasing onto `master` (`develop` moved under it when BH-1329 landed on 07-31 in adjacent
+files), then wire the missing caller. The rebase is the first move on this row and lands as its own
+PR in `brightbot`.
 
 **The agent can merge its own pull request on the main dbt path.** GC-17 is exemplary where it
 applies — `dbt_agent_react.py:262` omits `github_merge_pull_request` by explicit import list, with
@@ -254,10 +280,12 @@ main dbt path the tool is bound at `dbt_agent_react.py:152,230` and listed at `:
 theme's "cannot merge without a human" acceptance criterion would fail today. Worth a decision on
 whether that is intended.
 
-**Three themes point at the wrong epic.** legacy-file-intake claims `BH-1255`, which is *"Scheduled,
-Versioned, Lineage-Aware Pipeline Runs"* — a different epic. routine-authoring claims `epic:
-BH-897`, but BH-897 is a **Task** under BH-876, and BH-898–911 do not exist. governance-enforced
-cites `BH-624`, which is *"Semantic View Lifecycle for Snowflake Tables"*. Fix before assigning.
+**Three themes pointed at the wrong epic — now fixed (2026-08-19).** legacy-file-intake claimed
+`BH-1255` (*"Scheduled, Versioned, Lineage-Aware Pipeline Runs"* — a different epic) → repointed to
+**BH-1421**. routine-authoring claimed `BH-897` (a **Task** under `Done` BH-876; BH-898–911 never
+existed) → moved to the newly-created **BH-1463** (*BrightRoutines next-phase*), alongside
+routine-delivery. governance-enforced cited `BH-624` (*"Semantic View Lifecycle for Snowflake
+Tables"*) → repointed to **BH-172**. All theme frontmatter now names a live open epic.
 
 **On-prem's "Where it lives" table omits the repo the work is in.** The runner is shipped
 end-to-end on `main` of **`brightagent-engineering-runner`** — poll loop (`worker.py:122`),
@@ -345,20 +373,27 @@ missing dialect port that items 1 and 5 keep paying for — 3 pd to fix properly
 work against ~30 working days. Jira shows three engineers taking assignments (Kuri, Marwan,
 Harbour), so nominal capacity is ~90 pd before review, QC and the existing backlog — realistically
 60–70. Tracks 0–3 total **~45 pd**. That is the honest Sep 30 scope. The remaining ~120 pd —
-governance-enforced, routine-authoring, honest-surfaces, cost-and-volume, project-activation,
-legacy-file-intake, routine-delivery, blast-radius-quality, and the rest of fleet-self-healing —
-is **post-Q3**, and saying so now is cheaper than discovering it in week five.
+routine-authoring, honest-surfaces, cost-and-volume, project-activation, legacy-file-intake,
+routine-delivery, blast-radius-quality, and the rest of fleet-self-healing — is **post-Q3** on this
+capacity, and saying so now is cheaper than discovering it in week five. **One deliberate exception:**
+governance-enforced (23–28 pd) was pulled *into* this quarter on 2026-08-19 (Decision 3). That is a
+scope-over-capacity call made with eyes open — it lifts committed scope to **~68–73 pd**, so it
+either adds an engineer or displaces lower-priority Sep-30 work. The decision is recorded; which
+work slips (or how far the date moves) is a sprint-planning choice, not a hidden overrun.
 
 **The real delegation blocker is not the spec pile.** There are **no open sprints** in project BH,
 and **40 tickets sit in `In Progress` / `Code Review` / `Staging QC`** — 34 assigned to one
 person, the oldest untouched since 2026-07-07. Handing out 14 themes on top of that queue deepens
 it. Track 0 exists partly to drain it.
 
-**Ticket hygiene is the gate on four themes, not code.** `cost-and-volume` and `routine-delivery`
-have **no real tickets at all** — their only references are catch-all epics (BH-171/172) and a
-`Done` epic (BH-876). `legacy-file-intake`'s seven tickets are entirely unassigned. BH-1457 is
-mis-parented under BrightRoutines when it is the warehouse-health bug. A theme with no refined,
-assigned ticket cannot be delegated at any size.
+**Ticket hygiene is the gate on several themes, not code — and it improved on 2026-08-19.**
+routine-delivery and routine-authoring now sit under a real open epic (**BH-1463**), and
+legacy-file-intake / governance-enforced were repointed to live epics (BH-1421 / BH-172). What
+remains: `cost-and-volume` still has **no child tickets** (only catch-all epic BH-118 + a pending
+sales check); routine-delivery/authoring under BH-1463 still need their child tickets cut;
+`legacy-file-intake`'s seven tickets are entirely unassigned; and BH-1457 is mis-parented under
+BrightRoutines when it is the warehouse-health bug. A theme with no refined, assigned ticket cannot
+be delegated at any size.
 
 **Jira status is not evidence and was not treated as such.** BH-991/992/993 show `Code Review`
 while their code is on `main`. BH-767 and BH-769 show `Needs Refinement` while their code shipped.
