@@ -37,10 +37,10 @@ flowchart TB
     subgraph E1036["BH-1036 · Monitoring Agents"]
         WHT["Warehouse health you can trust<br/>11 pd · Tier 1"]:::oneMove
     end
-    subgraph E1370["BH-1370 · Warehouse catalog & identity"]
+    subgraph E1370["BH-1370 · Warehouse catalog &amp; identity"]
         CAT["Always know which warehouse<br/>you're talking to<br/>10 pd · Tier 1"]:::oneMove
     end
-    subgraph E1421["BH-1421 · Legacy & on-prem engineering"]
+    subgraph E1421["BH-1421 · Legacy &amp; on-prem engineering"]
         ONP["Work where the customer's<br/>data lives<br/>9.5 pd · Tier 1 · In Progress"]:::ready
         LEG["Drop in your legacy<br/>pipeline files<br/>9–10 pd · Tier 2"]:::oneMove
     end
@@ -49,7 +49,7 @@ flowchart TB
     end
     subgraph E1255["BH-1255 · Scheduled, versioned, lineage-aware runs"]
         FSH["Pipelines that fix themselves<br/>18 pd · Tier 2 · rebase landed → brightbot #1043"]:::oneMove
-        PROJ["Turn on a project & it knows<br/>its own history<br/>11 pd · Tier 3"]:::oneMove
+        PROJ["Turn on a project &amp; it knows<br/>its own history<br/>11 pd · Tier 3"]:::oneMove
     end
     subgraph E172["BH-172 · Platform features"]
         GOV["Governance you declare is<br/>governance we enforce<br/>23–28 pd · Tier 2"]:::oneMove
@@ -67,7 +67,7 @@ flowchart TB
     subgraph E409["BH-409 · BrightSignals"]
         HON["The screen never lies<br/>16 pd · Tier 3"]:::oneMove
     end
-    subgraph E118["BH-118 · Cost & volume"]
+    subgraph E118["BH-118 · Cost &amp; volume"]
         COST["Answer what it costs<br/>14 pd · Tier 3"]:::blocked
     end
 
