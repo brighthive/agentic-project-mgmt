@@ -1,0 +1,56 @@
+{
+  "resolved": [
+    {
+      "key": "BH-1461",
+      "summary": "Wire LANGGRAPH_BASE_URL + LANGGRAPH_API_KEY into core GraphQL API env (Sync fails closed)",
+      "status": "Done",
+      "assignee": "Kuri Chinca",
+      "type": "Bug",
+      "resolutiondate": "2026-08-18T16:06:57.931-0500"
+    }
+  ],
+  "shipped_but_needs_refinement": [
+    {
+      "key": "BH-1462",
+      "summary": "fix(observability): run-card timestamps from stored lastRunAt + GitHub org from repo URL",
+      "status": "Needs Refinement",
+      "assignee": null,
+      "parent": "BH-359",
+      "prs": ["brighthive-platform-core#1214", "brighthive-webapp#1433"]
+    },
+    {
+      "key": "BH-1454",
+      "summary": "Give the supervisor a warehouse-listing tool so \"what warehouses do I have\" never needs GraphQL introspection",
+      "status": "Needs Refinement",
+      "assignee": null,
+      "parent": "BH-1421",
+      "prs": ["brightbot#1038"]
+    },
+    {
+      "key": "BH-1452",
+      "summary": "slack-server: deliver PDF/CSV/table artifacts on the direct channel-push path",
+      "status": "Needs Refinement",
+      "assignee": "Kuri Chinca",
+      "parent": "BH-876",
+      "prs": ["brightbot-slack-server#177"]
+    },
+    {
+      "key": "BH-1036",
+      "summary": "Monitoring Agents — proactive pipeline discovery & health (dbt, Databricks, ETL)",
+      "status": "Needs Refinement",
+      "assignee": "Kuri Chinca",
+      "parent": null,
+      "prs": ["agentic-project-mgmt#179"]
+    }
+  ],
+  "groomed_no_pr": [
+    { "key": "BH-1463", "summary": "BrightRoutines next-phase — team-targeted delivery & AI-authored multi-step routines", "status": "Needs Refinement", "assignee": null },
+    { "key": "BH-1460", "summary": "Multiple transformation engines per workspace — default-engine selector (mirror setDefaultWarehouse)", "status": "Needs Refinement", "assignee": "Kuri Chinca" },
+    { "key": "BH-1459", "summary": "Eliminate TransformationNode null-dbtDependencies root cause: schema default + latent throw sites + orphan cleanup", "status": "Needs Refinement", "assignee": "Kuri Chinca" },
+    { "key": "BH-1458", "summary": "Pipeline run-status write path broken + workspace pipeline-health blind to all transformations", "status": "Needs Refinement", "assignee": "Kuri Chinca" },
+    { "key": "BH-1457", "summary": "Impact Capital: default-warehouse mismatch + unreachable Azure SQL server blocking all workflow execution", "status": "Needs Refinement", "assignee": "Kuri Chinca" },
+    { "key": "BH-1456", "summary": "OneTen has no default warehouse set — violates BH-1362 invariant, breaks workflow SQL execution", "status": "Needs Refinement", "assignee": "Kuri Chinca" },
+    { "key": "BH-1455", "summary": "Routine suggestion status drifts from its backing schedule row (DISMISSED vs enabled:true)", "status": "Needs Refinement", "assignee": "Kuri Chinca" },
+    { "key": "BH-1453", "summary": "feat(graphql): renameWorkspaceAsAdmin superadmin mutation", "status": "Needs Refinement", "assignee": "Kuri Chinca" }
+  ]
+}
