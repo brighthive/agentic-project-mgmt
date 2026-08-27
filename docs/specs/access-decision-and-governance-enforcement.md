@@ -366,13 +366,13 @@ INV-9 guarantees Phase 1a changes no outcome; the divergence metric is the go/no
 
 | Ticket | Summary | Size | Phase |
 |---|---|---|---|
-| — | `feat(platform-core): authorize() decision function (tenant→admin→matrix, fail-closed) + matrix cache/invalidation` | L | 1a |
-| — | `feat(platform-core): extend WorkspacePolicyNode to a cell-set + seed defaults + setRolePermission/permissionMatrix/myPermissions` | L | 1a |
-| — | `feat(platform-core): SHADOW mode + authz.decision telemetry + shadow_divergence & latency metrics` | M | 1a |
-| — | `refactor(platform-core): @authorized delegates to authorize(); @public allowlist; default-deny at schema-build (close 49 ungated)` | L | 1b |
-| — | `feat(webapp): permission-matrix live editor bound to setRolePermission; fix phantom role + local-dev bypass` | M | 1b |
-| — | `feat(brightbot): role-aware tool context + call authorize() before RUN/write tools` | M | 1b |
-| — | `test(e2e): matrix edit denies a role end-to-end + denied RUN returns BLOCK (real backend)` | S | 1b |
+| [BH-1465](https://brighthiveio.atlassian.net/browse/BH-1465) | `feat(platform-core): authorize() decision function (tenant→admin→matrix, fail-closed) + matrix cache/invalidation` | L | 1a |
+| [BH-1466](https://brighthiveio.atlassian.net/browse/BH-1466) | `feat(platform-core): extend WorkspacePolicyNode to a cell-set + seed defaults + setRolePermission/permissionMatrix/myPermissions` | L | 1a |
+| [BH-1467](https://brighthiveio.atlassian.net/browse/BH-1467) | `feat(platform-core): SHADOW mode + authz.decision telemetry + shadow_divergence & latency metrics` | M | 1a |
+| [BH-1468](https://brighthiveio.atlassian.net/browse/BH-1468) | `refactor(platform-core): @authorized delegates to authorize(); @public allowlist; default-deny at schema-build (close 49 ungated)` | L | 1b |
+| [BH-1469](https://brighthiveio.atlassian.net/browse/BH-1469) | `feat(webapp): permission-matrix live editor bound to setRolePermission; fix phantom role + local-dev bypass` | M | 1b |
+| [BH-1470](https://brighthiveio.atlassian.net/browse/BH-1470) | `feat(brightbot): role-aware tool context + call authorize() before RUN/write tools` | M | 1b |
+| [BH-1471](https://brighthiveio.atlassian.net/browse/BH-1471) | `test(e2e): matrix edit denies a role end-to-end + denied RUN returns BLOCK (real backend)` | S | 1b |
 
 *(Phase 0 security tickets live in the separate fast-track security spec, not here.)*
 
