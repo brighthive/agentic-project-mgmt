@@ -2,7 +2,7 @@
 title: Project Files → dbt GitHub Bridge
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: 2026-07-30
 last-reviewed: 2026-07-30
 generates: tickets
@@ -19,6 +19,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-legacy-file-intake.md — dbt/github bridge
 ---
 
 # SPEC: Project Files → dbt GitHub Bridge
@@ -31,7 +32,7 @@ related:
 > execute the git operation without the PAT ever entering BrightBot state or logs (docstring,
 > `github_tools.py:1-5`). This spec adds exactly one new caller to that existing pipeline: a dbt
 > model file uploaded to Project Files (extended to accept `.sql` by
-> `project-files-pipeline-artifact-intake.md`) gets committed to the customer's dbt repo via the
+> [`project-files-pipeline-artifact-intake.md`](./project-files-pipeline-artifact-intake.md)) gets committed to the customer's dbt repo via the
 > same proxy dbt_agent already uses in chat. No new auth flow, no new secret storage, no new
 > platform-core mutation.
 

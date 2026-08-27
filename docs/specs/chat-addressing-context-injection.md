@@ -1,3 +1,8 @@
+---
+status: Shipped
+roadmap: done — merged; @ dotted-path parser live
+---
+
 # Spec: Chat-native addressing grammar — `@`-context injection with extend/scope + n-to-n fan-out
 
 **Ticket:** BH-1371 (BH-1370 identity-ladder epic) · **Status:** Draft · **Author:** Kuri · **Last-Reviewed:** 2026-08-06

@@ -2,7 +2,7 @@
 title: "Enterprise-Grade Design for saas-mcp-bridge Integration"
 epic: "BH-1250-mcp-bridge"
 author: "Gemini CLI"
-status: "Draft"
+status: Parked
 created: "2026-08-11"
 generates: "epic | tickets"
 tags: [mcp, bridge, security, on-prem, architecture, fastmcp, brightbot]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — no customer ask; no file:line grounding
 ---
 
 # Enterprise-Grade Design for saas-mcp-bridge Integration

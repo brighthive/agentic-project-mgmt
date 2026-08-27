@@ -2,7 +2,7 @@
 title: "Usage Metering Pipeline"
 epic: "BH-171"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-04-16"
 generates: "tickets"
 tags: [infrastructure, cost, metering, observability, nestle]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-cost-and-volume.md — usage metering
 ---
 
 # Usage Metering Pipeline

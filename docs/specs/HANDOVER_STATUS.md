@@ -47,15 +47,15 @@ built work visible/usable. Both start **simple + incremental** and are grounded 
 - **More ships than the specs first assumed — grounded 2026-07-29 against committed source.** A
   cross-repo pass (all repos on `develop`/`origin/staging`) found the family had drifted from an
   already-built reality:
-  - `sqlserver-health-watch` + the SSIS diagnostics capability ship in `brightbot`
+  - [`sqlserver-health-watch`](./sqlserver-health-watch.md) + the SSIS diagnostics capability ship in `brightbot`
     (`SqlServerPipelineSource`, `SsisCatalogPipelineSource` at `ssis_pipeline_source.py:103`,
     `analyze_dtsx_package`/`analyze_rdl_report`). SSIS work is **wire + verify**, not authoring;
     only SSRS (`.rdl` proactive source) is net-new.
-  - **`pipeline-run-lifecycle`'s entire platform-core side ships** on staging (commit `a4c00f80`):
+  - **[`pipeline-run-lifecycle`](./pipeline-run-lifecycle.md)'s entire platform-core side ships** on staging (commit `a4c00f80`):
     `runPipelineSegment`, `reRunFromNode`, `WorkflowRunNode.lineageNodesTouched`/`runScope`/`immutable`,
     and a real `DbtAdapter.checkStatus` dbt Cloud poll. BH-1258/1259/1260/1263 are **verify-only**;
     the net-new is brightbot (`path_between`, `schedule_pipeline_run`, runner port) + webapp + e2e.
-  - `data-quality-rules`' scope storage already exists (`ALL_ASSETS`/`SELECTED_ASSETS`
+  - [`data-quality-rules`](./data-quality-rules.md)' scope storage already exists (`ALL_ASSETS`/`SELECTED_ASSETS`
     `typedefs.ts:631-633`, `DataAsset.tags` `:565`, group NODES via INCLUDES edges) — the bridge
     is a thin public `rulesInScope(tag|groupId)` resolver, not new tag/group storage. There is **no**
     `DataAsset.group: String` scalar — target group nodes.
@@ -66,7 +66,7 @@ built work visible/usable. Both start **simple + incremental** and are grounded 
   three orthogonal ideas: **(1) engine** the pipeline runs on (`dbt`/`ssis`/`snowflake`/…) →
   `MonitoredPipeline.source_type`; **(2) detector** watched across engines (`longitudinal_drift`)
   → attached via `watch_drift`, never a `source_type`; **(3) quality rule** on a data asset →
-  the new `data-quality-rules.md` spec. All three feed one `PipelineHealthSignal → route → alert`
+  the new [`data-quality-rules.md`](./data-quality-rules.md) spec. All three feed one `PipelineHealthSignal → route → alert`
   backbone. Don't re-collapse them.
 - **`source_type` is an open `str`, validated against the live registry — not a closed Literal.**
   The old `Literal["dbt","databricks","etl"]` was fixed during the agnosticism audit: a closed type
@@ -91,19 +91,19 @@ other specs). `score = TrialValue×2 + Speed + Unblocks`. Build highest-score fi
 
 | # | Spec | Crit | TV | Speed | Unblk | Score | Wave |
 |---|---|---|:--:|:--:|:--:|:--:|:--:|
-| 1 | `sqlserver-health-watch` | 4 | 5 | 5 | 2 | **17** | **W1 — live proof** |
-| 2 | `ssis-ssrs-proactive-pipeline-source` | 5 & 6 | 5 | 3 | 2 | **15** | **W1 — live proof** |
-| 3 | `pipeline-run-lifecycle` | foundation | 3 | 3 | 5 | **14** | **W2 — foundation** |
-| 4 | `brightroutine-approve-schedule` | 9 (+8) | 4 | 3 | 3 | **14** | **W2 — foundation** |
-| 5 | `pipeline-self-healing-fleet` | 7 | 4 | 2 | 3 | **13** | **W3 — depth** |
-| 6 | `data-quality-rules` | 7 (axis 3) | 3 | 4 | 1 | **11** | **W3 — depth** |
-| — | `ssis-ssrs-to-dbt-regeneration` | none | 1 | 1 | 0 | **3** | **defer (OOS)** |
+| 1 | [`sqlserver-health-watch`](./sqlserver-health-watch.md) | 4 | 5 | 5 | 2 | **17** | **W1 — live proof** |
+| 2 | [`ssis-ssrs-proactive-pipeline-source`](./ssis-ssrs-proactive-pipeline-source.md) | 5 & 6 | 5 | 3 | 2 | **15** | **W1 — live proof** |
+| 3 | [`pipeline-run-lifecycle`](./pipeline-run-lifecycle.md) | foundation | 3 | 3 | 5 | **14** | **W2 — foundation** |
+| 4 | [`brightroutine-approve-schedule`](./brightroutine-approve-schedule.md) | 9 (+8) | 4 | 3 | 3 | **14** | **W2 — foundation** |
+| 5 | [`pipeline-self-healing-fleet`](./pipeline-self-healing-fleet.md) | 7 | 4 | 2 | 3 | **13** | **W3 — depth** |
+| 6 | [`data-quality-rules`](./data-quality-rules.md) | 7 (axis 3) | 3 | 4 | 1 | **11** | **W3 — depth** |
+| — | [`ssis-ssrs-to-dbt-regeneration`](./ssis-ssrs-to-dbt-regeneration.md) | none | 1 | 1 | 0 | **3** | **defer (OOS)** |
 
 - **W1 buys the fastest live proof.** Both are verify-only / new-caller over capabilities that
   already ship — the fastest rebuttal to Frank's "this is not live" (2026-07-09), because the
   underlying watch already runs; the work is pinning the acceptance bar + wiring the schedule/surfacing.
 - **W2 is the foundation** the rest leans on — re-runnable runs and human-approved scheduling
-  (`Unblocks` is why `pipeline-run-lifecycle` sequences here despite a lower trial value).
+  (`Unblocks` is why [`pipeline-run-lifecycle`](./pipeline-run-lifecycle.md) sequences here despite a lower trial value).
 - **W3 is the heavier depth work** — the engine-agnostic self-healing fleet and the quality-rule bridge.
 - **Regeneration stays deferred** — out of trial scope; a POC, not a trial deliverable.
 

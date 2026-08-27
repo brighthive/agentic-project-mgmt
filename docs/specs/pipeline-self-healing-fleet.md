@@ -2,7 +2,7 @@
 title: "Proactive Self-Healing Pipeline Monitoring — Fleet Architecture"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-29"
 last-reviewed: "2026-07-29"
 generates: "tickets"
@@ -11,6 +11,7 @@ related:
   features: []
   pocs: []
   specs: ["sqlserver-health-watch.md", "ssis-ssrs-proactive-pipeline-source.md", "brightroutine-approve-schedule.md", "pipeline-run-lifecycle.md", "data-quality-rules.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — also in fleet-self-healing
 ---
 
 # Proactive Self-Healing Pipeline Monitoring — Fleet Architecture

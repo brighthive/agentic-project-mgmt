@@ -1,12 +1,13 @@
 ---
 name: Honest + stable observe surface — health dots, catalog, notification card
 slug: honest-observe-surface
-status: draft
+status: Partial
 last_reviewed: 2026-08-02
 owner: drchinca
 jira_epic: BH-1331
 surfaces: [brighthive-platform-core, brighthive-webapp]
 related: [hive-health-landing-indicator, proactive-pipeline-ingestion-monitoring]
+roadmap: mixed — folded into THEME-honest-surfaces.md — never-checked shows unknown
 ---
 
 # Honest + stable observe surface — health dots, catalog, notification card

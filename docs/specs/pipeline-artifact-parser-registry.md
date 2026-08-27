@@ -2,7 +2,7 @@
 title: "Format-agnostic pipeline-artifact parser — a registry keyed by file type"
 epic: "BH-1255"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-07-30"
 last-reviewed: "2026-07-30"
 generates: "tickets"
@@ -14,6 +14,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-legacy-file-intake.md — parser registry — build one, not three
 ---
 
 # Format-agnostic pipeline-artifact parser — a registry keyed by file type

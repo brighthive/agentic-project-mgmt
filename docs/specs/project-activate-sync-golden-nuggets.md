@@ -3,7 +3,7 @@ title: "Project ACTIVE → SYNC(): fan-out that pulls the project's real state a
 epic: "BH-1255"
 ticket: "BH-1343"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-08-01"
 generates: "tickets"
 tags: [project-lifecycle, sync, proactive, golden-nuggets, ssis, ssrs, xsd, xslt, signals, engine-agnostic, admin, loopcapital]
@@ -12,6 +12,7 @@ related:
   pocs: []
   bedrock: []
   specs: ["project-engine-run-sync.md", "ssis-ssrs-proactive-pipeline-source.md", "project-files-pipeline-artifact-intake.md", "pipeline-artifact-parser-registry.md", "remediation-pr-engine-run-logs.md"]
+roadmap: mixed — folded into THEME-project-activation.md — activate->history appears
 ---
 
 # Project ACTIVE → SYNC(): the activation fan-out that surfaces golden nuggets

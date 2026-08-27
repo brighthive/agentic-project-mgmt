@@ -3,7 +3,7 @@ title: "Surgical Remediation PRs carry the engine's before+after run logs — th
 epic: "BH-1255"
 ticket: "BH-1329"
 author: "Kuri"
-status: "Draft"
+status: Shipped
 created: "2026-07-31"
 generates: "tickets"
 tags: [pipeline, remediation, self-healing, run-logs, dbt, engine-agnostic, loopcapital, GC-16]
@@ -12,15 +12,16 @@ related:
   pocs: []
   bedrock: []
   specs: ["self-healing-pipelines.md", "pipeline-run-lifecycle.md", "proactive-pipeline-ingestion-monitoring.md"]
+roadmap: done — shipped (BH-1329); run_on_ref port verb live
 ---
 
 # Surgical Remediation PRs carry the engine's before+after run logs
 
-> Extends the self-healing loop (`self-healing-pipelines.md`, epic BH-526 / GC-16) with ONE
+> Extends the self-healing loop ([`self-healing-pipelines.md`](./self-healing-pipelines.md), epic BH-526 / GC-16) with ONE
 > new guarantee: every surgical remediation PR embeds the transformation engine's own run
 > logs — the **failing** run that triggered the fix *and* a **post-fix verification** run on
 > the fix branch — and it does so through the engine-agnostic `PipelineRunner` port
-> (`pipeline-run-lifecycle.md`, epic BH-1255), never a dbt-Cloud-specific tool. What already
+> ([`pipeline-run-lifecycle.md`](./pipeline-run-lifecycle.md), epic BH-1255), never a dbt-Cloud-specific tool. What already
 > ships is named in §1 with `file:line` evidence so no ticket reinvents it.
 
 ## 1. Context

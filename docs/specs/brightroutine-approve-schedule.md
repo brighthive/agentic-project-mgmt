@@ -2,7 +2,7 @@
 title: "BrightRoutine approve-and-schedule — the Slack-approval → schedule wire"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-07-29"
 last-reviewed: "2026-07-29"
 generates: "tickets"
@@ -15,6 +15,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — decision 5 winner — shipped Slack->platform-core->brightbot path; keep as reference
 ---
 
 # BrightRoutine approve-and-schedule — the Slack-approval → schedule wire
@@ -52,7 +53,7 @@ Three pieces already exist in `brightbot`; the seam that joins them does not.
 **no routine-proposal-approval graph** — nothing consumes a Slack approval and converts an
 OFFERED `RoutineSuggestion` into a `ScheduleRoutineRequest` and a `create_schedule` call. The
 approval identity + service-key auth mechanics across slack-server → platform-core → brightbot
-are specified in `slack-routine-suggestion-scheduling.md` (BH-876) and are **not re-specified
+are specified in [`slack-routine-suggestion-scheduling.md`](./slack-routine-suggestion-scheduling.md) (BH-876) and are **not re-specified
 here**; this spec defines the *approval-gate seam* inside brightbot and the
 `ScheduleRoutineRequest → create_schedule` conversion.
 

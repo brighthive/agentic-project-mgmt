@@ -2,7 +2,7 @@
 title: "Okta SSO + Cognito Federation + MFA2 (BH-674 / BH-675 / BH-676 / MFA2)"
 epic: "BH-115"
 author: "Kuri"
-status: "In Progress"
+status: Shipped
 created: "2026-06-22"
 generates: "tickets"
 tags: ["auth", "sso", "cognito", "okta", "mfa", "saas"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — both PRs merged 2026-06-22; move to features/
 ---
 
 # Okta SSO + Cognito Federation + MFA2

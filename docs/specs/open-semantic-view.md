@@ -1,3 +1,8 @@
+---
+status: Relocated
+roadmap: closed — -> ADR
+---
+
 # Open Semantic View (OSV) — Warehouse-Agnostic by Design
 
 > Status: draft · Owner: BrightHive Platform · Last reviewed: 2026-06-24

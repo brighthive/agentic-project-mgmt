@@ -2,7 +2,7 @@
 title: "Volume Matrix Report"
 epic: "BH-172"
 author: "Kuri"
-status: "Draft"
+status: Partial
 created: "2026-04-16"
 generates: "tickets"
 tags: [reporting, cost, enterprise-sales, nestle]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: [cost-allocation-tagging, usage-metering-pipeline]
   bedrock: []
+roadmap: mixed — folded into THEME-cost-and-volume.md — volume/cost per workspace
 ---
 
 # Volume Matrix Report

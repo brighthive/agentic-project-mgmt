@@ -1,13 +1,14 @@
 ---
 title: Engineering agent — warehouse-agnostic read + write across all engines
 slug: engineering-agent-warehouse-agnostic
-status: draft
+status: Partial
 epic: BH-1168
 ticket: BH-1320
 related:
   - open-semantic-view.md
   - project-engine-repo-binding.md
 last-reviewed: 2026-07-31
+roadmap: mixed — folded into THEME-cross-engine-correctness.md — agnostic writer
 ---
 
 # Engineering agent — warehouse-agnostic read + write

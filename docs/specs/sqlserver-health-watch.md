@@ -2,7 +2,7 @@
 title: "Proactive SQL Server Health Watch — disk-low + failed Agent jobs as governed signals"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-29"
 generates: "tickets"
 tags: [pipeline, health, sqlserver, disk, agent-jobs, loopcapital, byow, engine-agnostic]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-health-snapshot.md", "pipeline-self-healing-fleet.md", "ssis-ssrs-proactive-pipeline-source.md", "golden-cases-loopcapital.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — SQL Server health probe
 ---
 
 # Proactive SQL Server Health Watch

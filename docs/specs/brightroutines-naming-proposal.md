@@ -2,7 +2,7 @@
 title: "BrightRoutines DTO naming proposal — decision doc for Marwan/Nano review"
 epic: "BH-876"
 author: "Kuri Chinca"
-status: "Draft"
+status: Parked
 created: "2026-07-07"
 generates: "tickets"
 tags: ["brightroutines", "naming", "refactor"]
@@ -12,6 +12,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — not a spec — a decision doc; move to ADR or delete once BH-953 resolves
 ---
 
 # BrightRoutines DTO naming proposal
@@ -111,7 +112,7 @@ Marwan + Nano — pick concrete new names"). Once Marwan and Nano review this ta
 proposed, or counter-propose any row), the decision becomes:
 
 1. Rename applied across `brightbot/routines/`, `brightbot/evals/routines/`, all tests (BH-953 AC item 2).
-2. Spec text in `brightroutines-intent-loop.md` synced (37 references, mechanical) (AC item 3).
+2. Spec text in [`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md) synced (37 references, mechanical) (AC item 3).
 3. BH-947's e2e chain test updated for the one cross-repo reference (AC item 4).
 4. Migration notes for any consumer pinned to old names (AC item 5) — verified above: none exist
    outside brightbot + the one e2e file, so this should be a short note, not a deprecation shim.

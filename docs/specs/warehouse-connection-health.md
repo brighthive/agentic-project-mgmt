@@ -3,7 +3,7 @@ title: Warehouse connection health — "which warehouse am I connected to, and i
 epic: BH-1245
 tickets: [BH-1341]
 author: kuri
-status: draft
+status: Shipped
 created: 2026-08-01
 last-reviewed: 2026-08-01
 generates: tickets
@@ -20,6 +20,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-1341 shipped; reused by warehouse-health theme
 ---
 
 # SPEC: Warehouse connection health

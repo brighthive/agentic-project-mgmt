@@ -2,7 +2,7 @@
 title: "On-prem engineering runner — dbt Core and legacy sources where the files live"
 epic: "BH-1421"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-13"
 last-reviewed: "2026-08-13"
 generates: "tickets"
@@ -10,6 +10,7 @@ tags: [on-prem, dbt-core, ssis, mcp, loopcapital, security]
 related:
   specs: ["loopcapital-onprem-read-write-sandbox.md", "autonomous-dbt-project-lifecycle.md"]
   adr: ["0002-engineering-runs-on-the-customers-filesystem.md"]
+roadmap: mixed — folded into THEME-onprem-engineering.md — ADR-0002 Accepted; runner live, register as engine remains
 ---
 
 # On-prem engineering runner

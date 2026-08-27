@@ -2,7 +2,7 @@
 title: "Proactive Pipeline & Ingestion Monitoring — job/run-status watchdog + surgical remediation"
 epic: "BH-1036"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-10"
 generates: "tickets"
 tags: [monitoring, observability, dbt, databricks, etl, ingestion, brightsignals, self-healing, brightbot, platform-core, watchdog]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "self-healing-pipelines.md", "lineage-aware-data-quality.md", "golden-cases-loopcapital.md"]
+roadmap: mixed — standalone; rewrite: keep Start Here, archive rest as decision log
 ---
 
 # Proactive Pipeline & Ingestion Monitoring
@@ -48,7 +49,7 @@ monitoring genuinely proactive (unprompted detection + alert + safe auto-remedia
 answering a Loop Capital sales-gate commitment for a **2026-07-17 demo**.
 
 **Want the demo-bar framing instead of the platform-contract framing?** Read
-`golden-cases-loopcapital.md` (GC-14/15/16/17) — the same tickets below, translated into
+[`golden-cases-loopcapital.md`](./golden-cases-loopcapital.md) (GC-14/15/16/17) — the same tickets below, translated into
 Frank-facing acceptance scenes (a broken nightly job, a legacy SQL Server with nothing
 installed on it, a recurring pipeline break) rather than DTOs and Protocols. This spec is the
 contract; that one is the proof the contract resolves something Frank actually asked for.
@@ -971,7 +972,7 @@ active permission gate — `enforce_tool_permission()` in `server.py:154-172` on
    shortening the next poll interval for THAT signature and changing what "suppress" means:
    confirmed-fixed → a success notification, recurred → an immediate escalation bypassing
    normal cooldown). This invariant's "SHALL NOT re-emit a duplicate alert" only holds for the
-   NORMAL case (no merge happened); BH-1091's design note in `self-healing-pipelines.md`
+   NORMAL case (no merge happened); BH-1091's design note in [`self-healing-pipelines.md`](./self-healing-pipelines.md)
    is the authoritative source once it ships — this invariant will need a corresponding
    revision at that point, not just an addendum.`
 4. `IF a signal's root_cause_class is DATA_SHAPE but has no matching mode in

@@ -2,7 +2,7 @@
 title: "Warehouse Health Snapshot — engine-agnostic operational health surfaced to the data leader"
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-31"
 generates: "tickets"
 tags: [health, snapshot, warehouse, engine-agnostic, governance, surfacing, hive-health]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["sqlserver-health-watch.md", "hive-health-landing-indicator.md", "pipeline-self-healing-fleet.md", "pipeline-run-lifecycle.md"]
+roadmap: mixed — folded into THEME-warehouse-health-truth.md — staleness gate — healthPolledAt
 ---
 
 # Warehouse Health Snapshot
@@ -17,7 +18,7 @@ related:
 > **Engine-agnostic surfacing layer.** This spec owns *how a warehouse's latest
 > operational-health result is persisted and surfaced to the data leader* —
 > independent of which engine produced it. SQL Server disk-low / failed-Agent-job
-> detection (`sqlserver-health-watch.md`) is the **first signal producer**, not the
+> detection ([`sqlserver-health-watch.md`](./sqlserver-health-watch.md)) is the **first signal producer**, not the
 > design. Snowflake, Redshift, Databricks, and dbt producers ride the same path with
 > zero changes here. Every existing type carries a real `file:line`; the two new
 > platform-core surfaces (`recordWarehouseHealth`, additive `ServiceHealthCheck`
@@ -25,7 +26,7 @@ related:
 
 ## 1. Context
 
-`hive-health-landing-indicator.md` (BH-1036) put a Hive Health band on the workspace
+[`hive-health-landing-indicator.md`](./hive-health-landing-indicator.md) (BH-1036) put a Hive Health band on the workspace
 landing, but it derives a warehouse's status from **connection state only** —
 `WarehouseServiceNode.status == "active" → Healthy, else Degraded`
 (`analytics-resolver.ts:55-68`). A warehouse whose connection is fine but whose

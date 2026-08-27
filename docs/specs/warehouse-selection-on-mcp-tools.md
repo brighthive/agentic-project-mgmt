@@ -2,7 +2,7 @@
 title: "Warehouse selection on MCP tools — answer from the warehouse you were asked about"
 epic: "BH-1430"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-08-13"
 last-reviewed: "2026-08-13"
 generates: "tickets"
@@ -10,6 +10,7 @@ tags: [mcp, warehouse, multi-tenant, loopcapital, safety]
 related:
   specs: ["loopcapital-onprem-read-write-sandbox.md", "table-parity-cross-warehouse-database.md"]
   adr: ["0002-engineering-runs-on-the-customers-filesystem.md"]
+roadmap: done — BH-1430 Done
 ---
 
 # Warehouse selection on MCP tools

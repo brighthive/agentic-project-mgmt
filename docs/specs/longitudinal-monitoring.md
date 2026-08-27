@@ -2,7 +2,7 @@
 title: "Longitudinal Anomaly Monitoring — stateful quality agent + scheduled nightshift"
 epic: "BH-503"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-06-15"
 generates: "tickets"
 tags: [quality, monitoring, longitudinal, anomaly, nightshift, brightbot, platform-core, snowflake, golden-cases]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["quality-rules-configurable.md", "byow-end-to-end-omd-native.md", "warehouse-agnostic-architecture.md"]
+roadmap: done — staging-verified 2026-06-18
 ---
 
 # Longitudinal Anomaly Monitoring (Golden Case 12 / GAP-8)

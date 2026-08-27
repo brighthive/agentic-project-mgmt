@@ -2,7 +2,7 @@
 title: SSIS/SSRS as a Proactive PipelineSource
 epic: "BH-1255"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: 2026-07-17
 last-reviewed: 2026-07-29
 generates: tickets
@@ -23,6 +23,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-legacy-file-intake.md — .dtsx/.rdl source
 ---
 
 # SPEC: SSIS/SSRS as a Proactive PipelineSource

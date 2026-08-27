@@ -2,7 +2,7 @@
 title: "Azure Synapse Analytics — Full Platform Integration"
 epic: "BH-172"
 author: "drchinca"
-status: "Draft"
+status: Superseded
 created: "2026-04-06"
 generates: "epic"
 tags: [warehouse, azure, synapse, byow, ingestion, destination]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — April spec; still frames deprecated Datapiary as dependency
 ---
 
 # Azure Synapse Analytics — Full Platform Integration

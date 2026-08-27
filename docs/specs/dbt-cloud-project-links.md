@@ -2,7 +2,7 @@
 title: "Tenant-scoped dbt Cloud project listing + reliable project↔service↔repo linkage"
 epic: "BH-1323"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-31"
 generates: "tickets"
 tags: [dbt, transformation, multi-tenant, platform-core, engineering-agent]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — folded into THEME-project-activation.md — project links
 ---
 
 # Tenant-scoped dbt Cloud project listing + reliable project↔service↔repo linkage

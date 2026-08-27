@@ -2,7 +2,7 @@
 title: "BrightRoutines detector fan-out: single cron + SQS + per-tenant fairness"
 epic: "BH-876"
 author: "Kuri Chinca"
-status: "Draft"
+status: Parked
 created: "2026-07-07"
 generates: "tickets"
 tags: ["brightroutines", "scalability", "sqs", "infra"]
@@ -12,6 +12,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — designs for hundreds of workspaces; staging runs 3-5
 ---
 
 # BrightRoutines detector fan-out: single cron + SQS + per-tenant fairness

@@ -3,7 +3,7 @@ title: "Sync a project with its transformation engine's existing jobs, runs, and
 epic: "BH-1255"
 ticket: "BH-1330"
 author: "Kuri"
-status: "Draft"
+status: Shipped
 created: "2026-08-01"
 generates: "tickets"
 tags: [pipeline, sync, observability, data-products, engine-agnostic, dbt, snowflake, loopcapital]
@@ -12,6 +12,7 @@ related:
   pocs: []
   bedrock: []
   specs: ["pipeline-run-lifecycle.md", "remediation-pr-engine-run-logs.md", "self-healing-pipelines.md"]
+roadmap: done — shipped (BH-1330); syncProjectRuns live
 ---
 
 # Sync a project with its transformation engine's existing jobs, runs, and logs
@@ -20,7 +21,7 @@ related:
 > products" even when the engine already has jobs, run history, and logs — because nothing
 > pulls that history into the project. This spec adds ONE capability: an engine-agnostic
 > **Sync** that enumerates the connected engine's jobs, pulls their runs + logs through the
-> `PipelineRunner` port (`pipeline-run-lifecycle.md`, BH-1255), persists them to the project's
+> `PipelineRunner` port ([`pipeline-run-lifecycle.md`](./pipeline-run-lifecycle.md), BH-1255), persists them to the project's
 > run store, and registers data products from each synced run. Every claim in §1 is anchored
 > to traced `file:line` so no ticket re-derives the gap.
 

@@ -2,7 +2,7 @@
 title: "BYOW End-to-End on OM 1.8.9 Native Ingestion (catalog → embeddings → retrieval → analysis)"
 epic: "BH-526"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-06-15"
 generates: "tickets"
 tags: [warehouse, byow, openmetadata, ingestion, embeddings, retrieval, snowflake, redshift, synapse]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["warehouse-agnostic-architecture.md", "warehouse-extensibility-pattern.md", "snowflake-full-integration.md", "azure-synapse-full-integration.md"]
+roadmap: mixed — standalone; make BYOW catalog scan populate; retire dead scanner lambdas (M)
 ---
 
 # BYOW End-to-End on OM 1.8.9 Native Ingestion

@@ -3,11 +3,12 @@ title: "Longitudinal Monitoring — cross-repo contract, deployment & testing re
 epic: "BH-601"
 parent_spec: "longitudinal-monitoring-capability.md"
 author: "drchinca"
-status: "Draft"
+status: Shipped
 created: "2026-06-17"
 tags: [quality, monitoring, longitudinal, deployment, contract, testing, brightbot, platform-core, webapp]
 related:
   specs: ["longitudinal-monitoring.md", "longitudinal-monitoring-capability.md", "quality-rules-configurable.md"]
+roadmap: done — staging-verified with parent 2026-06-18
 ---
 
 # Longitudinal Monitoring — Contract, Deployment & Testing

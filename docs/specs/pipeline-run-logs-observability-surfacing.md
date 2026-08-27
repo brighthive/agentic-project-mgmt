@@ -2,8 +2,9 @@
 title: Pipeline Run Logs & Observability Surfacing
 epic: BH-1255
 related: [BH-1036, BH-359, BH-1181]
-status: draft
+status: Partial
 last-reviewed: 2026-07-31
+roadmap: mixed — folded into THEME-honest-surfaces.md — run logs dropped on wire; new run store (6pd)
 ---
 
 # Pipeline Run Logs & Observability Surfacing

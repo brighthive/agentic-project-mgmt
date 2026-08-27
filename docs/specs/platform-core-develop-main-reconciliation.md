@@ -2,7 +2,7 @@
 title: "Platform Core: develop→main reconciliation (close the 3-year schema/code drift)"
 epic: "BH-170"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-07-21"
 generates: "epic"
 tags: ["migration", "platform-core", "neo4j", "graphql", "prod-safety"]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: mixed — standalone; develop/main reconciliation (L)
 ---
 
 # Platform Core: develop→main reconciliation

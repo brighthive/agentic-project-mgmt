@@ -3,7 +3,7 @@ title: BrightRoutines — "Your routines" Persistence
 epic: BH-876
 tickets: [BH-885]
 author: kuri
-status: implemented-verified-staging
+status: Shipped
 created: 2026-07-04
 last-reviewed: 2026-07-08
 generates: tickets
@@ -18,20 +18,21 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: done — BH-876 Done, verified staging
 ---
 
 # SPEC: BrightRoutines — "Your routines" Persistence
 
 > Scope: the read-back half of BH-885. The offer→schedule→dismiss **write**
 > path already shipped and is live on staging (see parent spec
-> `brightroutines-intent-loop.md` §7). This spec closes the one remaining gap
+> [`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md) §7). This spec closes the one remaining gap
 > that makes scheduled routines feel unreal: they vanish on reload.
 
 **Terms.** The `RoutineSuggestion` DTO, its status lifecycle
 (`OFFERED / SCHEDULING / SCHEDULED / DISMISSED / EXPIRED / SUPPRESSED`), the
 `brightroutines-{env}` single-table layout (`GSI4`, `pattern_id`,
 `cooldown_until`, `offered_at`), and the `execute_workflow` schedule are all
-defined in the parent spec `brightroutines-intent-loop.md` §3–§4 — this spec
+defined in the parent spec [`brightroutines-intent-loop.md`](./brightroutines-intent-loop.md) §3–§4 — this spec
 does not redefine them. The one net-new term is **`UNSCHEDULING`**: a transient,
 non-firing status this spec adds for the reverse `SCHEDULED → OFFERED`
 transition (defined in §2.2).

@@ -2,7 +2,7 @@
 title: "Warehouse Extensibility Pattern"
 epic: "BH-172"
 author: "drchinca"
-status: "Draft"
+status: Superseded
 created: "2026-04-06"
 generates: "tickets"
 tags: [warehouse, pattern, extensibility, architecture]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   specs: ["azure-synapse-full-integration.md"]
+roadmap: closed — duplicate 7-layer registry of its sibling, 3 days apart
 ---
 
 # Warehouse Extensibility Pattern

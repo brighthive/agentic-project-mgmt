@@ -2,7 +2,7 @@
 title: "Full-lifecycle pipeline-engine control from BrightAgent — observe, control, provision (engine-agnostic)"
 epic: "BH-1323"
 author: "drchinca"
-status: "Draft"
+status: Superseded
 created: "2026-07-31"
 generates: "tickets"
 tags: [pipeline-engine, port-adapter, dbt-cloud, snowflake-pipelines, mcp, provisioning, engineering-agent, brightbot, platform-core]
@@ -10,6 +10,7 @@ related:
   features: []
   pocs: []
   bedrock: []
+roadmap: closed — specs a port never built; decision 2 keeps PipelineRunner
 ---
 
 # Full-lifecycle pipeline-engine control from BrightAgent
@@ -21,7 +22,7 @@ related:
 > paths. Reference architecture:
 > `platform-saas-ai-context/docs/architecture/DBT_CLOUD_ACCOUNT_AND_PROJECT_LINKS.md` +
 > `DBT_TRANSFORMATION_ARCHITECTURE.md` (BH-332 auto-provisioning plan) + `DBT_CLOUD_LEARNINGS.md`.
-> Companion spec: `dbt-cloud-project-links.md` (tenant-scoped listing + project linkage — the
+> Companion spec: [`dbt-cloud-project-links.md`](./dbt-cloud-project-links.md) (tenant-scoped listing + project linkage — the
 > dbt-Cloud-adapter view of §2's port contract).
 
 ## 1. Context
