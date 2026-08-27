@@ -2,8 +2,9 @@
 title: Give the supervisor a warehouse-listing tool
 epic: BH-1370
 ticket: BH-1454
-status: draft
+status: Shipped
 last-reviewed: 2026-08-18
+roadmap: shipped — brightbot#1038 (feat(chat): add supervisor warehouse-listing tool)
 related:
   - warehouse-catalog-mcp-surface.md
   - warehouse-catalog-enumeration.md
