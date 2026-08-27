@@ -1,7 +1,7 @@
 # ADR-0002: Engineering runs on the customer's filesystem; monitoring runs from our cloud
 
 **Date:** 2026-08-13
-**Status:** Proposed
+**Status:** Accepted
 **Who:** @drchinca (Kuri)
 **Supersedes:** [ADR-0001](0001-dbt-core-runs-cloud-side-against-on-prem-sql-server.md)
 
