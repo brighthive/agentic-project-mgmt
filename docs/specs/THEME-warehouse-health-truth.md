@@ -32,6 +32,23 @@ what to do about it. Today all three of those fail: most connections are never p
 stale "Healthy" can sit on screen for weeks, and when an alert does fire it's a generic bell
 with no useful text.
 
+```mermaid
+flowchart LR
+  WH[("Every connected<br/>warehouse")] --> POLL["brightbot<br/>polls all, honors the default"]
+  POLL --> GATE["platform-core<br/>a stale reading shows Unknown"]
+  GATE --> PAGE["webapp<br/>Health Checks shows the truth"]
+  POLL -.->|down or DB missing| ALERT["Slack + inbox<br/>what broke, what to check"]
+  PAGE --> BTN["webapp<br/>Check now — live, read-only"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  classDef slack fill:#fff3e0,stroke:#e65100
+  class POLL bot
+  class GATE core
+  class PAGE,BTN web
+  class ALERT slack
+```
+
 ## Why now
 
 Impact Capital, staging, 2026-08-18 (**BH-1457**): a warehouse was deleted outright on the cloud
