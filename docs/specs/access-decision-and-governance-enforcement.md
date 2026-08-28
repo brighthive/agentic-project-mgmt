@@ -2,9 +2,10 @@
 title: "Access decisions v1 — one decision point + an editable permission matrix"
 epic: "BH-1464"
 author: "drchinca"
-status: "Draft"
+status: Partial
 created: "2026-08-27"
-last-reviewed: "2026-08-27"
+last-reviewed: "2026-08-28"
+roadmap: mixed — v1 in active implementation (BH-1465..1471); BH-1466 in code review (platform-core#1234/#1236), BH-1465 in progress
 generates: "tickets"
 tags: [authorization, rbac, security, tenant-isolation, permission-matrix, platform-core, webapp, brightbot, neo4j]
 related:
