@@ -5,7 +5,7 @@ author: "drchinca"
 status: Partial
 created: "2026-08-27"
 last-reviewed: "2026-08-28"
-roadmap: mixed — v1 in active implementation (BH-1465..1471); BH-1466 data model merged (platform-core#1234), resolvers in review (platform-core#1238); BH-1465 in progress
+roadmap: mixed — v1 in active implementation (BH-1465..1471); BH-1465 (authorize()) and BH-1466's data model (platform-core#1234) merged to develop; BH-1466's resolvers in review (platform-core#1238)
 generates: "tickets"
 tags: [authorization, rbac, security, tenant-isolation, permission-matrix, platform-core, webapp, brightbot, neo4j]
 related:
