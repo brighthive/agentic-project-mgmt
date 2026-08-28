@@ -5,7 +5,7 @@ author: "drchinca"
 status: Partial
 created: "2026-08-27"
 last-reviewed: "2026-08-28"
-roadmap: mixed — v1 in active implementation (BH-1465..1471); BH-1466 in code review (platform-core#1234/#1236), BH-1465 in progress
+roadmap: mixed — v1 in active implementation (BH-1465..1471); BH-1466 data model merged (platform-core#1234), resolvers in review (platform-core#1238); BH-1465 in progress
 generates: "tickets"
 tags: [authorization, rbac, security, tenant-isolation, permission-matrix, platform-core, webapp, brightbot, neo4j]
 related:
@@ -380,8 +380,11 @@ INV-9 guarantees Phase 1a changes no outcome; the divergence metric is the go/no
 4. **Session sharing** — a real shared-session grant + join/read model (v1 only *closes* the
    thread-owner hole in Phase 0). Ask #7.
 5. **Project-content propagation** — decide + document whether a PROJECT grant propagates to the
-   project's assets/pipelines; **write the ADR-015 reconciliation** (project as relationship vs
-   "not a permission axis") before building. Ask #3 (full).
+   project's assets/pipelines; **write a new ADR reconciling this** (project as relationship vs
+   "not a permission axis") before building. This is a third, distinct decision — do not reuse
+   ADR-015 or ADR-016 for it; check `platform-saas-ai-context/docs/decisions/decisions.md` for the
+   next free number when this increment actually starts, same lesson as ADR-016's citation fix
+   above. Ask #3 (full).
 
 ## Ticket Breakdown (v1 only — children of BH-1464, `issueType=Task`)
 
