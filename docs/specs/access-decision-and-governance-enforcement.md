@@ -160,6 +160,15 @@ field is silently open.
 // authorize() runs under ctx.deadline (timeout_s, config); on timeout OR any internal error → BLOCK·fail_closed.
 // Degraded mode is explicit and owned: authorize() unavailable ⇒ writes are DENIED (fail-closed), reads
 //  fall back to the last cached matrix within TTL; a hard cache+graph outage denies writes, not silently allows.
+//
+// ctx (RequestContext, pluggable-scalable.md) — which fields v1 actually reads, and why the rest don't apply yet:
+//  - ctx.deadline    — consulted (above). The only field that gates decision logic.
+//  - ctx.correlation_id — stamped onto the authz.decision span and every authz.* log event (§9) so a
+//    decision can be traced end-to-end; not consulted by the decision itself.
+//  - ctx.budget_remaining, ctx.tenant_tier — NOT used. authorize() is a Neo4j/cache read, not a metered
+//    external call (budget doesn't apply per pluggable-scalable.md PS-12), and per-tier matrix behavior
+//    is out of scope until §12.2 (custom-role authoring). Carried on ctx for forward-compat only —
+//    a later increment that needs them extends this contract explicitly, not by silent assumption.
 ```
 
 ### 2.5 brightbot — call the decider, re-bind the run path
@@ -303,9 +312,11 @@ to the governance increment (§12.3 / `governance-policy-enforcement.md`), where
 ## 9. Observability Contract
 
 - **Span**: `authz.decision` — attributes `workspace.id`, `authz.verb`, `authz.resource_kind`,
-  `authz.effect`, `authz.decided_by`, `authz.shadow`. brightbot tool calls wrap it under `gen_ai.tool.execute`.
+  `authz.effect`, `authz.decided_by`, `authz.shadow`, `correlation_id` (from `ctx.correlation_id`,
+  §2.4 — the join key back to the request that triggered the decision). brightbot tool calls wrap
+  it under `gen_ai.tool.execute`.
 - **Log events**: `authz.allow`, `authz.block` (`reason`), `authz.shadow_divergence`, `authz.matrix_edited`
-  (ids/counts only, never resource values).
+  (ids/counts only, never resource values) — each carries `correlation_id` too.
 - **Metrics**: `authz_decisions_total{effect,verb,resource_kind,workspace_id}`;
   `authz_shadow_divergence_total{verb,workspace_id}` — the gauge that must reach ~0 before a verb
   leaves shadow (§11); `authz_decision_latency_ms` (guards the §2.4 hot-path budget).
