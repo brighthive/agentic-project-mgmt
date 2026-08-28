@@ -103,6 +103,12 @@ enum ResourceKind { WORKSPACE  PROJECT  DATA_ASSET  DATA_PRODUCT  TRANSFORMATION
 enum WorkspaceRoleName { WORKSPACE_ADMIN  WORKSPACE_COLLABORATOR  WORKSPACE_CONTRIBUTOR  WORKSPACE_VIEWER  WORKSPACE_AGENT_GUEST }
 ```
 
+**Implementation note (BH-1466):** platform-core already has this exact enum, values-for-values, as
+`AuthWorkspaceRole` (`src/graphql/directives/authorized.ts:63-68`). v1 reuses it rather than
+introducing a duplicate `WorkspaceRoleName` type — same shape, no vendor/type drift, one fewer
+enum to keep in sync. This spec keeps the name `WorkspaceRoleName` for readability; treat it as an
+alias for `AuthWorkspaceRole` in code.
+
 ### 2.2 The permission matrix — the thing `authorize()` reads (this is the core, requirement #1/#8)
 
 A workspace's matrix is, per role, the set of `(verb, resourceKind)` cells that role may perform.
@@ -136,7 +142,7 @@ a cell-set; today's booleans map 1:1 as seed values (below). No new store, no mi
 | READ · DATA_ASSET | ✅ | ✅ | ✅ | ✅ | ❌ | `dataAssetRead` |
 | CREATE · DATA_ASSET | ✅ | ✅ | ❌ | ❌ | ❌ | `dataAssetCreate` |
 | READ/CREATE/UPDATE/DELETE · PROJECT | ✅ | C:✅ CRU / no D | R only | R only | ❌ | `project*` flags |
-| READ · GOVERNANCE (artifact) | ✅ | ✅ | ✅ | ✅ | ❌ | `governanceRead` |
+| READ · GOVERNANCE (→ v1: READ·WORKSPACE — `GOVERNANCE` is not a §2.1 `ResourceKind`; governance artifacts are workspace-scoped with no dedicated kind, same collapse as the `memberCreate` row below) | ✅ | ✅ | ✅ | ✅ | ❌ | `governanceRead` |
 | MANAGE members (→ v1: CREATE·WORKSPACE-member) | ✅ | ❌ | ❌ | ❌ | ❌ | `memberCreate` |
 | **RUN · TRANSFORMATION/PIPELINE/WORKFLOW** | ✅ | ✅ | ❌ | ❌ | ❌ | **new — conservative default** |
 | **DELETE · DATA_ASSET** | ✅ | ❌ | ❌ | ❌ | ❌ | **new — admin-only default** |
