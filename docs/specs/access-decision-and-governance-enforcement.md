@@ -163,7 +163,10 @@ field is silently open.
 // MatrixCache: read-through Redis cache of a workspace's matrix, keyed workspace_id.
 //  - setRolePermission INVALIDATES the workspace key in the same transaction (INV-11) — no stale ALLOW.
 //  - RoleReader lookups are DataLoader-batched so a list resolver returning N objects is 1 role read, not N.
-// authorize() runs under ctx.deadline (timeout_s, config); on timeout OR any internal error → BLOCK·fail_closed.
+// authorize() has its own configured budget (timeout_s, config — a duration) AND is bounded by
+//  ctx.deadline (an absolute timestamp inherited from the caller, per pluggable-scalable.md PS-11:
+//  "child deadline ≤ parent"). Effective cutoff = min(now + timeout_s, ctx.deadline) — whichever
+//  comes first. On exceeding that cutoff, OR any internal error → BLOCK·fail_closed.
 // Degraded mode is explicit and owned: authorize() unavailable ⇒ writes are DENIED (fail-closed), reads
 //  fall back to the last cached matrix within TTL; a hard cache+graph outage denies writes, not silently allows.
 //
