@@ -401,6 +401,8 @@ INV-9 guarantees Phase 1a changes no outcome; the divergence metric is the go/no
 
 - **Prior art**: `AUTH_TIERS_AND_RBAC.md` (shipped 3-tier model), `NEO4J_DATA_MODEL.md`.
 - **Program epic**: BH-1464 (this is its v1; §12 are its later increments).
-- **ADR to record before implementation**: "Extend Neo4j (matrix on the existing graph) over adopting
-  Cedar/OpenFGA" — `platform-saas-ai-context/docs/decisions/decisions.md`. Note: **ADR-015 is cited
-  across specs but is absent from `decisions.md` (stops at ADR-014)** — record it too, or stop citing it.
+- **ADR-016**: "Extend Neo4j (matrix on the existing graph) over adopting Cedar/OpenFGA" —
+  `platform-saas-ai-context/docs/decisions/decisions.md` (`platform-saas-ai-context#48`, draft).
+  Originally miscited in this spec as "ADR-015" — that number is already claimed by an unrelated,
+  still-open decision (`platform-saas-ai-context#46`, BrightAgent shared-core four-plane pattern,
+  BH-1255). Recorded under the correct free number instead of colliding two decisions on one slot.
