@@ -22,6 +22,21 @@ When a source table starts producing wrong or missing data, the platform says wh
 reports, dashboards, and Gold tables are affected — before anyone reads a bad number off one of
 them. Today a customer learns about it from whoever noticed the dashboard looked odd.
 
+```mermaid
+flowchart LR
+  DBT[("dbt lineage graph")] --> PROV["brightbot<br/>read lineage through one provider"]
+  PROV --> EDGES["platform-core<br/>store dependency edges, walkable both ways"]
+  ANOM["anomaly detected<br/>on a source table"] --> WALK["brightbot<br/>walk downstream, attach the impact"]
+  EDGES --> WALK
+  WALK --> ALERT["Slack + webapp<br/>what broke and what it hits, Gold first"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef slack fill:#fff3e0,stroke:#e65100
+  class PROV,WALK bot
+  class EDGES core
+  class ALERT slack
+```
+
 ## Why now
 
 The two halves already exist and have never been connected. The platform detects anomalies on a

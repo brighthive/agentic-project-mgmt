@@ -31,6 +31,18 @@ the platform actually applies it, tells someone when it's violated, and shows wh
 Today all three can be created and none are reliably applied. A data leader can build a whole
 governance posture in the UI and have it change nothing.
 
+```mermaid
+flowchart LR
+  RULES["quality rule, governance policy,<br/>schema contract (declared in the UI)"] --> POINT["platform-core — one enforcement point:<br/>allow, block, or warn; fails closed"]
+  OP["called from transform-run<br/>and query-execute"] --> POINT
+  POINT --> DECISION[("the decision is stored,<br/>readable later")]
+  POINT --> SHOW["webapp + Slack<br/>what ran, what it decided, what it blocked"]
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  classDef web fill:#e8f5e9,stroke:#2e7d32
+  class POINT,DECISION core
+  class SHOW web
+```
+
 ## Why now
 
 Two separate audits, written in June, each confirmed the same thing by reading the code: the

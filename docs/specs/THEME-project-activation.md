@@ -26,6 +26,18 @@ A customer points a project at their transformation engine and their repo, flips
 platform pulls in what's already there — past runs, existing models, current failures — instead
 of starting from an empty screen. They see their real estate on day one, not after a week of use.
 
+```mermaid
+flowchart LR
+  BIND["platform-core<br/>bind project to engine + repo (admin, multi-repo)"] --> ACT{"project activated<br/>— fires exactly once"}
+  ACT --> PULL["brightbot<br/>pull existing run history via the runner port"]
+  PULL --> FIND["surface findings: current failures,<br/>stale models, undocumented assets"]
+  BIND --> SCOPE["platform-core<br/>you see only your own dbt Cloud projects"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  class PULL,FIND bot
+  class BIND,SCOPE core
+```
+
 ## Why now
 
 Activation today does nothing. A customer connects dbt Cloud, activates a project, and sees nothing

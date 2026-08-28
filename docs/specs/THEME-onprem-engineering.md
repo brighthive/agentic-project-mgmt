@@ -25,6 +25,23 @@ experience — read their tables, run their dbt models, propose changes as revie
 moving data out or opening their firewall to us. Today this only works if the files happen to be
 reachable from our cloud, which for Loop Capital they are not.
 
+```mermaid
+flowchart LR
+  subgraph net["inside the customer's network"]
+    RUNNER["brightbot runner<br/>runs dbt, reads SQL Server locally"]
+    SQL[("their SQL Server")]
+    RUNNER --- SQL
+  end
+  CLOUD["BrightAgent cloud"] -->|queued work| RUNNER
+  RUNNER -->|results, outbound HTTPS only| CLOUD
+  RUNNER --> PR["a model change as a reviewable<br/>PR, a human merges"]
+  CLOUD --> REG["platform-core<br/>register the on-prem engine, show its runs"]
+  classDef bot fill:#e3f2fd,stroke:#1565c0
+  classDef core fill:#f3e5f5,stroke:#6a1b9a
+  class RUNNER,PR bot
+  class REG core
+```
+
 ## Why now
 
 Loop Capital's SQL Server sits on their own machine behind their firewall, and it is the live
