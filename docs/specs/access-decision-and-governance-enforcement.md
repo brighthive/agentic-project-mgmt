@@ -5,7 +5,7 @@ author: "drchinca"
 status: Partial
 created: "2026-08-27"
 last-reviewed: "2026-08-28"
-roadmap: mixed — v1 Phase 1a complete: BH-1465 (authorize()), BH-1466 (permission matrix), BH-1467 (shadow mode + telemetry) all merged to develop. Phase 1b (BH-1468..1471) not started. Known gap: no metrics backend exists org-wide, so §9's metrics are structured logs + in-process counters only — see BH-1464 comment for the Phase-1b-gate implication
+roadmap: mixed — v1 Phase 1a complete (BH-1465/1466/1467 merged to develop). BH-1470 (brightbot) also merged: fixes the live cross-tenant run-path leak outright, adds a client-side tool-authorization gate (shadow-flagged off by default, pending BH-1472). BH-1469 (webapp editor) in review. BH-1468/1471 (the real @authorized flip) deliberately deferred until Phase 1a produces real shadow-mode divergence data. Two gaps found and ticketed: BH-1472 (platform-core needs a GraphQL entry point for authorize()/authorizeWithShadowMode() -- doesn't exist yet), BH-1473 (a narrow pre-verification secret read in brightbot's concurrent startup fan-out). Also: no metrics backend exists org-wide, so §9's metrics are structured logs + in-process counters only — see BH-1464 comments.
 generates: "tickets"
 tags: [authorization, rbac, security, tenant-isolation, permission-matrix, platform-core, webapp, brightbot, neo4j]
 related:
@@ -408,8 +408,10 @@ INV-9 guarantees Phase 1a changes no outcome; the divergence metric is the go/no
 | [BH-1469](https://brighthiveio.atlassian.net/browse/BH-1469) | `feat(webapp): permission-matrix live editor bound to setRolePermission; fix phantom role + local-dev bypass` | M | 1b |
 | [BH-1470](https://brighthiveio.atlassian.net/browse/BH-1470) | `feat(brightbot): role-aware tool context + call authorize() before RUN/write tools` | M | 1b |
 | [BH-1471](https://brighthiveio.atlassian.net/browse/BH-1471) | `test(e2e): matrix edit denies a role end-to-end + denied RUN returns BLOCK (real backend)` | S | 1b |
+| [BH-1472](https://brighthiveio.atlassian.net/browse/BH-1472) | `feat(platform-core): expose authorize()/authorizeWithShadowMode() over GraphQL for brightbot` | M | gap |
+| [BH-1473](https://brighthiveio.atlassian.net/browse/BH-1473) | `fix(brightbot): warehouse-type probe reads foreign workspace's secret before workspace_id verification completes` | S | gap |
 
-*(Phase 0 security tickets live in the separate fast-track security spec, not here.)*
+*(Phase 0 security tickets live in the separate fast-track security spec, not here. BH-1472/1473 are gaps discovered during BH-1470's implementation, not part of the original v1 breakdown.)*
 
 ## Related
 
