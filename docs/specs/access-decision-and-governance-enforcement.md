@@ -5,7 +5,7 @@ author: "drchinca"
 status: Partial
 created: "2026-08-27"
 last-reviewed: "2026-08-28"
-roadmap: mixed — v1 in active implementation (BH-1465..1471); BH-1465 (authorize()) and BH-1466's data model (platform-core#1234) merged to develop; BH-1466's resolvers in review (platform-core#1238)
+roadmap: mixed — v1 Phase 1a complete: BH-1465 (authorize()), BH-1466 (permission matrix), BH-1467 (shadow mode + telemetry) all merged to develop. Phase 1b (BH-1468..1471) not started. Known gap: no metrics backend exists org-wide, so §9's metrics are structured logs + in-process counters only — see BH-1464 comment for the Phase-1b-gate implication
 generates: "tickets"
 tags: [authorization, rbac, security, tenant-isolation, permission-matrix, platform-core, webapp, brightbot, neo4j]
 related:
@@ -330,6 +330,17 @@ to the governance increment (§12.3 / `governance-policy-enforcement.md`), where
 - **Metrics**: `authz_decisions_total{effect,verb,resource_kind,workspace_id}`;
   `authz_shadow_divergence_total{verb,workspace_id}` — the gauge that must reach ~0 before a verb
   leaves shadow (§11); `authz_decision_latency_ms` (guards the §2.4 hot-path budget).
+
+**Implementation note (BH-1467):** this platform-core repo has no metrics backend anywhere today
+(no OTel/prom-client/CloudWatch-metrics dependency exists in the codebase) — every existing
+observability signal here, not just this feature's, is a structured `console.log` line. These
+three metrics are real and correctly computed (`src/graphql/service/authz/telemetry.ts`), but
+their only home right now is that structured log line plus an in-process, non-persisted counter
+(`getAuthzMetricsSnapshot()`). **§11's Phase 1b gate — "the divergence metric is the go/no-go for
+each flip" — currently means hand-querying CloudWatch Logs Insights, not reading a dashboard.**
+Building a real metrics pipeline is an org-wide undertaking well outside this spec; whoever plans
+the first Phase 1b flip should decide explicitly whether manual log-querying is acceptable or a
+pipeline needs to land first, rather than discovering this gap mid-flip.
 
 ## 10. Test Coverage Update
 
