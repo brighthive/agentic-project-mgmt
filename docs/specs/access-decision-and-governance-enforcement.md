@@ -5,7 +5,7 @@ author: "drchinca"
 status: Partial
 created: "2026-08-27"
 last-reviewed: "2026-08-28"
-roadmap: mixed — v1 Phase 1a complete AND BH-1469/1470 (Phase 1b's non-flip pieces) merged: BH-1465/1466/1467 (authorize()/matrix/shadow mode, platform-core), BH-1469 (webapp live editor), BH-1470 (brightbot: fixes the live cross-tenant run-path leak outright, adds a client-side tool-authorization gate shadow-flagged off by default). Only BH-1468/1471 (the actual @authorized enforcement flip + its e2e proof) remain, deliberately deferred until Phase 1a runs in a real environment long enough to produce shadow-mode divergence data. Four gaps found and ticketed along the way: BH-1472 (platform-core needs a GraphQL entry point for authorize()/authorizeWithShadowMode() — doesn't exist yet), BH-1473 (a narrow pre-verification secret read in brightbot's concurrent startup fan-out), BH-1474 (develop-wide webapp typecheck break blocking all pushes). Also: no metrics backend exists org-wide, so §9's metrics are structured logs + in-process counters only — see BH-1464 comments.
+roadmap: mixed — v1 Phase 1a merged AND BH-1469/1470 (Phase 1b's non-flip pieces) merged, BUT an architectural audit (2026-08-31) found INV-11 does not actually hold as implemented — see the INV-11 note in §3 and BH-1477 (fix in progress, CRITICAL, blocks trusting BH-1467's shadow-mode divergence data). Merged: BH-1465/1466/1467 (authorize()/matrix/shadow mode, platform-core), BH-1469 (webapp live editor), BH-1470 (brightbot: fixes the live cross-tenant run-path leak outright, adds a client-side tool-authorization gate shadow-flagged off by default). BH-1468/1471 (the actual @authorized enforcement flip + its e2e proof) remain deliberately deferred until Phase 1a runs in a real environment long enough to produce trustworthy shadow-mode divergence data — now additionally gated on BH-1477 landing first. Seven gaps found and ticketed along the way: BH-1472 (platform-core needs a GraphQL entry point for authorize()/authorizeWithShadowMode() — doesn't exist yet), BH-1473 (a narrow pre-verification secret read in brightbot's concurrent startup fan-out), BH-1474 (develop-wide webapp typecheck break blocking all pushes), BH-1477 (cache race, CRITICAL, fix in progress), BH-1478 (PII masking is alias-based not lineage-based — SELECT ssn AS x bypasses it), BH-1479 (bypass-path sweep not yet done). Also: no metrics backend exists org-wide, so §9's metrics are structured logs + in-process counters only — see BH-1464 comments.
 generates: "tickets"
 tags: [authorization, rbac, security, tenant-isolation, permission-matrix, platform-core, webapp, brightbot, neo4j]
 related:
@@ -213,6 +213,12 @@ to mutating tools, not every read (mirrors THEME "transform-run and query-execut
   closed enums; which cells a role holds is open workspace config, never code.
 - **INV-11 Cache coherence.** A `setRolePermission` write SHALL invalidate the workspace's cached
   matrix before the next decision reads it — no stale ALLOW SHALL survive an edit.
+  **Known violation, in progress ([BH-1477](https://brighthiveio.atlassian.net/browse/BH-1477)):**
+  an architectural audit (2026-08-31) found this invariant does NOT hold as implemented — a slow
+  cache refill can race a concurrent revoke and overwrite a correctly-invalidated cache entry with
+  stale pre-edit data (no version/fencing token exists), and the invalidation call itself fails
+  open (swallows Redis errors, `setRolePermission` reports success regardless). Fix in progress;
+  do not treat INV-11 as proven until BH-1477 lands with its race-reproduction regression test.
 - **INV-12 Agents don't re-derive.** brightbot/webapp SHALL obtain decisions from `authorize()`,
   never compute a parallel verdict.
 
@@ -423,6 +429,11 @@ only so the two don't get scoped as the same thing.
 | [BH-1472](https://brighthiveio.atlassian.net/browse/BH-1472) | `feat(platform-core): expose authorize()/authorizeWithShadowMode() over GraphQL for brightbot` | M | gap |
 | [BH-1473](https://brighthiveio.atlassian.net/browse/BH-1473) | `fix(brightbot): warehouse-type probe reads foreign workspace's secret before workspace_id verification completes` | S | gap |
 | [BH-1474](https://brighthiveio.atlassian.net/browse/BH-1474) | `fix(webapp): 17 pre-existing typecheck errors on develop block every push (DataAssetCatalog)` | S | gap, unrelated to v1 — filed under BH-172, belongs under BH-170 |
+| [BH-1475](https://brighthiveio.atlassian.net/browse/BH-1475) | `feat(brightbot): full column/record removal for governed data, not just value masking` | M | adjacent pillar, under BH-172 |
+| [BH-1476](https://brighthiveio.atlassian.net/browse/BH-1476) | `spec: attribute-based access control (ABAC) as the second half of pillar A` | spec-only | later increment |
+| [BH-1477](https://brighthiveio.atlassian.net/browse/BH-1477) | `fix(platform-core): permission-matrix cache race lets a revoked cell stay effectively granted` | M | **CRITICAL, fix in progress** |
+| [BH-1478](https://brighthiveio.atlassian.net/browse/BH-1478) | `fix(brightbot): PII masking is alias-name-based, not lineage-based` | M | gap, under BH-172 |
+| [BH-1479](https://brighthiveio.atlassian.net/browse/BH-1479) | `audit: sweep for authz/masking bypass paths` | audit | not yet started |
 
 *(Phase 0 security tickets live in the separate fast-track security spec, not here. BH-1472/1473 are gaps discovered during BH-1470's implementation, not part of the original v1 breakdown.)*
 
