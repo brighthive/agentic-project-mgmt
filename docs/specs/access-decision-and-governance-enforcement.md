@@ -396,6 +396,18 @@ INV-9 guarantees Phase 1a changes no outcome; the divergence metric is the go/no
    ADR-015 or ADR-016 for it; check `platform-saas-ai-context/docs/decisions/decisions.md` for the
    next free number when this increment actually starts, same lesson as ADR-016's citation fix
    above. Ask #3 (full).
+6. **ABAC (attribute-based access control)** — [BH-1476](https://brighthiveio.atlassian.net/browse/BH-1476),
+   spec-only ticket. v1 is pure RBAC (role × cell); ABAC adds conditions on resource/subject
+   attributes beyond role membership. Explicitly a different pillar from §12's masking/removal
+   concern below — ABAC decides *whether* an operation is allowed, masking decides *what data* is
+   visible within an already-allowed one. Do not conflate the two when scoping.
+
+**Adjacent, not part of this spec's pillar:** full column/record removal for governed data
+([BH-1475](https://brighthiveio.atlassian.net/browse/BH-1475), under BH-172) extends BH-766's
+existing PII-masking layer (`brightbot/tools/pii_masking.py`) to drop a column/record entirely
+rather than mask a value in place. This is the "declared governance policy actually applied"
+pillar (`governance-policy-enforcement.md`, BH-766), not this spec's RBAC/ABAC pillar — named here
+only so the two don't get scoped as the same thing.
 
 ## Ticket Breakdown (v1 only — children of BH-1464, `issueType=Task`)
 
