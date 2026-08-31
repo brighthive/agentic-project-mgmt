@@ -4,7 +4,7 @@ epic: "BH-172"
 author: "drchinca"
 status: Partial
 created: "2026-06-24"
-last_reviewed: "2026-06-24"
+last_reviewed: "2026-08-31"
 generates: "tickets"
 tags: [governance, quality, policy, enforcement, brightbot, platform-core, great-expectations]
 related:
@@ -52,7 +52,7 @@ Success = the four scenarios below pass against a real workspace, and the `ENFOR
 
 | # | Ticket | Gap | Evidence |
 |---|---|---|---|
-| 1 | **BH-766** | Custom policies are inert prose — never enforced | 4 active policies (FERPA Review, PII Anonymization, Access, Retention) with zero enforcement code anywhere |
+| 1 | **BH-766** | Custom policies are inert prose — never enforced | **Stale as of 2026-08-31**: PII Anonymization now has real enforcement — `brightbot/tools/pii_masking.py` masks `SENSITIVE` columns deterministically (`****`), fail-closed on classification error, sourced from a real OMD-tag → Neo4j `pii: PiiType!` → GraphQL chain (`platform-core/src/data-source/openmetadata/v2.ts:899-910`), with 9 confirmed call sites across brightbot's agents — not decorative. FERPA Review, Access, and Retention still have zero enforcement code; Retention isn't even a `PolicyCategory` enum value (`brightbot/models/policy.py:12-21`). BH-766's "Staging QC" Jira status reflects the PII slice specifically — see ROADMAP.md's own caution not to read it as the whole gap closed. |
 | 2 | **BH-767** | Agent generates quality expectations but cannot persist them | `createQualityRule` exists in platform-core but is never called from brightbot; prompt punts to UI |
 | 3 | **BH-768** | `applyOnIngestion` / `applyOnSchedule` are decorative | Rule "staigng test 2" is ACTIVE + applyOnSchedule=true, yet its 10 executions are at irregular timestamps — a manual fingerprint, not a scheduler cadence |
 | 4 | **BH-769** | Failing ACTIVE rules emit no alert | That same rule: all 10 executions `passed=false` (latest: 0/100 rows ok); no BrightSignals/Slack notification |
@@ -66,7 +66,7 @@ Close the loop in four independently-shippable slices, smallest-risk first:
 1. **BH-767 (persist) — M, do first.** Add a feature-flagged, confirm-gated brightbot tool `persist_quality_rules` mapping generated `ChosenExpectationResponse` → `CreateQualityRuleInput` → `createQualityRule`. Update the governance prompt to offer saving *via the tool* instead of the UI. Lowest risk — the mutation already exists; this is wiring.
 2. **BH-769 (alert) — M.** On any `ACTIVE` rule execution that fails at/above severity, emit a BrightSignals/Slack notification (respect `warningThreshold`). Reuses the existing execution-write path; couples to BH-409.
 3. **BH-768 (auto-run) — L.** Build the trigger that reads `applyOnSchedule` (scheduled job) and `applyOnIngestion` (post-ingestion hook) and invokes the existing execution path. Likely lives in jobs-service / org-cdk (EventBridge), per the BH-503 design intent.
-4. **BH-766 (policy enforcement) — L.** Make at least one policy category machine-enforceable (recommend the FERPA USE gate or ACCESS): a platform-core resolver seam that blocks/flags the described action and cites the policy. Free-text→executable NLP is out of scope.
+4. **BH-766 (policy enforcement) — L, PARTIALLY DONE as of 2026-08-31.** "Make at least one policy category machine-enforceable" is satisfied for PRIVACY — see the corrected gap row above. Remaining: FERPA (USE), ACCESS, SECURITY, TRANSPARENCY, QUALITY, and RETENTION (needs adding to the `PolicyCategory` enum first, `brightbot/models/policy.py:12-21`) are still zero-enforcement. PRIVACY's masking layer is Python-on-fetched-rows in brightbot, not a platform-core resolver seam — the remaining categories may or may not fit that same pattern; worth deciding per-category rather than assuming one mechanism covers all six. Free-text→executable NLP remains out of scope.
 
 Sequencing rationale: persist + alert are wiring on existing rails and deliver immediate value; auto-run and policy-enforcement are the genuine cross-repo engine work.
 
