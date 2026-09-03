@@ -35,27 +35,30 @@ the data BH-1343's SYNC() reads, so it blocks this theme too.
 
 ## What to build
 
-1. `brightbot` — Ship BH-1343 first (unbuilt foundation): `project.activated` → `run_project_sync`
-   SYNC() → seeded sessions + roll-up signal. This theme adds nothing until that lands.
-2. `brightbot` — Add `quality_check_agent` + `data_profiler_agent`
+1. `brightbot` — Ship **BH-1343** first (unbuilt foundation): `project.activated` →
+   `run_project_sync` SYNC() → seeded sessions + roll-up signal. This theme adds nothing until
+   that lands.
+2. `brightbot` — **BH-1503**: add `quality_check_agent` + `data_profiler_agent`
    (`agents/governance_agent/`, Great Expectations, BH-503 Shipped) as a `GoldenNugget` source
    inside SYNC() — a failing expectation suite on a table/data-product surfaces a nugget the same
    way a bad `.dtsx` file does.
-3. `brightbot` — Recurring trigger: SYNC() re-runs on a cadence (start: nightly, reusing the
-   existing longitudinal-monitoring nightshift scheduler, BH-503) while a project stays ACTIVE —
-   not only on the DRAFT→ACTIVE edge. New nuggets since the last run seed new sessions;
-   nothing-new re-runs produce zero nuggets silently (reuse BH-1343's `reason_if_empty`, never
-   alert on quiet).
-4. `brightbot` — Add `project` to `AGENT_SHORT` (`agents/constants.py:125`) and give it Skills
-   affinity, so a user opening a seeded session and asking a follow-up gets governance/quality/
-   schema Skills loaded (`DeepAgentSkillsMiddleware`, BH-860 Shipped) instead of none.
-5. `brighthive-platform-core` — Fix `addResourceToProject`/`removeResourceFromProject`: add
-   `workspaceId` to `ResourceProjectConnectInput`/`Disconnect` (currently resolves to `""`,
-   `authorize()` fails closed forever once BH-1464 flips CREATE/DELETE live) and call
+3. `brightbot` — **BH-1504**: recurring trigger — SYNC() re-runs on a cadence (start: nightly,
+   reusing the existing longitudinal-monitoring nightshift scheduler, BH-503) while a project
+   stays ACTIVE — not only on the DRAFT→ACTIVE edge. New nuggets since the last run seed new
+   sessions; nothing-new re-runs produce zero nuggets silently (reuse BH-1343's
+   `reason_if_empty`, never alert on quiet).
+4. `brightbot` — **BH-1505**: add `project` to `AGENT_SHORT` (`agents/constants.py:125`) and give
+   it Skills affinity, so a user opening a seeded session and asking a follow-up gets
+   governance/quality/schema Skills loaded (`DeepAgentSkillsMiddleware`, BH-860 Shipped) instead
+   of none.
+5. `brighthive-platform-core` — **BH-1506** + **BH-1507**: fix
+   `addResourceToProject`/`removeResourceFromProject` — add `workspaceId` to
+   `ResourceProjectConnectInput`/`Disconnect` (currently resolves to `""`, `authorize()` fails
+   closed forever once BH-1464 flips CREATE/DELETE live) and call
    `invalidateProjectResourcesCache` on link/unlink (today only `onboard`/`delete` do).
-6. `brightbot` + `brighthive-platform-core` — Move activation-check + run-sync + the new
-   recurring trigger off bare FastAPI `BackgroundTasks` onto a queue with per-workspace fairness,
-   before item 3 runs this fan-out on a schedule across every ACTIVE project.
+6. `brightbot` + `brighthive-platform-core` — **BH-1508**: move activation-check + run-sync + the
+   new recurring trigger off bare FastAPI `BackgroundTasks` onto a queue with per-workspace
+   fairness, before item 3 runs this fan-out on a schedule across every ACTIVE project.
 
 ## Done when
 
@@ -90,8 +93,8 @@ the data BH-1343's SYNC() reads, so it blocks this theme too.
 | `brightbot` | SYNC() composition + quality-nugget source + recurring trigger + `project` Skills affinity |
 | `brighthive-platform-core` | `workspaceId` fix + cache invalidation on resource↔project link/unlink |
 
-**Tickets:** BH-1343 (existing, build first) + new tickets filed under BH-1255 (all `issueType:
-Task`/`Bug` as noted, never `Story`)
+**Tickets:** BH-1343 (existing, build first) blocks BH-1503, BH-1504; BH-1505, BH-1506, BH-1507,
+BH-1508 — all `issueType: Task` under BH-1255.
 
 ## Related
 
