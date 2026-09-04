@@ -127,11 +127,15 @@ Joins specifically: where join *keys* come from is a related but separate concer
 
 | Ticket | Summary | Points | Epic |
 |--------|---------|--------|------|
-| — | Schema-contract resolver + typed SchemaContract model (parse TargetSchema.jsonSchema) | 3 | BH-624 |
-| — | Deterministic conformance validator (columns/types, INPUT/OUTPUT, dialect-aware) | 5 | BH-624 |
-| — | Bind OUTPUT contract to analysis/query: validate result + refuse-on-mismatch | 5 | BH-624 |
-| — | Bind INPUT/OUTPUT contracts to dbt transformation generation | 5 | BH-624 |
-| — | Bind contract gates to visualization + join output | 3 | BH-624 |
+| [BH-1511](https://brighthiveio.atlassian.net/browse/BH-1511) | Schema-contract resolver + typed SchemaContract model (parse TargetSchema.jsonSchema) | 3 | BH-172 |
+| [BH-1512](https://brighthiveio.atlassian.net/browse/BH-1512) | Deterministic conformance validator (columns/types, INPUT/OUTPUT, dialect-aware) | 5 | BH-172 |
+| [BH-1513](https://brighthiveio.atlassian.net/browse/BH-1513) | Bind OUTPUT contract to analysis/query: validate result + refuse-on-mismatch | 5 | BH-172 |
+| [BH-1514](https://brighthiveio.atlassian.net/browse/BH-1514) | Bind INPUT/OUTPUT contracts to dbt transformation generation | 5 | BH-172 |
+| [BH-1515](https://brighthiveio.atlassian.net/browse/BH-1515) | Bind contract gates to visualization + join output | 3 | BH-172 |
+
+Filed 2026-09-04 under BH-172 (the consolidated epic per `THEME-governance-enforced.md`), not the
+`BH-624` this table originally named — that epic (Semantic View Lifecycle) predates the theme
+consolidation.
 
 ## Related
 

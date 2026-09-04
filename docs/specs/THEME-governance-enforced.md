@@ -4,6 +4,7 @@ epic: "BH-172"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"
+last-reviewed: "2026-09-04"
 supersedes:
   - governance-policy-enforcement.md
   - user-schema-contract-gates.md
@@ -117,11 +118,9 @@ enforcement point that all three artifacts register against, then wire each arti
 | `brighthive-webapp` | enforcement visibility, tier badges |
 | `brightbot-slack-server` | violation alerts |
 
-**Tickets:** BH-766, BH-767, BH-768, BH-769, BH-624
-
-⚠️ **Not yet handable to an engineer:** [`user-schema-contract-gates.md`](./user-schema-contract-gates.md)'s five ticket rows have
-**no Jira IDs at all**. Create them (and confirm the BH-76x numbers above are still live) before
-this theme is assigned — status stays `Draft` until then.
+**Tickets:** BH-766, BH-767, BH-768, BH-769 (policy/quality enforcement gaps) + BH-1511, BH-1512,
+BH-1513, BH-1514, BH-1515 (schema-contract gates, filed 2026-09-04 — see
+[`user-schema-contract-gates.md`](./user-schema-contract-gates.md))
 
 ---
 
