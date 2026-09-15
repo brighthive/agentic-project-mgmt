@@ -89,6 +89,8 @@ Mutation deleteProjectSpecDocument(input: DeleteProjectSpecDocumentInput!): Dele
 | `read_project_pipeline` | read | Read WorkflowSpec for project |
 | `get_pipeline_node_catalog` | read | Available node types + support status |
 | `propose_pipeline_from_spec` | write preview | Draft WorkflowSpec steps from spec text (returns preview, does not mutate) |
+| `apply_pipeline_from_spec` | write + confirm | Apply proposed steps to WorkflowSpec |
+| `create_project_from_conversation` | write + confirm | Bootstrap project + spec from workspace chat (see `conversational-project-bootstrap.md`) |
 
 ## 3. Invariants (DbC)
 
