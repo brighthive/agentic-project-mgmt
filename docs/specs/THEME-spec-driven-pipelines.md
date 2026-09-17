@@ -112,8 +112,16 @@ staged-gate + activation-thread mechanism — see PR #191)
 
 ## Not yet ready to delegate
 
-No client trigger yet. Also: confirm whether `Spec`/`Pipeline`/`Observability` are real tabs
-today (webapp sidenav doesn't show them) before BH-1527/1530 are refined further.
+No client trigger yet. Also, **resolved 2026-09-16, confirmed against `origin/develop`:** no
+`Spec` tab and no `Observability` tab exist in `brighthive-webapp`
+(`src/common/ProjectSidenav/ProjectSidenav.tsx`) — real tabs are Overview / Schemas / Flow /
+Input Data Assets / Files / Data Products. `Flow` (≈ this doc's "Pipeline") is real but
+feature-flagged, marked "not GA" in its own code comment. **Open product decision, not an
+engineering call:** does spec-authoring get a new tab, fold into `Overview`, or ride behind the
+same flag as `Flow`? BH-1527's "existing single-file specs parse unmodified" criterion assumed a
+surface that doesn't exist — this is greenfield UI, not an extension. Source docs:
+[projects-2.0-technical-requirements.md](projects-2.0-technical-requirements.md),
+[projects-2.0-design-spec.md](projects-2.0-design-spec.md) (both now saved in-repo, reconciled).
 
 ## Notes for whoever picks this up
 
