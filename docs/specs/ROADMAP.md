@@ -95,6 +95,7 @@ flowchart TB
 | [Pipelines that fix themselves](THEME-fleet-self-healing.md) | BH-1255 | 18 pd | 🟡 | **Decision 4 done → rebase landed.** The orphaned ~3,200 lines are recovered onto `develop` (layers 0–1, gate default OFF, 157 tests) — **brightbot #1043**, draft. One follow-up left: wire `evaluate_after_poll` into the watchdog poll cycle, then delegate the remainder |
 | [Describe a routine and get one](THEME-routine-authoring.md) | BH-1463 | ~20 pd | 🟡 | Epic **created** 2026-08-19. Largest un-started; the one gate before build is a scored eval (spec item 6) |
 | [Governance you declare is enforced](THEME-governance-enforced.md) | BH-172 | 23–28 pd | 🟡 | **Decision 3 settled → yes, this quarter.** Cut the missing 5–6 pd child ticket; capacity note below (it displaces other Sep-30 scope) |
+| [Write a spec, get a working pipeline](THEME-spec-driven-pipelines.md) | BH-1255 | not yet sized | 🔴 | New theme (2026-09-16), not yet ready to delegate — its own template requires a real incident/client trigger before status leaves `Draft`; none exists yet |
 
 **Read it as a hand-off order.** The four ✅ rows (≈18 pd) go to engineers this week with no
 meeting. **Ten 🟡 rows** each need one first move — a ~1 pd query, a ticket assignment, a release
@@ -292,8 +293,9 @@ shipped capability. It is the highest-return item on this page.
 | [Pipelines that fix themselves](THEME-fleet-self-healing.md) | L | **18 pd** | ⬆️ | ~7 pd of it is recovering an orphaned branch, not building |
 | [Describe a routine and get one](THEME-routine-authoring.md) | L | **~20 pd** | ⬆️ | Wrong in both directions — drafting is cheaper, context-gathering is dearer |
 | [Governance you declare is enforced](THEME-governance-enforced.md) | L | **23–28 pd** | ⬆️⬆️ | Largest by far, and 5–6 pd of it has no ticket at all |
+| [Write a spec, get a working pipeline](THEME-spec-driven-pipelines.md) | — | **not sized** | new | Added 2026-09-16, reconciled out of a "Projects 2.0" doc — see the correction below. Not yet read against code line-by-line; excluded from the total until it is |
 
-**Total ≈ 165 person-days.**
+**Total ≈ 165 person-days** (15th theme not yet sized — see row above).
 
 ---
 
@@ -344,6 +346,18 @@ whether that is intended.
 existed) → moved to the newly-created **BH-1463** (*BrightRoutines next-phase*), alongside
 routine-delivery. governance-enforced cited `BH-624` (*"Semantic View Lifecycle for Snowflake
 Tables"*) → repointed to **BH-172**. All theme frontmatter now names a live open epic.
+
+**A "Projects 2.0" requirements doc (2026-09-16) mostly restated shipped-or-already-themed work.**
+Reconciled against real epics before any of it was ticketed: its "pipeline-to-data-product
+visualizer" is `THEME-honest-surfaces.md`'s badges + `THEME-governance-enforced.md` item 6's tier
+surfacing, and its "proactive agentic monitoring" is verbatim `THEME-fleet-self-healing.md` +
+`THEME-blast-radius-quality.md` — the latter already ✅ ready-today, the former already landing as
+brightbot #1043. Only one requirement was genuinely new (spec → parsed intent → built pipeline,
+with a conformance check distinct from BH-172's enforcement engine) — written up as
+[THEME-spec-driven-pipelines.md](THEME-spec-driven-pipelines.md), `Draft`, not yet sized, and not
+yet delegatable (no incident/client trigger, per its own template bar). One small real delta —
+a pre-merge sandboxed dry-run step for proposed fixes — was folded into
+`THEME-fleet-self-healing.md`'s notes instead of spawning a duplicate theme.
 
 **On-prem's "Where it lives" table omits the repo the work is in.** The runner is shipped
 end-to-end on `main` of **`brightagent-engineering-runner`** — poll loop (`worker.py:122`),

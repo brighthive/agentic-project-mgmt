@@ -110,3 +110,11 @@ the prompt contains the words "never merge" does not satisfy this.
 **Fold, don't merge wholesale:** [`self-healing-pipelines.md`](./self-healing-pipelines.md) (BH-526) contributes its four
 sandboxed data-shape failure modes as healer registrations. Everything else in it — particularly
 its verification-loop design — is superseded by the fleet spec's typed version.
+
+**New delta found reconciling a "Projects 2.0" doc (2026-09-16), not yet ticketed:** a pre-merge
+**sandboxed dry-run** step — run the proposed fix in an isolated schema/branch and confirm the
+target test passes *before* the PR reaches a human — is not covered by BH-1091 (post-merge
+re-check) or BH-1092 (PR-exists check); both verify after the fact. This is write-adjacent (it
+executes code, even isolated) and needs the same Matt Gee sign-off gate the source doc itself
+flagged before it's represented in any demo or customer material. Scope which engines actually
+support isolated dry-run (dbt vs. ADF vs. Cortex vs. Databricks differ) before ticketing.
