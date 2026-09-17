@@ -13,130 +13,110 @@ supersedes: []
 
 ## The goal
 
-A customer writes what they want in plain markdown — the sources, the columns that matter, the
-transform logic, the quality bar, who consumes the output — and BrightAgent authors that into the
-platform's real workflow system, then keeps checking that what's deployed still matches what was
-declared. Today a spec is a Project tab a human reads; nothing parses it into WorkflowSpec.
+A customer writes what they want in plain markdown — sources, columns, transform logic, quality
+bar, consumers — and BrightAgent turns that into real staged quality gates and a real WorkflowSpec,
+using primitives that already exist: the `PRE_ELT`/`ELT`/`POST_ELT` quality-rule gate, the
+`project_agent` activation-thread pattern (structured prompt → `submit_*_findings` tool →
+notification), and the `execute_workflow` scheduler for anything recurring. No new engine.
 
 ```mermaid
 flowchart LR
-  SPEC["/spec/*.md<br/>goal, sources, columns,<br/>transform, quality, outputs"] --> PARSE["brightbot<br/>parse -> author into WorkflowSpec"]
-  PARSE --> WFS["platform-core WorkflowSpec<br/>(existing compiler.ts) — not a new store"]
-  WFS --> ENG["hand-off tool set with<br/>self-merge excluded"]
-  WFS --> CONFORM["conformance check:<br/>WorkflowSpec issues + run history vs. spec"]
-  CONFORM --> BADGE["webapp Spec tab<br/>verified / drift / not built, per section"]
+  SPEC["/spec/*.md"] --> PARSE["brightbot: parse"]
+  PARSE --> WFS["author into WorkflowSpec<br/>(existing compiler.ts)"]
+  PARSE --> GATE["register as staged<br/>QualityRuleStage rules<br/>PRE_ELT (source/columns) /<br/>POST_ELT (transform/quality)"]
+  GATE --> EXEC["existing gate/rule<br/>execution engine (BH-503)"]
+  EXEC --> BADGE["Spec tab badges"]
+  ACT["project ACTIVE /<br/>execute_workflow schedule"] --> THREAD["project_agent thread:<br/>structured prompt -> submit_findings"]
+  THREAD --> GATE
   classDef bot fill:#e3f2fd,stroke:#1565c0
   classDef core fill:#f3e5f5,stroke:#6a1b9a
   classDef web fill:#e8f5e9,stroke:#2e7d32
-  class PARSE bot
-  class WFS,CONFORM core
+  class PARSE,THREAD bot
+  class WFS,GATE,EXEC core
   class BADGE web
 ```
 
-## ⚠️ Corrections (two review passes — read before building)
+## ⚠️ Corrections (three review passes — read before building)
 
-**Pass 1 (WorkflowSpec):** the first draft proposed a parallel "Intent Graph" inside brightbot
-duplicating a **live, shipped** system — `WorkflowSpec` (`brighthive-platform-core/.../workflow/compiler.ts`,
-`.../neo4j/workflow-spec.ts`), the default render path of a Project's `Flow` tab
-(`brighthive-webapp/src/ProjectWorkflow/ProjectWorkflowPage.tsx:60,515-526`). Exactly the failure
-`THEMES.md`'s own audit was written to catch. Rewritten to extend WorkflowSpec, not duplicate it;
-the "no new write authority" claim was also false as written — corrected below.
-
-**Pass 2 (unverified premise, still open):** `BH-172`'s enforcement point does **not exist in
-code yet** — confirmed by grep, zero hits beyond WorkflowSpec's own unrelated `checkPolicies()`.
-The reconciliation line below is a design intention pending BH-172, not a verified boundary. Also:
-**this theme's own opening line — "today a spec is a Project tab a human reads" — is unconfirmed.**
-No `ProjectSpecPage` exists in webapp; the live sidenav shows `Overview / Schemas / Flow / Input
-Data Assets / Files / Data Products`, not `Spec / Pipeline / Observability` as both the technical
-and design docs describe. Needs a human answer before BH-1527 is refined further — see below.
+1. **WorkflowSpec** (live, shipped) already does pipeline compile/validate/run — extend it, don't
+   build a parallel Intent Graph.
+2. **BH-172's enforcement point isn't built yet**; **Goal** already binds to `Project.goals`.
+3. **The real primitives, grounded 2026-09-16:** `SYNC()` (named in prior memory/specs) is
+   **vaporware — zero code**. The scheduler that's real is `execute_workflow` (BH-877–881,
+   shipped, e2e-verified). Staged quality gates already exist —
+   `QualityRuleStage: PRE_ELT | ELT | POST_ELT` — plus a `GOVERNED_BY`-edge binding that already
+   indexes rules/policies onto lineage nodes. `project_activation_check_routes.py` is the real,
+   live "proactive prompt fills an agent session with findings" pattern (`ACTIVATION_PROMPT` →
+   `discover_data_assets`/`read_project_schema_file` → `submit_activation_findings`) — reuse its
+   shape, don't invent a new one. PDF-summarize / CSV-to-table agent capability **does not
+   exist anywhere** — real gap, explicitly out of scope here (see "Don't do").
 
 ## Why now
 
-Honest answer: this isn't an incident or a client blocker — it's a product-direction ask (a
-"Projects 2.0" requirements + design-spec pair). No concrete trigger exists yet, so status stays
-`Draft` (see "Not yet ready to delegate" below).
+Honest answer: product-direction ask, not an incident. `Draft` until a real trigger names it.
 
 ## What to build
 
-1. `brighthive-platform-core` — parse `/spec/*.md` frontmatter + canonical H2 sections. **Goal**
-   already has structured backing (`Project.goals` in `schema.graphql`, a real form in
-   `ProjectOverviewProjectGoalForm.tsx`) — bind to it, don't re-parse from prose. The other five
-   (Source systems, Key columns, Transform logic, Data quality, Outputs/Consumers) have no
-   existing schema field — genuinely net new, merged by section name across multiple files.
-2. `brightbot` — author the parsed sections **into WorkflowSpec** via its existing mutations
-   (`createWorkflowSpec` → `upsertWorkflowStep` → `bindWorkflowStep` → `compileWorkflow`) — do not
-   build a second compiler or graph store. Mirrors what
-   [`brightroutines-ai-authored-workflowspec.md`](brightroutines-ai-authored-workflowspec.md)
-   (BH-897) already designed for chat intent → WorkflowSpec, applied to spec markdown instead.
-3. `brightbot` — a conformance check reading WorkflowSpec's own `issues` and run history vs. the
-   parsed spec, flagging drift (declared-not-built / built-not-declared / logic-mismatch) — not a
-   second store. Overlaps `THEME-governance-enforced.md`'s schema-contract check ("output shape
-   drifted"); **proposed line, unverified — BH-172 isn't built yet: schema contracts would own
-   write-time blocking, this owns everything else, read-only, no gating.**
-4. `brighthive-platform-core` — read endpoint + on-demand trigger (`POST .../spec/verify` per the
-   source doc's §2.5) surfacing per-section conformance status, sourced from WorkflowSpec's
-   issues/runs, not a parallel record.
-5. `brighthive-webapp` — Spec tab shows a badge per section (verified/drift/not-built), following
-   [THEME-honest-surfaces.md](THEME-honest-surfaces.md)'s never-false-green principle rather than
-   a fourth ad hoc status enum.
+1. `brighthive-platform-core` — parse `/spec/*.md`; **Goal** binds to `Project.goals`; the other
+   five sections (Source systems, Key columns, Transform logic, Data quality, Outputs/Consumers)
+   are net-new parsed storage.
+2. `brightbot` — author parsed sections into WorkflowSpec (existing mutations) AND register each
+   as a `QualityRuleStage` rule: source/column declarations → `PRE_ELT`, transform-logic/quality
+   sections → `POST_ELT`, via the existing `GOVERNED_BY` gate binding — not a new store, not a
+   bespoke comparison. Hand-off tool set excludes `github_merge_pull_request`
+   (`dbt_agent_react.py:229-230` can self-merge; mirror `REMEDIATION_TOOLS` +
+   `test_gc_17_auto_merge_exclusion.py`).
+3. `brightbot` — trigger the check by reusing the **real** `project_activation_check_routes.py`
+   pattern (structured prompt → `submit_*_findings` tool → notification) against a `project_agent`
+   thread, for on-ACTIVE and on-demand. For recurring re-checks, schedule via the real
+   `execute_workflow` action — never a bespoke cron or `SYNC()` (doesn't exist).
+4. `brighthive-platform-core` + `brighthive-webapp` — badges read the staged gate rules' real
+   execution results (BH-503's engine), following honest-surfaces' never-false-green principle.
 
-**Sequencing — this is a strict chain, not 4 parallel tickets:** 1 → 2 → 3 → 4. Do not assign in
-parallel expecting independent completion; 2/3/4 each depend on their predecessor's output shape.
+**Sequencing:** 1 → 2 → {3, 4} — 3 and 4 both only consume item 2's output; they don't block
+each other.
 
 ## Done when
 
-- [ ] A spec with Goal/Source systems/Transform logic/Outputs sections authors a real WorkflowSpec
-      (via the existing mutations) without hand-editing
-- [ ] Authoring goes through a hand-off tool set with `github_merge_pull_request` excluded —
-      proven by a test mirroring `test_gc_17_auto_merge_exclusion.py` (injects the leak, asserts
-      zero attempts), not a prompt assertion
-- [ ] A deployed model that diverges from its spec'd transform logic shows as drift, not silently
-      green
+- [ ] A parsed spec registers real `PRE_ELT`/`POST_ELT` quality rules AND a WorkflowSpec, not a
+      shadow record
+- [ ] Self-merge structurally excluded — proven by a test mirroring `test_gc_17_auto_merge_exclusion.py`
+- [ ] A project going ACTIVE (or an on-demand call) fires a real `project_agent` thread with
+      findings, visible the same way activation findings are today
+- [ ] A recurring check runs via `execute_workflow`, not a new scheduler
 - [ ] Existing single-file Project specs keep working unmodified
-- [ ] Real-behavior test against a real project's spec and a real WorkflowSpec compile
 
 ## Don't do
 
-- **Auto-apply anything, or use a self-merge-capable tool set.** `dbt_agent_react_graph`'s main
-  tool list includes `github_merge_pull_request`
-  (`brightbot/agents/dbt_agent/dbt_agent_react.py:229-230`) — this theme's hand-off must use a
-  restricted set (the pattern `REMEDIATION_TOOLS` already establishes), never the main list.
-- **A second "is this operation allowed" engine, or a second Intent Graph/compiler.** WorkflowSpec
-  and BH-172 already own those. This theme parses markdown INTO WorkflowSpec and reads its
-  existing issues/runs for conformance — it does not re-implement either.
-- **Blast-radius/impact analysis on a conformance failure** — owned by
-  [Catch a bad number before your customers do](THEME-blast-radius-quality.md).
-- **RCA or fix-authoring on a failing pipeline** — owned by
-  [Pipelines that fix themselves](THEME-fleet-self-healing.md). A conformance failure can become a
-  trigger source into that loop; it is not a second healing loop.
-- **The typed graph-visualizer UI** — track separately once parsing lands.
+- **Auto-apply anything, or a self-merge-capable tool set.**
+- **A second Intent Graph, a second scheduler, or `SYNC()`** — unbuilt; don't design as if real.
+- **PDF summarization or CSV-to-table generation** — confirmed real, unbuilt Ingestion Agent
+  capability. Genuinely valuable, genuinely a different theme — don't fold it in here by accident.
+- **Blast-radius analysis** — [blast-radius-quality](THEME-blast-radius-quality.md).
+- **RCA/fix-authoring** — [fleet-self-healing](THEME-fleet-self-healing.md); a conformance
+  failure is a new trigger source into that loop, not a second one.
+- **The typed graph-visualizer UI** — separate, later.
 
 ## Where it lives
 
 | Repo | What changes |
 |---|---|
-| `brighthive-platform-core` | spec file/section storage, conformance-status read API, extends WorkflowSpec's schema/issues — no new store |
-| `brightbot` | markdown-to-WorkflowSpec authoring, conformance checker |
-| `brighthive-webapp` | Spec tab per-section badges |
+| `brighthive-platform-core` | spec storage, `PRE_ELT`/`POST_ELT` rule registration via existing gate typedefs |
+| `brightbot` | markdown→WorkflowSpec + rule authoring, activation-thread-pattern trigger reuse |
+| `brighthive-webapp` | badges reading real rule-execution results |
 
-**Tickets:** BH-1255 (epic), BH-1527 → BH-1528 → BH-1529 → BH-1530 (strict sequence; ticket
-bodies updated post-correction — see PR #191)
+**Tickets:** BH-1255 (epic), BH-1527 → BH-1528 → {BH-1529, BH-1530} (bodies updated to reflect the
+staged-gate + activation-thread mechanism — see PR #191)
 
 ---
 
 ## Not yet ready to delegate
 
-Real evidence — an incident, a client blocker, a live bug — is this repo's own bar before a theme
-leaves `Draft`. No client trigger exists yet (`clients/README.md`, Loop Capital notes checked).
-
-**Blocking question, needs a human answer, not more grepping:** do `Spec` / `Pipeline` /
-`Observability` exist as real tabs today, under different names, or are they aspirational in both
-source docs? The live webapp sidenav has no `Spec` tab. If the premise is wrong, BH-1527's target
-(what does it parse INTO, on top of what UI) needs re-scoping before refinement, not after.
+No client trigger yet. Also: confirm whether `Spec`/`Pipeline`/`Observability` are real tabs
+today (webapp sidenav doesn't show them) before BH-1527/1530 are refined further.
 
 ## Notes for whoever picks this up
 
-**BH-1255 carries 50+ `Needs Refinement` tickets** across other themes — real load, not a clean epic.
-
-**Shares one mechanism with** [`brightroutines-ai-authored-workflowspec.md`](brightroutines-ai-authored-workflowspec.md)
-(BH-897, unshipped) — both author into WorkflowSpec from natural input. Build the pipeline once.
+**PDF-summarize / CSV-to-table** is a real, separate gap worth its own theme if wanted — don't
+let it get absorbed into this one's scope by accident. Shares WorkflowSpec-authoring with
+[`brightroutines-ai-authored-workflowspec.md`](brightroutines-ai-authored-workflowspec.md) (BH-897).
