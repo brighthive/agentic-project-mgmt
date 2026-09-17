@@ -4,7 +4,8 @@ type: vision
 author: "drchinca"
 created: "2026-09-04"
 source: "AI Agent for Data Engineering - DRAFT.pdf (~/Downloads)"
-status: "Exploratory — not yet a theme, not yet ticketed"
+status: Parked
+roadmap: parked — no confirmed client trigger for the "operate it" tier yet; hold as reference per this doc's own "Open question for Kuri" section
 related:
   specs: ["THEMES.md", "sqlserver-health-watch.md", "THEME-fleet-self-healing.md", "THEME-project-proactive-lifecycle.md", "pipeline-connectivity-watchdog.md"]
 ---
