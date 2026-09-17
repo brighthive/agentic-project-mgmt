@@ -1,6 +1,7 @@
 ---
 title: "Brighthive Projects 2.0 — Design Spec"
-status: "Source doc — reconciled; premise partially inaccurate, see note below"
+status: Superseded
+roadmap: superseded — see THEME-spec-driven-pipelines.md for the corrected build target; its Spec/Observability-tab premise does not match the live webapp (confirmed 2026-09-16)
 created: "2026-09-16"
 companion: "projects-2.0-technical-requirements.md"
 ---

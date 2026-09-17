@@ -1,6 +1,7 @@
 ---
 title: "Brighthive Projects 2.0 — Technical Requirements"
-status: "Source doc — reconciled, superseded in scope by docs/specs/THEME-spec-driven-pipelines.md"
+status: Superseded
+roadmap: superseded — genuinely-new scope absorbed into THEME-spec-driven-pipelines.md; the rest already existed as THEME-fleet-self-healing.md / THEME-blast-radius-quality.md / THEME-honest-surfaces.md / THEME-governance-enforced.md
 created: "2026-09-16"
 companion: "projects-2.0-design-spec.md"
 ---
