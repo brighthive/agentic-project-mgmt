@@ -359,6 +359,17 @@ yet delegatable (no incident/client trigger, per its own template bar). One smal
 a pre-merge sandboxed dry-run step for proposed fixes — was folded into
 `THEME-fleet-self-healing.md`'s notes instead of spawning a duplicate theme.
 
+**Correction, same day, red-team pass against real code (not just specs):** the theme above
+originally proposed a parallel "Intent Graph" mechanism inside brightbot. It duplicates a live,
+shipped system — `WorkflowSpec` (`brighthive-platform-core/src/graphql/service/workflow/compiler.ts`),
+already the default render path of a Project's Flow tab
+(`brighthive-webapp/src/ProjectWorkflow/ProjectWorkflowPage.tsx`). Exactly the failure this file's
+own consolidation was written to catch, recurring inside the doc meant to prevent it — caught
+before any of BH-1527–1530 were built, not after. Theme rewritten to extend WorkflowSpec instead
+of duplicating it; a second error (claiming "no new write authority" when the natural hand-off
+path, `dbt_agent_react_graph`, can self-merge today per `dbt_agent_react.py:229-230`) was also
+fixed. Tickets BH-1528/BH-1529 updated to match.
+
 **On-prem's "Where it lives" table omits the repo the work is in.** The runner is shipped
 end-to-end on `main` of **`brightagent-engineering-runner`** — poll loop (`worker.py:122`),
 lease/claim, installer, real-wire test — a repo the theme never names. An engineer reading the
