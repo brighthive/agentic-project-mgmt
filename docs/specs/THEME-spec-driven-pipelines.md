@@ -40,7 +40,10 @@ flowchart LR
 
 1. **WorkflowSpec** (live, shipped) already does pipeline compile/validate/run — extend it, don't
    build a parallel Intent Graph.
-2. **BH-172's enforcement point isn't built yet**; **Goal** already binds to `Project.goals`.
+2. **BH-172's enforcement point isn't built yet.** **Corrected again 2026-09-16, verified live
+   against staging (not just schema):** `ProjectOutput.goals` exists but is **empty on every real
+   project checked** (10/10, `workspace(input:{workspaceId:"4d7ffd13-..."})`). Real goal
+   narrative lives in the plain-text `Project.description` field — bind Goal there instead.
 3. **The real primitives, grounded 2026-09-16:** `SYNC()` (named in prior memory/specs) is
    **vaporware — zero code**. The scheduler that's real is `execute_workflow` (BH-877–881,
    shipped, e2e-verified). Staged quality gates already exist —
@@ -57,9 +60,10 @@ Honest answer: product-direction ask, not an incident. `Draft` until a real trig
 
 ## What to build
 
-1. `brighthive-platform-core` — parse `/spec/*.md`; **Goal** binds to `Project.goals`; the other
-   five sections (Source systems, Key columns, Transform logic, Data quality, Outputs/Consumers)
-   are net-new parsed storage.
+1. `brighthive-platform-core` — parse `/spec/*.md`; **Goal** binds to `Project.description`
+   (the plain-text field real projects actually use — `ProjectOutput.goals` exists but is unused
+   in practice, see Corrections); the other five sections (Source systems, Key columns, Transform
+   logic, Data quality, Outputs/Consumers) are net-new parsed storage.
 2. `brightbot` — author parsed sections into WorkflowSpec (existing mutations) AND register each
    as a `QualityRuleStage` rule: source/column declarations → `PRE_ELT`, transform-logic/quality
    sections → `POST_ELT`, via the existing `GOVERNED_BY` gate binding — not a new store, not a
