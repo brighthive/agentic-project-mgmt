@@ -19,6 +19,15 @@ using primitives that already exist: the `PRE_ELT`/`ELT`/`POST_ELT` quality-rule
 `project_agent` activation-thread pattern (structured prompt → `submit_*_findings` tool →
 notification), and the `execute_workflow` scheduler for anything recurring. No new engine.
 
+**Why this lands on the Project.** A Project is the glue joining every BrightHive platform
+feature — warehouse, ingestion, transform, quality, governance, lineage, data products, agent
+sessions — not a container they happen to sit in. That makes the Project the only honest home
+for a spec: the written spec is the customer's *declaration of intent*, and every section binds
+to a primitive the Project already joins (Source systems → ingestion, Key columns → data assets,
+Transform logic → dbt, Data quality → staged rules, Outputs/Consumers → destinations). A parsed
+section stored without that binding is a shadow record — the failure mode this theme exists to
+avoid, and the reason the badges in item 4 belong on the Project surface rather than anywhere else.
+
 ```mermaid
 flowchart LR
   SPEC["/spec/*.md"] --> PARSE["brightbot: parse"]
@@ -120,10 +129,12 @@ No client trigger yet. Also, **resolved 2026-09-16, confirmed against `origin/de
 `Spec` tab and no `Observability` tab exist in `brighthive-webapp`
 (`src/common/ProjectSidenav/ProjectSidenav.tsx`) — real tabs are Overview / Schemas / Flow /
 Input Data Assets / Files / Data Products. `Flow` (≈ this doc's "Pipeline") is real but
-feature-flagged, marked "not GA" in its own code comment. **Open product decision, not an
-engineering call:** does spec-authoring get a new tab, fold into `Overview`, or ride behind the
-same flag as `Flow`? BH-1527's "existing single-file specs parse unmodified" criterion assumed a
-surface that doesn't exist — this is greenfield UI, not an extension. Source docs:
+feature-flagged, marked "not GA" in its own code comment. **Product decision made 2026-09-17:**
+spec-authoring gets its own `Spec` tab in the project sidenav, gated behind the same feature flag
+as `Flow` — chosen over folding into `Overview` because the surface needs room past a badge strip
+(section bodies, and the diff/ghost rendering already carved out as later scope), and because a
+project with no parsed spec then renders no tab at all rather than one full of unknowns. BH-1530
+is unblocked; this is still greenfield UI, not an extension of an existing tab. Source docs:
 [projects-2.0-technical-requirements.md](projects-2.0-technical-requirements.md),
 [projects-2.0-design-spec.md](projects-2.0-design-spec.md) (both now saved in-repo, reconciled).
 
