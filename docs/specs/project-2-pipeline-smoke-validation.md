@@ -66,6 +66,18 @@ Feature: Pipeline smoke validation
     Then status is preview and no mutation occurs
     When confirm=true
     Then upsertWorkflowStep persists the new sqlTemplate
+
+  Scenario: Binding fix for mart output
+    Given step 6 outputBindings point at a corrupt FQN
+    When pipeline_verifier calls list_pipeline_catalog_assets_tool for the mart table
+    And propose_pipeline_step_bindings_tool is called with confirm=true
+    Then bindWorkflowStep persists the corrected output binding
+    And compileWorkflow status is VALIDATED
+
+  Scenario: Catalog columns drive SQL repair
+    Given smoke fails on an unknown column
+    When list_pipeline_catalog_assets_tool returns fields for the bound asset
+    Then pipeline_verifier can propose SQL using real column names without a live warehouse query
 ```
 
 ## 5. API (platform-core)
@@ -96,8 +108,12 @@ mutation validatePipelineSmoke(input: ValidatePipelineSmokeInput!): ValidatePipe
 | Tool | Purpose |
 |------|---------|
 | `validate_pipeline_smoke_tool` | Calls `validatePipelineSmoke` |
-| `propose_pipeline_step_fix_tool` | Preview SQL fix (`confirm=false`) |
-| `apply_pipeline_step_fix_tool` | `upsertWorkflowStep` when `confirm=true` |
+| `list_pipeline_catalog_assets_tool` | Catalog assets + columns for binding/SQL repair (no live warehouse query) |
+| `propose_pipeline_step_fix_tool` | Preview/apply SQL-only fix via `upsertWorkflowStep` |
+| `propose_pipeline_step_config_tool` | Preview/apply full step config (SQL, dependsOn, node type, runtimeConfig, …) |
+| `propose_pipeline_step_bindings_tool` | Preview/apply input/output bindings via `bindWorkflowStep` (auto-resolves assetId from FQN) |
+
+All mutating tools are confirm-gated (`confirm=false` preview, `confirm=true` apply) and re-run `compileWorkflow` after apply.
 
 ## 7. Out of scope (v1)
 
