@@ -37,6 +37,7 @@ readonly NON_SPEC_FILES=(
     "THEME_SPEC_TEMPLATE.md"     # lean theme template
     "HANDOVER_STATUS.md"         # BH-1255 trial handover map (tracking doc)
     "TICKET_LIST.md"             # BH-1255 trial ticket list (tracking doc)
+    "PROJECT_V2_TRACKER.md"      # BH-1255 ticket-vs-code verification tracker (tracking doc)
 )
 
 is_non_spec() {
