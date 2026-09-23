@@ -4,6 +4,7 @@ epic: "BH-172"
 owner: "drchinca"
 status: "Draft"
 created: "2026-08-18"
+last-reviewed: "2026-09-04"
 supersedes:
   - governance-policy-enforcement.md
   - user-schema-contract-gates.md
@@ -117,13 +118,27 @@ enforcement point that all three artifacts register against, then wire each arti
 | `brighthive-webapp` | enforcement visibility, tier badges |
 | `brightbot-slack-server` | violation alerts |
 
-**Tickets:** BH-766, BH-767, BH-768, BH-769, BH-624
-
-⚠️ **Not yet handable to an engineer:** [`user-schema-contract-gates.md`](./user-schema-contract-gates.md)'s five ticket rows have
-**no Jira IDs at all**. Create them (and confirm the BH-76x numbers above are still live) before
-this theme is assigned — status stays `Draft` until then.
+**Tickets:** BH-766, BH-767, BH-768, BH-769 (policy/quality enforcement gaps) + BH-1511, BH-1512,
+BH-1513, BH-1514, BH-1515 (schema-contract gates, filed 2026-09-04 — see
+[`user-schema-contract-gates.md`](./user-schema-contract-gates.md))
 
 ---
+
+## ⚠️ Open decision — added 2026-09-04, verify before item 1 starts
+
+Since this theme was written (2026-08-18), **BH-1464 shipped a real `authorize(subject, verb,
+resource, ctx)` decision point**, and BH-1491 (Testing (Dev)) is extending it with ABAC attribute
+conditions (`AttributeReader`, `PermissionCondition`). This theme's item 1 — "one place that
+answers 'is this operation allowed?'" — has **not been ticketed or built**. Before it is: confirm
+whether that one place *is* BH-1464's `authorize()` engine (extended to also gate quality-rule and
+schema-contract artifacts, not just identity/role), or a genuinely separate mechanism. Building a
+second "one enforcement point" alongside `authorize()` is the exact three-divergent-paths failure
+this theme exists to prevent — just one layer up from the policy/quality/schema-contract split it
+already caught.
+
+This does **not** block BH-1511/BH-1512 (the schema-contract resolver + conformance validator,
+filed 2026-09-04 under this theme) — column/type diffing is not an identity decision, so that part
+is correct regardless of the answer. Only the final allow/block/warn *wiring* is open.
 
 ## Notes for whoever picks this up
 
