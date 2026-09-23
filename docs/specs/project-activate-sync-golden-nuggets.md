@@ -3,7 +3,7 @@ title: "Project ACTIVE → the real activation-check + recurring-schedule primit
 epic: "BH-1255"
 ticket: "BH-1343"
 author: "Kuri"
-status: Corrected
+status: Partial
 created: "2026-08-01"
 corrected: "2026-09-23"
 generates: "tickets"
