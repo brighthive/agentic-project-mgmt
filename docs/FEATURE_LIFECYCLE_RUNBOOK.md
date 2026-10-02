@@ -188,6 +188,24 @@ the shapes:
 
 ---
 
+## ⑨a Local-first test — before anything deploys
+
+Test the branch on `localhost` against staging's data plane **before** it reaches the shared staging
+deploy. Full steps, trap table and preflight script: `platform-saas-ai-context/docs/infrastructure/RUN_LOCAL_AGAINST_STAGING.md`
+(`scripts/local-staging.sh check` → `up`).
+
+- **Unmerged work spans several PRs?** Stack them into a throwaway `local/<topic>-int` branch in a worktree
+  (never the main checkout, never pushed). Additive registry conflicts (`mcp/server.py`, `capabilities.py`,
+  `tool_authorization.py`): keep both sides.
+- **Drive it through MCP** at `localhost:2024/bh-mcp/` with a real staging user token (not `LOCAL_DEV_MODE`,
+  which bypasses the token your tools forward to platform-core). Walk reads, then `confirm=false` previews,
+  then foreign-id / wrong-role refusals.
+- **Writes (`confirm=true`) need `mcp:write`.** A Cognito login idToken carries no MCP scopes and the staging
+  M2M client token has no user identity for platform-core to validate, so neither can exercise writes. Use an
+  OAuth-issued user token (Okta/PKCE path) or test writes at the e2e `--writes` layer. Known gap, not a bug.
+- **Flag-gated tools** appear only when `FEATURE_FLAG_MCP_<NAME>=true` is in the `.env` the process loads.
+- Secrets reads follow the named-consent rule; the runbook lists exactly which two are needed.
+
 ## ⑨ e2e live testing — real backend, all engines
 
 Re-converge here: one e2e run exercises every repo's change together against **live staging**.
