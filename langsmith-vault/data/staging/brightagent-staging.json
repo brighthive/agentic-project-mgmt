@@ -5,9 +5,9 @@
   "env_var_names": [],
   "graph_aliases": {},
   "host": "https://api.host.langchain.com",
-  "latest_revision_id": "45d50974-9d6d-473a-90ec-4f2ccfe2dce1",
+  "latest_revision_id": "98bfa7bb-c871-4a07-a0ee-85dbf092d877",
   "name": "brightagent-staging",
-  "secret_count": 80,
+  "secret_count": 81,
   "secret_names": [
     "ANTHROPIC_API_KEY",
     "AWS_ACCESS_KEY_ID",
@@ -42,6 +42,7 @@
     "FEATURE_FLAG_MCP_DBT_READ_TOOLS",
     "FEATURE_FLAG_MCP_FS_TOOLS",
     "FEATURE_FLAG_MCP_GENERATION_TOOLS",
+    "FEATURE_FLAG_MCP_PROJECT_WRITE_TOOLS",
     "FEATURE_FLAG_MCP_QUALITY_TOOLS",
     "FEATURE_FLAG_MCP_SOURCE_READ_TOOLS",
     "FEATURE_FLAG_MCP_SOURCE_WRITE_TOOLS",
@@ -90,5 +91,5 @@
     "WEBHOOK_SECRET",
     "WHITELISTED_LANGSMITH_API_KEYS"
   ],
-  "snapshot_at": "2026-10-05T22:26:49+00:00"
+  "snapshot_at": "2026-10-05T22:35:26+00:00"
 }
