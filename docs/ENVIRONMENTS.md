@@ -17,6 +17,9 @@ Four logical environments map to two platform accounts (PROD, STAGE). Each has a
 
 **Promotion path:** Staging Test → Staging Demo → Prod Test → Prod Demo
 
+**Warehouse readiness (prod rollouts, multi-warehouse):** see
+[`PROD_WORKSPACE_WAREHOUSE_READINESS.md`](./PROD_WORKSPACE_WAREHOUSE_READINESS.md).
+
 ---
 
 ## AWS Account Map
