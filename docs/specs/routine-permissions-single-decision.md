@@ -89,10 +89,10 @@ flowchart LR
 | Role | UPDATE · ROUTINE | DELETE · ROUTINE | RUN · ROUTINE |
 |---|---|---|---|
 | WORKSPACE_ADMIN | allow | allow | allow |
-| COLLABORATOR, CONTRIBUTOR, VIEWER | `OWNER_OR_MANAGER` | `OWNER_OR_MANAGER` | `OWNER_OR_MANAGER` |
-| AGENT_GUEST | none | none | none |
+| COLLABORATOR | `OWNER_OR_MANAGER` | `OWNER_OR_MANAGER` | `OWNER_OR_MANAGER` |
+| CONTRIBUTOR, VIEWER, AGENT_GUEST | none | none | none |
 
-This reproduces today's rule for every human role. AGENT_GUEST stays at "no cells", per its seed policy.
+Admins and collaborators keep today's rule. Viewers and contributors get no ROUTINE cells. The v1 seed policy keeps them free of RUN and DELETE, and "viewer is strictly read-only". So once Phase 2's switch is on, a viewer or contributor who owns a schedule can no longer change it unless an admin grants the cell. This narrows brightbot's BH-1564 guard, which allows any owner. The narrowing is deliberate, and it is only effective once `SCHEDULE_ACCESS_FROM_PLATFORM` is on.
 
 ### 2.4 Writing the graph
 
@@ -164,6 +164,11 @@ Feature: One permission decision for routines
     Given a routine owned by user A
     When admin B deletes it
     Then authorize() returns ALLOW by matrix
+
+  Scenario: Viewer who owns a routine needs an admin grant
+    Given a routine owned by viewer V
+    When V deletes it
+    Then authorize() returns BLOCK until an admin grants DELETE · ROUTINE to VIEWER
 
   Scenario: Collaborator is refused
     Given a routine owned by user A
