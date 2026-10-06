@@ -1,7 +1,7 @@
 ---
 title: Routine permissions — one decision in platform-core
 epic: BH-1464
-tickets: [BH-1565]
+tickets: [BH-1565, BH-1572, BH-1573, BH-1574, BH-1575, BH-1576, BH-1577]
 author: kuri
 status: Draft
 created: 2026-10-05
@@ -269,9 +269,9 @@ Omitted, because this spec has no LLM behavior.
 
 | # | Ticket | Repo | Size | Depends on |
 |---|---|---|---|---|
-| P1-a | ROUTINE kind, `BELONGS_TO` binding, labelled ownership lookup, default cells, cell + node backfill script | platform-core | M | — |
-| P1-b | `unscheduleRoutine` asks `authorize()`, removes the node | platform-core | S | P1-a |
-| P2-a | `recordRoutineSchedule` / `forgetRoutineSchedule` + nightly stale-node sweep, plus `AuthDecision.enforced` | platform-core | M | P1-a |
-| P2-b | brightbot records on create (before write), forgets on delete | brightbot | S | P2-a |
-| P2-c | Backfill every existing schedule per environment | brightbot script | S | P2-b |
-| P2-d | brightbot guard asks `checkAccess` behind `SCHEDULE_ACCESS_FROM_PLATFORM` | brightbot | S | P2-c verified |
+| P1-a BH-1572 | ROUTINE kind, `BELONGS_TO` binding, labelled ownership lookup, default cells, cell + node backfill script | platform-core | M | — |
+| P1-b BH-1573 | `unscheduleRoutine` asks `authorize()`, removes the node | platform-core | S | P1-a |
+| P2-a BH-1574 | `recordRoutineSchedule` / `forgetRoutineSchedule` + nightly stale-node sweep, plus `AuthDecision.enforced` | platform-core | M | P1-a |
+| P2-b BH-1575 | brightbot records on create (before write), forgets on delete | brightbot | S | P2-a |
+| P2-c BH-1576 | Backfill every existing schedule per environment | brightbot script | S | P2-b |
+| P2-d BH-1577 | brightbot guard asks `checkAccess` behind `SCHEDULE_ACCESS_FROM_PLATFORM` | brightbot | S | P2-c verified |
