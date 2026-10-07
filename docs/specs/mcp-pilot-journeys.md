@@ -122,6 +122,20 @@ appears as a fleet concern with a configuration-review action, never a successfu
 Existing success/error/running statuses retain their meanings. Older persisted rows
 are not silently rewritten based on message text.
 
+### On-demand quality execution evidence
+
+`execute_library_quality_rules` exposes `notify` (default true, preserving existing
+behavior). False suppresses this run's notification signal while still evaluating
+the rules and recording execution history. Preview describes that choice and does
+not execute. True requests publication through configured workspace preferences;
+it is not a delivery receipt. This choice does not change scheduled monitoring.
+
+Any reported execution-history write failure returns `status=error` with
+`error=execution_persistence_failed`, the run identifier, evaluation counts and
+`write_failures`. A failed expectation alone remains a completed evaluation. Before
+claiming a quality run is verified, read its exact run ID from rule history. This
+slice does not add execution retries or claim completion of recurring alert delivery.
+
 ### Evidence contract
 
 For each acceptance run record: journey/criterion, environment, workspace reference,
@@ -218,6 +232,45 @@ PRs require their own merge authorization under the workspace contract.
 | Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Active on staging; readiness true |
 | Dedicated regional storage | [Platform Core #1322](https://github.com/brighthive/brighthive-platform-core/pull/1322) | 2 synthesis/entry-point tests; isolated synth | Merged staging; isolated stack deployed |
 | Scheduler replay authorization | [BrightBot #1129](https://github.com/brighthive/brightbot/pull/1129) | 49 scheduler/invariant tests; four-role review | Open; merge not yet authorized |
+| Quality execution evidence and notification choice | [BrightBot #1130](https://github.com/brighthive/brightbot/pull/1130) | 46 unit/invariant tests; four-role review; local MCP against staging data passed below | Open; cloud rollout pending |
+
+### Five-journey checkpoint — October 7
+
+| Journey | Evidence obtained | Remaining pilot acceptance |
+|---|---|---|
+| Specification to data product | Staging project create/update/delete passed | Terminal pipeline run, output checks, reviewed PR/downstream proof for each client's intended path |
+| Warehouse to quality coverage | Staging saved-rule lifecycle; local MCP evaluated a real staging table and read exact-run history | Scheduled checks, delivered alerts, all four Longaeva anomaly families and Loop SQL Agent/disk coverage |
+| Failure to reviewed repair | Existing self-merge guard; no completed repair proof in this run | Detection, diagnosis, PR, independent approval (Slack for Loop), rerun and output checks |
+| Recurring work to automation | Existing schedule surface; authorization correction in #1129 | Durable schedule deduplication, proposal/approval, actual execution/delivery and failure handling |
+| Governance to enforcement | Existing authorization and governance surfaces | Observable policy denial/audit, PII evidence and human review before writes for Loop criterion 8 |
+
+These are platform/demo results. Neither client's full acceptance is established.
+
+### Local MCP quality execution proof
+
+- Code: BrightBot #1130, commit `5f206431`, based on staging `99d7d2ef`.
+- Environment: local FastMCP using the staging deployment's runtime configuration,
+  real staging Core/OGM/Redshift and durable mutation table. Runtime AWS account was
+  checked before serving. Secrets remained in memory; no deployed configuration changed.
+- MCP warehouse discovery matched a fully qualified table to one catalog asset in
+  `bh-demo`; no hard-coded asset ID or stale `test_data` fixture was used.
+- Run `b8910c40`, 2026-10-07 05:15 UTC: **2 passed, zero findings**, cleanup **4/0**.
+  The runner reported full-table SQL over **4,044 rows**, one passed rule and zero
+  history write failures. MCP inventory independently returned that exact run/asset.
+- Executed rule: `ff30b0fb-2ca7-4728-a977-41f00e77b4d1`;
+  execution run: `e2f64229-1759-468d-8fa8-4449f0140a66`. Test rules/history were deleted.
+- Invocation used `ON_DEMAND`, `notify=false`, no transport retry, and
+  `apply_on_schedule=false`. No notification delivery or scheduled execution is claimed.
+- Reproducer: e2e #101, `test_quality_writes.py`, `--workspace-config=bh-demo --writes --gate`,
+  `BH_ENV=staging`, `BH_HAS_MCP_WRITE_TOKEN=1`; use `BH_MCP_URL` for the local MCP base.
+  The harness appends `/mcp`, which the local bootstrap served under `/bh-mcp`.
+- Local artifacts: `findings/staging-20261007-051506.json` and `.md`,
+  `/tmp/mcp-quality-execution-local-final.log`. Earlier setup attempts exposed a stale
+  fixture and quoted-identifier fallback; final discovery supplied the executor's
+  unquoted identifier and verified the full-table SQL path.
+- New notification control and truthful persistence errors are **not deployed** yet.
+  After approved merge, rerun the same case against the cloud endpoint without the
+  local override before marking the new behavior live.
 
 The complete quality batch passed 84 combined local tests after integration. Its
 staging merge is `17d2ea279bd3b36d60735623aa0e777813df4213`; PM #199 merged to master
