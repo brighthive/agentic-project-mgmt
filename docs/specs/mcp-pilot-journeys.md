@@ -200,10 +200,10 @@ Each implementation slice stays independently reviewable under the workspace PR 
 
 ### Implementation ledger — October 7
 
-These are code/review results, not deployed or client acceptance results.
+The test counts below are local results; live activation evidence follows the table.
 The user approved BrightBot #1121, this spec's PM #199 and then the quality lifecycle
-batch #1122–#1126. All are merged into their target branches. Live staging verification
-is deferred at the user's request while implementation continues. New implementation
+batch #1122–#1126. All are merged into their target branches. The user subsequently
+authorized staging write activation and positive validation. New implementation
 PRs require their own merge authorization under the workspace contract.
 
 | Slice | PR | Local evidence | Rollout state |
@@ -211,11 +211,11 @@ PRs require their own merge authorization under the workspace contract.
 | Skipped monitoring outcomes | [BrightBot #1121](https://github.com/brighthive/brightbot/pull/1121) | 47 tests | Merged staging; verification deferred |
 | Executable generated expectations | [BrightBot #1122](https://github.com/brighthive/brightbot/pull/1122) | 19 tests; JSON/persistence mapping | Merged staging |
 | Shared retry store | [BrightBot #1123](https://github.com/brighthive/brightbot/pull/1123) | 11 tests, including real local Redis concurrency | Merged staging |
-| Save one DRAFT rule | [BrightBot #1124](https://github.com/brighthive/brightbot/pull/1124) | 45 tests, including MCP invariants | Merged staging; confirmed writes default off |
+| Save one DRAFT rule | [BrightBot #1124](https://github.com/brighthive/brightbot/pull/1124) | 45 tests, including MCP invariants | Enabled and positively verified on staging |
 | Rule inventory and recent executions | [BrightBot #1125](https://github.com/brighthive/brightbot/pull/1125) | 28 tests, including denied reads and paging | Merged staging |
-| Activate/deactivate/deprecate | [BrightBot #1126](https://github.com/brighthive/brightbot/pull/1126) | 48 tests; actual transitions/readback/retry coverage | Merged staging; confirmed writes default off |
+| Activate/deactivate/deprecate | [BrightBot #1126](https://github.com/brighthive/brightbot/pull/1126) | 48 tests; actual transitions/readback/retry coverage | Enabled; ACTIVE/DRAFT transitions verified on staging |
 | Explicit notification destination | [BrightBot #1127](https://github.com/brighthive/brightbot/pull/1127) | 33 tests | Merged staging |
-| Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Merged staging; writes not enabled |
+| Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Active on staging; readiness true |
 | Dedicated regional storage | [Platform Core #1322](https://github.com/brighthive/brighthive-platform-core/pull/1322) | 2 synthesis/entry-point tests; isolated synth | Merged staging; isolated stack deployed |
 | Scheduler replay authorization | [BrightBot #1129](https://github.com/brighthive/brightbot/pull/1129) | 49 scheduler/invariant tests; four-role review | Open; merge not yet authorized |
 
@@ -224,7 +224,7 @@ staging merge is `17d2ea279bd3b36d60735623aa0e777813df4213`; PM #199 merged to m
 as `b750a2416d3927c1ead976c3cb73e7e4ec7153e0`. These are repository revisions, not
 proof of the running deployment revision.
 
-Each slice completed architect, senior Python, QA and junior review. Test counts
+Each BrightBot implementation slice completed architect, senior Python, QA and junior review. Test counts
 overlap and must not be added into an aggregate. Inventory pages currently fetch
 all matching rules from Core; histories contain at most ten recent executions per
 rule, across assets. Cached mutation replies describe their original operation;
@@ -232,6 +232,43 @@ inventory reads establish current state. Never reconcile uncertain creations by
 fuzzy matching names/parameters or by changing the idempotency key.
 
 ### Durable storage rollout
+
+**Activation authorization:** the user subsequently requested confirmed MCP writes
+to be turned on in staging and positively exercised. This supersedes the earlier
+write-disable and verification deferral for this activation. Production remains
+excluded. The configured staging runtime credentials were verified through STS as
+the intended staging `brightagent-aws` identity. Eight independent DynamoDB clients
+competed for one reservation: exactly one claimed it; completed replay and payload
+conflict both passed. The isolated readiness record expires after at least 24 hours.
+
+On October 7, staging deployment settings were changed to `dynamodb`, the dedicated
+table name, readiness `true` and retention `86400`. Revision
+`08e340ac-58a4-427f-8090-3b1550e36cd2` targets BrightBot commit
+`99d7d2effef8c68b4710a937f99116e9c6f8ace5`. The revision reached `DEPLOYED` and
+became `active_revision_id` before positive write validation. The deployment
+object's latest commit alone is not proof of the active revision.
+
+Confirmed quality writes are **enabled on staging** with durable DynamoDB storage.
+The positive lifecycle saved rule `589ee84b-e4a5-416b-9a5d-8a3e6bc6acf2` in run
+`8c287d32`, replayed the same save without a second rule ID, preserved expectation
+parameters, and observed DRAFT → ACTIVE → DRAFT through MCP inventory. The test
+registered exact-ID cleanup. The same run passed project create/update/archive/read/delete.
+Result: **2 passed in 30.81 seconds, zero findings; cleanup 4 succeeded, 0 failed**.
+Reusable coverage: [brighthive-e2e #101](https://github.com/brighthive/brighthive-e2e/pull/101).
+Evidence: `brighthive-e2e/findings/staging-20261007-045131.json` and `.md` (local run
+artifacts). Reproducer:
+
+```bash
+env -u BH_WORKSPACE_ID BH_ENV=staging AWS_PROFILE=brighthive-staging BH_HAS_MCP_WRITE_TOKEN=1 \
+  uv run pytest e2e/features/mcp/test_quality_writes.py \
+  e2e/features/mcp/test_projects.py::test_confirm_true_lifecycle_on_throwaway_project \
+  --workspace-config=bh-demo --writes --gate --tb=short -q -s
+```
+
+An earlier probe during rollout reached the prior revision and was refused with
+`mutation_store_unavailable`; it created no rule. The successful run above started
+after the new revision was confirmed active. This is demo-workspace evidence, not client
+acceptance of scheduled quality execution or delivered alerts.
 
 The user approved #1127, #1128, Core #1322 and PM #200 plus the isolated staging
 storage deployment. On October 7, `Staging-BPC-McpMutationStoreStack` reached
@@ -245,26 +282,24 @@ Core merge: `f425065fafd341e480c062bf24a29b6e7fb5d0b9`. BrightBot #1128 merge:
 `91dcfa728a2507617f96b56936823a49c126eeb1`; #1127 merge:
 `99d7d2effef8c68b4710a937f99116e9c6f8ace5`. CloudFormation change set
 `awscli-cloudformation-package-deploy-1791347750` added exactly the table and policy.
-No runtime environment was changed to enable confirmed writes; no item claims,
-quality writes or live journey suite were run. Runtime credential binding,
-cross-instance behavior and readiness enablement remain pending.
+The initial storage-only rollout did not enable writes. The separately authorized
+activation and positive tests above completed the runtime binding/readiness checks.
 
 1. Merge the reviewed adapter and isolated infrastructure PRs after authorization. **Done.**
 2. From Platform Core, synthesize `mcp_mutation_store_app.py` with `ENV=Staging`,
    the staging AWS profile and its actual account. Review the isolated
    `Staging-BPC-McpMutationStoreStack` change set: one table, one IAM policy. **Done.**
 3. Deploy only this stack with `RuntimeUserName` set to the confirmed existing
-   BrightBot runtime IAM user. The documented staging user exists; its actual
-   deployment credential binding still needs verification. Do not create credentials.
-   **Stack deployed; actual runtime identity verification remains pending.**
+   BrightBot runtime IAM user. Verify actual deployment credential binding without
+   creating credentials. **Done: stack deployed and runtime identity verified.**
 4. Check the deployed table's key, encryption, PITR, TTL, deletion protection and
-   runtime item permissions; prove competing claims and replay across instances.
+   runtime item permissions; prove competing claims and replay across instances. **Done.**
 5. Configure `BH_MCP_MUTATION_STORE=dynamodb`, the output table name as
    `BH_MCP_MUTATION_TABLE_NAME`, and its `AWS_REGION`. Set readiness true only after
-   those checks. Keep completed retention at least 86400 seconds.
+   those checks. Keep completed retention at least 86400 seconds. **Done.**
 6. Verify quality save/inventory/activation through MCP. Record exact operation IDs,
    deployed revisions and results in the evidence harness. Client acceptance remains
-   separate from the demo workspace check.
+   separate from the demo workspace check. **Positive write validation passed.**
 
 Rollback disables readiness first and retains the table/records. Do not repoint
 clients to an empty store or erase pending reservations; reconcile unknown writes
