@@ -102,6 +102,13 @@ caller times out. A partial schedule write returns pending and cannot be retried
 with a new reservation automatically. Execute-workflow owner authorization remains
 required at dispatch time. This does not enable service-context quality/profiler runs.
 
+Ship the existing scheduler's authorization correction first: require the current
+`RUN/PIPELINE` ALLOW before replay and include actor identity in cache keys. This
+narrow correction does not make the existing best-effort cache atomic or durable.
+Before moving creation to workers, replace the route's shared boto3 resource with
+worker-owned infrastructure and bound admission/deadlines. Reject local-only storage
+and missing dispatcher/role configuration instead of caching an unregistered schedule.
+
 Persist and expose `last_run_status="skipped"` when a completed graph reports
 `flag_skipped=true`. A transport/graph failure takes precedence over the skip flag.
 Preserve the graph's skip reason in `last_run_message`. An enabled skipped schedule
