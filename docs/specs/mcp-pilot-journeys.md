@@ -59,6 +59,19 @@ Existing MCP envelopes remain `ok | error | preview | pending | not_found`.
 An accepted asynchronous operation returns its persisted identifier for read-back;
 `ok` acknowledges the operation, not successful completion of the work.
 
+### Mutation retry contract
+
+New quality/schedule creation tools require an `idempotency_key` on confirmation.
+`MutationStore` is a port with atomic `claim(key, fingerprint)` and
+`complete(key, owner_token, result_json)` operations. Its registry initially selects
+Redis; tests inject a deterministic fake with failure injection. Records are scoped
+by workspace, actor and operation. Completed results are retained at least 24 hours. Matching completed
+requests replay their result; different payloads conflict; pending requests do not
+execute again. An unknown write outcome remains pending without expiry or automatic
+takeover until reconciliation. Redis must use durable persistence and no eviction
+for these records; deduplication cannot survive loss of the shared records. Missing
+or unavailable shared storage fails before a new mutation; no local fallback.
+
 ### Schedule outcome contract
 
 Persist and expose `last_run_status="skipped"` when a completed graph reports
