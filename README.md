@@ -6,6 +6,11 @@ For permanent platform architecture, see [`../platform-saas-ai-context`](../plat
 
 ---
 
+## MCP journeys and staging handoff
+
+Start with [MCP user journeys and staging handoff](docs/features/mcp-user-journeys.md) for
+available workflows, BH-1581 rollout evidence, code/test links, reproduction and remaining gaps.
+
 ## Quick Start — New Engineering Leader
 
 ```bash

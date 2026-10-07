@@ -3,7 +3,7 @@ title: MCP stateless transport — any instance answers any call
 epic: BH-1181
 tickets: [BH-1581]
 author: kuri
-status: Draft
+status: Partial
 created: 2026-10-06
 last-reviewed: 2026-10-06
 generates: tickets
@@ -15,17 +15,21 @@ tags:
 related:
   specs:
     - audit-every-mutation.md
-  features: []
+  features: [mcp-user-journeys.md]
   pocs: []
   bedrock: []
-roadmap: now — P0, about half of all MCP calls fail on staging
+roadmap: staging verified; production promotion requires explicit approval
 ---
 
 # MCP stateless transport — any instance answers any call
 
+> Staging rollout and acceptance are complete. Production promotion remains pending explicit
+> approval. See the [MCP user journeys and staging handoff](../features/mcp-user-journeys.md)
+> for available workflows, merged PRs, verification results, reproduction and known gaps.
+
 ## 1. Context
 
-brightbot serves MCP with FastMCP mounted as `get_mcp().http_app(path="/")` (`http/app.py:63`). FastMCP's default is `stateless_http=False`, so every MCP session lives only in the memory of the process that answered `initialize`. Any later call carrying that `Mcp-Session-Id` that lands on another process gets `404`.
+Before the BH-1581 fix, brightbot served MCP with FastMCP mounted as `get_mcp().http_app(path="/")` (`http/app.py:63`). FastMCP's default is `stateless_http=False`, so every MCP session lives only in the memory of the process that answered `initialize`. Any later call carrying that `Mcp-Session-Id` that lands on another process gets `404`.
 
 **Measured on staging, 2026-10-06, with no deploy in flight:** 5 sessions × 30 `tools/list` calls gave **73 × 200 and 77 × 404**. Each session split about 50/50, which matches two instances behind a round-robin load balancer. Every redeploy also kills every open session. Effect: about half of all MCP calls fail. That includes Projects v2 project actions (`create_project`, `update_project`, …), the MCP e2e suite (6 failures on 2026-10-06), Claude MCP connectors, and the webapp's MCP connectivity card and fleet panels. Production runs the same kind of deployment and is probably affected (**not verified**).
 
@@ -54,11 +58,11 @@ sequenceDiagram
 
 | Client | File | State |
 |---|---|---|
-| webapp | `src/WorkspaceSettings/mcpSession.ts` (`openMcpSession` threw when there was no id) | ✅ fixed, merged to webapp `staging` (#1486, `991f2127`). **Not deployed:** needs the manual Amplify build (`brighthive-main` account, SSO login). |
+| webapp | `src/WorkspaceSettings/mcpSession.ts` (`openMcpSession` threw when there was no id) | ✅ fixed, merged to webapp `staging` (#1486, `991f2127`). Deployed by Amplify staging job 274 before the server switch. |
 | webapp | `src/WorkspaceSettings/useMcpToolCount.ts` | ✅ already tolerated a missing id |
-| e2e | `e2e/core/mcp.py` (`initialize_mcp` raised when there was no id) | 🟡 draft PR brighthive-e2e #94: optional id plus reopen-on-404. Not yet run against staging. `ruff check` reports 4 errors, not yet checked against `master`. |
-| brightbot | `http/app.py:63` | ⚪ not started |
-| other MCP consumers | `brightbot-slack-server`, the brightagent-v3 client, any script that requires a session id | ⚪ grep before the server switch |
+| e2e | `e2e/core/mcp.py` (`initialize_mcp` raised when there was no id) | ✅ #94 merged to master with fake-transport tests; #96–#98 finish contract and write-token fixes. Full staging gate passes. |
+| brightbot | `http/app.py:63` | ✅ #1119 merged to staging and deployed; #1120 fixes the sanitized error flag. |
+| other MCP consumers | `brightbot-slack-server`, the brightagent-v3 client, any script that requires a session id | ✅ audited before the switch; no mandatory session-header requirement found. |
 
 ## 3. Invariants (DbC)
 
@@ -115,3 +119,20 @@ Feature: MCP works regardless of which instance answers
 | L1 | brightbot `tests/unit/mcp_server/` | The app factory passes `stateless_http=True`. A test client calls `initialize`, then `tools/list` with **no** session id, and gets 200. |
 | L2 | brighthive-e2e `e2e/core/mcp.py` | Missing session id accepted. A 404 reopens the session and resends once (unit test with a fake transport). |
 | e2e | brighthive-e2e `e2e/features/mcp/` | The full suite with `--writes` on staging. `test_projects` passes, plus the 5 × 30 probe. |
+
+
+## 11. Staging acceptance results
+
+Verified 2026-10-07 UTC: 150/150 raw calls returned HTTP 200 with zero RPC errors and no session
+IDs. The full MCP suite with `--workspace-config=bh-demo --writes --gate` returned 78 passed,
+8 expected skips, zero findings and exit 0. All five project tests ran; cleanup reported
+3 succeeded and 0 failed. A client opened before rollout completed 49 successful catalog calls.
+
+The compatible webapp deployed first. BrightBot staging is verified at `483899c8`; e2e master
+at `1b3f73d`. The existing login had `mcp:write` on its access token; the harness was initially
+checking the ID token. No new credential or authorization relaxation was required.
+
+The [feature handoff](../features/mcp-user-journeys.md#rollout-and-verification-evidence) links
+all implementation PRs and records evidence limits. Webapp bundle compatibility was checked;
+a browser walkthrough of the connectivity/fleet panels was not part of this run. Production
+has not been promoted or verified. These remaining items keep this spec classified Partial.

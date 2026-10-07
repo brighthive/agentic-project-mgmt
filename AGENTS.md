@@ -162,6 +162,12 @@ write POC -> write spec -> create Jira ticket -> implement -> write feature doc
 | `/aws-auth` | Use `make refresh-aws` and documented AWS SSO profiles |
 | `/scrum-master` | Plan sprint through `jira/AGENTS.md` and live Jira data |
 
+## MCP session handoff
+
+For MCP capabilities, BH-1581, staging verification, token selection and project cleanup,
+read [MCP user journeys and staging handoff](docs/features/mcp-user-journeys.md) and its linked spec.
+Refresh the live catalog/deployment before treating the dated evidence as current.
+
 ## Cross-Repo Navigation
 
 | Repo | Use for |
