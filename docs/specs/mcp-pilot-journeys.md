@@ -105,6 +105,12 @@ required at dispatch time. This does not enable service-context quality/profiler
 Ship the existing scheduler's authorization correction first: require the current
 `RUN/PIPELINE` ALLOW before replay and include actor identity in cache keys. This
 narrow correction does not make the existing best-effort cache atomic or durable.
+Its new actor-scoped namespace does not read legacy entries. Before rolling that
+slice out while scheduling writes are enabled, pause new scheduling confirmations
+and drain the configured old result-cache retention window; otherwise an in-flight
+retry can create a second schedule. This limitation remains until atomic reservations
+replace the cache. Permission lookup failure blocks confirmations and replays even
+when the general client-side authorization shadow flag is disabled.
 Before moving creation to workers, replace the route's shared boto3 resource with
 worker-owned infrastructure and bound admission/deadlines. Reject local-only storage
 and missing dispatcher/role configuration instead of caching an unregistered schedule.
