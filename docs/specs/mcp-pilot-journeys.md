@@ -71,6 +71,10 @@ execute again. An unknown write outcome remains pending without expiry or automa
 takeover until reconciliation. Redis must use durable persistence and no eviction
 for these records; deduplication cannot survive loss of the shared records. Missing
 or unavailable shared storage fails before a new mutation; no local fallback.
+Confirmed saves stay disabled until `BH_MCP_MUTATION_STORE_READY=true` and a dedicated
+`BH_MCP_MUTATION_REDIS_URL` are configured after persistence, non-eviction and recovery
+checks. Previews remain available. Mutations disable transport-level POST retries;
+a single reservation must never wrap multiple ambiguous downstream attempts.
 
 ### Schedule outcome contract
 
@@ -156,6 +160,42 @@ Each implementation slice stays independently reviewable under the workspace PR 
 3. Complete required runtime dispatch/polling and verify the project journey.
 4. Connect reviewed remediation and its human approval surface.
 5. Verify enforcement and end-to-end journey evidence in brighthive-e2e.
+
+### Implementation ledger — October 7
+
+These are code/review results, not deployed or client acceptance results.
+The user approved BrightBot #1121 and this spec's PM #199 for merge, and then
+requested more implementation before staging verification. New implementation
+PRs require their own merge authorization under the workspace contract.
+
+| Slice | PR | Local evidence | Rollout state |
+|---|---|---|---|
+| Skipped monitoring outcomes | [BrightBot #1121](https://github.com/brighthive/brightbot/pull/1121) | 47 tests | Merge authorized; verification deferred |
+| Executable generated expectations | [BrightBot #1122](https://github.com/brighthive/brightbot/pull/1122) | 19 tests; JSON/persistence mapping | Open against staging |
+| Shared retry store | [BrightBot #1123](https://github.com/brighthive/brightbot/pull/1123) | 11 tests, including real local Redis concurrency | Open against staging |
+| Save one DRAFT rule | [BrightBot #1124](https://github.com/brighthive/brightbot/pull/1124) | 45 tests, including MCP invariants | Stacked on #1123; confirmed writes default off |
+| Rule inventory and recent executions | [BrightBot #1125](https://github.com/brighthive/brightbot/pull/1125) | 28 tests, including denied reads and paging | Open against staging |
+| Activate/deactivate/deprecate | [BrightBot #1126](https://github.com/brighthive/brightbot/pull/1126) | 48 tests; actual transitions/readback/retry coverage | Stacked on #1124; confirmed writes default off |
+
+Each slice completed architect, senior Python, QA and junior review. Test counts
+overlap and must not be added into an aggregate. Inventory pages currently fetch
+all matching rules from Core; histories contain at most ten recent executions per
+rule, across assets. Cached mutation replies describe their original operation;
+inventory reads establish current state. Never reconcile uncertain creations by
+fuzzy matching names/parameters or by changing the idempotency key.
+
+Before enabling monitor creation, address execution authorization for scheduled
+quality/profiler work (currently service context; owner reauthorization is wired
+for execute_workflow only). Schedule creation also automatically creates a Slack
+DM subscription independently of explicit sink_config; an INBOX setting alone
+does not establish inbox-only delivery. Existing async schedule routes contain
+blocking AWS calls; a worker must retain its resources after caller timeout.
+
+Still required: monitor creation/control and delivered alerts; real terminal
+pipeline/output evidence and runtime gaps; durable reviewed repair/Slack approval;
+observable governance denial; client-specific acceptance evidence. BrightAgent in
+the BrightHive Slack workspace is the requested test destination; exact routing
+and the human reviewer's Slack identity remain to be resolved before messaging.
 
 Client infrastructure access, downstream MCP access, designated Slack test channel and
 reviewer identity are required for the corresponding client proofs. Record unresolved
