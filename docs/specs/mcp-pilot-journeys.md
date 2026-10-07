@@ -214,9 +214,10 @@ PRs require their own merge authorization under the workspace contract.
 | Save one DRAFT rule | [BrightBot #1124](https://github.com/brighthive/brightbot/pull/1124) | 45 tests, including MCP invariants | Merged staging; confirmed writes default off |
 | Rule inventory and recent executions | [BrightBot #1125](https://github.com/brighthive/brightbot/pull/1125) | 28 tests, including denied reads and paging | Merged staging |
 | Activate/deactivate/deprecate | [BrightBot #1126](https://github.com/brighthive/brightbot/pull/1126) | 48 tests; actual transitions/readback/retry coverage | Merged staging; confirmed writes default off |
-| Explicit notification destination | [BrightBot #1127](https://github.com/brighthive/brightbot/pull/1127) | 33 tests | Open; merge not yet authorized |
-| Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Open; merge not yet authorized |
-| Dedicated regional storage | [Platform Core #1322](https://github.com/brighthive/brighthive-platform-core/pull/1322) | 2 synthesis/entry-point tests; isolated synth | Open; not deployed |
+| Explicit notification destination | [BrightBot #1127](https://github.com/brighthive/brightbot/pull/1127) | 33 tests | Merged staging |
+| Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Merged staging; writes not enabled |
+| Dedicated regional storage | [Platform Core #1322](https://github.com/brighthive/brighthive-platform-core/pull/1322) | 2 synthesis/entry-point tests; isolated synth | Merged staging; isolated stack deployed |
+| Scheduler replay authorization | [BrightBot #1129](https://github.com/brighthive/brightbot/pull/1129) | 49 scheduler/invariant tests; four-role review | Open; merge not yet authorized |
 
 The complete quality batch passed 84 combined local tests after integration. Its
 staging merge is `17d2ea279bd3b36d60735623aa0e777813df4213`; PM #199 merged to master
@@ -230,15 +231,32 @@ rule, across assets. Cached mutation replies describe their original operation;
 inventory reads establish current state. Never reconcile uncertain creations by
 fuzzy matching names/parameters or by changing the idempotency key.
 
-### Durable storage rollout (pending)
+### Durable storage rollout
 
-1. Merge the reviewed adapter and isolated infrastructure PRs after authorization.
+The user approved #1127, #1128, Core #1322 and PM #200 plus the isolated staging
+storage deployment. On October 7, `Staging-BPC-McpMutationStoreStack` reached
+`CREATE_COMPLETE` in staging/us-east-1. Its table `brightbot-mcp-mutations-staging`
+is ACTIVE with the String `mutation_key` partition key, on-demand capacity,
+encryption, point-in-time recovery, `expires_at` TTL and deletion protection enabled.
+The attached `brightagent-aws` inline policy grants only GetItem/PutItem/UpdateItem
+on that table. These are deployment/configuration reads, not MCP journey validation.
+
+Core merge: `f425065fafd341e480c062bf24a29b6e7fb5d0b9`. BrightBot #1128 merge:
+`91dcfa728a2507617f96b56936823a49c126eeb1`; #1127 merge:
+`99d7d2effef8c68b4710a937f99116e9c6f8ace5`. CloudFormation change set
+`awscli-cloudformation-package-deploy-1791347750` added exactly the table and policy.
+No runtime environment was changed to enable confirmed writes; no item claims,
+quality writes or live journey suite were run. Runtime credential binding,
+cross-instance behavior and readiness enablement remain pending.
+
+1. Merge the reviewed adapter and isolated infrastructure PRs after authorization. **Done.**
 2. From Platform Core, synthesize `mcp_mutation_store_app.py` with `ENV=Staging`,
    the staging AWS profile and its actual account. Review the isolated
-   `Staging-BPC-McpMutationStoreStack` change set: one table, one IAM policy.
+   `Staging-BPC-McpMutationStoreStack` change set: one table, one IAM policy. **Done.**
 3. Deploy only this stack with `RuntimeUserName` set to the confirmed existing
    BrightBot runtime IAM user. The documented staging user exists; its actual
    deployment credential binding still needs verification. Do not create credentials.
+   **Stack deployed; actual runtime identity verification remains pending.**
 4. Check the deployed table's key, encryption, PITR, TTL, deletion protection and
    runtime item permissions; prove competing claims and replay across instances.
 5. Configure `BH_MCP_MUTATION_STORE=dynamodb`, the output table name as
