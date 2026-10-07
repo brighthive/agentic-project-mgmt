@@ -72,12 +72,35 @@ execute again. An unknown write outcome remains pending without expiry or automa
 takeover until reconciliation. Redis must use durable persistence and no eviction
 for these records; deduplication cannot survive loss of the shared records. Missing
 or unavailable shared storage fails before a new mutation; no local fallback.
-Confirmed saves stay disabled until `BH_MCP_MUTATION_STORE_READY=true` and a dedicated
-`BH_MCP_MUTATION_REDIS_URL` are configured after persistence, non-eviction and recovery
-checks. Previews remain available. Mutations disable transport-level POST retries;
+Confirmed saves stay disabled until `BH_MCP_MUTATION_STORE_READY=true` and the selected
+store is configured and verified. Redis requires a dedicated `BH_MCP_MUTATION_REDIS_URL`
+after persistence, non-eviction and recovery checks. Previews remain available.
+Mutations disable transport-level POST retries;
 a single reservation must never wrap multiple ambiguous downstream attempts.
 
+DynamoDB is the durable deployment option behind the same registry-backed port:
+atomic conditional reservation, strongly consistent replay reads, owner-checked
+completion, no TTL on pending records and a TTL of at least 24 hours on completed
+records. Select `BH_MCP_MUTATION_STORE=dynamodb` with an explicitly provisioned
+`BH_MCP_MUTATION_TABLE_NAME`; the readiness gate still defaults off. The owning
+infrastructure must configure encryption, point-in-time recovery and retention on
+deletion, and grant the runtime only the required item operations on that table.
+No existing scheduler or cache table is repurposed. Use one regional writer; active-active
+Global Tables do not satisfy this claim contract. Completed results have a configurable
+UTF-8 byte budget, bounded below DynamoDB's item limit. SDK write retries are disabled;
+ambiguous reservations fail closed. Test the adapter with an AWS fake and validate the
+real table configuration before enabling confirmed writes.
+
 ### Schedule outcome contract
+
+The existing `schedule_pipeline_run` tool adopts the shared retry contract too:
+confirmation requires a key; current scope and platform authorization run before
+claim or replay; the fingerprint covers normalized cron and every execution input.
+No process-local fallback or GET/create/SET race is permitted. The worker owns its
+storage client and in-process scheduler operation through completion, even if the
+caller times out. A partial schedule write returns pending and cannot be retried
+with a new reservation automatically. Execute-workflow owner authorization remains
+required at dispatch time. This does not enable service-context quality/profiler runs.
 
 Persist and expose `last_run_status="skipped"` when a completed graph reports
 `flag_skipped=true`. A transport/graph failure takes precedence over the skip flag.
@@ -165,18 +188,27 @@ Each implementation slice stays independently reviewable under the workspace PR 
 ### Implementation ledger — October 7
 
 These are code/review results, not deployed or client acceptance results.
-The user approved BrightBot #1121 and this spec's PM #199 for merge, and then
-requested more implementation before staging verification. New implementation
+The user approved BrightBot #1121, this spec's PM #199 and then the quality lifecycle
+batch #1122–#1126. All are merged into their target branches. Live staging verification
+is deferred at the user's request while implementation continues. New implementation
 PRs require their own merge authorization under the workspace contract.
 
 | Slice | PR | Local evidence | Rollout state |
 |---|---|---|---|
-| Skipped monitoring outcomes | [BrightBot #1121](https://github.com/brighthive/brightbot/pull/1121) | 47 tests | Merge authorized; verification deferred |
-| Executable generated expectations | [BrightBot #1122](https://github.com/brighthive/brightbot/pull/1122) | 19 tests; JSON/persistence mapping | Open against staging |
-| Shared retry store | [BrightBot #1123](https://github.com/brighthive/brightbot/pull/1123) | 11 tests, including real local Redis concurrency | Open against staging |
-| Save one DRAFT rule | [BrightBot #1124](https://github.com/brighthive/brightbot/pull/1124) | 45 tests, including MCP invariants | Stacked on #1123; confirmed writes default off |
-| Rule inventory and recent executions | [BrightBot #1125](https://github.com/brighthive/brightbot/pull/1125) | 28 tests, including denied reads and paging | Open against staging |
-| Activate/deactivate/deprecate | [BrightBot #1126](https://github.com/brighthive/brightbot/pull/1126) | 48 tests; actual transitions/readback/retry coverage | Stacked on #1124; confirmed writes default off |
+| Skipped monitoring outcomes | [BrightBot #1121](https://github.com/brighthive/brightbot/pull/1121) | 47 tests | Merged staging; verification deferred |
+| Executable generated expectations | [BrightBot #1122](https://github.com/brighthive/brightbot/pull/1122) | 19 tests; JSON/persistence mapping | Merged staging |
+| Shared retry store | [BrightBot #1123](https://github.com/brighthive/brightbot/pull/1123) | 11 tests, including real local Redis concurrency | Merged staging |
+| Save one DRAFT rule | [BrightBot #1124](https://github.com/brighthive/brightbot/pull/1124) | 45 tests, including MCP invariants | Merged staging; confirmed writes default off |
+| Rule inventory and recent executions | [BrightBot #1125](https://github.com/brighthive/brightbot/pull/1125) | 28 tests, including denied reads and paging | Merged staging |
+| Activate/deactivate/deprecate | [BrightBot #1126](https://github.com/brighthive/brightbot/pull/1126) | 48 tests; actual transitions/readback/retry coverage | Merged staging; confirmed writes default off |
+| Explicit notification destination | [BrightBot #1127](https://github.com/brighthive/brightbot/pull/1127) | 33 tests | Open; merge not yet authorized |
+| Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Open; merge not yet authorized |
+| Dedicated regional storage | [Platform Core #1322](https://github.com/brighthive/brighthive-platform-core/pull/1322) | 2 synthesis/entry-point tests; isolated synth | Open; not deployed |
+
+The complete quality batch passed 84 combined local tests after integration. Its
+staging merge is `17d2ea279bd3b36d60735623aa0e777813df4213`; PM #199 merged to master
+as `b750a2416d3927c1ead976c3cb73e7e4ec7153e0`. These are repository revisions, not
+proof of the running deployment revision.
 
 Each slice completed architect, senior Python, QA and junior review. Test counts
 overlap and must not be added into an aggregate. Inventory pages currently fetch
@@ -185,18 +217,42 @@ rule, across assets. Cached mutation replies describe their original operation;
 inventory reads establish current state. Never reconcile uncertain creations by
 fuzzy matching names/parameters or by changing the idempotency key.
 
+### Durable storage rollout (pending)
+
+1. Merge the reviewed adapter and isolated infrastructure PRs after authorization.
+2. From Platform Core, synthesize `mcp_mutation_store_app.py` with `ENV=Staging`,
+   the staging AWS profile and its actual account. Review the isolated
+   `Staging-BPC-McpMutationStoreStack` change set: one table, one IAM policy.
+3. Deploy only this stack with `RuntimeUserName` set to the confirmed existing
+   BrightBot runtime IAM user. The documented staging user exists; its actual
+   deployment credential binding still needs verification. Do not create credentials.
+4. Check the deployed table's key, encryption, PITR, TTL, deletion protection and
+   runtime item permissions; prove competing claims and replay across instances.
+5. Configure `BH_MCP_MUTATION_STORE=dynamodb`, the output table name as
+   `BH_MCP_MUTATION_TABLE_NAME`, and its `AWS_REGION`. Set readiness true only after
+   those checks. Keep completed retention at least 86400 seconds.
+6. Verify quality save/inventory/activation through MCP. Record exact operation IDs,
+   deployed revisions and results in the evidence harness. Client acceptance remains
+   separate from the demo workspace check.
+
+Rollback disables readiness first and retains the table/records. Do not repoint
+clients to an empty store or erase pending reservations; reconcile unknown writes
+from authoritative operation evidence. Code rollback must preserve the same records
+if confirmed mutations remain enabled. This runbook does not authorize production.
+
 Before enabling monitor creation, address execution authorization for scheduled
 quality/profiler work (currently service context; owner reauthorization is wired
-for execute_workflow only). Schedule creation also automatically creates a Slack
-DM subscription independently of explicit sink_config; an INBOX setting alone
-does not establish inbox-only delivery. Existing async schedule routes contain
+for execute_workflow only). BrightBot #1127 prevents new implicit Slack DM subscriptions
+when an explicit sink_config is supplied. Existing notification subscriptions remain;
+an INBOX setting alone does not establish inbox-only delivery. Existing async schedule routes contain
 blocking AWS calls; a worker must retain its resources after caller timeout.
 
 Still required: monitor creation/control and delivered alerts; real terminal
 pipeline/output evidence and runtime gaps; durable reviewed repair/Slack approval;
 observable governance denial; client-specific acceptance evidence. BrightAgent in
 the BrightHive Slack workspace is the requested test destination; exact routing
-and the human reviewer's Slack identity remain to be resolved before messaging.
+remains to be resolved before messaging. The user designated **@Kuri Chinca** as
+the human reviewer; resolve that Slack identity within the BrightHive workspace.
 
 Client infrastructure access, downstream MCP access, designated Slack test channel and
 reviewer identity are required for the corresponding client proofs. Record unresolved
