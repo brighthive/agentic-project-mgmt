@@ -2,7 +2,8 @@
 title: "Executable pilot journeys through MCP"
 epic: "BH-1255"
 author: "drchinca"
-status: "In Progress"
+status: Partial
+roadmap: "THEME-spec-driven-pipelines.md; implementation ledger in section 6; client acceptance pending"
 created: "2026-10-07"
 generates: "tickets"
 tags: [mcp, pilots, monitoring, workflows, governance]
