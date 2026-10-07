@@ -8,7 +8,7 @@ last_verified_utc: "2026-10-07"
 services: [brightbot, brighthive-webapp, brighthive-e2e]
 tags: [mcp, staging, user-journeys, handoff]
 related:
-  specs: [mcp-stateless-transport.md]
+  specs: [mcp-stateless-transport.md, mcp-pilot-journeys.md]
   pocs: []
 ---
 
@@ -21,9 +21,14 @@ manage projects, build and operate pipelines, and use ingestion, quality and gov
 The staging identity used for this verification saw **131 tools**. Catalog membership varies
 with identity, scopes and feature flags; it is a dated observation, not a fixed tool-count contract.
 
-**Staging acceptance is green:** 150/150 raw calls returned HTTP 200; the MCP suite with writes
+**MCP transport and project CRUD acceptance is green:** 150/150 raw calls returned HTTP 200; the MCP suite with writes
 and the gate enabled reported 78 passed, 8 expected skips and zero findings. Confirmed project
 create/update/archive/read/delete ran successfully. Production was not changed or verified.
+
+The broader five pilot journeys are being implemented under the
+[executable pilot journeys spec](../specs/mcp-pilot-journeys.md), including its PR
+ledger, local test evidence, rollout prerequisites and remaining work. The transport
+result above does not establish those journeys or client acceptance.
 
 ## How It Works
 
