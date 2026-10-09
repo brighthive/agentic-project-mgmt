@@ -3,7 +3,7 @@ title: Projects at enterprise scale — n projects × n pipelines, each with its
 epic: BH-1181
 tickets: [BH-1626]
 author: kuri
-status: Draft
+status: Partial
 created: 2026-10-09
 last-reviewed: 2026-10-09
 generates: tickets
@@ -24,7 +24,7 @@ related:
   features: []
   pocs: []
   bedrock: []
-roadmap: next — driver is Nestlé (hundreds of projects, several pipelines each)
+roadmap: next — nothing in this spec is built yet; it builds on shipped audit (BH-1579, BH-1580) and authz (BH-1464). Driver is Nestlé (hundreds of projects, several pipelines each)
 ---
 
 # Projects at enterprise scale — n projects × n pipelines
