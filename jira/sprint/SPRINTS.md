@@ -1,8 +1,25 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 15 (released Aug 17, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 17 (released Oct 6, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 17 🥝 — Authorization, PII Masking, Projects over MCP & a Production Release (Aug 24 – Oct 6, 2026)
+- **Duration**: 44 days (date-range cut, unofficial — sixth unofficial sprint in a row)
+- **Focus**: BH-1464 workspace authorization (one `authorize()` decision point, Neo4j permission matrix, shadow → enforced on staging), lineage-aware PII masking, ~20 project lifecycle tools over MCP, Projects 2.0 spec-driven pipelines, honest Unknown health, automatic audit of every write, catalog vector search + multi-warehouse routing, English/Spanish/Portuguese UI, Sep 30 Staging → Production promotion
+- **Team**: Kuri, Marwan, Harbour (written per person this sprint)
+- **PRs Merged**: 254 total (195 code + 59 release/promotion carriers, 7 repos)
+- **Lines Changed**: +218,197 / −53,750 code-only; +152,386 / −16,666 excluding a regenerated `ogm-types.ts`
+- **Highlights**: Kuri — authz epic built + enforced on staging, PII alias/CTE bypasses closed, project MCP surface, spec conformance; Marwan — catalog search, asset-scoped multi-warehouse SQL routing, Projects 2.0 spec→pipeline, led the Sep 30 prod promotion + GraphQL ECS cutover; Harbour — full i18n (en/es/pt), chat-configurable pipeline scheduling, in-process scheduler fixed on prod, UX reliability fixes
+- **Sprint Health**: 4 tickets to Done in 6 weeks against 195 code PRs; 35 PR-linked tickets in Testing (Dev), 46 in Needs Refinement. 43 engineer PRs carry no `BH-XXX`. Kuri authored 77.9% of code PRs (up from 75.2%). Sixth unofficial sprint — open a Jira sprint object for Sprint 18.
+- [Details →](./17/)
+
+---
+
+## Sprint 16 🍓 — (Aug 17–23, 2026)
+- Released to Slack only (Aug 23); no repo artifacts.
 
 ---
 
