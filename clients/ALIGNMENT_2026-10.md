@@ -17,16 +17,17 @@ tags: [alignment, loopcapital, nestle, agent-governance, azure, proposed-tickets
 
 # Client alignment — Loop Capital + Nestlé (October 2026)
 
-One page that keeps **clients, business, product and engineering** pointed at the same work.
+> One page that keeps **clients, business, product and engineering** pointed at the same work.
+
 Detail lives per client: [Loop Capital phase 1](trials/loopcapital/PHASE1_GOVERNANCE.md) ·
 [Nestlé Azure architecture](trials/nestle/AZURE_ARCHITECTURE.md) · [Nestlé trial room](trials/nestle/overview.md).
-Evidence date: 2026-10-17. Jira inventory: live JQL on BH, same date.
+Evidence date: 2026-10-17. Jira inventory: live JQL (Jira Query Language) on the BH project, same date.
 
 ## Where each client stands
 
 | | Loop Capital | Nestlé |
 |---|---|---|
-| **Client ask (latest doc)** | AI agent governance control plane across Claude, ChatGPT, Copilot (brief, 2026-10-16) | Single-tenant, private-only Azure deployment; Nestlé's own agents call our MCP server (architecture doc, Lightweight + Full) |
+| **Client ask (latest doc)** | AI agent governance control plane across Claude, ChatGPT, Copilot (brief, 2026-10-16) | Single-tenant, private-only Azure deployment; Nestlé's own agents call our MCP (Model Context Protocol) server (architecture doc, Lightweight + Full) |
 | **Next date** | Working session 2026-10-21, 10:00 Central | Trial target 2026-11-15, January fallback |
 | **What's real today** | Multi-agent prod (supervisor + 7); permission matrix (shadow); approval on writes; per-action audit lines | The agents, Neo4j, OpenMetadata, Synapse read, Great Expectations, SSIS diagnostics — all on AWS |
 | **Biggest gap** | Agent identity, Entra ID, skill risk rating, cross-vendor registry, control view | No Azure/Kubernetes packaging; Cognito, Bedrock and AWS storage in the core |
@@ -36,6 +37,7 @@ Evidence date: 2026-10-17. Jira inventory: live JQL on BH, same date.
 ## Shared capabilities — build once, serve both
 
 These four items appear in both clients' asks. Building them once is the main capacity lever.
+R1–R10 are Loop's requirement rows ([phase 1 doc](trials/loopcapital/PHASE1_GOVERNANCE.md)); LG-* and NZ-* are the proposed tickets below.
 
 | Capability | Loop needs it for | Nestlé needs it for | Proposed home |
 |---|---|---|---|
@@ -47,7 +49,7 @@ These four items appear in both clients' asks. Building them once is the main ca
 ## Proposed Jira — for approval (nothing created yet)
 
 Rules applied: project BH, board 152; children are **Task** with `parentKey`; default assignee Kuri until the
-team splits work. Owner column is a suggestion from `CLAUDE.md` ownership.
+team splits work. Owner column is a suggestion from [`CLAUDE.md`](../CLAUDE.md) ownership.
 
 ### New epic A — "Loop Capital: AI agent governance (phase 1)"
 
@@ -72,21 +74,21 @@ team splits work. Owner column is a suggestion from `CLAUDE.md` ownership.
 
 | ID | Task | Size | Suggested owner | Links |
 |---|---|---|---|---|
-| NZ-0 | ADR: orchestrator engine on AKS — self-hosted LangGraph vs CEMAF | S | Kuri | BH-1198, BH-1199 |
-| NZ-1 | Container images + Helm charts: agents, MCP server, platform API, ingress, Key Vault CSI, workload identity | L | Ahmed | — |
-| NZ-2 | Azure infrastructure as code: spoke VNet, private AKS, Private Endpoints + DNS, ACR, Key Vault, Postgres Flex, AMPLS | L | Ahmed | BH-584 (AWS pattern) |
+| NZ-0 | ADR (architecture decision record): orchestrator engine on AKS (Azure Kubernetes Service) — self-hosted LangGraph vs CEMAF (BrightAgent v3 framework) | S | Kuri | BH-1198, BH-1199 |
+| NZ-1 | Container images + Helm charts: agents, MCP server, platform API, ingress, Key Vault CSI (Container Storage Interface) driver, workload identity | L | Ahmed | — |
+| NZ-2 | Azure IaC (infrastructure as code): spoke VNet (virtual network), private AKS, Private Endpoints + DNS, ACR (Azure Container Registry), Key Vault, Postgres Flex, AMPLS (Azure Monitor Private Link Scope) | L | Ahmed | BH-584 (AWS pattern) |
 | NZ-3 | Model-provider port in brightbot + Azure AI Foundry / OpenAI adapter | M–L | Marwan | — |
 | NZ-4 | = LG-3 (Entra ID) — one ticket, linked from both epics | L | Ahmed | — |
-| NZ-5 | Storage, state and secrets ports + Azure adapters (Blob/ADLS, Postgres sessions, Key Vault) | L | Kuri | — |
+| NZ-5 | Storage, state and secrets ports + Azure adapters (Blob/ADLS (Azure Data Lake Storage), Postgres sessions, Key Vault) | L | Kuri | — |
 | NZ-6 | OpenMetadata + OpenSearch on AKS (upstream Helm, Postgres Flex) | M | Ahmed | — |
 | NZ-7 | Neo4j Enterprise StatefulSet + nightly backup to Blob + runbook | M | Ahmed | BH-1539 |
 | NZ-8 | Read-only ADLS / Synapse / Databricks via managed identity + Private Endpoints | M | Marwan | BH-1391, BH-1044 |
 | NZ-9 | OpenTelemetry → Azure Monitor (Log Analytics via AMPLS) | M | Ahmed | — |
-| NZ-10 | Nestlé trial epic (client delivery) — required by `clients/AGENTS.md` before Day 1; resolves trial-room O-06 | S | Kuri | trial room |
+| NZ-10 | Nestlé trial epic (client delivery) — required by [`clients/AGENTS.md`](AGENTS.md) before Day 1; resolves trial-room O-06 | S | Kuri | [trial room](trials/nestle/overview.md) |
 | NZ-11 | *Conditional* Azure DevOps PR adapter (only if Nestlé confirms Azure DevOps) | M | — | — |
 
 **Epic C — "Nestlé: Azure Full"** is proposed as a placeholder only (web app with Entra sign-in, App Gateway +
-APIM, Airbyte on AKS, Data Factory / Event Grid / Cosmos / AI Search / AI Language, BI push). Do not size it until
+APIM (Azure API Management), Airbyte on AKS, Data Factory / Event Grid / Cosmos / AI Search / AI Language, BI push). Do not size it until
 Lightweight is decided.
 
 ### Hygiene on existing tickets
@@ -106,7 +108,7 @@ finish by their client dates.** What ships for each date:
 | Date | Realistic | Not realistic |
 |---|---|---|
 | Oct 21 (Loop) | Honest capability walk-through; control-plane **design draft**; confirmed requirement rows and owners; Copilot/volume answers | Any working agent identity, Entra, eval sandbox or registry |
-| Nov 15 (Nestlé) | Trial on Brighthive-hosted environment with Nestlé's agents over MCP, *if* Nestlé accepts that (O-09); NZ-0 decided; NZ-1/2 under way | Lightweight running in Nestlé's Azure |
+| Nov 15 (Nestlé) | Trial on Brighthive-hosted environment with Nestlé's agents over MCP, *if* Nestlé accepts that ([O-09](trials/nestle/decisions-and-evidence.md)); NZ-0 decided; NZ-1/2 under way | Lightweight running in Nestlé's Azure |
 
 ## Decisions for business and product (owner: Kuri to route)
 
