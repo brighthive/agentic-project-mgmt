@@ -12,8 +12,8 @@ For client architecture profiles and capability maps, see `../platform-saas-ai-c
 | Prospect | Champion | Trial Window | Jira Epic | Status |
 |---|---|---|---|---|
 | [Longaeva Partners](trials/longaeva/overview.md) | Grant Langseth | May 26 – Jun 9, 2026 | [BH-526](https://brighthiveio.atlassian.net/browse/BH-526) | Active |
-| [Loop Capital](trials/loopcapital/overview.md) | Frank | Demo 7/9, decision gate 7/17, 2026 | [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Active |
-| [Nestlé Global](trials/nestle/overview.md) | To confirm | Six weeks; target Nov 15, 2026, January fallback (years provisional) | To assign before Day 1 | Preparation; dates/scope to confirm |
+| [Loop Capital](trials/loopcapital/overview.md) | Frank Sung | Phase 1 = [AI agent governance](trials/loopcapital/PHASE1_GOVERNANCE.md); working session 2026-10-21 | Phase-1 epic proposed ([alignment](ALIGNMENT_2026-10.md)); data-engineering work (BH-1036, BH-1245) is next phase | Active |
+| [Nestlé Global](trials/nestle/overview.md) | To confirm | Six weeks; target Nov 15, 2026, January fallback (years provisional); [Azure private deployment](trials/nestle/AZURE_ARCHITECTURE.md) | Epics proposed ([alignment](ALIGNMENT_2026-10.md)); none in Jira yet | Preparation; dates/scope to confirm |
 
 ---
 

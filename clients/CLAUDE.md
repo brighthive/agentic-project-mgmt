@@ -14,12 +14,15 @@
 | Question | Location |
 |---|---|
 | All leads, trials, and active clients | `README.md` |
+| **Client alignment Oct 2026 — Loop + Nestlé, proposed epics/tickets, capacity** | `ALIGNMENT_2026-10.md` |
 | Nestlé Global trial room, six-week plan and division rollout | `trials/nestle/overview.md` |
+| Nestlé Azure private deployment — component status, blockers, redlines | `trials/nestle/AZURE_ARCHITECTURE.md` |
 | Start a new lead | `_templates/LEAD.md` |
 | Start a new trial / POC | `_templates/TRIAL.md` |
 | Active paying customer profile | `_templates/CLIENT.md` |
 | Longaeva POC overview | `trials/longaeva/overview.md` |
 | Loop Capital POC overview | `trials/loopcapital/overview.md` |
+| **Loop Capital phase 1 — AI agent governance (R1–R10 status, redlines)** | `trials/loopcapital/PHASE1_GOVERNANCE.md` |
 | **Loop Capital Trial (Doc 1) — consolidated readiness statement** | `trials/loopcapital/TRIAL_STATEMENT.md` |
 | Loop Capital verbatim client asks (SSIS POC + 7/17 proactivity demo) | `trials/loopcapital/artifacts/poc-scope-from-client.md` |
 | Loop Capital proactive-monitoring handover spec | `../docs/specs/proactive-pipeline-ingestion-monitoring.md` (see its "Start Here" section) |
