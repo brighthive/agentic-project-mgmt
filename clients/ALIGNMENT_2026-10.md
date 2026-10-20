@@ -17,6 +17,8 @@ tags: [alignment, loopcapital, nestle, agent-governance, azure, proposed-tickets
 
 # Client alignment — Loop Capital + Nestlé (October 2026)
 
+> Measured against the [north star](NORTH_STAR.md): every warehouse, every database, unbounded lineage, every engine, glued by Brighthive with BrightAgents doing the data engineering.
+
 > One page that keeps **clients, business, product and engineering** pointed at the same work.
 
 Detail lives per client: [Loop Capital phase 1](trials/loopcapital/PHASE1_GOVERNANCE.md) ·

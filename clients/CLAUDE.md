@@ -14,6 +14,7 @@
 | Question | Location |
 |---|---|
 | All leads, trials, and active clients | `README.md` |
+| **North star — the seven-part platform promise every client ask is measured against** | `NORTH_STAR.md` |
 | **Client alignment Oct 2026 — Loop + Nestlé, proposed epics/tickets, capacity** | `ALIGNMENT_2026-10.md` |
 | Nestlé Global trial room, six-week plan and division rollout | `trials/nestle/overview.md` |
 | Nestlé Azure private deployment — component status, blockers, redlines | `trials/nestle/AZURE_ARCHITECTURE.md` |
