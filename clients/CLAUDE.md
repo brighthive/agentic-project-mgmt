@@ -24,6 +24,8 @@
 | Longaeva POC overview | `trials/longaeva/overview.md` |
 | Loop Capital POC overview | `trials/loopcapital/overview.md` |
 | **Loop Capital phase 1 — AI agent governance (R1–R10 status, redlines)** | `trials/loopcapital/PHASE1_GOVERNANCE.md` |
+| **Loop Capital vendor evaluation — requirements fit, competitors, co-build partnership** | `trials/loopcapital/GOVERNANCE_REQUIREMENTS_FIT.md` |
+| Loop Capital AI governance requirements (verbatim, 2026-10-16) | `trials/loopcapital/artifacts/2026-10-16-ai-governance-requirements-from-client.md` |
 | **Loop Capital Trial (Doc 1) — consolidated readiness statement** | `trials/loopcapital/TRIAL_STATEMENT.md` |
 | Loop Capital verbatim client asks (SSIS POC + 7/17 proactivity demo) | `trials/loopcapital/artifacts/poc-scope-from-client.md` |
 | Loop Capital proactive-monitoring handover spec | `../docs/specs/proactive-pipeline-ingestion-monitoring.md` (see its "Start Here" section) |
