@@ -136,6 +136,50 @@ Any reported execution-history write failure returns `status=error` with
 claiming a quality run is verified, read its exact run ID from rule history. This
 slice does not add execution retries or claim completion of recurring alert delivery.
 
+### Business value required for notifications
+
+The user rejected the October 7 delivery smoke message as offering no business
+value. A Slack transport acknowledgment is not pilot acceptance. Notifications
+must support a decision at enterprise scale, including a multi-region organization;
+this requirement does not imply access to, or validation against, Nestlé data.
+
+Every actionable alert must carry:
+
+- **What changed:** observed result versus a named expectation/baseline, units,
+  measurement time and whether the evidence is current, stale or incomplete.
+- **What is affected:** the authorized data product and verified downstream
+  report/process/deadline, grounded in project context and lineage. State impact
+  as unknown when it cannot be established; never invent revenue, affected
+  plants/regions, compliance exposure or a financial loss from a technical failure.
+- **Why it matters now:** the severity/SLA basis and whether work is blocked,
+  degraded or still usable. A successful scheduler invocation supplies none of this.
+- **Who acts:** the responsible owner or escalation destination, with one concrete
+  recommended next step. Separate a diagnosis from a hypothesis and an approved
+  action from a proposal. Put technical detail behind an evidence link.
+- **What approval means:** a scoped change, expected effect and available review
+  evidence. Expose an approval action only when it invokes real authorization and
+  audit behavior. A logging-only button is not an approval workflow.
+
+Group repeated observations of one incident into the existing thread. Use a
+workspace-scoped incident identity; updates must communicate a material change,
+escalation or verified recovery. Routine healthy/no-change results belong in a
+requested digest. A recovery message requires an actual recheck. Critical failures
+with incomplete impact evidence must still reach the responsible operator, clearly
+marked incomplete, without invented business conclusions.
+
+Human approval remains required where the pilot calls for it. An alert must never
+suggest that a repair was applied merely because a PR was created or a message sent.
+Release hashes, test counts, implementation PRs and deploy receipts belong in
+engineering evidence, not routine business-facing alerts.
+
+First correction: when a failed quality signal or schedule explicitly reports
+`Data asset not found:`, explain the missing coverage and recommend checking access,
+then restoring or rebinding the target before rerunning. A lookup failure is not
+proof of deletion. Use the existing schedule-configuration
+review action only when the schedule ID is known. A signal without a schedule ID
+must not invent an executable repair action. Preserve source IDs/timestamps for
+evidence and label downstream impact unverified.
+
 ### Evidence contract
 
 For each acceptance run record: journey/criterion, environment, workspace reference,
@@ -197,6 +241,15 @@ Given a declared blocking rule, when a violating operation is attempted through 
 then the owning platform denies it and exposes the decision. An enforcement-service
 failure fails closed. A forbidden tenant or acting identity cannot bypass this check.
 
+### AC-PILOT-07 Actionable notification with verified context
+
+Given a real pilot incident, an authorized recipient and available project/lineage
+context, when its notification is delivered, then the recipient can identify the
+observed change, affected product, evidence, severity basis, owner and next action.
+Unknown impact is labeled; no fabricated business impact appears. Repeated unchanged
+observations do not create additional alerts. A proposed repair stays pending until
+an independently authorized human approves it and the recorded operation completes.
+
 ## 5. Out of scope
 
 New workflow engine, separate scheduler, new customer UI, fabricated client acceptance,
@@ -232,19 +285,57 @@ PRs require their own merge authorization under the workspace contract.
 | Durable mutation adapter | [BrightBot #1128](https://github.com/brighthive/brightbot/pull/1128) | 18 tests, including Moto/Stubber and local Redis | Active on staging; readiness true |
 | Dedicated regional storage | [Platform Core #1322](https://github.com/brighthive/brighthive-platform-core/pull/1322) | 2 synthesis/entry-point tests; isolated synth | Merged staging; isolated stack deployed |
 | Scheduler replay authorization | [BrightBot #1129](https://github.com/brighthive/brightbot/pull/1129) | 49 scheduler/invariant tests; four-role review | Open; merge not yet authorized |
-| Quality execution evidence and notification choice | [BrightBot #1130](https://github.com/brighthive/brightbot/pull/1130) | 46 unit/invariant tests; four-role review; local MCP against staging data passed below | Open; cloud rollout pending |
+| Quality execution evidence and notification choice | [BrightBot #1130](https://github.com/brighthive/brightbot/pull/1130) | 46 unit/invariant tests; four-role review; local and cloud MCP proof below | Deployed staging; 3 cloud tests passed, zero skips |
 
 ### Five-journey checkpoint — October 7
 
 | Journey | Evidence obtained | Remaining pilot acceptance |
 |---|---|---|
 | Specification to data product | Staging project create/update/delete passed | Terminal pipeline run, output checks, reviewed PR/downstream proof for each client's intended path |
-| Warehouse to quality coverage | Staging saved-rule lifecycle; local MCP evaluated a real staging table and read exact-run history | Scheduled checks, delivered alerts, all four Longaeva anomaly families and Loop SQL Agent/disk coverage |
+| Warehouse to quality coverage | Staging saved-rule lifecycle and cloud MCP execution with exact-run history | Scheduled checks, actionable delivered alerts, all four Longaeva anomaly families and Loop SQL Agent/disk coverage |
 | Failure to reviewed repair | Existing self-merge guard; no completed repair proof in this run | Detection, diagnosis, PR, independent approval (Slack for Loop), rerun and output checks |
 | Recurring work to automation | Existing schedule surface; authorization correction in #1129 | Durable schedule deduplication, proposal/approval, actual execution/delivery and failure handling |
 | Governance to enforcement | Existing authorization and governance surfaces | Observable policy denial/audit, PII evidence and human review before writes for Loop criterion 8 |
 
 These are platform/demo results. Neither client's full acceptance is established.
+
+### Cloud rollout and notification acceptance — October 7
+
+The user authorized the four merges and staging verification with `--admin`:
+
+| Repo / PR | Target | Merge revision |
+|---|---|---|
+| BrightBot #1130 | staging | `657743dcd18410bd7c2197a734c262f8af285724` |
+| brighthive-e2e #101 | master | `d10cfdb83a7a224000d033a32d41f96a957c74ef` |
+| PM #201 | master | `0368be39bd0a1ec2c32d1212c5e6963fedebc0d5` |
+| context #52 | master | `85c6474e9569410987b2934b01fd88b9c613ade3` |
+
+Staging active revision `95b32439-f2cf-4b9f-aa48-0ac8fe1c4144` reached DEPLOYED
+with BrightBot merge `657743dc`. The public catalog lagged control-plane activation:
+an initial gate had one skip. After three fresh MCP sessions exposed `notify`, the
+final gate passed **3 tests, zero skips, zero findings** in 81.80 seconds; cleanup
+**6 succeeded, 0 failed**. Confirmed writes remained enabled with durable storage.
+
+Run `58a1cd41` verified saved-rule lifecycle, on-demand quality execution with exact
+run/asset history, and project create/update/archive/read/delete. Execution run:
+`cd75db25-76c4-400e-8087-a47bb65de5ef`. Both created rule IDs were independently
+confirmed absent after cleanup. Local artifacts: `findings/staging-20261007-053807.json`
+and `.md`, `/tmp/mcp-quality-cloud-verification-final.log`. Reproduce with the command
+in Durable storage rollout, additionally unsetting `BH_MCP_URL` to use cloud MCP.
+
+The quality test used `notify=false`. Separately, staging slack-server delivered
+[one technical smoke message to Kuri's BrightAgent DM](https://brighthivedata.slack.com/archives/D0ACMPLLVPA/p1791351033279549),
+with HTTP acknowledgment and independent Slack history readback. The installation
+belongs to Loop demo; quality execution used bh-demo. No tenant mapping or persistent
+subscription was changed. This proves delivery only, not subscription/poller routing,
+recurring monitoring or human repair approval.
+
+The user confirmed receipt and rejected the message as lacking business value.
+It earns **no actionable-alert acceptance credit**. AC-PILOT-07 records the required
+correction. Live fleet evidence at 05:38 UTC exposed a quality target lookup failure
+whose recommendation was incorrectly to rerun. Target access/binding correction is
+the next step; downstream impact and an accountable owner remain unverified. The
+classifier correction is under review, not deployed. Production was untouched.
 
 ### Local MCP quality execution proof
 
@@ -268,9 +359,8 @@ These are platform/demo results. Neither client's full acceptance is established
   `/tmp/mcp-quality-execution-local-final.log`. Earlier setup attempts exposed a stale
   fixture and quoted-identifier fallback; final discovery supplied the executor's
   unquoted identifier and verified the full-table SQL path.
-- New notification control and truthful persistence errors are **not deployed** yet.
-  After approved merge, rerun the same case against the cloud endpoint without the
-  local override before marking the new behavior live.
+- At this local checkpoint the new behavior was not deployed. The subsequent
+  authorized cloud rollout and verification are recorded above.
 
 The complete quality batch passed 84 combined local tests after integration. Its
 staging merge is `17d2ea279bd3b36d60735623aa0e777813df4213`; PM #199 merged to master
@@ -398,6 +488,9 @@ Expose actionable reasons when a required operation cannot execute.
 - brighthive-e2e: one AC per journey test, ground-truth fixtures, explicit writes and
   cleanup, persisted run polling and output assertions. Required skipped cases prevent
   declaring the entire journey verified even if the surrounding smoke suite is green.
+- Alert acceptance: extend producer/enrichment/formatter tests with verified context,
+  missing context, repeated incident, recovery and real approval-action cases; add
+  one live journey case that checks both delivered content and its source evidence.
 - Validate local changes before staging promotion; record deployed revision on live runs.
 
 ## Related
