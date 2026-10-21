@@ -1,0 +1,51 @@
+{
+  "sprint": 16,
+  "name": "Sprint 16 🍓",
+  "dates": { "start": "2026-08-17", "end": "2026-08-23", "duration_days": 7 },
+  "unofficial": true,
+  "note": "First release on the new weekly cadence — a deliberate team decision, not a placeholder until a formal Jira sprint object appears. No Jira sprint object exists for this window, and none is planned. Last release was Sprint 15 (🍑, 16 days, ended Aug 17).",
+  "tickets": {
+    "resolved_in_window": 1,
+    "done": 1,
+    "canceled": 0,
+    "shipped_code_still_needs_refinement": 4,
+    "groomed_no_pr": 8
+  },
+  "points": {
+    "note": "Team does not estimate — no story points set on any ticket touched this window."
+  },
+  "team": ["Kuri", "Marwan", "Harbour"],
+  "prs": {
+    "total": 22,
+    "code_prs": 13,
+    "release_promotion_prs": 9,
+    "lines_changed_code_only": { "additions": 5993, "deletions": 417 },
+    "repos_touched": 5,
+    "repos": [
+      "brighthive-platform-core",
+      "brighthive-webapp",
+      "brightbot",
+      "brightbot-slack-server",
+      "agentic-project-mgmt"
+    ],
+    "repos_checked_no_activity": [
+      "brighthive-admin",
+      "brighthive-data-organization-cdk",
+      "brighthive-e2e",
+      "brighthive-data-workspace-cdk",
+      "platform-saas-ai-context"
+    ],
+    "by_repo": {
+      "brighthive-platform-core": { "total": 10, "code": 5, "release": 5, "code_lines": { "additions": 540, "deletions": 33 } },
+      "brighthive-webapp": { "total": 3, "code": 2, "release": 1, "code_lines": { "additions": 826, "deletions": 38 } },
+      "brightbot": { "total": 7, "code": 4, "release": 3, "code_lines": { "additions": 1438, "deletions": 196 } },
+      "brightbot-slack-server": { "total": 1, "code": 1, "release": 0, "code_lines": { "additions": 151, "deletions": 1 } },
+      "agentic-project-mgmt": { "total": 1, "code": 1, "release": 0, "code_lines": { "additions": 3038, "deletions": 149 } }
+    },
+    "by_author_code_only": {
+      "Kuri (drchinca)": { "prs": 7, "additions": 4758, "deletions": 239 },
+      "Marwan (Marwan-Samih-Brighthive)": { "prs": 2, "additions": 483, "deletions": 19 },
+      "Harbour (Nano-233)": { "prs": 4, "additions": 752, "deletions": 159 }
+    }
+  }
+}

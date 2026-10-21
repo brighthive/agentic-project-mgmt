@@ -1,8 +1,20 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 15 (released Aug 17, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 16 (released Aug 23, unofficial — first weekly cut) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 16 🍓 — LANGGRAPH Env Wiring, Warehouse Routing Cleanup & Weekly Cadence (Aug 17–23, 2026)
+- **Duration**: 7 days — first release on the new weekly cadence, by team decision. No formal Jira sprint object planned.
+- **Focus**: LANGGRAPH env wiring into the ECS-cut-over GraphQL Lambda (BH-1461/1462), warehouse resolution routed off the legacy catalog path onto OGM/workspace-default (Harbour), a ticketless GraphQL ECS/CloudFront cutover continuation (Marwan), a supervisor warehouse-listing chat tool (BH-1454), slack-server direct-channel artifact delivery (BH-1452), and the 92-spec→14-theme consolidation under the new Monitoring Agents epic (BH-1036)
+- **Team**: Kuri, Marwan, Harbour
+- **PRs Merged**: 22 total (13 code + 9 release/promotion carriers, 5 repos)
+- **Lines Changed**: +5,993 / −417 (code-only; release re-merges excluded)
+- **Highlights**: LANGGRAPH_BASE_URL/API_KEY now flow into both the ECS runtime and the GraphQL Lambda so sync stops failing closed, project-transformation run cards read a stored lastRunAt instead of computing it live, warehouse config resolution for scheduled jobs and legacy SQL callers now goes through OGM/workspace-default instead of the public catalog, brightbot's supervisor can list warehouses without GraphQL introspection, and slack-server delivers PDF/CSV/table artifacts on the direct channel-push path
+- **Sprint Health**: 1/1 resolved ticket Done (BH-1461) — but 4 more tickets (BH-1462, BH-1454, BH-1452, BH-1036) shipped real code this window while still sitting in Needs Refinement, continuing the PR-ahead-of-Jira pattern from Sprints 11-15. Kuri's share of code PRs dropped to 53.8% (7/13), the most balanced distribution in several windows. No tickets carried over — none were formally in scope for a window this short.
+- [Details →](./16/)
 
 ---
 
