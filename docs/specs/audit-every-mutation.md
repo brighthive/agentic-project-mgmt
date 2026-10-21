@@ -3,7 +3,8 @@ title: Audit every mutation — one plugin, no per-endpoint logging
 epic: BH-695
 tickets: [BH-1579]
 author: kuri
-status: Draft
+status: Partial
+roadmap: "THEME-governance-enforced.md"
 created: 2026-10-06
 last-reviewed: 2026-10-06
 generates: tickets
