@@ -17,6 +17,8 @@ tags: [agent-governance, entra-id, skills-registry, control-plane, phase-1]
 
 # Loop Capital — Phase 1: AI agent governance
 
+> **2026-10-20:** Loop passed the first MVP trial goal and is now comparing vendors (NROC, CrowdStrike, Proofpoint, Zscaler) for a paid co-build partnership. Requirement-by-requirement fit and positioning: [GOVERNANCE_REQUIREMENTS_FIT.md](GOVERNANCE_REQUIREMENTS_FIT.md).
+
 > Maps each of Loop's phase-one governance requirements to what BrightAgent ships today, the gap, and the proposed ticket.
 
 **Source:** "Loop Capital × Brighthive: AI Agent Governance Call Brief" (Suzanne El-Moursi → Frank Sung, 2026-10-16).
@@ -76,7 +78,7 @@ have real foundations; R1, R3–R6, R8, R10 are new builds. This is closer to 70
 
 ## Open questions for Oct 21 (from the brief + ours)
 
-1. Copilot versions in use (basic / premium / Studio / agents / Cowork) — decides LG-10 Copilot coverage.
+1. ~~Copilot versions in use~~ — **answered 2026-10-16:** M365 Copilot Basic broadly, M365 Premium for a few, no Copilot Studio. A shared skills registry can't reach Copilot today; Copilot governance runs through Purview / Entra, and LG-10 starts with Claude and ChatGPT.
 2. Expected agent and scheduled-workflow volume over 6–12 months.
 3. Deployment location: Brighthive SaaS, or inside Loop's Azure tenant? (Loop runs Azure; Nestlé's private-Azure
    work in [Nestlé Azure architecture](../nestle/AZURE_ARCHITECTURE.md) would serve both.)

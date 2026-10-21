@@ -17,7 +17,9 @@ tags: [legacy-analyst, ssis, ssrs, proactive-monitoring, mcp-a2a]
 
 # Loop Capital — Trial Overview
 
-> **Current phase (2026-10-16 brief):** phase one is an **AI agent governance control plane** — see
+> **Current phase:** first MVP trial goal **passed**; Loop is now evaluating Brighthive against NROC, CrowdStrike,
+> Proofpoint and Zscaler for a **paid co-build partnership** — see [`GOVERNANCE_REQUIREMENTS_FIT.md`](GOVERNANCE_REQUIREMENTS_FIT.md).
+> Phase one (2026-10-16 brief) is an **AI agent governance control plane** — see
 > [`PHASE1_GOVERNANCE.md`](PHASE1_GOVERNANCE.md). The data-engineering trial below (SQL Server, SSIS/SSRS, dbt,
 > monitoring) is now the *next* phase. Cross-client view: [`../../ALIGNMENT_2026-10.md`](../../ALIGNMENT_2026-10.md).
 
