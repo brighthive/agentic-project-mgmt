@@ -13,6 +13,7 @@ For client architecture profiles and capability maps, see `../platform-saas-ai-c
 |---|---|---|---|---|
 | [Longaeva Partners](trials/longaeva/overview.md) | Grant Langseth | May 26 – Jun 9, 2026 | [BH-526](https://brighthiveio.atlassian.net/browse/BH-526) | Active |
 | [Loop Capital](trials/loopcapital/overview.md) | Frank | Demo 7/9, decision gate 7/17, 2026 | [BH-1036](https://brighthiveio.atlassian.net/browse/BH-1036) | Active |
+| [Nestlé Global](trials/nestle/overview.md) | To confirm | Six weeks; target Nov 15, 2026, January fallback (years provisional) | To assign before Day 1 | Preparation; dates/scope to confirm |
 
 ---
 

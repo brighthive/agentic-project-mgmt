@@ -14,6 +14,7 @@
 | Question | Location |
 |---|---|
 | All leads, trials, and active clients | `README.md` |
+| Nestlé Global trial room, six-week plan and division rollout | `trials/nestle/overview.md` |
 | Start a new lead | `_templates/LEAD.md` |
 | Start a new trial / POC | `_templates/TRIAL.md` |
 | Active paying customer profile | `_templates/CLIENT.md` |
