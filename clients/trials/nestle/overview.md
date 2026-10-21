@@ -36,6 +36,7 @@ not a started trial or an approved global rollout.
 | Business value and acceptance evidence | [Trial scorecard](scorecard.md) |
 | Expansion across all agreed divisions | [Global rollout plan](global-rollout.md) |
 | Decisions, blockers and authoritative sources | [Decisions and evidence](decisions-and-evidence.md) |
+| Azure private deployment: what exists, blockers, proposed tickets | [Azure architecture alignment](AZURE_ARCHITECTURE.md) |
 
 ## First decisions
 

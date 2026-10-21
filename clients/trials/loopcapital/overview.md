@@ -17,6 +17,10 @@ tags: [legacy-analyst, ssis, ssrs, proactive-monitoring, mcp-a2a]
 
 # Loop Capital — Trial Overview
 
+> **Current phase (2026-10-16 brief):** phase one is an **AI agent governance control plane** — see
+> [`PHASE1_GOVERNANCE.md`](PHASE1_GOVERNANCE.md). The data-engineering trial below (SQL Server, SSIS/SSRS, dbt,
+> monitoring) is now the *next* phase. Cross-client view: [`../../ALIGNMENT_2026-10.md`](../../ALIGNMENT_2026-10.md).
+
 > This file was created 2026-07-12 to fill a real gap: two weeks of active POC work (two
 > demos, 24 Jira tickets, a full handover spec) existed only in Jira + a specs doc, with no
 > client-lifecycle folder tracking it the way Longaeva has one. This is that folder, backfilled

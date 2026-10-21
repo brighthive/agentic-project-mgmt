@@ -45,6 +45,7 @@ until the trial owner accepts it.
 | O-06 | Live Jira epic and GTM reference | Delivery owner | Before Day 1 | Open; no epic assigned |
 | O-07 | Cost/volume acceptance scope and billing evidence availability | Commercial/platform owners | Before Day 1 | Historical ask to reconfirm |
 | O-08 | Incident recipients, support coverage and real approval path | Operations owner | Before monitoring | Open |
+| O-09–O-13 | Trial venue vs Azure readiness, orchestrator engine, Foundry models, Git remote, Lightweight-first scope | See [Azure architecture alignment](AZURE_ARCHITECTURE.md) | Before Day 1 | Open (added 2026-10-17) |
 
 ## Source register
 
