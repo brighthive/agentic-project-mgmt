@@ -209,3 +209,16 @@ Full diagnostic checklist + a still-open Snowflake MFA blocker (this project's d
 credential is `auth_type: "password"`, despite being originally set up for key-pair auth, and a
 Snowflake account MFA policy now rejects it):
 `platform-saas-ai-context/docs/architecture/DBT_CLOUD_LEARNINGS.md`
+
+## Local-against-staging bring-up traps (2026-10-02)
+
+Hours were lost booting platform-core + brightbot locally. All captured, with fixes, in
+`platform-saas-ai-context/docs/infrastructure/RUN_LOCAL_AGAINST_STAGING.md` (+ `scripts/local-staging.sh check`):
+
+1. `langgraph dev` rejects `langgraph.json`'s `webhooks` placeholder (`${{ env.LG_… }}`) — run with an untracked copy minus that key.
+2. `.env` is gitignored, so worktrees have none; `LOCAL_DEV_MODE`/`AWS_ENDPOINT_URL` shell exports are overridden by dotenv at import — edit the file.
+3. `make env-staging` renders into the main checkout's `.env`, refuses to clobber edits, and its `AGENTIC` path breaks in worktrees.
+4. Curated MCP is mounted at `/bh-mcp/` (trailing slash); `/mcp` is the legacy LangGraph door.
+5. MCP auth: `LOCAL_DEV_MODE=true` hides the bearer from tools (`no_token`); set it false and send a real staging JWT + `x-workspace-id`. Token validity is checked via platform-core (`BH_API_URL`), so no Cognito pool config is needed in brightbot.
+6. Write tools need `mcp:write`; neither a Cognito idToken nor the staging M2M client token can exercise them locally (see lifecycle runbook ⑨a).
+7. Verified live 2026-10-02: `list_projects`/`get_project`/`list_project_data_assets`/`list_project_data_products`/`get_project_spec_conformance` return real OneTen data; `create_project`/`update_project`/`set_project_status` previews write nothing; foreign project id → `not_found`.

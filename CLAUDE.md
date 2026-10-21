@@ -105,6 +105,7 @@ make status                 → confirm all sentinels green
 | **Team ownership** | `../platform-saas-ai-context/docs/team/TEAM.md` |
 | **Quarterly roadmap** | `../platform-saas-ai-context/docs/roadmap/ROADMAP.md` |
 | **AWS account hierarchy** | `../platform-saas-ai-context/docs/infrastructure/AWS_ACCOUNTS.md` |
+| **MCP journeys and BH-1581 staging handoff** | `docs/features/mcp-user-journeys.md` |
 | **Spec template** | `docs/specs/SPEC_TEMPLATE.md` |
 | **Feature doc template** | `docs/features/FEATURE_TEMPLATE.md` |
 | **Bedrock journal template** | `docs/bedrock/BEDROCK_TEMPLATE.md` |
