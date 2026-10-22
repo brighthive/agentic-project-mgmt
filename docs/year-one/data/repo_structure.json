@@ -1,0 +1,1117 @@
+{
+  "brightbot": {
+    "ref": "origin/develop",
+    "months": {
+      "2024-10": {
+        "test_files": 4,
+        "markdown_docs": 6,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2024-11": {
+        "test_files": 4,
+        "markdown_docs": 6,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2024-12": {
+        "test_files": 4,
+        "markdown_docs": 6,
+        "agent_contracts": 0,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-01": {
+        "test_files": 5,
+        "markdown_docs": 9,
+        "agent_contracts": 0,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-02": {
+        "test_files": 5,
+        "markdown_docs": 9,
+        "agent_contracts": 0,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-03": {
+        "test_files": 5,
+        "markdown_docs": 10,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-04": {
+        "test_files": 5,
+        "markdown_docs": 10,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-05": {
+        "test_files": 2,
+        "markdown_docs": 5,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-06": {
+        "test_files": 8,
+        "markdown_docs": 7,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-07": {
+        "test_files": 10,
+        "markdown_docs": 13,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-08": {
+        "test_files": 10,
+        "markdown_docs": 15,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-09": {
+        "test_files": 10,
+        "markdown_docs": 16,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-10": {
+        "test_files": 10,
+        "markdown_docs": 20,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-11": {
+        "test_files": 9,
+        "markdown_docs": 28,
+        "agent_contracts": 0,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-12": {
+        "test_files": 6,
+        "markdown_docs": 40,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-01": {
+        "test_files": 5,
+        "markdown_docs": 26,
+        "agent_contracts": 1,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-02": {
+        "test_files": 24,
+        "markdown_docs": 37,
+        "agent_contracts": 1,
+        "ci_workflows": 7,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-03": {
+        "test_files": 24,
+        "markdown_docs": 41,
+        "agent_contracts": 1,
+        "ci_workflows": 7,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-04": {
+        "test_files": 34,
+        "markdown_docs": 44,
+        "agent_contracts": 1,
+        "ci_workflows": 7,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-05": {
+        "test_files": 44,
+        "markdown_docs": 47,
+        "agent_contracts": 1,
+        "ci_workflows": 7,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-06": {
+        "test_files": 171,
+        "markdown_docs": 73,
+        "agent_contracts": 3,
+        "ci_workflows": 7,
+        "spec_files": 15,
+        "adr_files": 1
+      },
+      "2026-07": {
+        "test_files": 284,
+        "markdown_docs": 91,
+        "agent_contracts": 3,
+        "ci_workflows": 7,
+        "spec_files": 21,
+        "adr_files": 2
+      },
+      "2026-08": {
+        "test_files": 336,
+        "markdown_docs": 93,
+        "agent_contracts": 3,
+        "ci_workflows": 7,
+        "spec_files": 21,
+        "adr_files": 2
+      },
+      "2026-09": {
+        "test_files": 369,
+        "markdown_docs": 101,
+        "agent_contracts": 3,
+        "ci_workflows": 7,
+        "spec_files": 28,
+        "adr_files": 2
+      },
+      "2026-10": {
+        "test_files": 413,
+        "markdown_docs": 102,
+        "agent_contracts": 3,
+        "ci_workflows": 7,
+        "spec_files": 29,
+        "adr_files": 2
+      }
+    }
+  },
+  "brighthive-platform-core": {
+    "ref": "origin/develop",
+    "months": {
+      "2024-10": {
+        "test_files": 0,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2024-11": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2024-12": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-01": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-02": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-03": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-04": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-05": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-06": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-07": {
+        "test_files": 1,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-08": {
+        "test_files": 3,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-09": {
+        "test_files": 3,
+        "markdown_docs": 3,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-10": {
+        "test_files": 3,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-11": {
+        "test_files": 3,
+        "markdown_docs": 2,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-12": {
+        "test_files": 2,
+        "markdown_docs": 3,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-01": {
+        "test_files": 4,
+        "markdown_docs": 8,
+        "agent_contracts": 1,
+        "ci_workflows": 4,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-02": {
+        "test_files": 4,
+        "markdown_docs": 11,
+        "agent_contracts": 1,
+        "ci_workflows": 5,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-03": {
+        "test_files": 4,
+        "markdown_docs": 12,
+        "agent_contracts": 1,
+        "ci_workflows": 5,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-04": {
+        "test_files": 12,
+        "markdown_docs": 17,
+        "agent_contracts": 1,
+        "ci_workflows": 7,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-05": {
+        "test_files": 14,
+        "markdown_docs": 18,
+        "agent_contracts": 1,
+        "ci_workflows": 7,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-06": {
+        "test_files": 44,
+        "markdown_docs": 47,
+        "agent_contracts": 2,
+        "ci_workflows": 8,
+        "spec_files": 13,
+        "adr_files": 0
+      },
+      "2026-07": {
+        "test_files": 131,
+        "markdown_docs": 61,
+        "agent_contracts": 2,
+        "ci_workflows": 9,
+        "spec_files": 21,
+        "adr_files": 3
+      },
+      "2026-08": {
+        "test_files": 178,
+        "markdown_docs": 63,
+        "agent_contracts": 2,
+        "ci_workflows": 10,
+        "spec_files": 23,
+        "adr_files": 3
+      },
+      "2026-09": {
+        "test_files": 214,
+        "markdown_docs": 78,
+        "agent_contracts": 2,
+        "ci_workflows": 11,
+        "spec_files": 35,
+        "adr_files": 4
+      },
+      "2026-10": {
+        "test_files": 237,
+        "markdown_docs": 78,
+        "agent_contracts": 2,
+        "ci_workflows": 12,
+        "spec_files": 35,
+        "adr_files": 4
+      }
+    }
+  },
+  "brighthive-webapp": {
+    "ref": "origin/develop",
+    "months": {
+      "2024-10": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2024-11": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2024-12": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-01": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-02": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-03": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-04": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-05": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-06": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-07": {
+        "test_files": 37,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-08": {
+        "test_files": 37,
+        "markdown_docs": 5,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-09": {
+        "test_files": 37,
+        "markdown_docs": 5,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-10": {
+        "test_files": 37,
+        "markdown_docs": 5,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-11": {
+        "test_files": 37,
+        "markdown_docs": 5,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-12": {
+        "test_files": 37,
+        "markdown_docs": 6,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-01": {
+        "test_files": 37,
+        "markdown_docs": 9,
+        "agent_contracts": 1,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-02": {
+        "test_files": 37,
+        "markdown_docs": 13,
+        "agent_contracts": 1,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-03": {
+        "test_files": 37,
+        "markdown_docs": 16,
+        "agent_contracts": 1,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-04": {
+        "test_files": 37,
+        "markdown_docs": 20,
+        "agent_contracts": 1,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-05": {
+        "test_files": 40,
+        "markdown_docs": 21,
+        "agent_contracts": 1,
+        "ci_workflows": 2,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-06": {
+        "test_files": 112,
+        "markdown_docs": 29,
+        "agent_contracts": 2,
+        "ci_workflows": 2,
+        "spec_files": 5,
+        "adr_files": 0
+      },
+      "2026-07": {
+        "test_files": 156,
+        "markdown_docs": 30,
+        "agent_contracts": 2,
+        "ci_workflows": 3,
+        "spec_files": 6,
+        "adr_files": 0
+      },
+      "2026-08": {
+        "test_files": 184,
+        "markdown_docs": 33,
+        "agent_contracts": 2,
+        "ci_workflows": 3,
+        "spec_files": 9,
+        "adr_files": 0
+      },
+      "2026-09": {
+        "test_files": 198,
+        "markdown_docs": 33,
+        "agent_contracts": 2,
+        "ci_workflows": 3,
+        "spec_files": 9,
+        "adr_files": 0
+      },
+      "2026-10": {
+        "test_files": 220,
+        "markdown_docs": 33,
+        "agent_contracts": 2,
+        "ci_workflows": 3,
+        "spec_files": 9,
+        "adr_files": 0
+      }
+    }
+  },
+  "brighthive-e2e": {
+    "ref": "origin/master",
+    "months": {
+      "2024-10": null,
+      "2024-11": null,
+      "2024-12": null,
+      "2025-01": null,
+      "2025-02": null,
+      "2025-03": null,
+      "2025-04": null,
+      "2025-05": null,
+      "2025-06": null,
+      "2025-07": null,
+      "2025-08": null,
+      "2025-09": null,
+      "2025-10": null,
+      "2025-11": null,
+      "2025-12": null,
+      "2026-01": null,
+      "2026-02": null,
+      "2026-03": null,
+      "2026-04": null,
+      "2026-05": null,
+      "2026-06": {
+        "test_files": 49,
+        "markdown_docs": 46,
+        "agent_contracts": 1,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-07": {
+        "test_files": 76,
+        "markdown_docs": 58,
+        "agent_contracts": 1,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-08": {
+        "test_files": 85,
+        "markdown_docs": 60,
+        "agent_contracts": 1,
+        "ci_workflows": 3,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-09": {
+        "test_files": 86,
+        "markdown_docs": 60,
+        "agent_contracts": 1,
+        "ci_workflows": 3,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-10": {
+        "test_files": 97,
+        "markdown_docs": 66,
+        "agent_contracts": 1,
+        "ci_workflows": 3,
+        "spec_files": 1,
+        "adr_files": 0
+      }
+    }
+  },
+  "agentic-project-mgmt": {
+    "ref": "origin/master",
+    "months": {
+      "2024-10": null,
+      "2024-11": null,
+      "2024-12": null,
+      "2025-01": null,
+      "2025-02": null,
+      "2025-03": null,
+      "2025-04": null,
+      "2025-05": null,
+      "2025-06": null,
+      "2025-07": null,
+      "2025-08": null,
+      "2025-09": null,
+      "2025-10": null,
+      "2025-11": null,
+      "2025-12": null,
+      "2026-01": {
+        "test_files": 14,
+        "markdown_docs": 53,
+        "agent_contracts": 2,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-02": {
+        "test_files": 15,
+        "markdown_docs": 62,
+        "agent_contracts": 3,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-03": {
+        "test_files": 15,
+        "markdown_docs": 83,
+        "agent_contracts": 4,
+        "ci_workflows": 1,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-04": {
+        "test_files": 15,
+        "markdown_docs": 101,
+        "agent_contracts": 5,
+        "ci_workflows": 1,
+        "spec_files": 7,
+        "adr_files": 0
+      },
+      "2026-05": {
+        "test_files": 15,
+        "markdown_docs": 141,
+        "agent_contracts": 6,
+        "ci_workflows": 1,
+        "spec_files": 13,
+        "adr_files": 0
+      },
+      "2026-06": {
+        "test_files": 18,
+        "markdown_docs": 207,
+        "agent_contracts": 6,
+        "ci_workflows": 1,
+        "spec_files": 26,
+        "adr_files": 0
+      },
+      "2026-07": {
+        "test_files": 18,
+        "markdown_docs": 261,
+        "agent_contracts": 9,
+        "ci_workflows": 1,
+        "spec_files": 56,
+        "adr_files": 0
+      },
+      "2026-08": {
+        "test_files": 18,
+        "markdown_docs": 345,
+        "agent_contracts": 9,
+        "ci_workflows": 2,
+        "spec_files": 114,
+        "adr_files": 4
+      },
+      "2026-09": {
+        "test_files": 18,
+        "markdown_docs": 350,
+        "agent_contracts": 9,
+        "ci_workflows": 2,
+        "spec_files": 118,
+        "adr_files": 4
+      },
+      "2026-10": {
+        "test_files": 18,
+        "markdown_docs": 373,
+        "agent_contracts": 9,
+        "ci_workflows": 2,
+        "spec_files": 126,
+        "adr_files": 4
+      }
+    }
+  },
+  "platform-saas-ai-context": {
+    "ref": "origin/master",
+    "months": {
+      "2024-10": null,
+      "2024-11": null,
+      "2024-12": null,
+      "2025-01": null,
+      "2025-02": null,
+      "2025-03": null,
+      "2025-04": null,
+      "2025-05": null,
+      "2025-06": null,
+      "2025-07": null,
+      "2025-08": null,
+      "2025-09": null,
+      "2025-10": null,
+      "2025-11": null,
+      "2025-12": null,
+      "2026-01": {
+        "test_files": 0,
+        "markdown_docs": 11,
+        "agent_contracts": 1,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 1
+      },
+      "2026-02": {
+        "test_files": 0,
+        "markdown_docs": 12,
+        "agent_contracts": 1,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 1
+      },
+      "2026-03": {
+        "test_files": 0,
+        "markdown_docs": 12,
+        "agent_contracts": 1,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 1
+      },
+      "2026-04": {
+        "test_files": 0,
+        "markdown_docs": 15,
+        "agent_contracts": 1,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 1
+      },
+      "2026-05": {
+        "test_files": 0,
+        "markdown_docs": 21,
+        "agent_contracts": 3,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 1
+      },
+      "2026-06": {
+        "test_files": 0,
+        "markdown_docs": 26,
+        "agent_contracts": 3,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 2
+      },
+      "2026-07": {
+        "test_files": 0,
+        "markdown_docs": 45,
+        "agent_contracts": 4,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 2
+      },
+      "2026-08": {
+        "test_files": 0,
+        "markdown_docs": 47,
+        "agent_contracts": 4,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 2
+      },
+      "2026-09": {
+        "test_files": 0,
+        "markdown_docs": 47,
+        "agent_contracts": 4,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 2
+      },
+      "2026-10": {
+        "test_files": 0,
+        "markdown_docs": 47,
+        "agent_contracts": 4,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 2
+      }
+    }
+  },
+  "brightbot-slack-server": {
+    "ref": "origin/develop",
+    "months": {
+      "2024-10": null,
+      "2024-11": null,
+      "2024-12": null,
+      "2025-01": null,
+      "2025-02": null,
+      "2025-03": null,
+      "2025-04": null,
+      "2025-05": null,
+      "2025-06": null,
+      "2025-07": null,
+      "2025-08": null,
+      "2025-09": null,
+      "2025-10": {
+        "test_files": 1,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-11": {
+        "test_files": 1,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-12": {
+        "test_files": 1,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-01": {
+        "test_files": 1,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-02": {
+        "test_files": 1,
+        "markdown_docs": 1,
+        "agent_contracts": 0,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-03": {
+        "test_files": 5,
+        "markdown_docs": 3,
+        "agent_contracts": 0,
+        "ci_workflows": 2,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-04": {
+        "test_files": 6,
+        "markdown_docs": 7,
+        "agent_contracts": 0,
+        "ci_workflows": 2,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-05": {
+        "test_files": 7,
+        "markdown_docs": 10,
+        "agent_contracts": 0,
+        "ci_workflows": 2,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-06": {
+        "test_files": 27,
+        "markdown_docs": 12,
+        "agent_contracts": 0,
+        "ci_workflows": 2,
+        "spec_files": 1,
+        "adr_files": 0
+      },
+      "2026-07": {
+        "test_files": 56,
+        "markdown_docs": 17,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 3,
+        "adr_files": 0
+      },
+      "2026-08": {
+        "test_files": 61,
+        "markdown_docs": 17,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 3,
+        "adr_files": 0
+      },
+      "2026-09": {
+        "test_files": 61,
+        "markdown_docs": 17,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 3,
+        "adr_files": 0
+      },
+      "2026-10": {
+        "test_files": 68,
+        "markdown_docs": 17,
+        "agent_contracts": 0,
+        "ci_workflows": 3,
+        "spec_files": 3,
+        "adr_files": 0
+      }
+    }
+  },
+  "brightagent-v3": {
+    "ref": "origin/develop",
+    "months": {
+      "2024-10": null,
+      "2024-11": null,
+      "2024-12": null,
+      "2025-01": null,
+      "2025-02": null,
+      "2025-03": null,
+      "2025-04": null,
+      "2025-05": null,
+      "2025-06": null,
+      "2025-07": null,
+      "2025-08": null,
+      "2025-09": null,
+      "2025-10": null,
+      "2025-11": {
+        "test_files": 1,
+        "markdown_docs": 4,
+        "agent_contracts": 0,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2025-12": {
+        "test_files": 1,
+        "markdown_docs": 4,
+        "agent_contracts": 0,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-01": {
+        "test_files": 1,
+        "markdown_docs": 4,
+        "agent_contracts": 0,
+        "ci_workflows": 0,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-02": {
+        "test_files": 1,
+        "markdown_docs": 4,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-03": {
+        "test_files": 1,
+        "markdown_docs": 4,
+        "agent_contracts": 0,
+        "ci_workflows": 1,
+        "spec_files": 0,
+        "adr_files": 0
+      },
+      "2026-04": {
+        "test_files": 49,
+        "markdown_docs": 77,
+        "agent_contracts": 4,
+        "ci_workflows": 5,
+        "spec_files": 55,
+        "adr_files": 0
+      },
+      "2026-05": {
+        "test_files": 184,
+        "markdown_docs": 132,
+        "agent_contracts": 11,
+        "ci_workflows": 7,
+        "spec_files": 77,
+        "adr_files": 8
+      },
+      "2026-06": {
+        "test_files": 185,
+        "markdown_docs": 137,
+        "agent_contracts": 14,
+        "ci_workflows": 7,
+        "spec_files": 77,
+        "adr_files": 9
+      },
+      "2026-07": {
+        "test_files": 223,
+        "markdown_docs": 147,
+        "agent_contracts": 14,
+        "ci_workflows": 7,
+        "spec_files": 79,
+        "adr_files": 11
+      },
+      "2026-08": {
+        "test_files": 223,
+        "markdown_docs": 147,
+        "agent_contracts": 14,
+        "ci_workflows": 7,
+        "spec_files": 79,
+        "adr_files": 11
+      },
+      "2026-09": {
+        "test_files": 223,
+        "markdown_docs": 147,
+        "agent_contracts": 14,
+        "ci_workflows": 7,
+        "spec_files": 79,
+        "adr_files": 11
+      },
+      "2026-10": {
+        "test_files": 223,
+        "markdown_docs": 147,
+        "agent_contracts": 14,
+        "ci_workflows": 7,
+        "spec_files": 79,
+        "adr_files": 11
+      }
+    }
+  }
+}
