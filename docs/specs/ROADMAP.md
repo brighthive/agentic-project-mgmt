@@ -1,5 +1,7 @@
 # 🎯 Roadmap — Aug 19 → Sep 30
 
+> **Superseded** by [ROADMAP-Q4-2026-Q2-2027.md](ROADMAP-Q4-2026-Q2-2027.md). Kept for the theme sizing below.
+
 The one sequenced do-list to the end of Q3. [THEMES.md](THEMES.md) owns the 92-spec
 classification and the archive piles; **this file owns the dated frontier, the sizing, and the
 order of work**. Every row below was verified against code on 2026-08-19 — `file:line` for what
