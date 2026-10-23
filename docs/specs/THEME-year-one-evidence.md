@@ -14,8 +14,9 @@ supersedes: []
 ## The goal
 
 For the annual review, anyone can run one command and get a short, defensible before/after
-case that Brighthive's engineering and project-management foundations changed in year one:
-how we commit, review, release, specify, plan, document, share work, test and ship. Every
+case that Brighthive's engineering and project-management foundations changed in year one,
+and that the practices we introduced added value: how we commit, review, release, specify,
+plan, document, share work, test and ship. Every
 number traces to a script and a raw data file. Weak spots appear in the report on purpose, so
 nobody can poke a hole in it that we did not already show.
 
@@ -27,24 +28,33 @@ are not comparable across the two years (CI runs were pruned, Jira starts in 202
 status count that was simply wrong (Canceled counted as Done, Jira status lagging shipped
 work). Rule going forward: **a number earns a place only if it proves a pillar claim.**
 
-## The ten pillars (each is a claim, with 2 to 4 metrics at most)
+## The practice ledger: what we introduced, and what it bought
 
-| # | Pillar (the claim) | Metrics that prove it | Comparable before/after |
+Each row is one practice we introduced. **Adoption** says we did it. **Value** says what it
+bought. A practice is claimed as value only when its value metric moved the right way, or held
+while volume grew. Otherwise the row says "adopted, value not shown yet".
+
+First readings (three core repos, non-merge commits on `develop`, year before → year after):
+
+| Practice introduced | Adoption metric | Value it should buy, and the metric | Reading now |
 |---|---|---|---|
-| 1 | We commit to a standard | % of merged-commit subjects in `type(scope): description` form; % carrying a ticket key | ✅ local git |
-| 2 | PRs are reviewed and traceable | % of merged PRs approved by someone other than the author | ✅ GitHub search counts |
-| 3 | We release on a cadence | Production releases per month; median days between them | ✅ GitHub releases |
-| 4 | Specs come before code | Spec files, ADRs (architecture decision records), themes | ✅ local git (before = 0) |
-| 5 | Planning has structure | % work items under an epic, with a description, assigned; Done vs. merged-code range | ⚠️ after only (BH starts 2026-01-11); before = BPP idea backlog |
-| 6 | Everything is documented | Markdown docs; agent contract files (CLAUDE.md, AGENTS.md) | ✅ local git |
-| 7 | Work is shared | Contributors with 10+ merged PRs; top author's share of merged PRs; share of Jira work items assigned to Kuri | ✅ GitHub, ⚠️ Jira after only |
-| 8 | Software is designed to be tested | Test files per core repo; ports (Protocol classes) in the app core | ✅ local git |
-| 9 | We ship through gates | CI workflow files; end-to-end suite size and surfaces; CI success rate | ✅ files, ⚠️ CI success after only |
-| 10 | The business moved | Customers, pilots, revenue, headcount | ✍️ filled by hand in `business.yaml`, never guessed |
+| Conventional commits and PR titles | Conventional subjects 12.3% → 72.8% | Readable history; release notes generated per sprint (count of sprint release artifacts) | ✅ adopted, artifacts to count |
+| Ticket key in commits and PRs | Commits with a key 28.6% → 41.0% | Work traceable to a ticket (the same %) | ⚠️ 59% still untraced; "PRs ahead of Jira" is documented in the sprint reports |
+| Tests | Test files: brightbot 10 → 413, platform-core 3 → 237 | Change without breaking: revert rate 0.8% → 0.8% while commits grew 37% (1,423 → 1,950) | ✅ quality held at higher volume |
+| Hotfix discipline | n/a | Hotfix commits as share of commits 0.4% → 1.2% | ⚠️ went up; investigate before claiming |
+| CI and gates | Workflow files: brightbot 1 → 7, platform-core 3 → 12 | Failures caught before merge (CI success, after only) | ⚠️ webapp success under 50%; gate gaps BH-1140 to BH-1145 |
+| End-to-end and health suite | 571 tests, 8 surfaces, 3 environments, since 2026-06-18 | Regressions caught before customers: failing health or smoke runs that led to a fix | ✍️ not measured yet |
+| Spec-driven development | 126 specs, 4 ADRs (architecture decision records) here, 11 more in brightagent-v3 | Less rework: canceled share of work items (4%); roadmap delivered vs planned | ⚠️ partly: no before for rework |
+| Epics, parent-epic rule, ticket template | 88.6% of work items under an epic | Delivery measured against a plan for the first time: Q1 roadmap 65% delivered, 6 of 10 epics at 80%+ | ✅ (source: `BOARD_REPORT_OCT_2025_MAY_2026.md`) |
+| Sprint cadence and release automation | 16 sprints, weekly cut from Sprint 16 | Predictable releases: sprint release notes per cut | ✅ |
+| Docs and agent contract files | CLAUDE.md or AGENTS.md files: 0 → about 40 | Faster start for new people: commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value; do not claim |
+| Shared work | Contributors with 10+ PRs; top author share of PRs 25% → 67% | Work not stuck on one person | ❌ got worse; report as the next step |
 
-Dropped from the headline (kept as raw data): lines changed, org-wide PR counts, PRs authored
-by Kuri, hours-to-merge, workflow run counts, per-repo markdown counts. They are volume or
-noise and invite the wrong argument.
+Dropped from the headline (kept as raw data): lines changed, org-wide PR counts, PRs authored by
+Kuri, hours-to-merge, workflow run counts. They are volume, not value.
+
+Caveat stated in the report: the team changed between the two years, so every value metric is
+a before/after comparison, not proof of cause.
 
 ## What to build
 
@@ -62,6 +72,7 @@ noise and invite the wrong argument.
 ## Invariants
 
 - Every rendered number comes from a registry metric. No number is typed into the report.
+- Adoption and value are separate columns. A row with no value metric reads "adopted, value not shown yet".
 - Every metric states its source command and the date its raw file was generated.
 - A `LOW` confidence metric never appears in the headline table.
 - `AFTER_ONLY` and `MANUAL` metrics say why, in the row.
@@ -73,7 +84,7 @@ noise and invite the wrong argument.
 
 - [ ] `python -m yearone build` regenerates `results.json` and `YEAR_ONE.md` from the raw files
 - [ ] `python -m yearone check` passes, and fails when a metric loses its source or definition
-- [ ] Each pillar has its metrics and a one-line verdict: ✅ proven, ⚠️ partly, ✍️ needs your input
+- [ ] Each practice row has an adoption metric, a value metric and a verdict: ✅ proven, ⚠️ partly, ❌ not shown, ✍️ needs your input
 - [ ] At least one test builds the report from the real captured raw files (no hand-made fixture)
 - [ ] The PR description shows the headline table and links `YEAR_ONE.md`
 
