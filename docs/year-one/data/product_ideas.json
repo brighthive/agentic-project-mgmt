@@ -1,0 +1,999 @@
+{
+  "method": "Specs are matched by file name in docs/specs; first_added is the commit that first added the file. Epics are matched by listed key (counted) and by summary pattern (listed as related, not counted). Spec authorship shows who wrote the spec, not who had the idea.",
+  "ideas": [
+    {
+      "id": "brightsignals",
+      "name": "BrightSignals",
+      "one_line": "Proactive notifications across the platform, one shared signal catalog for Slack and the webapp.",
+      "origin_epics": [
+        {
+          "epic": "BH-111",
+          "summary": "Proactive Multi Agents",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        },
+        {
+          "epic": "BH-117",
+          "summary": "BH Omni integrations (Slack, Teams, Google)",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "proactive-pipeline-ingestion-monitoring.md",
+          "first_added": "2026-07-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "chat-session-notifications.md",
+          "first_added": "2026-07-15",
+          "added_by_kuri": false
+        },
+        {
+          "file": "hive-health-landing-indicator.md",
+          "first_added": "2026-07-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "honest-observe-surface.md",
+          "first_added": "2026-08-02",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-honest-surfaces.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "proactive-pipeline-ingestion-monitoring.md",
+        "first_added": "2026-07-12",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 4,
+      "epics_by_key": [
+        {
+          "epic": "BH-409",
+          "summary": "BrightSignals \u2014 proactive Slack notifications across the platform",
+          "commits": 106,
+          "kuri_share_pct": 46.2,
+          "first_commit": "2026-04-22",
+          "last_commit": "2026-10-12",
+          "children": 53,
+          "children_done": 13,
+          "by_key": true
+        },
+        {
+          "epic": "BH-1131",
+          "summary": "On-Demand Alerts \u2014 agent-authored notification rules on the Signal Catalog",
+          "commits": 32,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-07-19",
+          "last_commit": "2026-07-28",
+          "children": 3,
+          "children_done": 0,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [],
+      "commits_in_keyed_epics": 138,
+      "kuri_share_of_keyed_epic_commits_pct": 58.7,
+      "modules": [
+        {
+          "repo": "brighthive-platform-core",
+          "path": "src/notifications",
+          "commits": 5,
+          "kuri_commits": 4,
+          "kuri_share_pct": 80.0
+        },
+        {
+          "repo": "brighthive-platform-core",
+          "path": "lambdas/notification_dispatcher",
+          "commits": 11,
+          "kuri_commits": 9,
+          "kuri_share_pct": 81.8
+        },
+        {
+          "repo": "brighthive-webapp",
+          "path": "src/Notifications",
+          "commits": 26,
+          "kuri_commits": 10,
+          "kuri_share_pct": 38.5
+        }
+      ]
+    },
+    {
+      "id": "brightroutines",
+      "name": "BrightRoutines",
+      "one_line": "The agent notices repeated work and proposes a scheduled, auditable routine.",
+      "origin_epics": [
+        {
+          "epic": "BH-111",
+          "summary": "Proactive Multi Agents",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "brightroutines-execute-workflow-schedule.md",
+          "first_added": "2026-06-30",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-intent-loop.md",
+          "first_added": "2026-06-30",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-your-routines-persistence.md",
+          "first_added": "2026-07-04",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-ai-authored-workflowspec.md",
+          "first_added": "2026-07-05",
+          "added_by_kuri": true
+        },
+        {
+          "file": "slack-routine-suggestion-scheduling.md",
+          "first_added": "2026-07-07",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-detector-fanout-fairness.md",
+          "first_added": "2026-07-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-naming-proposal.md",
+          "first_added": "2026-07-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-online-judge-eval-circuit-breaker.md",
+          "first_added": "2026-07-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-email-delivery.md",
+          "first_added": "2026-07-13",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutine-approve-schedule.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "brightroutines-delivery-target-and-provenance.md",
+          "first_added": "2026-08-10",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-brightroutines-closeout.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-routine-authoring.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "routine-permissions-single-decision.md",
+          "first_added": "2026-10-06",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "brightroutines-execute-workflow-schedule.md",
+        "first_added": "2026-06-30",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 14,
+      "epics_by_key": [
+        {
+          "epic": "BH-876",
+          "summary": "BrightRoutines \u2014 proactive schedule detection and workflow automation",
+          "commits": 178,
+          "kuri_share_pct": 97.2,
+          "first_commit": "2026-07-02",
+          "last_commit": "2026-10-12",
+          "children": 118,
+          "children_done": 64,
+          "by_key": true
+        },
+        {
+          "epic": "BH-1463",
+          "summary": "BrightRoutines next-phase \u2014 team-targeted delivery & AI-authored multi-step routines",
+          "commits": 1,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-19",
+          "last_commit": "2026-08-19",
+          "children": 0,
+          "children_done": 0,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [],
+      "commits_in_keyed_epics": 179,
+      "kuri_share_of_keyed_epic_commits_pct": 97.2,
+      "modules": [
+        {
+          "repo": "brightbot",
+          "path": "brightbot/routines",
+          "commits": 6,
+          "kuri_commits": 6,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "repo": "brightbot",
+          "path": "brightbot/scheduled_agents",
+          "commits": 5,
+          "kuri_commits": 4,
+          "kuri_share_pct": 80.0
+        },
+        {
+          "repo": "brighthive-platform-core",
+          "path": "lambdas/scheduled_agent_dispatcher",
+          "commits": 18,
+          "kuri_commits": 9,
+          "kuri_share_pct": 50.0
+        },
+        {
+          "repo": "brighthive-webapp",
+          "path": "src/Schedules",
+          "commits": 20,
+          "kuri_commits": 9,
+          "kuri_share_pct": 45.0
+        }
+      ]
+    },
+    {
+      "id": "fleet",
+      "name": "Fleet health and self-healing",
+      "one_line": "Watch every pipeline and warehouse as a fleet, and fix failures through reviewed pull requests.",
+      "origin_epics": [
+        {
+          "epic": "BH-111",
+          "summary": "Proactive Multi Agents",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        },
+        {
+          "epic": "BH-113",
+          "summary": "Internal improvements (Performance/Monitoring)",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "self-healing-pipelines.md",
+          "first_added": "2026-06-16",
+          "added_by_kuri": true
+        },
+        {
+          "file": "pipeline-self-healing-fleet.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "sqlserver-health-watch.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "fleet-health-digest-push.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-fleet-self-healing.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "pipeline-connectivity-watchdog.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "self-healing-pipelines.md",
+        "first_added": "2026-06-16",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 6,
+      "epics_by_key": [
+        {
+          "epic": "BH-1036",
+          "summary": "Monitoring Agents \u2014 proactive pipeline discovery & health (dbt, Databricks, ETL)",
+          "commits": 174,
+          "kuri_share_pct": 98.3,
+          "first_commit": "2026-07-12",
+          "last_commit": "2026-10-16",
+          "children": 41,
+          "children_done": 1,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [
+        {
+          "epic": "BH-359",
+          "summary": "Platform Analytics, Monitoring & Reporting Dashboard",
+          "commits": 45,
+          "kuri_share_pct": 88.9,
+          "first_commit": "2026-04-12",
+          "last_commit": "2026-10-12",
+          "children": 19,
+          "children_done": 1,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1061",
+          "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+          "commits": 37,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-07-12",
+          "last_commit": "2026-10-20",
+          "children": 12,
+          "children_done": 1,
+          "by_key": false
+        },
+        {
+          "epic": "BH-113",
+          "summary": "Internal improvements (Performance/Monitoring)",
+          "commits": 9,
+          "kuri_share_pct": 88.9,
+          "first_commit": "2026-02-03",
+          "last_commit": "2026-10-12",
+          "children": 16,
+          "children_done": 6,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1037",
+          "summary": "Ingestion Observability \u2014 source syncs, batch, and event-processing health",
+          "commits": 3,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-07-12",
+          "last_commit": "2026-07-13",
+          "children": 5,
+          "children_done": 0,
+          "by_key": false
+        }
+      ],
+      "commits_in_keyed_epics": 174,
+      "kuri_share_of_keyed_epic_commits_pct": 98.3,
+      "modules": [
+        {
+          "repo": "brightbot",
+          "path": "brightbot/fleet_health",
+          "commits": 15,
+          "kuri_commits": 15,
+          "kuri_share_pct": 100.0
+        }
+      ]
+    },
+    {
+      "id": "project-glue",
+      "name": "Project as the glue",
+      "one_line": "A Project is the join point of every platform capability, not a container.",
+      "origin_epics": [
+        {
+          "epic": "BH-116",
+          "summary": "Projects & automations tasks (Containers of Custom contexts)",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Canceled"
+        },
+        {
+          "epic": "BH-114",
+          "summary": "UX WebApp Re-design for latest features",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "project-files-dbt-github-bridge.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "project-files-pipeline-artifact-intake.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "project-activate-sync-golden-nuggets.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "project-engine-repo-binding.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "project-engine-run-sync.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "project-governance-observability-convergence.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-project-activation.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "PROJECT_V2_TRACKER.md",
+          "first_added": "2026-09-22",
+          "added_by_kuri": true
+        },
+        {
+          "file": "projects-2.0-design-spec.md",
+          "first_added": "2026-09-22",
+          "added_by_kuri": true
+        },
+        {
+          "file": "projects-2.0-technical-requirements.md",
+          "first_added": "2026-09-22",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-project-proactive-lifecycle.md",
+          "first_added": "2026-10-20",
+          "added_by_kuri": true
+        },
+        {
+          "file": "projects-at-scale.md",
+          "first_added": "2026-10-20",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "project-files-dbt-github-bridge.md",
+        "first_added": "2026-07-29",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 12,
+      "epics_by_key": [
+        {
+          "epic": "BH-1255",
+          "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
+          "commits": 91,
+          "kuri_share_pct": 95.6,
+          "first_commit": "2026-07-29",
+          "last_commit": "2026-10-20",
+          "children": 78,
+          "children_done": 3,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [
+        {
+          "epic": "BH-1403",
+          "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
+          "commits": 17,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-12",
+          "last_commit": "2026-10-12",
+          "children": 19,
+          "children_done": 4,
+          "by_key": false
+        },
+        {
+          "epic": "BH-332",
+          "summary": "dbt Cloud Auto-Provisioning \u2014 Automated workspace+project setup",
+          "commits": 6,
+          "kuri_share_pct": 66.7,
+          "first_commit": "2026-04-08",
+          "last_commit": "2026-05-07",
+          "children": 10,
+          "children_done": 0,
+          "by_key": false
+        },
+        {
+          "epic": "BH-116",
+          "summary": "Projects & automations tasks (Containers of Custom contexts)",
+          "commits": 2,
+          "kuri_share_pct": 50.0,
+          "first_commit": "2026-02-09",
+          "last_commit": "2026-06-15",
+          "children": 11,
+          "children_done": 5,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1353",
+          "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
+          "commits": 1,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-03",
+          "last_commit": "2026-08-03",
+          "children": 6,
+          "children_done": 0,
+          "by_key": false
+        }
+      ],
+      "commits_in_keyed_epics": 91,
+      "kuri_share_of_keyed_epic_commits_pct": 95.6,
+      "modules": []
+    },
+    {
+      "id": "multi-warehouse",
+      "name": "Multi-warehouse, multi-database",
+      "one_line": "Warehouse, database and table identity that works the same across Snowflake, Redshift, Synapse and on-prem SQL Server.",
+      "origin_epics": [
+        {
+          "epic": "BH-115",
+          "summary": "Interconnect-ability: Source & Destinations (A2A)",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "azure-synapse-full-integration.md",
+          "first_added": "2026-04-06",
+          "added_by_kuri": true
+        },
+        {
+          "file": "aws-azure-network-connectivity.md",
+          "first_added": "2026-04-14",
+          "added_by_kuri": true
+        },
+        {
+          "file": "snowflake-full-integration.md",
+          "first_added": "2026-06-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "byow-end-to-end-omd-native.md",
+          "first_added": "2026-06-15",
+          "added_by_kuri": true
+        },
+        {
+          "file": "table-parity-verb.md",
+          "first_added": "2026-08-02",
+          "added_by_kuri": true
+        },
+        {
+          "file": "table-parity-cross-warehouse-database.md",
+          "first_added": "2026-08-06",
+          "added_by_kuri": true
+        },
+        {
+          "file": "default-warehouse-ui-surfacing.md",
+          "first_added": "2026-08-07",
+          "added_by_kuri": true
+        },
+        {
+          "file": "on-prem-sql-server-warehouse.md",
+          "first_added": "2026-08-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "loopcapital-onprem-read-write-sandbox.md",
+          "first_added": "2026-08-13",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-catalog-and-identity.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-cross-engine-correctness.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "azure-synapse-full-integration.md",
+        "first_added": "2026-04-06",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 11,
+      "epics_by_key": [
+        {
+          "epic": "BH-1370",
+          "summary": "Warehouse \u2192 Database \u2192 Table hierarchical identity",
+          "commits": 22,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-06",
+          "last_commit": "2026-10-20",
+          "children": 28,
+          "children_done": 0,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [
+        {
+          "epic": "BH-624",
+          "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
+          "commits": 31,
+          "kuri_share_pct": 96.8,
+          "first_commit": "2026-06-16",
+          "last_commit": "2026-07-21",
+          "children": 26,
+          "children_done": 2,
+          "by_key": false
+        },
+        {
+          "epic": "BH-358",
+          "summary": "Unstructured Data Pipeline \u2014 ingestion, vectorization, warehouse integration",
+          "commits": 1,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-04-09",
+          "last_commit": "2026-04-09",
+          "children": 0,
+          "children_done": 0,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1353",
+          "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
+          "commits": 1,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-03",
+          "last_commit": "2026-08-03",
+          "children": 6,
+          "children_done": 0,
+          "by_key": false
+        }
+      ],
+      "commits_in_keyed_epics": 22,
+      "kuri_share_of_keyed_epic_commits_pct": 100.0,
+      "modules": []
+    },
+    {
+      "id": "engine-agnostic",
+      "name": "Engine and framework agnosticism",
+      "one_line": "Pipelines, lineage and semantic views defined once, independent of dbt, Databricks, SSIS or any single engine.",
+      "origin_epics": [
+        {
+          "epic": "BH-115",
+          "summary": "Interconnect-ability: Source & Destinations (A2A)",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        },
+        {
+          "epic": "BH-110",
+          "summary": "Context Engineering Architecture",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "open-semantic-view.md",
+          "first_added": "2026-06-24",
+          "added_by_kuri": true
+        },
+        {
+          "file": "lineage-aware-data-quality.md",
+          "first_added": "2026-07-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "pipeline-artifact-parser-registry.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "engineering-agent-warehouse-agnostic.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "lineage-adapter-sql-server.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-spec-driven-pipelines.md",
+          "first_added": "2026-09-22",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "open-semantic-view.md",
+        "first_added": "2026-06-24",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 6,
+      "epics_by_key": [
+        {
+          "epic": "BH-1061",
+          "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+          "commits": 37,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-07-12",
+          "last_commit": "2026-10-20",
+          "children": 12,
+          "children_done": 1,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [
+        {
+          "epic": "BH-1255",
+          "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
+          "commits": 91,
+          "kuri_share_pct": 95.6,
+          "first_commit": "2026-07-29",
+          "last_commit": "2026-10-20",
+          "children": 78,
+          "children_done": 3,
+          "by_key": false
+        },
+        {
+          "epic": "BH-624",
+          "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
+          "commits": 31,
+          "kuri_share_pct": 96.8,
+          "first_commit": "2026-06-16",
+          "last_commit": "2026-07-21",
+          "children": 26,
+          "children_done": 2,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1273",
+          "summary": "Data Lineage \u2014 structure-derived tiering, delete/merge integrity, and lineage observability",
+          "commits": 3,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-07-29",
+          "last_commit": "2026-07-30",
+          "children": 9,
+          "children_done": 0,
+          "by_key": false
+        }
+      ],
+      "commits_in_keyed_epics": 37,
+      "kuri_share_of_keyed_epic_commits_pct": 100.0,
+      "modules": [
+        {
+          "repo": "brightbot",
+          "path": "brightbot/integrations",
+          "commits": 2,
+          "kuri_commits": 2,
+          "kuri_share_pct": 100.0
+        }
+      ]
+    },
+    {
+      "id": "orchestrated-elt",
+      "name": "Orchestrated ELT with agents",
+      "one_line": "Up- and downstream data pipelines run, versioned and repaired by agents, including on the customer's own filesystem.",
+      "origin_epics": [
+        {
+          "epic": "BH-119",
+          "summary": "Big Data Highly Complex Tasks reduce to minutes",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        },
+        {
+          "epic": "BH-111",
+          "summary": "Proactive Multi Agents",
+          "created": "2026-01-11",
+          "creator": "Kuri Chinca",
+          "status": "Needs Refinement"
+        }
+      ],
+      "specs": [
+        {
+          "file": "ssis-ssrs-proactive-pipeline-source.md",
+          "first_added": "2026-07-16",
+          "added_by_kuri": true
+        },
+        {
+          "file": "pipeline-run-lifecycle.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "ssis-ssrs-to-dbt-regeneration.md",
+          "first_added": "2026-07-29",
+          "added_by_kuri": true
+        },
+        {
+          "file": "pipeline-engine-full-lifecycle-control.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "project-engine-run-sync.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "remediation-pr-engine-run-logs.md",
+          "first_added": "2026-08-01",
+          "added_by_kuri": true
+        },
+        {
+          "file": "autonomous-dbt-project-lifecycle.md",
+          "first_added": "2026-08-12",
+          "added_by_kuri": true
+        },
+        {
+          "file": "on-prem-engineering-runner.md",
+          "first_added": "2026-08-13",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-legacy-file-intake.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        },
+        {
+          "file": "THEME-onprem-engineering.md",
+          "first_added": "2026-08-19",
+          "added_by_kuri": true
+        }
+      ],
+      "first_spec": {
+        "file": "ssis-ssrs-proactive-pipeline-source.md",
+        "first_added": "2026-07-16",
+        "added_by_kuri": true
+      },
+      "specs_added_by_kuri": 10,
+      "epics_by_key": [
+        {
+          "epic": "BH-1255",
+          "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
+          "commits": 91,
+          "kuri_share_pct": 95.6,
+          "first_commit": "2026-07-29",
+          "last_commit": "2026-10-20",
+          "children": 78,
+          "children_done": 3,
+          "by_key": true
+        },
+        {
+          "epic": "BH-1421",
+          "summary": "On-Prem Engineering Runner \u2014 filesystem-resident dbt + legacy artifact work inside the customer network",
+          "commits": 25,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-13",
+          "last_commit": "2026-10-12",
+          "children": 30,
+          "children_done": 4,
+          "by_key": true
+        },
+        {
+          "epic": "BH-860",
+          "summary": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities",
+          "commits": 7,
+          "kuri_share_pct": 42.9,
+          "first_commit": "2026-06-29",
+          "last_commit": "2026-07-21",
+          "children": 14,
+          "children_done": 12,
+          "by_key": true
+        }
+      ],
+      "related_epics_by_summary": [
+        {
+          "epic": "BH-1036",
+          "summary": "Monitoring Agents \u2014 proactive pipeline discovery & health (dbt, Databricks, ETL)",
+          "commits": 174,
+          "kuri_share_pct": 98.3,
+          "first_commit": "2026-07-12",
+          "last_commit": "2026-10-16",
+          "children": 41,
+          "children_done": 1,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1061",
+          "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+          "commits": 37,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-07-12",
+          "last_commit": "2026-10-20",
+          "children": 12,
+          "children_done": 1,
+          "by_key": false
+        },
+        {
+          "epic": "BH-695",
+          "summary": "Engineering Agent Audit Trail \u2014 JWT-attributed tamper-evident action log",
+          "commits": 19,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-06-22",
+          "last_commit": "2026-10-20",
+          "children": 16,
+          "children_done": 0,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1403",
+          "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
+          "commits": 17,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-12",
+          "last_commit": "2026-10-12",
+          "children": 19,
+          "children_done": 4,
+          "by_key": false
+        },
+        {
+          "epic": "BH-332",
+          "summary": "dbt Cloud Auto-Provisioning \u2014 Automated workspace+project setup",
+          "commits": 6,
+          "kuri_share_pct": 66.7,
+          "first_commit": "2026-04-08",
+          "last_commit": "2026-05-07",
+          "children": 10,
+          "children_done": 0,
+          "by_key": false
+        },
+        {
+          "epic": "BH-110",
+          "summary": "Context Engineering Architecture",
+          "commits": 4,
+          "kuri_share_pct": 0.0,
+          "first_commit": "2026-02-13",
+          "last_commit": "2026-05-07",
+          "children": 10,
+          "children_done": 1,
+          "by_key": false
+        },
+        {
+          "epic": "BH-358",
+          "summary": "Unstructured Data Pipeline \u2014 ingestion, vectorization, warehouse integration",
+          "commits": 1,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-04-09",
+          "last_commit": "2026-04-09",
+          "children": 0,
+          "children_done": 0,
+          "by_key": false
+        },
+        {
+          "epic": "BH-1353",
+          "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
+          "commits": 1,
+          "kuri_share_pct": 100.0,
+          "first_commit": "2026-08-03",
+          "last_commit": "2026-08-03",
+          "children": 6,
+          "children_done": 0,
+          "by_key": false
+        }
+      ],
+      "commits_in_keyed_epics": 123,
+      "kuri_share_of_keyed_epic_commits_pct": 93.5,
+      "modules": [
+        {
+          "repo": "brightbot",
+          "path": "brightbot/pipelines",
+          "commits": 7,
+          "kuri_commits": 7,
+          "kuri_share_pct": 100.0
+        }
+      ]
+    }
+  ]
+}

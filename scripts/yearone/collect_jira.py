@@ -152,7 +152,8 @@ def main() -> None:
     """Fetch, summarize and write the Jira metrics file."""
     issues = fetch_all_issues()
     ISSUES_PATH.write_text(json.dumps([
-        {"key": i["key"], "type": i["fields"]["issuetype"]["name"], "status": i["fields"]["status"]["name"],
+        {"key": i["key"], "summary": i["fields"]["summary"], "creator": (i["fields"]["creator"] or {}).get("displayName"), "parent": (i["fields"].get("parent") or {}).get("key"),
+         "type": i["fields"]["issuetype"]["name"], "status": i["fields"]["status"]["name"],
          "state": state_of(status=i["fields"]["status"]), "created": i["fields"]["created"][:10],
          "resolved": (i["fields"]["resolutiondate"] or "")[:10] or None,
          "assignee": (i["fields"]["assignee"] or {}).get("displayName")} for i in issues]))
