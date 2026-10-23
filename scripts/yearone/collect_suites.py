@@ -34,12 +34,23 @@ def count_test_functions(*, repo: Path, ref: str) -> int:
     return len(out.splitlines())
 
 
+KURI_AUTHOR_PATTERN = "Kuri|Chinca|drchinca"
+CORE_REPOS = ("brightbot", "brighthive-platform-core", "brighthive-webapp")
+
+
+def kuri_first_commit(*, repo: Path) -> str | None:
+    """Date of the first commit by Kuri on any branch."""
+    out = git(repo=repo, args=["log", "--all", "--author", KURI_AUTHOR_PATTERN, "-E", "--reverse", "--format=%ad", "--date=short"]).splitlines()
+    return out[0] if out else None
+
+
 def main() -> None:
     """Write the suite inventory."""
     e2e = WORKSPACE / "brighthive-e2e"
     webapp = WORKSPACE / "brighthive-webapp"
     e2e_ref, web_ref = integration_ref(repo=e2e), integration_ref(repo=webapp)
     payload = {
+        "kuri_first_commit": {n: kuri_first_commit(repo=WORKSPACE / n) for n in CORE_REPOS},
         "e2e": {
             "ref": e2e_ref,
             "first_commit": git(repo=e2e, args=["log", e2e_ref, "--reverse", "--format=%ad", "--date=short"]).splitlines()[0],

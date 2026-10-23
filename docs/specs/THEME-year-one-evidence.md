@@ -47,8 +47,8 @@ First readings (three core repos, non-merge commits on `develop`, year before �
 | Spec-driven development | 126 specs, 4 ADRs (architecture decision records) here, 11 more in brightagent-v3 | Less rework: canceled share of work items (4%); roadmap delivered vs planned | ⚠️ partly: no before for rework |
 | Epics, parent-epic rule, ticket template | 88.6% of work items under an epic | Delivery measured against a plan for the first time: Q1 roadmap 65% delivered, 6 of 10 epics at 80%+ | ✅ (source: `BOARD_REPORT_OCT_2025_MAY_2026.md`) |
 | Sprint cadence and release automation | 16 sprints, weekly cut from Sprint 16 | Predictable releases: sprint release notes per cut | ✅ |
-| Docs and agent contract files | CLAUDE.md or AGENTS.md files: 0 → about 40 | Faster start for new people: commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value; do not claim |
-| Shared work | Contributors with 10+ PRs; top author share of PRs 25% → 67% | Work not stuck on one person | ❌ got worse; report as the next step |
+| Docs and agent contract files | CLAUDE.md or AGENTS.md files: 0 → 35 | Faster start for new people: commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value; do not claim |
+| Shared work | Contributors with 10+ PRs; top author share of PRs 25.4% → 67.5% | Work not stuck on one person | ❌ got worse; report as the next step |
 
 Dropped from the headline (kept as raw data): lines changed, org-wide PR counts, PRs authored by
 Kuri, hours-to-merge, workflow run counts. They are volume, not value.

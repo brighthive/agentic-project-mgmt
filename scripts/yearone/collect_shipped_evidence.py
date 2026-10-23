@@ -36,11 +36,13 @@ def ticket_keys_in(*, repo: Path, refs: list[str]) -> set[str]:
 def main() -> None:
     """Classify non-done work items by whether merged code references them."""
     issues = [i for i in json.loads((DATA_DIR / "jira_issues.json").read_text()) if i["type"] != "Epic"]
+    searched: list[str] = []
     integrated: set[str] = set()
     in_production: set[str] = set()
     for name in REPOS:
         repo = WORKSPACE / name
         if repo.exists():
+            searched.append(name)
             integrated |= ticket_keys_in(repo=repo, refs=existing_refs(repo=repo, refs=INTEGRATION_REFS))
             in_production |= ticket_keys_in(repo=repo, refs=existing_refs(repo=repo, refs=PRODUCTION_REFS))
     by_status: dict[str, dict[str, int]] = {}
@@ -52,6 +54,7 @@ def main() -> None:
     shipped_open = [i for i in open_rows if i["key"] in integrated]
     payload = {
         "method": "A ticket counts as having shipped evidence when its BH key appears in a commit message on develop, staging or a production branch of any org repo. Evidence of merged work, not proof the ticket is complete.",
+        "repos_searched": searched,
         "work_items": len(issues),
         "done_in_jira": sum(i["state"] == "done" for i in issues),
         "open_in_jira": len(open_rows),

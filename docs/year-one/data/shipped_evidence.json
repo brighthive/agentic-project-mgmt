@@ -1,5 +1,19 @@
 {
   "method": "A ticket counts as having shipped evidence when its BH key appears in a commit message on develop, staging or a production branch of any org repo. Evidence of merged work, not proof the ticket is complete.",
+  "repos_searched": [
+    "brightbot",
+    "brighthive-platform-core",
+    "brighthive-webapp",
+    "brighthive-e2e",
+    "brightbot-slack-server",
+    "agentic-project-mgmt",
+    "brightagent-v3",
+    "brighthive-admin",
+    "brighthive-data-organization-cdk",
+    "brighthive-data-workspace-cdk",
+    "platform-saas-ai-context",
+    "brightagent-engineering-runner"
+  ],
   "work_items": 1459,
   "done_in_jira": 362,
   "open_in_jira": 1037,

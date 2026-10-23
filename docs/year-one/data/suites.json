@@ -1,4 +1,9 @@
 {
+  "kuri_first_commit": {
+    "brightbot": "2025-10-23",
+    "brighthive-platform-core": "2025-11-17",
+    "brighthive-webapp": "2025-11-17"
+  },
   "e2e": {
     "ref": "origin/master",
     "first_commit": "2026-06-18",
