@@ -16,16 +16,18 @@ One Platform Core codebase runs on **aws-saas**, **azure-k8s**, and **gcp-k8s** 
 
 ## Branch / PR stack (review order)
 
+**Integrated tip (Oct 2026):** `feature/multi-cloud-runtime-complete` on `brighthive-platform-core` contains commits 1–4 below plus Azure K8s deploy. Delivery record: [`docs/delivery/DELIVERY-multi-cloud-runtime-complete.md`](../delivery/DELIVERY-multi-cloud-runtime-complete.md). Narrative docs repo: **`brighthive-multi-cloud-runtime`**.
+
 | # | Branch | Scope | Status |
 |---|--------|--------|--------|
-| 1 | `feature/multi-cloud-workspace-secrets` | `DEPLOYMENT_PROFILE`, `IWorkspaceSecretStore`, AWS/Azure/GCP workspace JSON, consumer migration | In working tree |
-| 2 | `feature/multi-cloud-saas-capability-guards` | `AwsSaasPlatformCapability`, STS/validator/org/destination guards | In working tree |
-| 3 | `feature/multi-cloud-platform-secrets` | `IPlatformSecretStore` (platform vault/SM, not cross-account STS) | Planned |
-| 4 | `feature/multi-cloud-object-store` | `IObjectStore` presign; single-tenant blob/GCS; SaaS keeps STS+S3 | Planned |
-| 5 | `feature/multi-cloud-identity-config` | Profile-driven JWKS / issuer env; Entra documented; Cognito unchanged on SaaS | Planned |
-| 6 | `feature/multi-cloud-workspace-storage-config` | Replace DynamoDB S3 bucket map for single-tenant (env/Neo4j) | Planned |
-| 7 | `feature/multi-cloud-runtime-k8s` | ECS/Helm env wiring, webhook containers (platform-core CDK + charts) | Not started |
-| 8 | `feature/multi-cloud-notifications-dynamo` | Notifications/inbox table ports or managed Redis-only paths | Not started |
+| 1 | `feature/multi-cloud-workspace-secrets` | `DEPLOYMENT_PROFILE`, `IWorkspaceSecretStore`, AWS/Azure/GCP workspace JSON | Merged into stack (`5aef2cf0`) |
+| 2 | `feature/multi-cloud-saas-capability-guards` | `AwsSaasPlatformCapability`, guards | In stack (`0e9e378e`) |
+| 3 | `feature/multi-cloud-platform-secrets` | `IPlatformSecretStore` | In stack (`a8d02f3b`) |
+| 4 | `feature/multi-cloud-object-store` | `IObjectStore` presign; single-tenant blob/GCS | In stack (`d07eb331`) |
+| 5 | `feature/multi-cloud-runtime-complete` | K8s runtime parity, Helm/Terraform bh-demo, CI, public URL | Active (`4c698b64`) — **not on `develop`** |
+| 6 | `feature/multi-cloud-identity-config` | Entra production JWKS (beyond LOCAL_DEV_MODE) | Partial — docs + JIT; Entra app TBD |
+| 7 | `feature/multi-cloud-workspace-storage-config` | Replace DynamoDB S3 bucket map for single-tenant | Partial — env/registry ports |
+| 8 | `feature/multi-cloud-notifications-dynamo` | Optional Dynamo inbox on K8s | Neo4j default done; Dynamo optional |
 
 Each PR MUST stay under `PR_RULES.md` line limits; split adapters from call-site migration if needed.
 
