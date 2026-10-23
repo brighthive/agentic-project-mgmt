@@ -75,6 +75,7 @@ def main() -> None:
             "specs": specs, "first_spec": specs[0] if specs else None,
             "specs_added_by_kuri": sum(s["added_by_kuri"] for s in specs),
             "epics_by_key": keyed, "related_epics_by_summary": [e for e in epics if not e["by_key"]],
+            "related_commits_not_counted": sum(e["commits"] for e in epics if not e["by_key"]),
             "commits_in_keyed_epics": commits,
             "kuri_share_of_keyed_epic_commits_pct": round(sum(e["commits"] * e["kuri_share_pct"] for e in keyed) / commits, 1) if commits else None,
             "modules": [module_share(repo=m["repo"], path=m["path"]) for m in idea["modules"]],

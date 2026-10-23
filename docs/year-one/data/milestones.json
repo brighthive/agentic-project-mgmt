@@ -1,7 +1,7 @@
 {
-  "method": "An epic's commits are non-merge commits on develop, staging or a production branch whose message contains the key of the epic or of one of its child tickets. Kuri's commits are matched by author name or email. Kuri-led means 10+ commits and a 50%+ share. Commits are evidence of merged work, not proof an epic is complete.",
-  "epics_with_code": 44,
-  "kuri_led_epics": 27,
+  "method": "An epic's commits (code repos only, documentation repos excluded) are non-merge commits on develop, staging or a production branch whose message contains the key of the epic or of one of its child tickets. Kuri's commits are matched by author name or email. Kuri-led means 10+ commits and a 50%+ share. Commits are evidence of merged work, not proof an epic is complete.",
+  "epics_with_code": 40,
+  "kuri_led_epics": 24,
   "epics": [
     {
       "epic": "BH-876",
@@ -9,45 +9,22 @@
       "jira_status": "Done",
       "children": 118,
       "children_done": 64,
-      "tickets_with_code": 96,
-      "commits": 178,
-      "kuri_commits": 173,
-      "kuri_share_pct": 97.2,
+      "tickets_with_code": 83,
+      "commits": 157,
+      "kuri_commits": 152,
+      "kuri_share_pct": 96.8,
       "kuri_led": true,
       "first_commit": "2026-07-02",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightagent-v3",
         "brightbot",
         "brightbot-slack-server",
         "brighthive-e2e",
         "brighthive-platform-core",
         "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-1036",
-      "summary": "Monitoring Agents \u2014 proactive pipeline discovery &amp; health (dbt, Databricks, ETL)",
-      "jira_status": "Needs Refinement",
-      "children": 41,
-      "children_done": 1,
-      "tickets_with_code": 36,
-      "commits": 174,
-      "kuri_commits": 171,
-      "kuri_share_pct": 98.3,
-      "kuri_led": true,
-      "first_commit": "2026-07-12",
-      "last_commit": "2026-10-16",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brightbot-slack-server",
-        "brighthive-e2e",
-        "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+      ],
+      "jira_summary_raw": "BrightRoutines \u2014 proactive schedule detection and workflow automation"
     },
     {
       "epic": "BH-172",
@@ -55,47 +32,44 @@
       "jira_status": "To Do",
       "children": 132,
       "children_done": 50,
-      "tickets_with_code": 71,
-      "commits": 152,
-      "kuri_commits": 141,
-      "kuri_share_pct": 92.8,
+      "tickets_with_code": 67,
+      "commits": 134,
+      "kuri_commits": 123,
+      "kuri_share_pct": 91.8,
       "kuri_led": true,
       "first_commit": "2026-02-03",
-      "last_commit": "2026-10-20",
+      "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightagent-v3",
         "brightbot",
         "brighthive-data-organization-cdk",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Platform Features & Enhancements"
     },
     {
-      "epic": "BH-526",
-      "summary": "Longaeva Partners POC \u2014 14-day pre-trial execution",
+      "epic": "BH-1036",
+      "summary": "Monitoring Agents \u2014 proactive pipeline discovery &amp; health (dbt, Databricks, ETL)",
       "jira_status": "Needs Refinement",
-      "children": 62,
-      "children_done": 3,
-      "tickets_with_code": 44,
-      "commits": 108,
-      "kuri_commits": 107,
-      "kuri_share_pct": 99.1,
+      "children": 41,
+      "children_done": 1,
+      "tickets_with_code": 26,
+      "commits": 130,
+      "kuri_commits": 127,
+      "kuri_share_pct": 97.7,
       "kuri_led": true,
-      "first_commit": "2026-05-29",
-      "last_commit": "2026-10-13",
+      "first_commit": "2026-07-13",
+      "last_commit": "2026-10-16",
       "repos": [
-        "agentic-project-mgmt",
-        "brightagent-v3",
         "brightbot",
-        "brighthive-data-organization-cdk",
+        "brightbot-slack-server",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Monitoring Agents \u2014 proactive pipeline discovery &amp; health (dbt, Databricks, ETL)"
     },
     {
       "epic": "BH-409",
@@ -103,45 +77,22 @@
       "jira_status": "Needs Refinement",
       "children": 53,
       "children_done": 13,
-      "tickets_with_code": 32,
-      "commits": 106,
-      "kuri_commits": 49,
-      "kuri_share_pct": 46.2,
+      "tickets_with_code": 30,
+      "commits": 96,
+      "kuri_commits": 42,
+      "kuri_share_pct": 43.8,
       "kuri_led": false,
       "first_commit": "2026-04-22",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightagent-v3",
         "brightbot",
         "brightbot-slack-server",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
-    },
-    {
-      "epic": "BH-1255",
-      "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
-      "jira_status": "To Do",
-      "children": 78,
-      "children_done": 3,
-      "tickets_with_code": 39,
-      "commits": 91,
-      "kuri_commits": 87,
-      "kuri_share_pct": 95.6,
-      "kuri_led": true,
-      "first_commit": "2026-07-29",
-      "last_commit": "2026-10-20",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-e2e",
-        "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "BrightSignals \u2014 proactive Slack notifications across the platform"
     },
     {
       "epic": "BH-1181",
@@ -150,19 +101,19 @@
       "children": 72,
       "children_done": 15,
       "tickets_with_code": 38,
-      "commits": 88,
-      "kuri_commits": 88,
+      "commits": 85,
+      "kuri_commits": 85,
       "kuri_share_pct": 100.0,
       "kuri_led": true,
       "first_commit": "2026-07-24",
-      "last_commit": "2026-10-20",
+      "last_commit": "2026-10-14",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brighthive-e2e",
         "brighthive-platform-core",
         "brighthive-webapp"
-      ]
+      ],
+      "jira_summary_raw": "MCP capability coverage & availability across environments"
     },
     {
       "epic": "BH-115",
@@ -170,23 +121,45 @@
       "jira_status": "Needs Refinement",
       "children": 40,
       "children_done": 5,
-      "tickets_with_code": 25,
-      "commits": 83,
-      "kuri_commits": 78,
-      "kuri_share_pct": 94.0,
+      "tickets_with_code": 24,
+      "commits": 77,
+      "kuri_commits": 72,
+      "kuri_share_pct": 93.5,
       "kuri_led": true,
       "first_commit": "2026-06-03",
       "last_commit": "2026-10-06",
       "repos": [
-        "agentic-project-mgmt",
         "brightagent-v3",
         "brightbot",
         "brighthive-admin",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Interconnect-ability: Source & Destinations (A2A)"
+    },
+    {
+      "epic": "BH-526",
+      "summary": "Longaeva Partners POC \u2014 14-day pre-trial execution",
+      "jira_status": "Needs Refinement",
+      "children": 62,
+      "children_done": 3,
+      "tickets_with_code": 41,
+      "commits": 74,
+      "kuri_commits": 73,
+      "kuri_share_pct": 98.6,
+      "kuri_led": true,
+      "first_commit": "2026-06-08",
+      "last_commit": "2026-10-13",
+      "repos": [
+        "brightagent-v3",
+        "brightbot",
+        "brighthive-data-organization-cdk",
+        "brighthive-e2e",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Longaeva Partners POC \u2014 14-day pre-trial execution"
     },
     {
       "epic": "BH-1464",
@@ -194,21 +167,41 @@
       "jira_status": "In Progress",
       "children": 57,
       "children_done": 0,
-      "tickets_with_code": 45,
-      "commits": 78,
-      "kuri_commits": 76,
-      "kuri_share_pct": 97.4,
+      "tickets_with_code": 44,
+      "commits": 74,
+      "kuri_commits": 72,
+      "kuri_share_pct": 97.3,
       "kuri_led": true,
       "first_commit": "2026-08-28",
-      "last_commit": "2026-10-20",
+      "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Authorization & Governance Enforcement: configurable roles, per-resource grants, one decision point"
+    },
+    {
+      "epic": "BH-1255",
+      "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
+      "jira_status": "To Do",
+      "children": 78,
+      "children_done": 3,
+      "tickets_with_code": 33,
+      "commits": 64,
+      "kuri_commits": 60,
+      "kuri_share_pct": 93.8,
+      "kuri_led": true,
+      "first_commit": "2026-07-29",
+      "last_commit": "2026-10-16",
+      "repos": [
+        "brightbot",
+        "brighthive-e2e",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent"
     },
     {
       "epic": "BH-173",
@@ -216,45 +209,21 @@
       "jira_status": "To Do",
       "children": 105,
       "children_done": 39,
-      "tickets_with_code": 41,
-      "commits": 68,
-      "kuri_commits": 49,
-      "kuri_share_pct": 72.1,
+      "tickets_with_code": 40,
+      "commits": 60,
+      "kuri_commits": 41,
+      "kuri_share_pct": 68.3,
       "kuri_led": true,
       "first_commit": "2026-03-10",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brightbot-slack-server",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
-    },
-    {
-      "epic": "BH-601",
-      "summary": "Longaeva PoC \u2014 14 Golden Success Paths (GC-1..14) explicit tracking",
-      "jira_status": "Needs Refinement",
-      "children": 43,
-      "children_done": 4,
-      "tickets_with_code": 28,
-      "commits": 45,
-      "kuri_commits": 45,
-      "kuri_share_pct": 100.0,
-      "kuri_led": true,
-      "first_commit": "2026-06-05",
-      "last_commit": "2026-07-21",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightagent-v3",
-        "brightbot",
-        "brighthive-e2e",
-        "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Bugs & Fixes"
     },
     {
       "epic": "BH-359",
@@ -263,39 +232,19 @@
       "children": 19,
       "children_done": 1,
       "tickets_with_code": 8,
-      "commits": 45,
-      "kuri_commits": 40,
-      "kuri_share_pct": 88.9,
+      "commits": 43,
+      "kuri_commits": 38,
+      "kuri_share_pct": 88.4,
       "kuri_led": true,
       "first_commit": "2026-04-12",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brighthive-e2e",
         "brighthive-platform-core",
         "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-1061",
-      "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
-      "jira_status": "To Do",
-      "children": 12,
-      "children_done": 1,
-      "tickets_with_code": 12,
-      "commits": 37,
-      "kuri_commits": 37,
-      "kuri_share_pct": 100.0,
-      "kuri_led": true,
-      "first_commit": "2026-07-12",
-      "last_commit": "2026-10-20",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brightbot-slack-server",
-        "brighthive-platform-core"
-      ]
+      ],
+      "jira_summary_raw": "Platform Analytics, Monitoring & Reporting Dashboard"
     },
     {
       "epic": "BH-117",
@@ -303,10 +252,10 @@
       "jira_status": "Needs Refinement",
       "children": 14,
       "children_done": 5,
-      "tickets_with_code": 5,
-      "commits": 36,
-      "kuri_commits": 26,
-      "kuri_share_pct": 72.2,
+      "tickets_with_code": 4,
+      "commits": 35,
+      "kuri_commits": 25,
+      "kuri_share_pct": 71.4,
       "kuri_led": true,
       "first_commit": "2026-03-16",
       "last_commit": "2026-07-23",
@@ -314,9 +263,31 @@
         "brightbot-slack-server",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "BH Omni integrations (Slack, Teams, Google)"
+    },
+    {
+      "epic": "BH-601",
+      "summary": "Longaeva PoC \u2014 14 Golden Success Paths (GC-1..14) explicit tracking",
+      "jira_status": "Needs Refinement",
+      "children": 43,
+      "children_done": 4,
+      "tickets_with_code": 24,
+      "commits": 32,
+      "kuri_commits": 32,
+      "kuri_share_pct": 100.0,
+      "kuri_led": true,
+      "first_commit": "2026-06-08",
+      "last_commit": "2026-07-21",
+      "repos": [
+        "brightagent-v3",
+        "brightbot",
+        "brighthive-e2e",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Longaeva PoC \u2014 14 Golden Success Paths (GC-1..14) explicit tracking"
     },
     {
       "epic": "BH-1131",
@@ -325,21 +296,20 @@
       "children": 3,
       "children_done": 0,
       "tickets_with_code": 2,
-      "commits": 32,
-      "kuri_commits": 32,
+      "commits": 29,
+      "kuri_commits": 29,
       "kuri_share_pct": 100.0,
       "kuri_led": true,
       "first_commit": "2026-07-19",
       "last_commit": "2026-07-28",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brightbot-slack-server",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "On-Demand Alerts \u2014 agent-authored notification rules on the Signal Catalog"
     },
     {
       "epic": "BH-624",
@@ -347,21 +317,20 @@
       "jira_status": "Needs Refinement",
       "children": 26,
       "children_done": 2,
-      "tickets_with_code": 19,
-      "commits": 31,
-      "kuri_commits": 30,
-      "kuri_share_pct": 96.8,
+      "tickets_with_code": 18,
+      "commits": 27,
+      "kuri_commits": 26,
+      "kuri_share_pct": 96.3,
       "kuri_led": true,
       "first_commit": "2026-06-16",
       "last_commit": "2026-07-21",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brighthive-e2e",
         "brighthive-platform-core",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables"
     },
     {
       "epic": "BH-1421",
@@ -370,81 +339,20 @@
       "children": 30,
       "children_done": 4,
       "tickets_with_code": 20,
-      "commits": 25,
-      "kuri_commits": 25,
+      "commits": 21,
+      "kuri_commits": 21,
       "kuri_share_pct": 100.0,
       "kuri_led": true,
       "first_commit": "2026-08-13",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightagent-engineering-runner",
         "brightbot",
         "brighthive-e2e",
         "brighthive-platform-core",
         "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-1370",
-      "summary": "Warehouse \u2192 Database \u2192 Table hierarchical identity",
-      "jira_status": "Needs Refinement",
-      "children": 28,
-      "children_done": 0,
-      "tickets_with_code": 7,
-      "commits": 22,
-      "kuri_commits": 22,
-      "kuri_share_pct": 100.0,
-      "kuri_led": true,
-      "first_commit": "2026-08-06",
-      "last_commit": "2026-10-20",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-e2e",
-        "brighthive-platform-core",
-        "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-503",
-      "summary": "Configurable Quality Agent \u2014 workspace rule library, curation, and history",
-      "jira_status": "Done",
-      "children": 23,
-      "children_done": 17,
-      "tickets_with_code": 11,
-      "commits": 21,
-      "kuri_commits": 18,
-      "kuri_share_pct": 85.7,
-      "kuri_led": true,
-      "first_commit": "2026-05-27",
-      "last_commit": "2026-09-22",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-platform-core",
-        "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-695",
-      "summary": "Engineering Agent Audit Trail \u2014 JWT-attributed tamper-evident action log",
-      "jira_status": "Needs Refinement",
-      "children": 16,
-      "children_done": 0,
-      "tickets_with_code": 12,
-      "commits": 19,
-      "kuri_commits": 19,
-      "kuri_share_pct": 100.0,
-      "kuri_led": true,
-      "first_commit": "2026-06-22",
-      "last_commit": "2026-10-20",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-e2e",
-        "brighthive-platform-core"
-      ]
+      ],
+      "jira_summary_raw": "On-Prem Engineering Runner \u2014 filesystem-resident dbt + legacy artifact work inside the customer network"
     },
     {
       "epic": "BH-1084",
@@ -462,28 +370,69 @@
       "repos": [
         "brightbot",
         "brighthive-platform-core"
-      ]
+      ],
+      "jira_summary_raw": "Always-on PII enforcement across agent I/O (BH-1078 follow-through)"
     },
     {
-      "epic": "BH-1403",
-      "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
-      "jira_status": "In Progress",
-      "children": 19,
-      "children_done": 4,
+      "epic": "BH-1061",
+      "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+      "jira_status": "To Do",
+      "children": 12,
+      "children_done": 1,
+      "tickets_with_code": 3,
+      "commits": 18,
+      "kuri_commits": 18,
+      "kuri_share_pct": 100.0,
+      "kuri_led": true,
+      "first_commit": "2026-07-13",
+      "last_commit": "2026-10-13",
+      "repos": [
+        "brightbot",
+        "brightbot-slack-server",
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact"
+    },
+    {
+      "epic": "BH-695",
+      "summary": "Engineering Agent Audit Trail \u2014 JWT-attributed tamper-evident action log",
+      "jira_status": "Needs Refinement",
+      "children": 16,
+      "children_done": 0,
+      "tickets_with_code": 11,
+      "commits": 18,
+      "kuri_commits": 18,
+      "kuri_share_pct": 100.0,
+      "kuri_led": true,
+      "first_commit": "2026-06-22",
+      "last_commit": "2026-07-21",
+      "repos": [
+        "brightbot",
+        "brighthive-e2e",
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "Engineering Agent Audit Trail \u2014 JWT-attributed tamper-evident action log"
+    },
+    {
+      "epic": "BH-1370",
+      "summary": "Warehouse \u2192 Database \u2192 Table hierarchical identity",
+      "jira_status": "Needs Refinement",
+      "children": 28,
+      "children_done": 0,
       "tickets_with_code": 7,
       "commits": 17,
       "kuri_commits": 17,
       "kuri_share_pct": 100.0,
       "kuri_led": true,
-      "first_commit": "2026-08-12",
+      "first_commit": "2026-08-07",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
-        "brightagent-engineering-runner",
         "brightbot",
+        "brighthive-e2e",
         "brighthive-platform-core",
         "brighthive-webapp"
-      ]
+      ],
+      "jira_summary_raw": "Warehouse \u2192 Database \u2192 Table hierarchical identity"
     },
     {
       "epic": "BH-114",
@@ -500,7 +449,49 @@
       "last_commit": "2026-07-01",
       "repos": [
         "brighthive-webapp"
-      ]
+      ],
+      "jira_summary_raw": "UX WebApp Re-design for latest features"
+    },
+    {
+      "epic": "BH-1403",
+      "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
+      "jira_status": "In Progress",
+      "children": 19,
+      "children_done": 4,
+      "tickets_with_code": 3,
+      "commits": 15,
+      "kuri_commits": 15,
+      "kuri_share_pct": 100.0,
+      "kuri_led": true,
+      "first_commit": "2026-08-13",
+      "last_commit": "2026-10-12",
+      "repos": [
+        "brightagent-engineering-runner",
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox"
+    },
+    {
+      "epic": "BH-111",
+      "summary": "Proactive Multi Agents",
+      "jira_status": "Needs Refinement",
+      "children": 11,
+      "children_done": 4,
+      "tickets_with_code": 4,
+      "commits": 12,
+      "kuri_commits": 8,
+      "kuri_share_pct": 66.7,
+      "kuri_led": true,
+      "first_commit": "2026-02-03",
+      "last_commit": "2026-10-12",
+      "repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Proactive Multi Agents"
     },
     {
       "epic": "BH-1168",
@@ -509,97 +500,17 @@
       "children": 21,
       "children_done": 0,
       "tickets_with_code": 8,
-      "commits": 16,
-      "kuri_commits": 16,
+      "commits": 12,
+      "kuri_commits": 12,
       "kuri_share_pct": 100.0,
       "kuri_led": true,
       "first_commit": "2026-07-31",
-      "last_commit": "2026-08-19",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-e2e"
-      ]
-    },
-    {
-      "epic": "BH-111",
-      "summary": "Proactive Multi Agents",
-      "jira_status": "Needs Refinement",
-      "children": 11,
-      "children_done": 4,
-      "tickets_with_code": 5,
-      "commits": 13,
-      "kuri_commits": 9,
-      "kuri_share_pct": 69.2,
-      "kuri_led": true,
-      "first_commit": "2026-02-03",
-      "last_commit": "2026-10-12",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-platform-core",
-        "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-170",
-      "summary": "SDLC & Code Quality",
-      "jira_status": "To Do",
-      "children": 32,
-      "children_done": 2,
-      "tickets_with_code": 15,
-      "commits": 13,
-      "kuri_commits": 13,
-      "kuri_share_pct": 100.0,
-      "kuri_led": true,
-      "first_commit": "2026-06-06",
-      "last_commit": "2026-10-12",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brightbot-slack-server",
-        "brighthive-platform-core",
-        "platform-saas-ai-context"
-      ]
-    },
-    {
-      "epic": "BH-453",
-      "summary": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore \u2014 remove LangGraph Cloud / LangSmith service dependency",
-      "jira_status": "Needs Refinement",
-      "children": 25,
-      "children_done": 0,
-      "tickets_with_code": 2,
-      "commits": 13,
-      "kuri_commits": 13,
-      "kuri_share_pct": 100.0,
-      "kuri_led": true,
-      "first_commit": "2026-05-08",
       "last_commit": "2026-08-01",
       "repos": [
-        "agentic-project-mgmt",
-        "brightagent-v3",
-        "brighthive-e2e",
-        "brighthive-platform-core"
-      ]
-    },
-    {
-      "epic": "BH-1245",
-      "summary": "Loop Capital Trial Execution \u2014 client-delivery verification of the 9 SQL Server trial success criteria",
-      "jira_status": "Needs Refinement",
-      "children": 11,
-      "children_done": 0,
-      "tickets_with_code": 6,
-      "commits": 12,
-      "kuri_commits": 11,
-      "kuri_share_pct": 91.7,
-      "kuri_led": true,
-      "first_commit": "2026-07-28",
-      "last_commit": "2026-08-11",
-      "repos": [
-        "agentic-project-mgmt",
         "brightbot",
-        "brighthive-platform-core"
-      ]
+        "brighthive-e2e"
+      ],
+      "jira_summary_raw": "BUGS-V3 \u2014 BrightAgent v3 production bugs & e2e findings"
     },
     {
       "epic": "BH-260",
@@ -617,7 +528,48 @@
       "repos": [
         "brightagent-v3",
         "brightbot"
-      ]
+      ],
+      "jira_summary_raw": "BrightStudio - AI-Powered Studio & Workspace Management"
+    },
+    {
+      "epic": "BH-503",
+      "summary": "Configurable Quality Agent \u2014 workspace rule library, curation, and history",
+      "jira_status": "Done",
+      "children": 23,
+      "children_done": 17,
+      "tickets_with_code": 8,
+      "commits": 10,
+      "kuri_commits": 7,
+      "kuri_share_pct": 70.0,
+      "kuri_led": true,
+      "first_commit": "2026-05-27",
+      "last_commit": "2026-06-17",
+      "repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Configurable Quality Agent \u2014 workspace rule library, curation, and history"
+    },
+    {
+      "epic": "BH-453",
+      "summary": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore \u2014 remove LangGraph Cloud / LangSmith service dependency",
+      "jira_status": "Needs Refinement",
+      "children": 25,
+      "children_done": 0,
+      "tickets_with_code": 1,
+      "commits": 9,
+      "kuri_commits": 9,
+      "kuri_share_pct": 100.0,
+      "kuri_led": false,
+      "first_commit": "2026-07-13",
+      "last_commit": "2026-08-01",
+      "repos": [
+        "brightagent-v3",
+        "brighthive-e2e",
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore \u2014 remove LangGraph Cloud / LangSmith service dependency"
     },
     {
       "epic": "BH-113",
@@ -625,37 +577,18 @@
       "jira_status": "Needs Refinement",
       "children": 16,
       "children_done": 6,
-      "tickets_with_code": 6,
-      "commits": 9,
-      "kuri_commits": 8,
-      "kuri_share_pct": 88.9,
+      "tickets_with_code": 4,
+      "commits": 8,
+      "kuri_commits": 7,
+      "kuri_share_pct": 87.5,
       "kuri_led": false,
       "first_commit": "2026-02-03",
       "last_commit": "2026-10-12",
       "repos": [
-        "agentic-project-mgmt",
         "brightbot",
         "brighthive-webapp"
-      ]
-    },
-    {
-      "epic": "BH-860",
-      "summary": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities",
-      "jira_status": "Done",
-      "children": 14,
-      "children_done": 12,
-      "tickets_with_code": 14,
-      "commits": 7,
-      "kuri_commits": 3,
-      "kuri_share_pct": 42.9,
-      "kuri_led": false,
-      "first_commit": "2026-06-29",
-      "last_commit": "2026-07-21",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-e2e"
-      ]
+      ],
+      "jira_summary_raw": "Internal improvements (Performance/Monitoring)"
     },
     {
       "epic": "BH-428",
@@ -673,7 +606,8 @@
       "repos": [
         "brightagent-v3",
         "brighthive-platform-core"
-      ]
+      ],
+      "jira_summary_raw": "Webapp \u2194 BrightAgent v2.3 integration \u2014 phased cut-over from brightbot"
     },
     {
       "epic": "BH-425",
@@ -690,7 +624,66 @@
       "last_commit": "2026-04-22",
       "repos": [
         "brightagent-v3"
-      ]
+      ],
+      "jira_summary_raw": "refactor: src/brightagent/ layout reorganization \u2014 PEP 695/649-native, hexagonal, feature-sliced agents"
+    },
+    {
+      "epic": "BH-860",
+      "summary": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities",
+      "jira_status": "Done",
+      "children": 14,
+      "children_done": 12,
+      "tickets_with_code": 13,
+      "commits": 6,
+      "kuri_commits": 2,
+      "kuri_share_pct": 33.3,
+      "kuri_led": false,
+      "first_commit": "2026-07-01",
+      "last_commit": "2026-07-21",
+      "repos": [
+        "brightbot",
+        "brighthive-e2e"
+      ],
+      "jira_summary_raw": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities"
+    },
+    {
+      "epic": "BH-1245",
+      "summary": "Loop Capital Trial Execution \u2014 client-delivery verification of the 9 SQL Server trial success criteria",
+      "jira_status": "Needs Refinement",
+      "children": 11,
+      "children_done": 0,
+      "tickets_with_code": 2,
+      "commits": 5,
+      "kuri_commits": 4,
+      "kuri_share_pct": 80.0,
+      "kuri_led": false,
+      "first_commit": "2026-08-01",
+      "last_commit": "2026-08-06",
+      "repos": [
+        "brightbot",
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "Loop Capital Trial Execution \u2014 client-delivery verification of the 9 SQL Server trial success criteria"
+    },
+    {
+      "epic": "BH-170",
+      "summary": "SDLC & Code Quality",
+      "jira_status": "To Do",
+      "children": 32,
+      "children_done": 2,
+      "tickets_with_code": 9,
+      "commits": 5,
+      "kuri_commits": 5,
+      "kuri_share_pct": 100.0,
+      "kuri_led": false,
+      "first_commit": "2026-06-06",
+      "last_commit": "2026-10-12",
+      "repos": [
+        "brightbot",
+        "brightbot-slack-server",
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "SDLC & Code Quality"
     },
     {
       "epic": "BH-332",
@@ -698,18 +691,18 @@
       "jira_status": "Needs Refinement",
       "children": 10,
       "children_done": 0,
-      "tickets_with_code": 3,
-      "commits": 6,
-      "kuri_commits": 4,
-      "kuri_share_pct": 66.7,
+      "tickets_with_code": 2,
+      "commits": 5,
+      "kuri_commits": 3,
+      "kuri_share_pct": 60.0,
       "kuri_led": false,
       "first_commit": "2026-04-08",
       "last_commit": "2026-05-07",
       "repos": [
         "brightbot",
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "dbt Cloud Auto-Provisioning \u2014 Automated workspace+project setup"
     },
     {
       "epic": "BH-299",
@@ -727,7 +720,8 @@
       "repos": [
         "brightbot",
         "brighthive-webapp"
-      ]
+      ],
+      "jira_summary_raw": "[CRITICAL] Bug Fix for Production (3/9/2026)"
     },
     {
       "epic": "BH-110",
@@ -744,25 +738,8 @@
       "last_commit": "2026-05-07",
       "repos": [
         "brightbot"
-      ]
-    },
-    {
-      "epic": "BH-171",
-      "summary": "AWS DevOps & Infrastructure",
-      "jira_status": "To Do",
-      "children": 27,
-      "children_done": 13,
-      "tickets_with_code": 3,
-      "commits": 4,
-      "kuri_commits": 4,
-      "kuri_share_pct": 100.0,
-      "kuri_led": false,
-      "first_commit": "2026-04-06",
-      "last_commit": "2026-08-19",
-      "repos": [
-        "agentic-project-mgmt",
-        "brighthive-platform-core"
-      ]
+      ],
+      "jira_summary_raw": "Context Engineering Architecture"
     },
     {
       "epic": "BH-1273",
@@ -770,71 +747,36 @@
       "jira_status": "Needs Refinement",
       "children": 9,
       "children_done": 0,
-      "tickets_with_code": 2,
-      "commits": 3,
-      "kuri_commits": 3,
-      "kuri_share_pct": 100.0,
-      "kuri_led": false,
-      "first_commit": "2026-07-29",
-      "last_commit": "2026-07-30",
-      "repos": [
-        "agentic-project-mgmt",
-        "brightbot",
-        "brighthive-platform-core"
-      ]
-    },
-    {
-      "epic": "BH-1037",
-      "summary": "Ingestion Observability \u2014 source syncs, batch, and event-processing health",
-      "jira_status": "Needs Refinement",
-      "children": 5,
-      "children_done": 0,
-      "tickets_with_code": 5,
-      "commits": 3,
-      "kuri_commits": 3,
-      "kuri_share_pct": 100.0,
-      "kuri_led": false,
-      "first_commit": "2026-07-12",
-      "last_commit": "2026-07-13",
-      "repos": [
-        "agentic-project-mgmt"
-      ]
-    },
-    {
-      "epic": "BH-116",
-      "summary": "Projects & automations tasks (Containers of Custom contexts)",
-      "jira_status": "Canceled",
-      "children": 11,
-      "children_done": 5,
-      "tickets_with_code": 1,
-      "commits": 2,
-      "kuri_commits": 1,
-      "kuri_share_pct": 50.0,
-      "kuri_led": false,
-      "first_commit": "2026-02-09",
-      "last_commit": "2026-06-15",
-      "repos": [
-        "brighthive-webapp",
-        "platform-saas-ai-context"
-      ]
-    },
-    {
-      "epic": "BH-118",
-      "summary": "Workspace/Orgs usage & pricing reporting",
-      "jira_status": "Needs Refinement",
-      "children": 2,
-      "children_done": 2,
       "tickets_with_code": 1,
       "commits": 2,
       "kuri_commits": 2,
       "kuri_share_pct": 100.0,
       "kuri_led": false,
-      "first_commit": "2026-06-15",
-      "last_commit": "2026-08-19",
+      "first_commit": "2026-07-29",
+      "last_commit": "2026-07-30",
       "repos": [
-        "agentic-project-mgmt",
-        "platform-saas-ai-context"
-      ]
+        "brightbot",
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "Data Lineage \u2014 structure-derived tiering, delete/merge integrity, and lineage observability"
+    },
+    {
+      "epic": "BH-171",
+      "summary": "AWS DevOps & Infrastructure",
+      "jira_status": "To Do",
+      "children": 27,
+      "children_done": 13,
+      "tickets_with_code": 1,
+      "commits": 1,
+      "kuri_commits": 1,
+      "kuri_share_pct": 100.0,
+      "kuri_led": false,
+      "first_commit": "2026-08-05",
+      "last_commit": "2026-08-05",
+      "repos": [
+        "brighthive-platform-core"
+      ],
+      "jira_summary_raw": "AWS DevOps & Infrastructure"
     },
     {
       "epic": "BH-358",
@@ -851,41 +793,26 @@
       "last_commit": "2026-04-09",
       "repos": [
         "brighthive-webapp"
-      ]
+      ],
+      "jira_summary_raw": "Unstructured Data Pipeline \u2014 ingestion, vectorization, warehouse integration"
     },
     {
-      "epic": "BH-1463",
-      "summary": "BrightRoutines next-phase \u2014 team-targeted delivery & AI-authored multi-step routines",
-      "jira_status": "Needs Refinement",
-      "children": 0,
-      "children_done": 0,
+      "epic": "BH-116",
+      "summary": "Projects & automations tasks (Containers of Custom contexts)",
+      "jira_status": "Canceled",
+      "children": 11,
+      "children_done": 5,
       "tickets_with_code": 1,
       "commits": 1,
-      "kuri_commits": 1,
-      "kuri_share_pct": 100.0,
+      "kuri_commits": 0,
+      "kuri_share_pct": 0.0,
       "kuri_led": false,
-      "first_commit": "2026-08-19",
-      "last_commit": "2026-08-19",
+      "first_commit": "2026-02-09",
+      "last_commit": "2026-02-09",
       "repos": [
-        "agentic-project-mgmt"
-      ]
-    },
-    {
-      "epic": "BH-1353",
-      "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
-      "jira_status": "Needs Refinement",
-      "children": 6,
-      "children_done": 0,
-      "tickets_with_code": 1,
-      "commits": 1,
-      "kuri_commits": 1,
-      "kuri_share_pct": 100.0,
-      "kuri_led": false,
-      "first_commit": "2026-08-03",
-      "last_commit": "2026-08-03",
-      "repos": [
-        "agentic-project-mgmt"
-      ]
+        "brighthive-webapp"
+      ],
+      "jira_summary_raw": "Projects & automations tasks (Containers of Custom contexts)"
     }
   ]
 }
