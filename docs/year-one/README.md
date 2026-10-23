@@ -10,6 +10,7 @@ Kuri's first commit is 2025-10-23 (`brightbot`).
 
 | Doc | What it answers |
 |---|---|
+| [ACCOMPLISHMENTS.md](ACCOMPLISHMENTS.md) | The year in one reading: what shipped, what is still staging, and the caveats |
 | [STORY.md](STORY.md) | The before/after storyline and the milestones, with verified dates |
 | [PRACTICES.md](PRACTICES.md) | Which engineering practices we introduced, and what each one bought |
 | [JIRA.md](JIRA.md) | How planning changed, and why Jira status understates shipped work |
