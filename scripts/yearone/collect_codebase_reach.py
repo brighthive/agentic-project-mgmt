@@ -119,6 +119,7 @@ def snapshot(*, spec: RepoSpec, repo: Path, ref: str) -> dict:
         "markdown_docs": sum(p.endswith(".md") for p in paths),
         "skills": sum(p.endswith("SKILL.md") for p in paths),
         "modules": {root: sorted(child_dirs(paths=paths, root=root)) for root in spec.module_roots},
+        "module_code_files": {root: {name: sum(1 for c, _ in code if c.startswith(f"{root}/{name}/")) for name in child_dirs(paths=paths, root=root)} for root in spec.module_roots},
         "graphql": graphql_surface(repo=repo, ref=ref) if spec.name == "brighthive-platform-core" else None,
         "signals": {group: {name: grep_stats(repo=repo, ref=ref, pattern=pat) for name, pat in items.items()} for group, items in SIGNALS.items()},
     }
@@ -136,7 +137,7 @@ def added_modules(*, spec: RepoSpec, repo: Path, before: dict, after: dict) -> l
     added = []
     for root in spec.module_roots:
         for name in sorted(set(after["modules"][root]) - set(before["modules"][root])):
-            added.append({"root": root, "module": name, **kuri_share(repo=repo, path=f"{root}/{name}")})
+            added.append({"root": root, "module": name, "code_files": after["module_code_files"][root][name], **kuri_share(repo=repo, path=f"{root}/{name}")})
     return added
 
 
