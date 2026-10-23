@@ -58,8 +58,8 @@
         {
           "epic": "BH-409",
           "summary": "BrightSignals \u2014 proactive Slack notifications across the platform",
-          "commits": 106,
-          "kuri_share_pct": 46.2,
+          "commits": 96,
+          "kuri_share_pct": 43.8,
           "first_commit": "2026-04-22",
           "last_commit": "2026-10-12",
           "children": 53,
@@ -69,7 +69,7 @@
         {
           "epic": "BH-1131",
           "summary": "On-Demand Alerts \u2014 agent-authored notification rules on the Signal Catalog",
-          "commits": 32,
+          "commits": 29,
           "kuri_share_pct": 100.0,
           "first_commit": "2026-07-19",
           "last_commit": "2026-07-28",
@@ -79,8 +79,9 @@
         }
       ],
       "related_epics_by_summary": [],
-      "commits_in_keyed_epics": 138,
-      "kuri_share_of_keyed_epic_commits_pct": 58.7,
+      "related_commits_not_counted": 0,
+      "commits_in_keyed_epics": 125,
+      "kuri_share_of_keyed_epic_commits_pct": 56.8,
       "modules": [
         {
           "repo": "brighthive-platform-core",
@@ -200,29 +201,19 @@
         {
           "epic": "BH-876",
           "summary": "BrightRoutines \u2014 proactive schedule detection and workflow automation",
-          "commits": 178,
-          "kuri_share_pct": 97.2,
+          "commits": 157,
+          "kuri_share_pct": 96.8,
           "first_commit": "2026-07-02",
           "last_commit": "2026-10-12",
           "children": 118,
           "children_done": 64,
           "by_key": true
-        },
-        {
-          "epic": "BH-1463",
-          "summary": "BrightRoutines next-phase \u2014 team-targeted delivery & AI-authored multi-step routines",
-          "commits": 1,
-          "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-19",
-          "last_commit": "2026-08-19",
-          "children": 0,
-          "children_done": 0,
-          "by_key": true
         }
       ],
       "related_epics_by_summary": [],
-      "commits_in_keyed_epics": 179,
-      "kuri_share_of_keyed_epic_commits_pct": 97.2,
+      "related_commits_not_counted": 0,
+      "commits_in_keyed_epics": 157,
+      "kuri_share_of_keyed_epic_commits_pct": 96.8,
       "modules": [
         {
           "repo": "brightbot",
@@ -316,9 +307,9 @@
         {
           "epic": "BH-1036",
           "summary": "Monitoring Agents \u2014 proactive pipeline discovery & health (dbt, Databricks, ETL)",
-          "commits": 174,
-          "kuri_share_pct": 98.3,
-          "first_commit": "2026-07-12",
+          "commits": 130,
+          "kuri_share_pct": 97.7,
+          "first_commit": "2026-07-13",
           "last_commit": "2026-10-16",
           "children": 41,
           "children_done": 1,
@@ -329,8 +320,8 @@
         {
           "epic": "BH-359",
           "summary": "Platform Analytics, Monitoring & Reporting Dashboard",
-          "commits": 45,
-          "kuri_share_pct": 88.9,
+          "commits": 43,
+          "kuri_share_pct": 88.4,
           "first_commit": "2026-04-12",
           "last_commit": "2026-10-12",
           "children": 19,
@@ -340,10 +331,10 @@
         {
           "epic": "BH-1061",
           "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
-          "commits": 37,
+          "commits": 18,
           "kuri_share_pct": 100.0,
-          "first_commit": "2026-07-12",
-          "last_commit": "2026-10-20",
+          "first_commit": "2026-07-13",
+          "last_commit": "2026-10-13",
           "children": 12,
           "children_done": 1,
           "by_key": false
@@ -351,28 +342,18 @@
         {
           "epic": "BH-113",
           "summary": "Internal improvements (Performance/Monitoring)",
-          "commits": 9,
-          "kuri_share_pct": 88.9,
+          "commits": 8,
+          "kuri_share_pct": 87.5,
           "first_commit": "2026-02-03",
           "last_commit": "2026-10-12",
           "children": 16,
           "children_done": 6,
           "by_key": false
-        },
-        {
-          "epic": "BH-1037",
-          "summary": "Ingestion Observability \u2014 source syncs, batch, and event-processing health",
-          "commits": 3,
-          "kuri_share_pct": 100.0,
-          "first_commit": "2026-07-12",
-          "last_commit": "2026-07-13",
-          "children": 5,
-          "children_done": 0,
-          "by_key": false
         }
       ],
-      "commits_in_keyed_epics": 174,
-      "kuri_share_of_keyed_epic_commits_pct": 98.3,
+      "related_commits_not_counted": 69,
+      "commits_in_keyed_epics": 130,
+      "kuri_share_of_keyed_epic_commits_pct": 97.7,
       "modules": [
         {
           "repo": "brightbot",
@@ -475,10 +456,10 @@
         {
           "epic": "BH-1255",
           "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
-          "commits": 91,
-          "kuri_share_pct": 95.6,
+          "commits": 64,
+          "kuri_share_pct": 93.8,
           "first_commit": "2026-07-29",
-          "last_commit": "2026-10-20",
+          "last_commit": "2026-10-16",
           "children": 78,
           "children_done": 3,
           "by_key": true
@@ -488,9 +469,9 @@
         {
           "epic": "BH-1403",
           "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
-          "commits": 17,
+          "commits": 15,
           "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-12",
+          "first_commit": "2026-08-13",
           "last_commit": "2026-10-12",
           "children": 19,
           "children_done": 4,
@@ -499,8 +480,8 @@
         {
           "epic": "BH-332",
           "summary": "dbt Cloud Auto-Provisioning \u2014 Automated workspace+project setup",
-          "commits": 6,
-          "kuri_share_pct": 66.7,
+          "commits": 5,
+          "kuri_share_pct": 60.0,
           "first_commit": "2026-04-08",
           "last_commit": "2026-05-07",
           "children": 10,
@@ -510,28 +491,18 @@
         {
           "epic": "BH-116",
           "summary": "Projects & automations tasks (Containers of Custom contexts)",
-          "commits": 2,
-          "kuri_share_pct": 50.0,
+          "commits": 1,
+          "kuri_share_pct": 0.0,
           "first_commit": "2026-02-09",
-          "last_commit": "2026-06-15",
+          "last_commit": "2026-02-09",
           "children": 11,
           "children_done": 5,
           "by_key": false
-        },
-        {
-          "epic": "BH-1353",
-          "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
-          "commits": 1,
-          "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-03",
-          "last_commit": "2026-08-03",
-          "children": 6,
-          "children_done": 0,
-          "by_key": false
         }
       ],
-      "commits_in_keyed_epics": 91,
-      "kuri_share_of_keyed_epic_commits_pct": 95.6,
+      "related_commits_not_counted": 21,
+      "commits_in_keyed_epics": 64,
+      "kuri_share_of_keyed_epic_commits_pct": 93.8,
       "modules": []
     },
     {
@@ -614,10 +585,10 @@
         {
           "epic": "BH-1370",
           "summary": "Warehouse \u2192 Database \u2192 Table hierarchical identity",
-          "commits": 22,
+          "commits": 17,
           "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-06",
-          "last_commit": "2026-10-20",
+          "first_commit": "2026-08-07",
+          "last_commit": "2026-10-12",
           "children": 28,
           "children_done": 0,
           "by_key": true
@@ -627,8 +598,8 @@
         {
           "epic": "BH-624",
           "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
-          "commits": 31,
-          "kuri_share_pct": 96.8,
+          "commits": 27,
+          "kuri_share_pct": 96.3,
           "first_commit": "2026-06-16",
           "last_commit": "2026-07-21",
           "children": 26,
@@ -645,20 +616,10 @@
           "children": 0,
           "children_done": 0,
           "by_key": false
-        },
-        {
-          "epic": "BH-1353",
-          "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
-          "commits": 1,
-          "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-03",
-          "last_commit": "2026-08-03",
-          "children": 6,
-          "children_done": 0,
-          "by_key": false
         }
       ],
-      "commits_in_keyed_epics": 22,
+      "related_commits_not_counted": 28,
+      "commits_in_keyed_epics": 17,
       "kuri_share_of_keyed_epic_commits_pct": 100.0,
       "modules": []
     },
@@ -724,10 +685,10 @@
         {
           "epic": "BH-1061",
           "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
-          "commits": 37,
+          "commits": 18,
           "kuri_share_pct": 100.0,
-          "first_commit": "2026-07-12",
-          "last_commit": "2026-10-20",
+          "first_commit": "2026-07-13",
+          "last_commit": "2026-10-13",
           "children": 12,
           "children_done": 1,
           "by_key": true
@@ -737,10 +698,10 @@
         {
           "epic": "BH-1255",
           "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
-          "commits": 91,
-          "kuri_share_pct": 95.6,
+          "commits": 64,
+          "kuri_share_pct": 93.8,
           "first_commit": "2026-07-29",
-          "last_commit": "2026-10-20",
+          "last_commit": "2026-10-16",
           "children": 78,
           "children_done": 3,
           "by_key": false
@@ -748,8 +709,8 @@
         {
           "epic": "BH-624",
           "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
-          "commits": 31,
-          "kuri_share_pct": 96.8,
+          "commits": 27,
+          "kuri_share_pct": 96.3,
           "first_commit": "2026-06-16",
           "last_commit": "2026-07-21",
           "children": 26,
@@ -759,7 +720,7 @@
         {
           "epic": "BH-1273",
           "summary": "Data Lineage \u2014 structure-derived tiering, delete/merge integrity, and lineage observability",
-          "commits": 3,
+          "commits": 2,
           "kuri_share_pct": 100.0,
           "first_commit": "2026-07-29",
           "last_commit": "2026-07-30",
@@ -768,7 +729,8 @@
           "by_key": false
         }
       ],
-      "commits_in_keyed_epics": 37,
+      "related_commits_not_counted": 93,
+      "commits_in_keyed_epics": 18,
       "kuri_share_of_keyed_epic_commits_pct": 100.0,
       "modules": [
         {
@@ -862,10 +824,10 @@
         {
           "epic": "BH-1255",
           "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
-          "commits": 91,
-          "kuri_share_pct": 95.6,
+          "commits": 64,
+          "kuri_share_pct": 93.8,
           "first_commit": "2026-07-29",
-          "last_commit": "2026-10-20",
+          "last_commit": "2026-10-16",
           "children": 78,
           "children_done": 3,
           "by_key": true
@@ -873,7 +835,7 @@
         {
           "epic": "BH-1421",
           "summary": "On-Prem Engineering Runner \u2014 filesystem-resident dbt + legacy artifact work inside the customer network",
-          "commits": 25,
+          "commits": 21,
           "kuri_share_pct": 100.0,
           "first_commit": "2026-08-13",
           "last_commit": "2026-10-12",
@@ -884,9 +846,9 @@
         {
           "epic": "BH-860",
           "summary": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities",
-          "commits": 7,
-          "kuri_share_pct": 42.9,
-          "first_commit": "2026-06-29",
+          "commits": 6,
+          "kuri_share_pct": 33.3,
+          "first_commit": "2026-07-01",
           "last_commit": "2026-07-21",
           "children": 14,
           "children_done": 12,
@@ -897,9 +859,9 @@
         {
           "epic": "BH-1036",
           "summary": "Monitoring Agents \u2014 proactive pipeline discovery & health (dbt, Databricks, ETL)",
-          "commits": 174,
-          "kuri_share_pct": 98.3,
-          "first_commit": "2026-07-12",
+          "commits": 130,
+          "kuri_share_pct": 97.7,
+          "first_commit": "2026-07-13",
           "last_commit": "2026-10-16",
           "children": 41,
           "children_done": 1,
@@ -908,10 +870,10 @@
         {
           "epic": "BH-1061",
           "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
-          "commits": 37,
+          "commits": 18,
           "kuri_share_pct": 100.0,
-          "first_commit": "2026-07-12",
-          "last_commit": "2026-10-20",
+          "first_commit": "2026-07-13",
+          "last_commit": "2026-10-13",
           "children": 12,
           "children_done": 1,
           "by_key": false
@@ -919,10 +881,10 @@
         {
           "epic": "BH-695",
           "summary": "Engineering Agent Audit Trail \u2014 JWT-attributed tamper-evident action log",
-          "commits": 19,
+          "commits": 18,
           "kuri_share_pct": 100.0,
           "first_commit": "2026-06-22",
-          "last_commit": "2026-10-20",
+          "last_commit": "2026-07-21",
           "children": 16,
           "children_done": 0,
           "by_key": false
@@ -930,9 +892,9 @@
         {
           "epic": "BH-1403",
           "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
-          "commits": 17,
+          "commits": 15,
           "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-12",
+          "first_commit": "2026-08-13",
           "last_commit": "2026-10-12",
           "children": 19,
           "children_done": 4,
@@ -941,8 +903,8 @@
         {
           "epic": "BH-332",
           "summary": "dbt Cloud Auto-Provisioning \u2014 Automated workspace+project setup",
-          "commits": 6,
-          "kuri_share_pct": 66.7,
+          "commits": 5,
+          "kuri_share_pct": 60.0,
           "first_commit": "2026-04-08",
           "last_commit": "2026-05-07",
           "children": 10,
@@ -970,21 +932,11 @@
           "children": 0,
           "children_done": 0,
           "by_key": false
-        },
-        {
-          "epic": "BH-1353",
-          "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
-          "commits": 1,
-          "kuri_share_pct": 100.0,
-          "first_commit": "2026-08-03",
-          "last_commit": "2026-08-03",
-          "children": 6,
-          "children_done": 0,
-          "by_key": false
         }
       ],
-      "commits_in_keyed_epics": 123,
-      "kuri_share_of_keyed_epic_commits_pct": 93.5,
+      "related_commits_not_counted": 191,
+      "commits_in_keyed_epics": 91,
+      "kuri_share_of_keyed_epic_commits_pct": 91.2,
       "modules": [
         {
           "repo": "brightbot",

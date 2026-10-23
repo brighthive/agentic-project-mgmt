@@ -6,7 +6,7 @@ volume grew. Otherwise it reads "adopted, value not shown yet".
 
 Source for commit numbers: `scripts/yearone/collect_commit_practices.py` → `data/commit_practices.json`
 (non-merge commits on `origin/develop` of `brightbot`, `brighthive-platform-core`, `brighthive-webapp`).
-Pull-request (PR) hygiene and review numbers come from `collect_practices.py` → `data/practices.json`, which is still being collected (GitHub rate limit), so review coverage is not reported yet.
+Pull-request (PR) hygiene and review numbers come from `collect_practices.py` → `data/practices.json`, generated 2026-10-23. The full table is in [METRICS.md](METRICS.md). It covers 926 of 927 merged PRs before and 2,641 of 2,861 after: bots are excluded, and the collector keeps at most 20 PRs per repo per day.
 
 ## Ledger
 
@@ -23,6 +23,9 @@ Pull-request (PR) hygiene and review numbers come from `collect_practices.py` �
 | Sprint cadence and release automation | 16 sprints, weekly cuts from Sprint 16 | Release notes produced per cut | ✅ |
 | Docs and agent contract files | 0 → 35 CLAUDE.md or AGENTS.md files across 8 repos | Commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value |
 | Shared work | Top author's share of merged PRs 25.4% → 67.5% | Work not stuck on one person | ❌ got worse |
+| Human review and approval | Reviewed by someone else 95.7% → 49.1%; approved by someone else 95.7% → 11.5% | A second person checks the change | ❌ coverage fell |
+
+Kuri's own PRs in the year after were approved by someone else 0.7% of the time. Everyone else was approved 32.3% of the time, down from 95.7% the year before.
 
 ## Commit profile (three core repos)
 

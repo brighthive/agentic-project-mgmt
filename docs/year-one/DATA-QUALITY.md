@@ -13,6 +13,7 @@ that does not flatter us. It exists so the review case cannot be undone by somet
 | CI (continuous integration) counts of exactly 1,000 runs | GitHub caps filtered queries at 1,000 results | Collector splits date ranges until under the cap |
 | CI before-year runs (e.g. 571,240-minute median) | Runs from before 2025-10-23 were pruned | CI shown for the year after only |
 | Webapp "152 workflows" | Counted run names that were commit messages | Column removed |
+| "Review coverage not collected yet" | `practices.json` finished after the rate limit, on a capped sample | Percentages use 926 of 927 merged PRs before and 2,641 of 2,861 after |
 
 ## Limits
 
@@ -21,6 +22,7 @@ that does not flatter us. It exists so the review case cannot be undone by somet
 - A Jira key in a commit message is evidence of merged work, not proof of completion.
 - Line counts include lockfiles and generated files, so they are not used.
 - Revenue, contract values and headcount are not in any queryable system. See [business.md](business.md).
+- `collect_practices.py` drops bot authors and keeps at most 20 merged PRs per repo per day. Practice percentages therefore cover 926 of 927 merged PRs before and 2,641 of 2,861 after, not every PR in the delivery table.
 
 ## Weak spots, shown on purpose
 
@@ -33,7 +35,7 @@ that does not flatter us. It exists so the review case cannot be undone by somet
 | Hotfix rate | 0.4% → 1.2% of commits |
 | New-contributor ramp | Median commits in first 30 days 10 → 4 |
 | Webapp CI | 46.7% success |
-| Review latency | Median time from PR open to merge fell from 0.7–2.3 hours to about 0.1 hours in the core repos, which probably means self-merged PRs. Review coverage (`practices.json`, not collected yet) is the check |
+| Review coverage | PRs reviewed by someone else 95.7% → 49.1%; approved by someone else 95.7% → 11.5% (Kuri's own approval rate 0.7%). Median time from PR open to merge fell from 0.7–2.3 hours to about 0.1 hours in the core repos |
 | Controls not yet enforced | Authorization checks are log-only in production, and the Usage and Audit page shows mock data (internal audit, 2026-10-21) |
 
 ## Context a reader needs

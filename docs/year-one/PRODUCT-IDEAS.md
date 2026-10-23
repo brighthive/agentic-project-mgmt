@@ -6,13 +6,13 @@ Spec authorship and commits show who wrote and built each idea. They do not show
 
 | Idea | Written down as (Jira epic, date, creator) | Specs | First spec | Commits in listed epics, Kuri share | Modules, Kuri share |
 |---|---|---|---|---|---|
-| BrightSignals | BH-111 (2026-01-11, Kuri Chinca), BH-117 (2026-01-11, Kuri Chinca) | 5 (4 by Kuri) | 2026-07-12 | 138 at 58.7% | `src/notifications` 80.0%; `lambdas/notification_dispatcher` 81.8%; `src/Notifications` 38.5% |
-| BrightRoutines | BH-111 (2026-01-11, Kuri Chinca) | 14 (14 by Kuri) | 2026-06-30 | 179 at 97.2% | `brightbot/routines` 100.0%; `brightbot/scheduled_agents` 80.0%; `lambdas/scheduled_agent_dispatcher` 50.0%; `src/Schedules` 45.0% |
-| Fleet health and self-healing | BH-111 (2026-01-11, Kuri Chinca), BH-113 (2026-01-11, Kuri Chinca) | 6 (6 by Kuri) | 2026-06-16 | 174 at 98.3% | `brightbot/fleet_health` 100.0% |
-| Project as the glue | BH-116 (2026-01-11, Kuri Chinca), BH-114 (2026-01-11, Kuri Chinca) | 12 (12 by Kuri) | 2026-07-29 | 91 at 95.6% | n/a |
-| Multi-warehouse, multi-database | BH-115 (2026-01-11, Kuri Chinca) | 11 (11 by Kuri) | 2026-04-06 | 22 at 100.0% | n/a |
-| Engine and framework agnosticism | BH-115 (2026-01-11, Kuri Chinca), BH-110 (2026-01-11, Kuri Chinca) | 6 (6 by Kuri) | 2026-06-24 | 37 at 100.0% | `brightbot/integrations` 100.0% |
-| Orchestrated ELT with agents | BH-119 (2026-01-11, Kuri Chinca), BH-111 (2026-01-11, Kuri Chinca) | 10 (10 by Kuri) | 2026-07-16 | 123 at 93.5% | `brightbot/pipelines` 100.0% |
+| BrightSignals | BH-111 (2026-01-11, Kuri Chinca), BH-117 (2026-01-11, Kuri Chinca) | 5 (4 by Kuri) | 2026-07-12 | 125 at 56.8% | `src/notifications` 80.0%; `lambdas/notification_dispatcher` 81.8%; `src/Notifications` 38.5% |
+| BrightRoutines | BH-111 (2026-01-11, Kuri Chinca) | 14 (14 by Kuri) | 2026-06-30 | 157 at 96.8% | `brightbot/routines` 100.0%; `brightbot/scheduled_agents` 80.0%; `lambdas/scheduled_agent_dispatcher` 50.0%; `src/Schedules` 45.0% |
+| Fleet health and self-healing | BH-111 (2026-01-11, Kuri Chinca), BH-113 (2026-01-11, Kuri Chinca) | 6 (6 by Kuri) | 2026-06-16 | 130 at 97.7% | `brightbot/fleet_health` 100.0% |
+| Project as the glue | BH-116 (2026-01-11, Kuri Chinca), BH-114 (2026-01-11, Kuri Chinca) | 12 (12 by Kuri) | 2026-07-29 | 64 at 93.8% | n/a |
+| Multi-warehouse, multi-database | BH-115 (2026-01-11, Kuri Chinca) | 11 (11 by Kuri) | 2026-04-06 | 17 at 100.0% | n/a |
+| Engine and framework agnosticism | BH-115 (2026-01-11, Kuri Chinca), BH-110 (2026-01-11, Kuri Chinca) | 6 (6 by Kuri) | 2026-06-24 | 18 at 100.0% | `brightbot/integrations` 100.0% |
+| Orchestrated ELT with agents | BH-119 (2026-01-11, Kuri Chinca), BH-111 (2026-01-11, Kuri Chinca) | 10 (10 by Kuri) | 2026-07-16 | 91 at 91.2% | `brightbot/pipelines` 100.0% |
 
 ## Detail
 
@@ -47,7 +47,7 @@ The agent notices repeated work and proposes a scheduled, auditable routine.
 - `THEME-routine-authoring.md` (first added 2026-08-19)
 - `routine-permissions-single-decision.md` (first added 2026-10-06)
 
-Epics: BH-876 BrightRoutines — proactive schedule detection and workflow a, BH-1463 BrightRoutines next-phase — team-targeted delivery & AI-auth
+Epics: BH-876 BrightRoutines — proactive schedule detection and workflow a
 
 ### Fleet health and self-healing
 

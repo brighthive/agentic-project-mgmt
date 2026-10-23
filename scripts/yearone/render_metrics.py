@@ -63,7 +63,13 @@ def practices_section(*, practices: dict | None) -> str:
         return "⏳ Pending: `collect_practices.py` is waiting out a GitHub rate limit."
     p = practices["practices"]
     rows = [[label, p["before"]["everyone"][key], p["after"]["everyone"][key], p["after"]["everyone_else"][key]] for key, label in PRACTICE_ROWS]
-    return table(header=["Practice (% of merged PRs)", "Year before", "Year after (all)", "Year after (everyone but Kuri)"], rows=rows)
+    before_n, after_n = p["before"]["everyone"]["prs"], p["after"]["everyone"]["prs"]
+    note = (
+        f"Percentages use {before_n:,} merged PRs before and {after_n:,} after, bots excluded. "
+        "`collect_practices.py` keeps at most 20 merged PRs per repo per day, so a busy day is short of the org-wide delivery count above. "
+        "See [DATA-QUALITY.md](DATA-QUALITY.md)."
+    )
+    return table(header=["Practice (% of merged PRs)", "Year before", "Year after (all)", "Year after (everyone but Kuri)"], rows=rows) + "\n\n" + note
 
 
 def jira_section(*, jira: dict) -> str:

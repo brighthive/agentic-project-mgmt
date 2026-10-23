@@ -18,7 +18,17 @@ Windows: year before = 2024-10-23 → 2025-10-22, year after = 2025-10-23 → 20
 
 ## Engineering practices (GitHub PRs)
 
-⏳ Pending: `collect_practices.py` is waiting out a GitHub rate limit.
+| Practice (% of merged PRs) | Year before | Year after (all) | Year after (everyone but Kuri) |
+|---|---|---|---|
+| PR titles in `type(scope): description` form | 9.4 | 76.1 | 47.3 |
+| PR titles carrying a ticket key | 23.3 | 41.3 | 10.0 |
+| Branches named `name/TICKET/description` | 0.0 | 37.5 | 7.4 |
+| PRs with a real description (200+ chars) | 80.6 | 95.4 | 93.4 |
+| PRs reviewed by someone other than the author | 95.7 | 49.1 | 41.3 |
+| PRs approved by someone other than the author | 95.7 | 11.5 | 32.3 |
+| Commit headlines in conventional form | 11.6 | 63.4 | 42.5 |
+
+Percentages use 926 merged PRs before and 2,641 after, bots excluded. `collect_practices.py` keeps at most 20 merged PRs per repo per day, so a busy day is short of the org-wide delivery count above. See [DATA-QUALITY.md](DATA-QUALITY.md).
 
 ## Project management (Jira)
 
