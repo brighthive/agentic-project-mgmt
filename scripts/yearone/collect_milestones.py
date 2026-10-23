@@ -11,8 +11,8 @@ DATA_DIR = Path(__file__).parent.parent.parent / "docs" / "year-one" / "data"
 OUTPUT_PATH = DATA_DIR / "milestones.json"
 REPOS = (
     "brightbot", "brighthive-platform-core", "brighthive-webapp", "brighthive-e2e", "brightbot-slack-server",
-    "agentic-project-mgmt", "brightagent-v3", "brighthive-admin", "brighthive-data-organization-cdk",
-    "brighthive-data-workspace-cdk", "platform-saas-ai-context", "brightagent-engineering-runner",
+    "brightagent-v3", "brighthive-admin", "brighthive-data-organization-cdk",
+    "brighthive-data-workspace-cdk", "brightagent-engineering-runner",
 )
 REFS = ("origin/develop", "origin/staging", "origin/master", "origin/main", "origin/production")
 KURI_RE = re.compile(r"kuri|chinca|drchinca|bado", re.IGNORECASE)
@@ -70,11 +70,11 @@ def main() -> None:
             "children": len(children), "children_done": sum(c["state"] == "done" for c in children),
             "tickets_with_code": len(a["keys"]), "commits": total, "kuri_commits": kuri, "kuri_share_pct": share,
             "kuri_led": total >= MIN_COMMITS_FOR_LED and share >= LED_SHARE_PCT,
-            "first_commit": min(a["dates"]), "last_commit": max(a["dates"]), "repos": sorted(a["repos"]),
+            "first_commit": min(a["dates"]), "last_commit": max(a["dates"]), "repos": sorted(a["repos"]), "jira_summary_raw": issues[epic]["summary"],
         })
     rows.sort(key=lambda r: -r["commits"])
     payload = {
-        "method": "An epic's commits are non-merge commits on develop, staging or a production branch whose message contains the key of the epic or of one of its child tickets. Kuri's commits are matched by author name or email. Kuri-led means 10+ commits and a 50%+ share. Commits are evidence of merged work, not proof an epic is complete.",
+        "method": "An epic's commits (code repos only, documentation repos excluded) are non-merge commits on develop, staging or a production branch whose message contains the key of the epic or of one of its child tickets. Kuri's commits are matched by author name or email. Kuri-led means 10+ commits and a 50%+ share. Commits are evidence of merged work, not proof an epic is complete.",
         "epics_with_code": len(rows), "kuri_led_epics": sum(r["kuri_led"] for r in rows), "epics": rows,
     }
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2))
