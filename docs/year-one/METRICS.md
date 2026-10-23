@@ -38,6 +38,19 @@ BH keys 1 to 109 are not retrievable (deleted or never existed), so BH is shown 
 | ⚠️ Share of work items assigned to Kuri | n/a | 62% |
 | ⚠️ Unassigned work items | n/a | 285 |
 
+### Jira status vs. shipped code
+
+Jira status lags delivery. A ticket counts here when its key appears in a commit on develop, staging or a production branch of any org repo. That is evidence of merged work, not proof the ticket is complete.
+
+| Metric | Value |
+|---|---|
+| Work items Jira marks Done | 362 (25%) |
+| Open work items whose key appears in merged code | 516 of 1,037 |
+| …of which in a production branch | 506 |
+| 'Needs Refinement' tickets with merged code | 355 of 836 |
+| Any-status work items with merged code | 737 (51%) |
+| Plausible completed range | 362 (Jira) to 878 (Jira plus merged code) |
+
 ## Repo structure: tests, specs, ADRs, contracts, CI files
 
 | Metric | Oct 2025 (start) | Oct 2026 |

@@ -92,6 +92,21 @@ def jira_section(*, jira: dict) -> str:
     return table(header=["Metric", "Year before", "Year after"], rows=rows)
 
 
+def shipped_section(*, shipped: dict) -> str:
+    """Jira status versus merged-code evidence."""
+    n = shipped["work_items"]
+    nr = shipped["by_status"]["Needs Refinement"]
+    rows = [
+        ["Work items Jira marks Done", f"{shipped['done_in_jira']:,} ({round(100 * shipped['done_in_jira'] / n)}%)"],
+        ["Open work items whose key appears in merged code", f"{shipped['open_with_merged_code']:,} of {shipped['open_in_jira']:,}"],
+        ["…of which in a production branch", f"{shipped['open_with_code_in_production_branch']:,}"],
+        ["'Needs Refinement' tickets with merged code", f"{nr['with_merged_code']:,} of {nr['tickets']:,}"],
+        ["Any-status work items with merged code", f"{shipped['any_status_with_merged_code']:,} ({round(100 * shipped['any_status_with_merged_code'] / n)}%)"],
+        ["Plausible completed range", f"{shipped['done_in_jira']:,} (Jira) to {shipped['done_in_jira'] + shipped['open_with_merged_code']:,} (Jira plus merged code)"],
+    ]
+    return table(header=["Metric", "Value"], rows=rows)
+
+
 def structure_section(*, structure: dict) -> str:
     """Repo structure counts at the first and last month."""
     rows = []
@@ -133,7 +148,7 @@ def suites_section(*, suites: dict) -> str:
 
 def main() -> None:
     """Write METRICS.md."""
-    github, jira, structure, cicd, suites = (load(name=f"{n}.json") for n in ("github", "jira", "repo_structure", "cicd", "suites"))
+    github, jira, structure, cicd, suites, shipped = (load(name=f"{n}.json") for n in ("github", "jira", "repo_structure", "cicd", "suites", "shipped_evidence"))
     practices = load(name="practices.json")
     parts = [
         "# Year-one metrics",
@@ -144,6 +159,9 @@ def main() -> None:
         "## Project management (Jira)",
         "BH keys 1 to 109 are not retrievable (deleted or never existed), so BH is shown from its first visible ticket, BH-110 on 2026-01-11. "
         "BPP (Platform Planning) holds the earlier idea backlog. Canceled is counted separately from Done.", jira_section(jira=jira),
+        "### Jira status vs. shipped code",
+        "Jira status lags delivery. A ticket counts here when its key appears in a commit on develop, staging or a production branch of any org repo. "
+        "That is evidence of merged work, not proof the ticket is complete.", shipped_section(shipped=shipped),
         "## Repo structure: tests, specs, ADRs, contracts, CI files", structure_section(structure=structure),
         "Counts are by file-name pattern, so treat them as approximate.",
         "## CI/CD health (year after only)",

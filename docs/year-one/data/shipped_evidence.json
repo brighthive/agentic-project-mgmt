@@ -1,0 +1,88 @@
+{
+  "method": "A ticket counts as having shipped evidence when its BH key appears in a commit message on develop, staging or a production branch of any org repo. Evidence of merged work, not proof the ticket is complete.",
+  "work_items": 1459,
+  "done_in_jira": 362,
+  "open_in_jira": 1037,
+  "open_with_merged_code": 516,
+  "open_with_code_in_production_branch": 506,
+  "any_status_with_merged_code": 737,
+  "by_status": {
+    "Blocked": {
+      "tickets": 3,
+      "with_merged_code": 3,
+      "with_code_in_production_branch": 3
+    },
+    "Canceled": {
+      "tickets": 60,
+      "with_merged_code": 6,
+      "with_code_in_production_branch": 6
+    },
+    "Code Review": {
+      "tickets": 44,
+      "with_merged_code": 37,
+      "with_code_in_production_branch": 36
+    },
+    "Done": {
+      "tickets": 362,
+      "with_merged_code": 215,
+      "with_code_in_production_branch": 213
+    },
+    "In Progress": {
+      "tickets": 10,
+      "with_merged_code": 1,
+      "with_code_in_production_branch": 1
+    },
+    "Needs Refinement": {
+      "tickets": 836,
+      "with_merged_code": 355,
+      "with_code_in_production_branch": 346
+    },
+    "Ready for Staging": {
+      "tickets": 21,
+      "with_merged_code": 13,
+      "with_code_in_production_branch": 13
+    },
+    "Staging QC": {
+      "tickets": 48,
+      "with_merged_code": 45,
+      "with_code_in_production_branch": 45
+    },
+    "Testing (Dev)": {
+      "tickets": 48,
+      "with_merged_code": 46,
+      "with_code_in_production_branch": 46
+    },
+    "To Do": {
+      "tickets": 27,
+      "with_merged_code": 16,
+      "with_code_in_production_branch": 16
+    }
+  },
+  "open_with_merged_code_by_status": {
+    "Ready for Staging": 13,
+    "Testing (Dev)": 46,
+    "Code Review": 37,
+    "Staging QC": 45,
+    "To Do": 16,
+    "Needs Refinement": 355,
+    "In Progress": 1,
+    "Blocked": 3
+  },
+  "sample_needs_refinement_with_code": [
+    "BH-331",
+    "BH-343",
+    "BH-360",
+    "BH-363",
+    "BH-371",
+    "BH-374",
+    "BH-376",
+    "BH-377",
+    "BH-386",
+    "BH-387",
+    "BH-391",
+    "BH-393",
+    "BH-394",
+    "BH-395",
+    "BH-397"
+  ]
+}

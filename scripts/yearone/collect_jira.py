@@ -20,6 +20,7 @@ IN_PROGRESS_CATEGORY = "In Progress"
 OTHER_PROJECTS = ("BL", "BPP")
 STATE_DONE, STATE_CANCELED, STATE_IN_FLIGHT, STATE_BACKLOG = "done", "canceled", "in_flight", "backlog"
 OUTPUT_PATH = Path(__file__).parent.parent.parent / "docs" / "year-one" / "data" / "jira.json"
+ISSUES_PATH = OUTPUT_PATH.with_name("jira_issues.json")
 FIELDS = "summary,issuetype,status,created,resolutiondate,assignee,creator,parent,description,labels,priority"
 
 
@@ -149,7 +150,13 @@ def summarize_other_project(*, project: str) -> dict:
 
 def main() -> None:
     """Fetch, summarize and write the Jira metrics file."""
-    payload = summarize(issues=fetch_all_issues())
+    issues = fetch_all_issues()
+    ISSUES_PATH.write_text(json.dumps([
+        {"key": i["key"], "type": i["fields"]["issuetype"]["name"], "status": i["fields"]["status"]["name"],
+         "state": state_of(status=i["fields"]["status"]), "created": i["fields"]["created"][:10],
+         "resolved": (i["fields"]["resolutiondate"] or "")[:10] or None,
+         "assignee": (i["fields"]["assignee"] or {}).get("displayName")} for i in issues]))
+    payload = summarize(issues=issues)
     payload["other_projects"] = {k: summarize_other_project(project=k) for k in OTHER_PROJECTS}
     payload["bh_keys_below_110_retrievable"] = False
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2))
