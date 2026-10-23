@@ -21,7 +21,7 @@ Pull-request (PR) hygiene and review numbers come from `collect_practices.py` �
 | Spec-driven development | 123 specs, 3 ADRs (architecture decision records) here, 10 in `brightagent-v3` | Canceled share of work items 4%; roadmap delivered vs planned | ⚠️ no before for rework |
 | Epics and the ticket template | 88.6% of work items under an epic | Q1 roadmap: 65% delivered, 6 of 10 epics at 80%+ | ✅ delivery measured against a plan |
 | Sprint cadence and release automation | 16 sprints, weekly cuts from Sprint 16 | Release notes produced per cut | ✅ |
-| Docs and agent contract files | 0 → 35 CLAUDE.md or AGENTS.md files across 8 repos | Commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value |
+| Docs and agent contract files | 0 → 35 CLAUDE.md or AGENTS.md files across 7 repos | Commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value |
 | Shared work | Top author's share of merged PRs 25.4% → 67.5% | Work not stuck on one person | ❌ got worse |
 | Second-person review and approval (review bots included) | Reviewed by someone else 95.7% → 49.1%; approved by someone else 95.7% → 11.5% | A second person checks the change | ❌ coverage fell |
 

@@ -16,7 +16,7 @@ Kuri did not only write code with AI help. Kuri built and ran an agentic way of 
 | Move | What it does | Where it lives |
 |---|---|---|
 | **Spec first** | Every feature starts as a spec with typed contracts, invariants, Gherkin scenarios and a test-coverage step. The spec is the prompt agents work from. | `docs/specs/SPEC_TEMPLATE.md`, 123 specs |
-| **Contracts for agents** | Each repo tells an agent what it may and may not do before it touches code. | 35 contract files in 8 repos |
+| **Contracts for agents** | Each repo tells an agent what it may and may not do before it touches code. | 35 contract files in 7 repos |
 | **Skills for repeatable work** | Ticket creation, trial call-outs and trial delivery run as checked-in agent skills. | `.claude/skills/` (3 skills) |
 | **Records that regenerate** | Sprint stats, release notes, board reports and this year-one evidence are produced by scripts, not meetings. | 66 documented `make` targets, 16 collectors and renderers in `scripts/yearone/` |
 
