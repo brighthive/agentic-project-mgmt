@@ -19,6 +19,7 @@ that does not flatter us. It exists so the review case cannot be undone by somet
 | Webapp "199 test files" in one doc, 220 in others | Two counting methods | 220 everywhere |
 | GraphQL growth, port or adapter classes, error analytics | The GraphQL schema moved from a TypeScript file to a `.graphql` file, so counts are not comparable; the other two are keyword counts the code does not match | Dropped from [BEFORE-AFTER-KURI.md](BEFORE-AFTER-KURI.md) |
 | Modules table credited Kuri for every new module | 24 of 47 had a Kuri share under 50% | Table lists Kuri-led modules only, with the count of the rest |
+| "35 contract files across 8 repos" | 7 repos hold them | 7 repos |
 | "Review coverage not collected yet" | `practices.json` finished after the rate limit, on a capped sample | Percentages use 926 of 927 merged PRs before and 2,641 of 2,861 after |
 
 ## Limits
