@@ -1,0 +1,979 @@
+{
+  "cutoff": "2025-10-23",
+  "after_ref": "origin/develop",
+  "repos": {
+    "brightbot": {
+      "before_sha": "55b8cf1821c1b41097942fe9f8f8295fdde36099",
+      "before": {
+        "source_kb": 2047,
+        "code_files": 161,
+        "test_files": 10,
+        "markdown_docs": 20,
+        "skills": 0,
+        "modules": {
+          "brightbot": [
+            "agents",
+            "custom_llms",
+            "models",
+            "notebooks",
+            "prompts",
+            "tools",
+            "utils",
+            "workflows"
+          ],
+          "brightbot/agents": [
+            "analyst_agent",
+            "dbt_agent",
+            "governance_agent",
+            "retrieval_agent",
+            "super_agent",
+            "visualization_agent"
+          ],
+          "brightbot/integrations": [],
+          "brightbot/skills/system": []
+        },
+        "graphql": null,
+        "signals": {
+          "observability": {
+            "tracing_and_evals": {
+              "files": 1,
+              "matches": 1
+            },
+            "structured_logging": {
+              "files": 69,
+              "matches": 74
+            },
+            "cost_and_token_metering": {
+              "files": 0,
+              "matches": 0
+            },
+            "health_endpoints": {
+              "files": 1,
+              "matches": 1
+            },
+            "alarms_and_alerts": {
+              "files": 0,
+              "matches": 0
+            },
+            "audit_trail": {
+              "files": 0,
+              "matches": 0
+            },
+            "error_and_product_analytics": {
+              "files": 5,
+              "matches": 15
+            }
+          },
+          "architecture": {
+            "protocol_classes": {
+              "files": 1,
+              "matches": 1
+            },
+            "port_or_adapter_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "registries": {
+              "files": 0,
+              "matches": 0
+            },
+            "feature_flags": {
+              "files": 0,
+              "matches": 0
+            },
+            "authorization_checks": {
+              "files": 0,
+              "matches": 0
+            },
+            "agent_graphs_and_tools": {
+              "files": 18,
+              "matches": 26
+            }
+          }
+        }
+      },
+      "after": {
+        "source_kb": 10181,
+        "code_files": 1093,
+        "test_files": 413,
+        "markdown_docs": 102,
+        "skills": 7,
+        "modules": {
+          "brightbot": [
+            "agent_tools",
+            "agents",
+            "audit",
+            "backends",
+            "custom_llms",
+            "docs",
+            "evals",
+            "fleet_health",
+            "integrations",
+            "mcp",
+            "models",
+            "pipelines",
+            "prompts",
+            "routines",
+            "scheduled_agents",
+            "skills",
+            "tools",
+            "utils",
+            "validators",
+            "workflows",
+            "workspace_context"
+          ],
+          "brightbot/agents": [
+            "airbyte_custom_agent",
+            "analyst_agent",
+            "brightagent_studio",
+            "code_interpreter_agent",
+            "dbt_agent",
+            "governance_agent",
+            "pipeline_verifier_agent",
+            "retrieval_agent",
+            "shared_middleware",
+            "simple_messaging_agent",
+            "slack_router_agent",
+            "spec_author_agent",
+            "summary_agent",
+            "super_agent",
+            "visualization_agent",
+            "workflow_agent"
+          ],
+          "brightbot/integrations": [],
+          "brightbot/skills/system": [
+            "project-observation-cycle",
+            "sql-server-diagnostics",
+            "ssis-diagnostics",
+            "ssrs-diagnostics",
+            "storage-optimization",
+            "xsd-nested-document",
+            "xsd-table-schema"
+          ]
+        },
+        "graphql": null,
+        "signals": {
+          "observability": {
+            "tracing_and_evals": {
+              "files": 46,
+              "matches": 130
+            },
+            "structured_logging": {
+              "files": 329,
+              "matches": 340
+            },
+            "cost_and_token_metering": {
+              "files": 6,
+              "matches": 110
+            },
+            "health_endpoints": {
+              "files": 12,
+              "matches": 19
+            },
+            "alarms_and_alerts": {
+              "files": 9,
+              "matches": 11
+            },
+            "audit_trail": {
+              "files": 9,
+              "matches": 23
+            },
+            "error_and_product_analytics": {
+              "files": 2,
+              "matches": 7
+            }
+          },
+          "architecture": {
+            "protocol_classes": {
+              "files": 32,
+              "matches": 40
+            },
+            "port_or_adapter_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "registries": {
+              "files": 17,
+              "matches": 35
+            },
+            "feature_flags": {
+              "files": 46,
+              "matches": 246
+            },
+            "authorization_checks": {
+              "files": 23,
+              "matches": 54
+            },
+            "agent_graphs_and_tools": {
+              "files": 155,
+              "matches": 397
+            }
+          }
+        }
+      },
+      "modules_added": [
+        {
+          "root": "brightbot",
+          "module": "agent_tools",
+          "commits": 4,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "brightbot",
+          "module": "audit",
+          "commits": 11,
+          "kuri_commits": 11,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot",
+          "module": "backends",
+          "commits": 21,
+          "kuri_commits": 2,
+          "kuri_share_pct": 9.5
+        },
+        {
+          "root": "brightbot",
+          "module": "docs",
+          "commits": 1,
+          "kuri_commits": 1,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot",
+          "module": "evals",
+          "commits": 12,
+          "kuri_commits": 6,
+          "kuri_share_pct": 50.0
+        },
+        {
+          "root": "brightbot",
+          "module": "fleet_health",
+          "commits": 15,
+          "kuri_commits": 15,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot",
+          "module": "integrations",
+          "commits": 2,
+          "kuri_commits": 2,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot",
+          "module": "mcp",
+          "commits": 77,
+          "kuri_commits": 67,
+          "kuri_share_pct": 87.0
+        },
+        {
+          "root": "brightbot",
+          "module": "pipelines",
+          "commits": 7,
+          "kuri_commits": 7,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot",
+          "module": "routines",
+          "commits": 6,
+          "kuri_commits": 6,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot",
+          "module": "scheduled_agents",
+          "commits": 5,
+          "kuri_commits": 4,
+          "kuri_share_pct": 80.0
+        },
+        {
+          "root": "brightbot",
+          "module": "skills",
+          "commits": 16,
+          "kuri_commits": 4,
+          "kuri_share_pct": 25.0
+        },
+        {
+          "root": "brightbot",
+          "module": "validators",
+          "commits": 2,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "brightbot",
+          "module": "workspace_context",
+          "commits": 2,
+          "kuri_commits": 1,
+          "kuri_share_pct": 50.0
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "airbyte_custom_agent",
+          "commits": 7,
+          "kuri_commits": 4,
+          "kuri_share_pct": 57.1
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "brightagent_studio",
+          "commits": 11,
+          "kuri_commits": 1,
+          "kuri_share_pct": 9.1
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "code_interpreter_agent",
+          "commits": 6,
+          "kuri_commits": 1,
+          "kuri_share_pct": 16.7
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "pipeline_verifier_agent",
+          "commits": 2,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "shared_middleware",
+          "commits": 22,
+          "kuri_commits": 8,
+          "kuri_share_pct": 36.4
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "simple_messaging_agent",
+          "commits": 12,
+          "kuri_commits": 4,
+          "kuri_share_pct": 33.3
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "slack_router_agent",
+          "commits": 6,
+          "kuri_commits": 2,
+          "kuri_share_pct": 33.3
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "spec_author_agent",
+          "commits": 1,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "summary_agent",
+          "commits": 1,
+          "kuri_commits": 1,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot/agents",
+          "module": "workflow_agent",
+          "commits": 8,
+          "kuri_commits": 5,
+          "kuri_share_pct": 62.5
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "project-observation-cycle",
+          "commits": 1,
+          "kuri_commits": 1,
+          "kuri_share_pct": 100.0
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "sql-server-diagnostics",
+          "commits": 2,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "ssis-diagnostics",
+          "commits": 2,
+          "kuri_commits": 1,
+          "kuri_share_pct": 50.0
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "ssrs-diagnostics",
+          "commits": 2,
+          "kuri_commits": 1,
+          "kuri_share_pct": 50.0
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "storage-optimization",
+          "commits": 3,
+          "kuri_commits": 2,
+          "kuri_share_pct": 66.7
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "xsd-nested-document",
+          "commits": 4,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "brightbot/skills/system",
+          "module": "xsd-table-schema",
+          "commits": 9,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        }
+      ]
+    },
+    "brighthive-platform-core": {
+      "before_sha": "e3ea75ef9b03ce72abe240fc2acdf4e8d17b8f0e",
+      "before": {
+        "source_kb": 6626,
+        "code_files": 193,
+        "test_files": 3,
+        "markdown_docs": 2,
+        "skills": 0,
+        "modules": {
+          "src": [
+            "common",
+            "config",
+            "core",
+            "data-source",
+            "error",
+            "graphql",
+            "repository",
+            "servers",
+            "service"
+          ],
+          "lambdas": [
+            "dbt_validation"
+          ],
+          "brighthive_core": []
+        },
+        "graphql": {
+          "schema_file": "src/graphql/schema/typedefs.ts",
+          "types": 142,
+          "query_fields": 12,
+          "mutation_fields": 82
+        },
+        "signals": {
+          "observability": {
+            "tracing_and_evals": {
+              "files": 0,
+              "matches": 0
+            },
+            "structured_logging": {
+              "files": 0,
+              "matches": 0
+            },
+            "cost_and_token_metering": {
+              "files": 0,
+              "matches": 0
+            },
+            "health_endpoints": {
+              "files": 3,
+              "matches": 12
+            },
+            "alarms_and_alerts": {
+              "files": 0,
+              "matches": 0
+            },
+            "audit_trail": {
+              "files": 0,
+              "matches": 0
+            },
+            "error_and_product_analytics": {
+              "files": 1,
+              "matches": 6
+            }
+          },
+          "architecture": {
+            "protocol_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "port_or_adapter_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "registries": {
+              "files": 0,
+              "matches": 0
+            },
+            "feature_flags": {
+              "files": 0,
+              "matches": 0
+            },
+            "authorization_checks": {
+              "files": 12,
+              "matches": 78
+            },
+            "agent_graphs_and_tools": {
+              "files": 0,
+              "matches": 0
+            }
+          }
+        }
+      },
+      "after": {
+        "source_kb": 16018,
+        "code_files": 770,
+        "test_files": 237,
+        "markdown_docs": 78,
+        "skills": 0,
+        "modules": {
+          "src": [
+            "common",
+            "config",
+            "core",
+            "data-source",
+            "error",
+            "graphql",
+            "notifications",
+            "repository",
+            "servers",
+            "service"
+          ],
+          "lambdas": [
+            "dbt_validation",
+            "notification_dispatcher",
+            "scheduled_agent_dispatcher",
+            "trigger_openmetdata_agents"
+          ],
+          "brighthive_core": []
+        },
+        "graphql": {
+          "schema_file": "src/graphql/schema/schema.graphql",
+          "types": 285,
+          "query_fields": 60,
+          "mutation_fields": 207
+        },
+        "signals": {
+          "observability": {
+            "tracing_and_evals": {
+              "files": 1,
+              "matches": 1
+            },
+            "structured_logging": {
+              "files": 16,
+              "matches": 16
+            },
+            "cost_and_token_metering": {
+              "files": 0,
+              "matches": 0
+            },
+            "health_endpoints": {
+              "files": 10,
+              "matches": 23
+            },
+            "alarms_and_alerts": {
+              "files": 3,
+              "matches": 3
+            },
+            "audit_trail": {
+              "files": 0,
+              "matches": 0
+            },
+            "error_and_product_analytics": {
+              "files": 2,
+              "matches": 8
+            }
+          },
+          "architecture": {
+            "protocol_classes": {
+              "files": 2,
+              "matches": 3
+            },
+            "port_or_adapter_classes": {
+              "files": 4,
+              "matches": 14
+            },
+            "registries": {
+              "files": 8,
+              "matches": 20
+            },
+            "feature_flags": {
+              "files": 2,
+              "matches": 3
+            },
+            "authorization_checks": {
+              "files": 107,
+              "matches": 503
+            },
+            "agent_graphs_and_tools": {
+              "files": 1,
+              "matches": 8
+            }
+          }
+        }
+      },
+      "modules_added": [
+        {
+          "root": "src",
+          "module": "notifications",
+          "commits": 5,
+          "kuri_commits": 4,
+          "kuri_share_pct": 80.0
+        },
+        {
+          "root": "lambdas",
+          "module": "notification_dispatcher",
+          "commits": 11,
+          "kuri_commits": 9,
+          "kuri_share_pct": 81.8
+        },
+        {
+          "root": "lambdas",
+          "module": "scheduled_agent_dispatcher",
+          "commits": 18,
+          "kuri_commits": 9,
+          "kuri_share_pct": 50.0
+        },
+        {
+          "root": "lambdas",
+          "module": "trigger_openmetdata_agents",
+          "commits": 4,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        }
+      ]
+    },
+    "brighthive-webapp": {
+      "before_sha": "42eebf06538a4eddf5866ade2b5e5a9025f987c2",
+      "before": {
+        "source_kb": 4963,
+        "code_files": 1078,
+        "test_files": 37,
+        "markdown_docs": 5,
+        "skills": 0,
+        "modules": {
+          "src": [
+            "AccountAdmin",
+            "AssetDetail",
+            "Auth",
+            "BbAssistant",
+            "BrightBot",
+            "Constants",
+            "ContentPages",
+            "DataAssetCatalog",
+            "DataStackServices",
+            "ErrorPage",
+            "Governance",
+            "KnowledgeCenter",
+            "Members",
+            "Memories",
+            "MyOrganization",
+            "MyWork",
+            "ProjectWorkflow",
+            "Projects",
+            "SetupPage",
+            "Sheets",
+            "Sources",
+            "TrialExpired",
+            "WelcomePage",
+            "WorkspaceConfiguration",
+            "WorkspaceSettings",
+            "WorkspaceSwitcher",
+            "__snapshots__",
+            "api",
+            "assets",
+            "common",
+            "components",
+            "config",
+            "contexts",
+            "features",
+            "graphql",
+            "hooks",
+            "mock-data",
+            "routes",
+            "store",
+            "theme",
+            "types",
+            "utils"
+          ],
+          "src/features": [
+            "home"
+          ]
+        },
+        "graphql": null,
+        "signals": {
+          "observability": {
+            "tracing_and_evals": {
+              "files": 0,
+              "matches": 0
+            },
+            "structured_logging": {
+              "files": 0,
+              "matches": 0
+            },
+            "cost_and_token_metering": {
+              "files": 0,
+              "matches": 0
+            },
+            "health_endpoints": {
+              "files": 0,
+              "matches": 0
+            },
+            "alarms_and_alerts": {
+              "files": 0,
+              "matches": 0
+            },
+            "audit_trail": {
+              "files": 0,
+              "matches": 0
+            },
+            "error_and_product_analytics": {
+              "files": 4,
+              "matches": 6
+            }
+          },
+          "architecture": {
+            "protocol_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "port_or_adapter_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "registries": {
+              "files": 0,
+              "matches": 0
+            },
+            "feature_flags": {
+              "files": 0,
+              "matches": 0
+            },
+            "authorization_checks": {
+              "files": 0,
+              "matches": 0
+            },
+            "agent_graphs_and_tools": {
+              "files": 0,
+              "matches": 0
+            }
+          }
+        }
+      },
+      "after": {
+        "source_kb": 10668,
+        "code_files": 1828,
+        "test_files": 220,
+        "markdown_docs": 33,
+        "skills": 0,
+        "modules": {
+          "src": [
+            "AccountAdmin",
+            "Analytics",
+            "AssetDetail",
+            "Auth",
+            "BbAssistant",
+            "BrightAgent",
+            "BrightBot",
+            "Constants",
+            "ContentPages",
+            "Context",
+            "CustomAgents",
+            "DataAssetCatalog",
+            "DataStackServices",
+            "ErrorPage",
+            "Governance",
+            "KnowledgeCenter",
+            "Members",
+            "Memories",
+            "MyAgents",
+            "MyOrganization",
+            "MyWork",
+            "Notifications",
+            "ProjectWorkflow",
+            "Projects",
+            "Schedules",
+            "SetupPage",
+            "Sheets",
+            "SiteMap",
+            "Sources",
+            "SystemAdmin",
+            "TrialExpired",
+            "WelcomePage",
+            "WorkspaceConfiguration",
+            "WorkspaceSettings",
+            "WorkspaceSwitcher",
+            "__snapshots__",
+            "api",
+            "apollo",
+            "assets",
+            "common",
+            "components",
+            "config",
+            "contexts",
+            "features",
+            "graphql",
+            "hooks",
+            "i18n",
+            "mock-data",
+            "routes",
+            "shims",
+            "store",
+            "theme",
+            "types",
+            "utils"
+          ],
+          "src/features": [
+            "home"
+          ]
+        },
+        "graphql": null,
+        "signals": {
+          "observability": {
+            "tracing_and_evals": {
+              "files": 1,
+              "matches": 2
+            },
+            "structured_logging": {
+              "files": 0,
+              "matches": 0
+            },
+            "cost_and_token_metering": {
+              "files": 0,
+              "matches": 0
+            },
+            "health_endpoints": {
+              "files": 14,
+              "matches": 20
+            },
+            "alarms_and_alerts": {
+              "files": 0,
+              "matches": 0
+            },
+            "audit_trail": {
+              "files": 1,
+              "matches": 2
+            },
+            "error_and_product_analytics": {
+              "files": 7,
+              "matches": 10
+            }
+          },
+          "architecture": {
+            "protocol_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "port_or_adapter_classes": {
+              "files": 0,
+              "matches": 0
+            },
+            "registries": {
+              "files": 0,
+              "matches": 0
+            },
+            "feature_flags": {
+              "files": 22,
+              "matches": 52
+            },
+            "authorization_checks": {
+              "files": 5,
+              "matches": 8
+            },
+            "agent_graphs_and_tools": {
+              "files": 0,
+              "matches": 0
+            }
+          }
+        }
+      },
+      "modules_added": [
+        {
+          "root": "src",
+          "module": "Analytics",
+          "commits": 20,
+          "kuri_commits": 19,
+          "kuri_share_pct": 95.0
+        },
+        {
+          "root": "src",
+          "module": "BrightAgent",
+          "commits": 46,
+          "kuri_commits": 17,
+          "kuri_share_pct": 37.0
+        },
+        {
+          "root": "src",
+          "module": "Context",
+          "commits": 41,
+          "kuri_commits": 40,
+          "kuri_share_pct": 97.6
+        },
+        {
+          "root": "src",
+          "module": "CustomAgents",
+          "commits": 25,
+          "kuri_commits": 11,
+          "kuri_share_pct": 44.0
+        },
+        {
+          "root": "src",
+          "module": "MyAgents",
+          "commits": 4,
+          "kuri_commits": 1,
+          "kuri_share_pct": 25.0
+        },
+        {
+          "root": "src",
+          "module": "Notifications",
+          "commits": 26,
+          "kuri_commits": 10,
+          "kuri_share_pct": 38.5
+        },
+        {
+          "root": "src",
+          "module": "Schedules",
+          "commits": 20,
+          "kuri_commits": 9,
+          "kuri_share_pct": 45.0
+        },
+        {
+          "root": "src",
+          "module": "SiteMap",
+          "commits": 14,
+          "kuri_commits": 1,
+          "kuri_share_pct": 7.1
+        },
+        {
+          "root": "src",
+          "module": "SystemAdmin",
+          "commits": 5,
+          "kuri_commits": 2,
+          "kuri_share_pct": 40.0
+        },
+        {
+          "root": "src",
+          "module": "apollo",
+          "commits": 1,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        },
+        {
+          "root": "src",
+          "module": "i18n",
+          "commits": 25,
+          "kuri_commits": 15,
+          "kuri_share_pct": 60.0
+        },
+        {
+          "root": "src",
+          "module": "shims",
+          "commits": 1,
+          "kuri_commits": 0,
+          "kuri_share_pct": 0.0
+        }
+      ]
+    }
+  }
+}
