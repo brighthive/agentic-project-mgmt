@@ -15,6 +15,7 @@ Kuri's first commit is 2025-10-23 (`brightbot`).
 | [PRACTICES.md](PRACTICES.md) | Which engineering practices we introduced, and what each one bought |
 | [JIRA.md](JIRA.md) | How planning changed, and why Jira status understates shipped work |
 | [CICD-AND-E2E.md](CICD-AND-E2E.md) | Pipelines (continuous integration and delivery, CI/CD), the end-to-end (e2e) suite, and the webapp |
+| [AI-DRIVEN-ENGINEERING.md](AI-DRIVEN-ENGINEERING.md) | How one engineer covered project management, business analysis, QA and senior review with an agentic framework |
 | [BEFORE-AFTER-KURI.md](BEFORE-AFTER-KURI.md) | What the codebase could do before and after: features, architecture, monitoring |
 | [PRODUCT-IDEAS.md](PRODUCT-IDEAS.md) | The product ideas, traced to epics, specs and code |
 | [MILESTONES.md](MILESTONES.md) | The epics Kuri led, in the order work began |
@@ -48,6 +49,7 @@ python3 -I scripts/yearone/collect_repo_structure.py    # tests, docs, specs, CI
 python3 -I scripts/yearone/collect_cicd.py              # GitHub Actions (CI/CD) health
 python3 -I scripts/yearone/collect_suites.py            # e2e suite and webapp inventory
 python3 -I scripts/yearone/collect_codebase_reach.py    # before/after snapshots of the core repos
+python3 -I scripts/yearone/collect_ai_engineering.py     # agent skills, Claude review, specs, sprint records
 python3 -I scripts/yearone/collect_milestones.py        # epics tied to commits, Kuri share
 python3 -I scripts/yearone/collect_product_ideas.py     # evidence per product idea
 python3 -I scripts/yearone/collect_production_value.py  # release-note items vs production

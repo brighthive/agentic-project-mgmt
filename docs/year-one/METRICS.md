@@ -73,7 +73,7 @@ Jira status lags delivery. A ticket counts here when its key appears in a commit
 | `brightbot`: Markdown docs | 20 | 102 |
 | `brighthive-platform-core`: Test files | 3 | 237 |
 | `brighthive-platform-core`: Spec files | 0 | 35 |
-| `brighthive-platform-core`: ADRs | 0 | 4 |
+| `brighthive-platform-core`: ADRs | 0 | 3 |
 | `brighthive-platform-core`: CLAUDE.md / AGENTS.md | 0 | 2 |
 | `brighthive-platform-core`: CI workflow files | 3 | 12 |
 | `brighthive-platform-core`: Markdown docs | 2 | 78 |
@@ -88,14 +88,14 @@ Jira status lags delivery. A ticket counts here when its key appears in a commit
 | `brighthive-e2e`: CI workflow files | repo did not exist | 3 |
 | `brighthive-e2e`: Markdown docs | repo did not exist | 66 |
 | `agentic-project-mgmt`: Test files | repo did not exist | 18 |
-| `agentic-project-mgmt`: Spec files | repo did not exist | 126 |
-| `agentic-project-mgmt`: ADRs | repo did not exist | 4 |
+| `agentic-project-mgmt`: Spec files | repo did not exist | 123 |
+| `agentic-project-mgmt`: ADRs | repo did not exist | 3 |
 | `agentic-project-mgmt`: CLAUDE.md / AGENTS.md | repo did not exist | 9 |
 | `agentic-project-mgmt`: CI workflow files | repo did not exist | 2 |
 | `agentic-project-mgmt`: Markdown docs | repo did not exist | 373 |
 | `brightagent-v3`: Test files | repo did not exist | 223 |
-| `brightagent-v3`: Spec files | repo did not exist | 79 |
-| `brightagent-v3`: ADRs | repo did not exist | 11 |
+| `brightagent-v3`: Spec files | repo did not exist | 77 |
+| `brightagent-v3`: ADRs | repo did not exist | 10 |
 | `brightagent-v3`: CLAUDE.md / AGENTS.md | repo did not exist | 14 |
 | `brightagent-v3`: CI workflow files | repo did not exist | 7 |
 | `brightagent-v3`: Markdown docs | repo did not exist | 147 |

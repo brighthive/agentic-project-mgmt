@@ -18,12 +18,12 @@ Pull-request (PR) hygiene and review numbers come from `collect_practices.py` �
 | Hotfix discipline | n/a | Hotfix commits 0.4% → 1.2% of commits | ⚠️ went up, investigate before claiming |
 | CI (continuous integration) and gates | Workflow files `brightbot` 1 → 7, `platform-core` 3 → 12 | CI success rate (year after only) | ⚠️ see [CICD-AND-E2E.md](CICD-AND-E2E.md) |
 | End-to-end (e2e) and health suite | 571 tests, 8 surfaces, 3 environments | Regressions caught before customers | ✍️ not measured yet |
-| Spec-driven development | 126 specs, 4 ADRs (architecture decision records) here, 11 in `brightagent-v3` | Canceled share of work items 4%; roadmap delivered vs planned | ⚠️ no before for rework |
+| Spec-driven development | 123 specs, 3 ADRs (architecture decision records) here, 10 in `brightagent-v3` | Canceled share of work items 4%; roadmap delivered vs planned | ⚠️ no before for rework |
 | Epics and the ticket template | 88.6% of work items under an epic | Q1 roadmap: 65% delivered, 6 of 10 epics at 80%+ | ✅ delivery measured against a plan |
 | Sprint cadence and release automation | 16 sprints, weekly cuts from Sprint 16 | Release notes produced per cut | ✅ |
 | Docs and agent contract files | 0 → 35 CLAUDE.md or AGENTS.md files across 8 repos | Commits in a new contributor's first 30 days, median 10 → 4 | ❌ no evidence of value |
 | Shared work | Top author's share of merged PRs 25.4% → 67.5% | Work not stuck on one person | ❌ got worse |
-| Human review and approval | Reviewed by someone else 95.7% → 49.1%; approved by someone else 95.7% → 11.5% | A second person checks the change | ❌ coverage fell |
+| Second-person review and approval (review bots included) | Reviewed by someone else 95.7% → 49.1%; approved by someone else 95.7% → 11.5% | A second person checks the change | ❌ coverage fell |
 
 Kuri's own PRs in the year after were approved by someone else 0.7% of the time. Everyone else was approved 32.3% of the time, down from 95.7% the year before.
 

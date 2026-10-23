@@ -381,7 +381,7 @@
         "agent_contracts": 2,
         "ci_workflows": 9,
         "spec_files": 21,
-        "adr_files": 3
+        "adr_files": 2
       },
       "2026-08": {
         "test_files": 178,
@@ -389,7 +389,7 @@
         "agent_contracts": 2,
         "ci_workflows": 10,
         "spec_files": 23,
-        "adr_files": 3
+        "adr_files": 2
       },
       "2026-09": {
         "test_files": 214,
@@ -397,7 +397,7 @@
         "agent_contracts": 2,
         "ci_workflows": 11,
         "spec_files": 35,
-        "adr_files": 4
+        "adr_files": 3
       },
       "2026-10": {
         "test_files": 237,
@@ -405,7 +405,7 @@
         "agent_contracts": 2,
         "ci_workflows": 12,
         "spec_files": 35,
-        "adr_files": 4
+        "adr_files": 3
       }
     }
   },
@@ -718,7 +718,7 @@
         "markdown_docs": 83,
         "agent_contracts": 4,
         "ci_workflows": 1,
-        "spec_files": 1,
+        "spec_files": 0,
         "adr_files": 0
       },
       "2026-04": {
@@ -726,7 +726,7 @@
         "markdown_docs": 101,
         "agent_contracts": 5,
         "ci_workflows": 1,
-        "spec_files": 7,
+        "spec_files": 6,
         "adr_files": 0
       },
       "2026-05": {
@@ -734,7 +734,7 @@
         "markdown_docs": 141,
         "agent_contracts": 6,
         "ci_workflows": 1,
-        "spec_files": 13,
+        "spec_files": 12,
         "adr_files": 0
       },
       "2026-06": {
@@ -742,7 +742,7 @@
         "markdown_docs": 207,
         "agent_contracts": 6,
         "ci_workflows": 1,
-        "spec_files": 26,
+        "spec_files": 25,
         "adr_files": 0
       },
       "2026-07": {
@@ -750,7 +750,7 @@
         "markdown_docs": 261,
         "agent_contracts": 9,
         "ci_workflows": 1,
-        "spec_files": 56,
+        "spec_files": 55,
         "adr_files": 0
       },
       "2026-08": {
@@ -758,24 +758,24 @@
         "markdown_docs": 345,
         "agent_contracts": 9,
         "ci_workflows": 2,
-        "spec_files": 114,
-        "adr_files": 4
+        "spec_files": 111,
+        "adr_files": 3
       },
       "2026-09": {
         "test_files": 18,
         "markdown_docs": 350,
         "agent_contracts": 9,
         "ci_workflows": 2,
-        "spec_files": 118,
-        "adr_files": 4
+        "spec_files": 115,
+        "adr_files": 3
       },
       "2026-10": {
         "test_files": 18,
         "markdown_docs": 373,
         "agent_contracts": 9,
         "ci_workflows": 2,
-        "spec_files": 126,
-        "adr_files": 4
+        "spec_files": 123,
+        "adr_files": 3
       }
     }
   },
@@ -1061,7 +1061,7 @@
         "markdown_docs": 77,
         "agent_contracts": 4,
         "ci_workflows": 5,
-        "spec_files": 55,
+        "spec_files": 53,
         "adr_files": 0
       },
       "2026-05": {
@@ -1069,48 +1069,48 @@
         "markdown_docs": 132,
         "agent_contracts": 11,
         "ci_workflows": 7,
-        "spec_files": 77,
-        "adr_files": 8
+        "spec_files": 75,
+        "adr_files": 7
       },
       "2026-06": {
         "test_files": 185,
         "markdown_docs": 137,
         "agent_contracts": 14,
         "ci_workflows": 7,
-        "spec_files": 77,
-        "adr_files": 9
+        "spec_files": 75,
+        "adr_files": 8
       },
       "2026-07": {
         "test_files": 223,
         "markdown_docs": 147,
         "agent_contracts": 14,
         "ci_workflows": 7,
-        "spec_files": 79,
-        "adr_files": 11
+        "spec_files": 77,
+        "adr_files": 10
       },
       "2026-08": {
         "test_files": 223,
         "markdown_docs": 147,
         "agent_contracts": 14,
         "ci_workflows": 7,
-        "spec_files": 79,
-        "adr_files": 11
+        "spec_files": 77,
+        "adr_files": 10
       },
       "2026-09": {
         "test_files": 223,
         "markdown_docs": 147,
         "agent_contracts": 14,
         "ci_workflows": 7,
-        "spec_files": 79,
-        "adr_files": 11
+        "spec_files": 77,
+        "adr_files": 10
       },
       "2026-10": {
         "test_files": 223,
         "markdown_docs": 147,
         "agent_contracts": 14,
         "ci_workflows": 7,
-        "spec_files": 79,
-        "adr_files": 11
+        "spec_files": 77,
+        "adr_files": 10
       }
     }
   }

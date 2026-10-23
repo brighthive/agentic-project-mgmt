@@ -15,6 +15,8 @@ REPOS = (
     "agentic-project-mgmt", "platform-saas-ai-context", "brightbot-slack-server", "brightagent-v3",
 )
 DEFAULT_REFS = ("origin/develop", "origin/master", "origin/main", "origin/production")
+NON_CONTENT_NAMES = ("README.md", "THEMES.md")
+NON_CONTENT_MARKER = "TEMPLATE"
 
 
 @dataclass(frozen=True)
@@ -55,6 +57,12 @@ def month_ends() -> list[tuple[str, datetime]]:
     return out
 
 
+def is_non_content(*, path: str) -> bool:
+    """True for READMEs, index files and templates, which are not specs or decision records."""
+    name = Path(path).name
+    return name in NON_CONTENT_NAMES or NON_CONTENT_MARKER in name
+
+
 def count_category(*, paths: list[str], category: Category) -> int:
     """Count paths matching a category."""
     if category.name == "test_files":
@@ -63,6 +71,8 @@ def count_category(*, paths: list[str], category: Category) -> int:
         return sum(1 for p in paths if p.endswith(".md"))
     if category.name == "agent_contracts":
         return sum(1 for p in paths if Path(p).name in category.matches)
+    if category.name in ("spec_files", "adr_files"):
+        return sum(1 for p in paths if any(m in p for m in category.matches) and not is_non_content(path=p))
     return sum(1 for p in paths if any(m in p for m in category.matches))
 
 

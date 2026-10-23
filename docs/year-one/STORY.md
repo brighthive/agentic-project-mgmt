@@ -38,7 +38,7 @@ Items marked (notes) come from internal working notes and need a source check be
 | Tests | `brightbot` 413 test files, `platform-core` 237 |
 | CI | `brightbot` 7 workflow files, `platform-core` 12 |
 | Commit standard | 72.8% of commits conventional |
-| Written standards | 35 CLAUDE.md or AGENTS.md files across 8 repos, 126 specs in this repo, ADRs in five repos |
+| Written standards | 35 CLAUDE.md or AGENTS.md files across 8 repos, 123 specs in this repo, ADRs in five repos |
 | Planning | 1,507 Jira issues under 48 epics. 88.6% of work items sit under an epic, 97.7% have a description |
 | Releases | 378 releases published org-wide in the year after, against 145 before |
 | End-to-end suite | 571 tests across 8 surfaces |

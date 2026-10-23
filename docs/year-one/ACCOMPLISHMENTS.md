@@ -20,7 +20,8 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 | End-to-end test suite | none | **571 tests across 8 surfaces**, 3 CI workflows | `CICD-AND-E2E.md` |
 | Commits in conventional `type(scope): description` form | 12.3% | **72.8%** | `STORY.md` |
 | Written engineering contracts (CLAUDE.md / AGENTS.md) | 0 | **35 across 8 repos** | `STORY.md` |
-| Specs · architecture decision records (ADRs) | 0 · 0 | **126 specs · ADRs in 5 repos** | `STORY.md` |
+| Specs · architecture decision records (ADRs) | 0 · 0 | **123 specs · 20 ADRs in 5 repos** | `STORY.md` |
+| Project management, business analysis, QA and review run as agentic artifacts | none | **16 sprint records, 570 Gherkin scenarios in 79 specs, Claude PR review in 7 repos** | [AI-DRIVEN-ENGINEERING.md](AI-DRIVEN-ENGINEERING.md) |
 | Planning record | 69-idea backlog, no delivery epics | **1,507 Jira issues under 48 epics**, 88.6% under an epic, 97.7% with a description | `METRICS.md`, Jira |
 
 **Merged PRs by Kuri, per repo (this year):**
@@ -33,6 +34,7 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 | `agentic-project-mgmt` | 194 | `loopcapital-dbt-demo` | 8 |
 | `brightbot-slack-server` | 129 | `brighthive-scripts` | 6 |
 | `brightagent-v3` | 111 | `brightportal-webapp` | 1 |
+| Other repos (17) | 38 | | |
 
 ⚠️ Raw commit counts are much higher (about 15,000) and mostly hourly auto-save checkpoints. Quote merged PRs, never raw commits.
 
@@ -42,13 +44,13 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 
 1. 🟢 **Shipped Brighthive 3.0 to production** (2026-07-21): live notifications on one shared Signal Catalog, across Slack, email, webhooks and Microsoft Teams.
 2. 🟢 **Built BrightSignals and the Slack app**: BrightAgent inside customers' Slack, plus proactive data-quality and pipeline alerts.
-3. 🟡 **Made every permission decision go through one default-deny check**, rolled out in shadow mode first, then enforced; closed 16 authorization gaps.
+3. 🟡 **Made every permission decision go through one default-deny check**, rolled out in shadow mode first; 16 authorization gaps closed in code. Production still runs the checks log-only (audit 2026-10-21).
 4. 🟡 **Gave agent actions a tamper-resistant audit trail and fail-closed personal-data (PII) masking** at every boundary.
 5. 🟡 **Opened BrightAgent to outside AI clients over MCP (Model Context Protocol)**, with a permissions matrix and confirmation on write tools; enterprise Okta sign-in for it.
 6. 🟡 **Taught BrightAgent to watch customer pipelines and propose fixes** as reviewable PRs; auto-merge is blocked in code.
 7. 🟡 **Made BrightAgent warehouse-agnostic**: Snowflake, Azure Synapse, SQL Server, Redshift, Postgres, Databricks, with lineage per engine.
 8. 🟢 **Created the platform's end-to-end suite from nothing**: 571 tests across 8 surfaces, including a read-only production smoke test.
-9. **Rebuilt how engineering runs**: tests, CI, specs, ADRs, conventional commits, Claude PR review on 26+ repos, and project management as reproducible, agent-run artifacts.
+9. **Rebuilt how engineering runs, as an AI-driven system** (section 6): tests, CI, specs, ADRs, conventional commits, Claude PR review, and project management, business analysis and QA as reproducible, agent-run artifacts.
 10. ⚪ **Designed the next-generation BrightAgent (v3)** on CEMAF with AWS Bedrock as the only model provider; the foundation is built, cutover has not started.
 
 ---
@@ -84,7 +86,7 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 ## 2. Trust, security and governance
 
 ### One authorization engine, rolled out safely 🟡
-- **Outcome:** every permission decision goes through one auditable, default-deny check, switched on one action at a time instead of all at once.
+- **Outcome:** every permission decision goes through one auditable, default-deny check, switched on one action at a time instead of all at once. ⚠️ In production the checks are log-only today; enforcement is merged, not yet switched on there.
 - **How:** a single `authorize()` decision backed by a permission matrix; a SHADOW mode that logs decisions before enforcing; attribute-based conditions (ABAC); a `checkAccess` query; agent-side READ checks with data-sensitivity rules.
 - **Evidence:** `brighthive-platform-core` #1234, #1238–#1240 (2026-08-28), #1254, #1255, #1257, #1293 (default permission set, 16 enforced gaps closed, 2026-09-06), #1317, #1318; `docs/adr/0003-governance-enforcement-ramp.md`; `brightbot` #1046, #1064, #1109; admin editors in `brighthive-webapp` #1442, #1448, #1453; epic BH-1464.
 
@@ -155,7 +157,7 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 - **Evidence:** `brighthive_testing_infrastructure_cdk` (2026-01-03/05): 5 CDK stacks (network, data lake, Redshift, EMR, monitoring), 16 scenarios, synthetic data, safe teardown (#2), for stress-testing BrightAgent (BH-107).
 
 ### How work is specified and reviewed
-- **Evidence:** 126 specs and spec-driven templates (`agentic-project-mgmt` `d79848d`); ADRs in 5 repos; 35 CLAUDE.md/AGENTS.md contracts; conventional commits 12.3% → 72.8%; automated Claude PR review rolled out to 26+ repos on 2026-02-05, with fixes on 2026-02-09 and 2026-04-09; moves from Poetry and Pipenv to `uv`; a full local stack on LocalStack (`brighthive-platform-core` #769, #802, #804).
+- **Evidence:** 123 specs and spec-driven templates (`agentic-project-mgmt` `d79848d`); ADRs in 5 repos; 35 CLAUDE.md/AGENTS.md contracts; conventional commits 12.3% → 72.8%; automated Claude PR review rolled out to 26+ repos on 2026-02-05, with fixes on 2026-02-09 and 2026-04-09; moves from Poetry and Pipenv to `uv`; a full local stack on LocalStack (`brighthive-platform-core` #769, #802, #804).
 
 ### Project management as code
 - **Outcome:** sprint records, release notes, board reporting and year-one metrics are reproducible artifacts, not meetings and memory.
@@ -166,7 +168,14 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 
 ---
 
-## 6. Customer trials
+## 6. AI-driven engineering
+
+- **Outcome:** one engineer ran an agentic delivery system that covers project management, business analysis, QA and senior review, and left each role's work behind as files anyone can open.
+- **How:** specs as the prompt (123 specs, 79 with Gherkin acceptance scenarios, 570 scenarios); contracts that tell agents the rules (35 files in 8 repos); checked-in agent skills for tickets and trials; sprint, release and board records generated by scripts (16 sprints, 66 `make` targets, 16 collectors and renderers); 571 end-to-end tests; Claude PR review in 7 repos; agentic products built the same way (fix loop, BrightRoutines, v3 on CEMAF, on-premises runner).
+- **Evidence:** [AI-DRIVEN-ENGINEERING.md](AI-DRIVEN-ENGINEERING.md), `data/ai_engineering.json`, `agentic-project-mgmt` (194 merged PRs by Kuri).
+- ⚠️ AI share of code is not measurable (no attribution in commits), the reviewer-role roster lives outside the repos, and review quality is not yet measured.
+
+## 7. Customer trials
 
 Each trial below has engineering evidence in the repos. Outcomes (revenue, signatures) are not recorded there and belong in `business.md`.
 
@@ -197,9 +206,9 @@ Each trial below has engineering evidence in the repos. Outcomes (revenue, signa
 
 ## Stated plainly
 
-- ⚠️ **Concentration risk.** 62% of Jira work items are assigned to Kuri, and he authored 75.2% of code PRs in Sprint 15. The foundations make hand-off possible; the team has not yet taken it up (`METRICS.md`, `SPRINTS.md`).
+- ⚠️ **Concentration.** Kuri authored 67.5% of merged PRs, holds 62% of Jira work items, led 24 of 40 epics with merged code, and authored 61.9% of the user-facing changes verified in production. The dependency shows in the modules too: audit, fleet health and routines are 100% Kuri commits. The written contracts are meant to ease hand-off, but new contributors' first-month commits fell (median 10 → 4), so hand-off is not yet shown (`METRICS.md`, `PRACTICES.md`).
 - ⚠️ **Jira understates delivery.** 362 items are marked Done, but 878 have merged code behind them; the true completed count sits in that range (`METRICS.md`, Jira status vs shipped code).
-- ⚠️ **Human review fell.** PRs reviewed by someone other than the author went from 95.7% to 49.1%, and approvals from 95.7% to 11.5%. Kuri's own PRs were approved by someone else 0.7% of the time (`METRICS.md`). The sample is 2,641 of 2,861 merged PRs.
+- ⚠️ **Second-person review fell.** PRs reviewed by someone other than the author went from 95.7% to 49.1% (this counts review bots too, so the share reviewed by a person is lower), and approvals from 95.7% to 11.5%. Kuri's own PRs were approved by someone else 0.7% of the time (`METRICS.md`). The sample is 2,641 of 2,861 merged PRs.
 - ⚠️ **Not live yet:** BrightAgent v3 and the move off LangGraph Cloud (see section 4). The on-premises runner is built but not deployed to a customer.
 - ⚠️ **Agent-assisted work.** Some trial artifacts were written by BrightAgent under Kuri's direction (for example 38 `BrightAgent[bot]` commits in `loopcapital-dbt-demo`).
 - Revenue, customer signatures and headcount are not in any repo; see [business.md](business.md).
@@ -208,6 +217,7 @@ Each trial below has engineering evidence in the repos. Outcomes (revenue, signa
 
 ## Sources
 
+- **AI-driven engineering:** `data/ai_engineering.json` from `collect_ai_engineering.py`.
 - **Org metrics:** [METRICS.md](METRICS.md), [STORY.md](STORY.md), [MILESTONES.md](MILESTONES.md), [CICD-AND-E2E.md](CICD-AND-E2E.md) in this folder. Epic commit counts are code repos only, documentation repos excluded, regenerated 2026-10-23.
 - **Merged PRs per repo:** one call per repo, `gh api "search/issues?q=repo:<owner>/<repo>+is:pr+is:merged+author:drchinca+merged:>=2025-10-23&per_page=1" --jq .total_count`, run 2026-10-23.
 - **Commits:** `git log --all --no-merges -i --since=2025-10-23 --author=drchinca --author=kuri`, auto-save and WIP checkpoints excluded.

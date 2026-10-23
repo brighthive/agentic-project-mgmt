@@ -13,6 +13,12 @@ that does not flatter us. It exists so the review case cannot be undone by somet
 | CI (continuous integration) counts of exactly 1,000 runs | GitHub caps filtered queries at 1,000 results | Collector splits date ranges until under the cap |
 | CI before-year runs (e.g. 571,240-minute median) | Runs from before 2025-10-23 were pruned | CI shown for the year after only |
 | Webapp "152 workflows" | Counted run names that were commit messages | Column removed |
+| "126 specs, 4 ADRs here, 11 in v3" | Counted README, index and template files | Now 123 specs, 3 ADRs, 10 in v3 (`collect_repo_structure.py` skips them) |
+| "Human review" 49.1% | The collector counts any non-author review, so review bots count | Relabeled second-person review; the share reviewed by a person is lower |
+| Per-repo PRs by Kuri summed to 1,893 of 1,931 | 17 smaller repos were not listed | "Other repos (17): 38" row added |
+| Webapp "199 test files" in one doc, 220 in others | Two counting methods | 220 everywhere |
+| GraphQL growth, port or adapter classes, error analytics | The GraphQL schema moved from a TypeScript file to a `.graphql` file, so counts are not comparable; the other two are keyword counts the code does not match | Dropped from [BEFORE-AFTER-KURI.md](BEFORE-AFTER-KURI.md) |
+| Modules table credited Kuri for every new module | 24 of 47 had a Kuri share under 50% | Table lists Kuri-led modules only, with the count of the rest |
 | "Review coverage not collected yet" | `practices.json` finished after the rate limit, on a capped sample | Percentages use 926 of 927 merged PRs before and 2,641 of 2,861 after |
 
 ## Limits

@@ -52,7 +52,7 @@ show the suite catching regressions before customers.
 
 ## Webapp
 
-199 test files at the integration branch (37 → 220 by the structure collector's file-name pattern, which counts differently).
+220 test files at the integration branch, up from 37 (file-name pattern `.test.` or `.spec.`).
 Workflows: `deploy.yml`, `catalog-check.yml`, `claude-review.yml`.
 
 ## Known gate gaps (tracked)

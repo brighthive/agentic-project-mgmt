@@ -8,12 +8,13 @@ DOCS_DIR = Path(__file__).parent.parent.parent / "docs" / "year-one"
 DATA_DIR = DOCS_DIR / "data"
 INTERNAL_REPOS = ("agentic-project-mgmt", "brighthive-e2e", "platform-saas-ai-context")
 TOP_CAPABILITIES = 30
+KURI_LED_MIN_SHARE_PCT = 50.0
 SIGNAL_LABELS = {
     "tracing_and_evals": "Tracing and evals", "structured_logging": "Structured logging", "cost_and_token_metering": "Cost and token metering",
     "health_endpoints": "Health endpoints", "alarms_and_alerts": "Alarms and alerts", "audit_trail": "Audit trail",
-    "error_and_product_analytics": "Error and product analytics", "registries": "Registries (adapter lookups)",
+    "registries": "Registries (adapter lookups)",
     "feature_flags": "Feature flags", "authorization_checks": "Authorization checks", "agent_graphs_and_tools": "Agent graphs and tools",
-    "protocol_classes": "Protocol classes", "port_or_adapter_classes": "Port or adapter classes",
+    "protocol_classes": "Protocol classes",
 }
 
 
@@ -39,9 +40,6 @@ def before_after_doc(reach: dict) -> None:
     repos = reach["repos"]
     size = [[n, f"{r['before']['source_kb']:,} → {r['after']['source_kb']:,}", f"{r['before']['code_files']:,} → {r['after']['code_files']:,}",
              f"{r['before']['test_files']} → {r['after']['test_files']}", f"{r['before']['markdown_docs']} → {r['after']['markdown_docs']}"] for n, r in repos.items()]
-    pc = repos["brighthive-platform-core"]
-    gb, ga = pc["before"]["graphql"], pc["after"]["graphql"]
-    graphql = [["GraphQL types", gb["types"], ga["types"]], ["Query fields", gb["query_fields"], ga["query_fields"]], ["Mutation fields", gb["mutation_fields"], ga["mutation_fields"]]]
     signals = []
     for group in ("observability", "architecture"):
         for key, label in SIGNAL_LABELS.items():
@@ -52,19 +50,20 @@ def before_after_doc(reach: dict) -> None:
                 cells.append(f"{b['files']} → {a['files']}" if b and a else "–")
             if any(c not in ("–", "0 → 0") for c in cells):
                 signals.append(row + cells)
-    added = [[n, f"{m['root']}/{m['module']}", m["commits"], f"{m['kuri_share_pct']}%" if m["kuri_share_pct"] is not None else "n/a"] for n, r in repos.items() for m in r["modules_added"]]
+    all_modules = [(n, m) for n, r in repos.items() for m in r["modules_added"]]
+    led = [(n, m) for n, m in all_modules if (m["kuri_share_pct"] or 0.0) >= KURI_LED_MIN_SHARE_PCT]
+    added = [[n, f"{m['root']}/{m['module']}", m["commits"], f"{m['kuri_share_pct']}%"] for n, m in led]
     write("BEFORE-AFTER-KURI.md", [
         "# Before Kuri, After Kuri: What the Codebase Can Do",
         f"Each core repo is measured at the last commit on `develop` before {reach['cutoff']} and at `{reach['after_ref']}` now. "
         "Source: `scripts/yearone/collect_codebase_reach.py` → `data/codebase_reach.json`. Counts match code patterns, so treat them as approximate.",
         "## Size and tests", table(["Repo", "Source KB", "Code files", "Test files", "Markdown docs"], size),
-        "## Feature reach: the GraphQL API (`brighthive-platform-core`)", table(["Metric", "Before", "After"], graphql),
-        f"The schema moved from `{gb['schema_file']}` to `{ga['schema_file']}`. Counts are line-pattern estimates, and the newer file may include generated types, so read the growth as a direction, not an exact multiple.",
         "## Monitoring, observability and architecture signals", "Files containing the pattern, before → after.",
         table(["Group", "Signal", *repos.keys()], signals),
-                "## Modules added since the cutoff", "A module is a directory that did not exist before the cutoff. Kuri share is the share of commits touching it on `develop`, matched by author name or email. Some directories are moves, not new capability.",
+                "## Kuri-led modules added since the cutoff",
+        f"A module is a directory that did not exist before the cutoff. Kuri share is the share of commits touching it on `develop`, matched by author name or email. Listed: {len(led)} of {len(all_modules)} new modules, those with a Kuri share of {KURI_LED_MIN_SHARE_PCT:.0f}% or more (the same rule as [MILESTONES.md](MILESTONES.md)). The other {len(all_modules) - len(led)} were built mostly by others and are in `data/codebase_reach.json`. Some directories are moves, not new capability.",
         table(["Repo", "Module", "Commits", "Kuri share"], added),
-        "## Limits", "- Pattern counts can miss renamed code and count tests and docs that mention a term.\n- A module's Kuri share counts commits, not value.\n- This compares two snapshots. It does not prove the change was caused by any one person.",
+        "## Limits", "- Pattern counts can miss renamed code and count tests and docs that mention a term.\n- Left out as unreliable: GraphQL field counts (the schema moved from a TypeScript file to a `.graphql` file, so the two counts are not comparable), \"port or adapter classes\" (the code names them differently) and \"error and product analytics\" (a keyword count).\n- A module's Kuri share counts commits, not value.\n- This compares two snapshots. It does not prove the change was caused by any one person.",
     ])
 
 
