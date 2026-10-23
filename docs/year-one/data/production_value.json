@@ -1,0 +1,2039 @@
+{
+  "method": "Items are the user-facing sections of jira/sprint/N/MARKETING_RELEASE_NOTES.md (sprints 1 to 16). Production means: platform-core and webapp, a commit in a plain -release tag; other repos, a commit on main or master. Git shows released or on the production branch, not that the change is running. Kuri share is the share of commits mentioning the item's tickets, matched by author name or email.",
+  "items": 73,
+  "by_status": {
+    "released": 19,
+    "no_ticket_key": 46,
+    "no_code_found": 5,
+    "on_main": 2,
+    "pre_production": 1
+  },
+  "released_and_kuri_led": 15,
+  "sprints_covered": [
+    3,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "release_items": [
+    {
+      "sprint": 3,
+      "window": "",
+      "title": "Highlights for Customers",
+      "keys": [
+        "BH-139",
+        "BH-141",
+        "BH-144",
+        "BH-160",
+        "BH-199",
+        "BH-205",
+        "BH-214",
+        "BH-228",
+        "BH-229"
+      ],
+      "summary": "### New Features - **Project Creation Wizard** ([BH-214](https://brighthiveio.atlassian.net/browse/BH-214)) - **UX Tab Data Asset Quality** ([BH-160](https://brighthiveio.atlassian.net/browse/BH-160)) - **Implement Slack",
+      "status": "released",
+      "commits": 11,
+      "kuri_share_pct": 27.3,
+      "first_production_date": "2026-01-30",
+      "kuri_led": false,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 3,
+      "window": "",
+      "title": "Engineering Stats",
+      "keys": [],
+      "summary": "| Metric | Value | |--------|-------| | Features Delivered | 12 tickets | | Story Points | 13 pts | | PRs Merged | 14 | | Lines Changed | 13896 | | Repos Touched | 3 | | Engineering Hours | ~26h | ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 3,
+      "window": "",
+      "title": "Repos Modified",
+      "keys": [],
+      "summary": "- **brightbot**: 5 PRs, 2446 lines - **brighthive-platform-core**: 5 PRs, 6174 lines - **brighthive-webapp**: 4 PRs, 5276 lines ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 3,
+      "window": "",
+      "title": "All Tickets (Reference)",
+      "keys": [
+        "BH-139",
+        "BH-141",
+        "BH-144",
+        "BH-160",
+        "BH-199",
+        "BH-205",
+        "BH-206",
+        "BH-214",
+        "BH-227",
+        "BH-228",
+        "BH-229",
+        "BH-234"
+      ],
+      "summary": "- [BH-234](https://brighthiveio.atlassian.net/browse/BH-234): No-Cloud Local DX - [BH-229](https://brighthiveio.atlassian.net/browse/BH-229): [BE] Add lambda that triggers OMD agents based on the worksapce that get passe",
+      "status": "released",
+      "commits": 12,
+      "kuri_share_pct": 33.3,
+      "first_production_date": "2026-01-30",
+      "kuri_led": false,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 5,
+      "window": "",
+      "title": "Highlights for Customers",
+      "keys": [],
+      "summary": "<!-- GTM TEAM: Fill in customer-facing highlights --> ### New Features - [ ] TODO: Add customer-facing features ### Improvements - [ ] TODO: Add improvements ### Bug Fixes - [ ] TODO: Add notable bug fixes ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 5,
+      "window": "",
+      "title": "Engineering Stats (for investors)",
+      "keys": [],
+      "summary": "| Metric | Value | |--------|-------| | Features Delivered | 11 tickets | | Story Points | 23.0 pts | | PRs Merged | 13 | | Lines Changed | 93,479 | | Repos Modified | 4 | ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 5,
+      "window": "",
+      "title": "Repos Modified",
+      "keys": [],
+      "summary": "- **brightbot**: 5 PRs, 1,577 lines - **brightbot-slack-server**: 1 PRs, 10 lines - **brighthive-platform-core**: 3 PRs, 90,292 lines - **brighthive-webapp**: 4 PRs, 1,600 lines",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 6,
+      "window": "",
+      "title": "Highlights for Customers",
+      "keys": [
+        "BH-238",
+        "BH-267",
+        "BH-268",
+        "BH-269",
+        "BH-270",
+        "BH-281",
+        "BH-287"
+      ],
+      "summary": "### New Features - **Update Indiana tech Zenjbar connection pointing to the new database IP** ([BH-287](https://brighthiveio.atlassian.net/browse/BH-287)) - **BrightStudio - Connect with Resources (parity with Projects)*",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 6,
+      "window": "",
+      "title": "Engineering Stats",
+      "keys": [],
+      "summary": "| Metric | Value | |--------|-------| | Features Delivered | 11 tickets | | Story Points | 34 pts | | PRs Merged | 0 | | Lines Changed | 0 | | Repos Touched | 0 | | Engineering Hours | ~68h | ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 6,
+      "window": "",
+      "title": "Repos Modified",
+      "keys": [],
+      "summary": "---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 6,
+      "window": "",
+      "title": "All Tickets (Reference)",
+      "keys": [
+        "BH-238",
+        "BH-267",
+        "BH-268",
+        "BH-269",
+        "BH-270",
+        "BH-273",
+        "BH-276",
+        "BH-279",
+        "BH-281",
+        "BH-283",
+        "BH-287"
+      ],
+      "summary": "- [BH-287](https://brighthiveio.atlassian.net/browse/BH-287): Update Indiana tech Zenjbar connection pointing to the new database IP - [BH-283](https://brighthiveio.atlassian.net/browse/BH-283): Create a Pulumi stack for",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 7,
+      "window": "",
+      "title": "BrightStudio & Custom Agents \u2014 Full Delivery",
+      "keys": [
+        "BH-266",
+        "BH-289",
+        "BH-290",
+        "BH-291",
+        "BH-295"
+      ],
+      "summary": "The biggest feature of the period: **BrightStudio** is now a fully functional custom agent workspace. Users can create, configure, and deploy custom AI agents with support for multiple LLM models. The team investigated L",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 7,
+      "window": "",
+      "title": "Shareable Agents & Agent Collaboration",
+      "keys": [],
+      "summary": "A new collaboration layer: users can now **share agent conversations** via links and publish custom agents from BrightStudio to a shared \"My Agents\" page. On the backend, a new **AGENT_GUEST** role enables external users",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 7,
+      "window": "",
+      "title": "Projects v1 \u2014 Complete",
+      "keys": [
+        "BH-241",
+        "BH-242",
+        "BH-248"
+      ],
+      "summary": "Projects reached v1 maturity with full BrightAgent integration. Users can now interact with AI agents within project context, with proper resource-project relationships and a polished interaction UI. - [BE] Projects - BH",
+      "status": "released",
+      "commits": 8,
+      "kuri_share_pct": 0.0,
+      "first_production_date": "2026-02-10",
+      "kuri_led": false,
+      "production_repos": [
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 7,
+      "window": "",
+      "title": "Slack Integration \u2014 Production Ready",
+      "keys": [],
+      "summary": "The Slack server received a major hardening pass: type safety enforcement, rate limiting, autoscaling policies, and monitoring. Per-workspace API key authentication ensures secure multi-tenant agent access, and end-to-en",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 7,
+      "window": "",
+      "title": "Data Quality & Agent Reliability",
+      "keys": [
+        "BH-286",
+        "BH-297",
+        "BH-300",
+        "BH-301"
+      ],
+      "summary": "The quality check agent received reliability improvements: retry loops with LLM error feedback, proper S3 key path structure, and a new Quality Check tab in the web app with rich metadata chips UI. The retrieval agent wa",
+      "status": "released",
+      "commits": 9,
+      "kuri_share_pct": 0.0,
+      "first_production_date": "2026-03-10",
+      "kuri_led": false,
+      "production_repos": [
+        "brightbot",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 7,
+      "window": "",
+      "title": "Production Stability & Security",
+      "keys": [
+        "BH-277",
+        "BH-280",
+        "BH-284",
+        "BH-294",
+        "BH-298"
+      ],
+      "summary": "Multiple critical production issues resolved, including the Indiana Supervisor vs DeepAgent release, system bug fixes, and security hardening (S3 URI exposure removal, CSV preview limits). - [CRITICAL] Fix system bugs fo",
+      "status": "released",
+      "commits": 12,
+      "kuri_share_pct": 0.0,
+      "first_production_date": "2026-02-24",
+      "kuri_led": false,
+      "production_repos": [
+        "brightbot",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "dbt Agent & Transformation Pipeline -- Full Delivery",
+      "keys": [
+        "BH-319",
+        "BH-325",
+        "BH-326",
+        "BH-327",
+        "BH-328",
+        "BH-330",
+        "BH-339",
+        "BH-340",
+        "BH-342",
+        "BH-344",
+        "BH-345",
+        "BH-346"
+      ],
+      "summary": "The flagship achievement of Sprint 8: the **dbt transformation pipeline** is now a complete, end-to-end workflow. Users can connect their GitHub repos, select dbt Cloud jobs from a dropdown (no more manual job IDs), view",
+      "status": "released",
+      "commits": 12,
+      "kuri_share_pct": 83.3,
+      "first_production_date": "2026-04-08",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "Governance & Policy Enforcement",
+      "keys": [
+        "BH-347",
+        "BH-356",
+        "BH-357"
+      ],
+      "summary": "A new governance layer gives workspace administrators real control over data policies. Policies can now be toggled between Active, Enforced, and Admin Only states -- and they're automatically **injected into the AI agent",
+      "status": "released",
+      "commits": 20,
+      "kuri_share_pct": 90.0,
+      "first_production_date": "2026-04-09",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "Azure Synapse BYOW Integration",
+      "keys": [
+        "BH-321",
+        "BH-322"
+      ],
+      "summary": "BrightHive now supports **Azure Synapse** as a Bring-Your-Own-Warehouse (BYOW) target. The integration spans the full stack: T-SQL dialect support in the warehouse layer, a new Synapse ingestion pipeline with warehouse-t",
+      "status": "released",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-04-08",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "Platform Analytics & Health Checks",
+      "keys": [
+        "BH-359",
+        "BH-374",
+        "BH-375"
+      ],
+      "summary": "A new **Platform Analytics Dashboard** surfaces operational metrics, and a **Data Asset Health Check** system monitors the quality of ingested data. The webapp now has full Analytics sub-pages: Dashboards, Reports, Alert",
+      "status": "released",
+      "commits": 14,
+      "kuri_share_pct": 78.6,
+      "first_production_date": "2026-04-14",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "Webapp UX -- Context, Analytics, Custom Personas",
+      "keys": [
+        "BH-347",
+        "BH-376"
+      ],
+      "summary": "Three major new sections were added to the webapp behind feature flags: **Context**: Knowledge Base, workspace context, formulas, library, and transcribes -- with real data sources and AWS service integrations. Brand-col",
+      "status": "released",
+      "commits": 31,
+      "kuri_share_pct": 83.9,
+      "first_production_date": "2026-04-09",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "Bedrock Migration & AI Agent Improvements",
+      "keys": [
+        "BH-240",
+        "BH-282",
+        "BH-355"
+      ],
+      "summary": "Progress on the Bedrock migration: model routing from Claude to Bedrock is complete, and the GraphQL capabilities for the deep_agent supervisor open new interaction patterns. The credential form now supports Human-in-the",
+      "status": "released",
+      "commits": 8,
+      "kuri_share_pct": 50.0,
+      "first_production_date": "2026-03-03",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 8,
+      "window": "",
+      "title": "Production Stability & Infrastructure",
+      "keys": [
+        "BH-253",
+        "BH-278"
+      ],
+      "summary": "Legacy infrastructure cleanup, package fixes, and cross-repo improvements. The EDL (Extract Data Lake) pipeline was decommissioned, Slack bot behavior was tightened to only respond to @mentions, and the React framework w",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 9,
+      "window": "",
+      "title": "Headlines",
+      "keys": [],
+      "summary": "### \ud83d\udd14 BrightSignals is Here For the first time, **BrightHive reaches out to you**. BrightSignals is BrightHive's new proactive notification layer. Subscribe to a workspace, a data asset, or an agent run, and BrightHive w",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 9,
+      "window": "",
+      "title": "What Else Shipped",
+      "keys": [],
+      "summary": "### \ud83e\udd16 Smarter Agent Runtime \u2014 Bedrock Converse BrightAgent now runs on AWS's modern Bedrock Converse interface. Same answers, faster streaming, better tool use, lower cost-per-call. This is a foundational upgrade that un",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "Headline: AWS Bedrock AgentCore Migration \u2014 Plan Locked In",
+      "keys": [],
+      "summary": "This sprint we closed the planning loop on the **biggest AWS infrastructure move of 2026** for BrightHive: migrating the entire BrightAgent runtime from LangChain's hosted services onto Amazon Bedrock AgentCore. After a ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "BrightStudio \u2014 Major IA Overhaul",
+      "keys": [],
+      "summary": "The webapp got its biggest information-architecture refresh in 2026. - **The Hive** \u2014 new central hub for the BrightHive data fabric - **Governance** section \u2014 quality, access, audit in one place - **Notifications Inbox*",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "BrightSignals \u2014 Unified Activity Drawer + Notifications Schema",
+      "keys": [],
+      "summary": "The Sprint 9 BrightSignals AWS-native event pipeline shipped. This sprint added the **product surface**: - **Unified activity drawer** \u2014 every BrightAgent event in one curated stream - **Notifications schema grounded in ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "dbt \u2014 Multi-Repo Support + Secrets Manager Credentials",
+      "keys": [],
+      "summary": "A major dbt enhancement: - **Multi-repo preview** \u2014 BrightAgent's dbt subagent can now work across multiple GitHub repositories per workspace, not just one - **AWS Secrets Manager-stored dbt Cloud credentials** \u2014 credent",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "Scheduler MVP \u2014 Production Hardening",
+      "keys": [],
+      "summary": "The Sprint 9 scheduler MVP got four rounds of webhook hardening this sprint: - Scheduler webhook fix (initial) - LangGraph webhook wiring - Payload corrections - Task graph updated to return scheduled-run results Plus pl",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "Analytics \u2014 Health Checks Wired to Real Data",
+      "keys": [],
+      "summary": "The Sprint 9 Health Checks UI in BrightStudio was wired to real GraphQL data this sprint. Platform-core gained a `ServiceHealthCheck` type + resolver; the webapp page now displays live status instead of mock fixtures. --",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "Local Dev Stack \u2014 LocalStack for Quality Check",
+      "keys": [],
+      "summary": "For engineers: a full local stack for the `quality_check` subagent with Postgres + LocalStack-emulated AWS. Iterate on AWS-adjacent behavior without burning Bedrock quota or RDS hours. ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "Production Stability + Quality",
+      "keys": [],
+      "summary": "- **Today's hotfix (May 15)** \u2014 production BrightAgent S3 streaming Mem0 issue resolved (brightbot #483) - **AG Grid sidebar layout fix** \u2014 accessibility regression in BrightAgent UI fixed (webapp #1103) - **Project retr",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 10,
+      "window": "",
+      "title": "Links",
+      "keys": [
+        "BH-453"
+      ],
+      "summary": "- \ud83d\udccb [Release Notes](https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/10/RELEASE_NOTES.md) - \ud83d\udcca [Summary](https://github.com/brighthive/agentic-project-mgmt/blob/master/jira/sprint/10/SUMMARY.md) ",
+      "status": "released",
+      "commits": 9,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-07-17",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-e2e",
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "Data Profiler Agent \u2014 production-ready",
+      "keys": [
+        "BH-498",
+        "BH-501",
+        "BH-520",
+        "BH-522"
+      ],
+      "summary": "The data profiler is no longer a manual script. This sprint it became: - **Auto-triggered on ingestion** \u2014 runs in parallel with the quality check on every webhook (BH-501) - **Manually runnable** \u2014 Run Profiler button w",
+      "status": "released",
+      "commits": 6,
+      "kuri_share_pct": 50.0,
+      "first_production_date": "2026-05-27",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "Navigation + Permissions \u2014 fully correct",
+      "keys": [
+        "BH-376",
+        "BH-513",
+        "BH-514",
+        "BH-515",
+        "BH-516",
+        "BH-517",
+        "BH-556"
+      ],
+      "summary": "The enterprise nav restructure (BH-376) shipped with five surgical fixes that locked down the entire role-based experience: - Admin role guard restored on KB file queries (BH-513) - All `/govern/schemas` links updated to",
+      "status": "released",
+      "commits": 23,
+      "kuri_share_pct": 60.9,
+      "first_production_date": "2026-04-14",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "BrightStudio \u2014 collaborators can manage agents",
+      "keys": [
+        "BH-548"
+      ],
+      "summary": "Previously, only `WORKSPACE_ADMIN` could create, update, or delete custom agents \u2014 collaborators saw a \"user not authorized\" toast even though Apollo's optimistic mutations succeeded. Now agent CRUD is gated by `prohibit",
+      "status": "released",
+      "commits": 1,
+      "kuri_share_pct": 0.0,
+      "first_production_date": "2026-06-01",
+      "kuri_led": false,
+      "production_repos": [
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "Quality Signals \u2192 Slack",
+      "keys": [
+        "BH-530"
+      ],
+      "summary": "When a quality check finishes, the result now publishes through BrightSignals to the customer's Slack workspace. Quality has gone from \"data team checks the dashboard\" to \"everyone sees it land in their channel\". (BH-530",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "Local-Dev Experience \u2014 dramatically faster",
+      "keys": [],
+      "summary": "Comprehensive seed data + mock fixtures across platform-core and webapp. New engineers can spin up a fully populated workspace in under a minute, and PR reviewers can see real data in every screen. Workspace-aware Bright",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "Production Stability",
+      "keys": [],
+      "summary": "- BrightAgent S3 streaming + mem0 hotfix - AG Grid aria description sidebar layout fix ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 11,
+      "window": "",
+      "title": "Not in this release",
+      "keys": [
+        "BH-526"
+      ],
+      "summary": "Longaeva PoC work (Snowflake integration, BH-526 epic, poc_tracker scaffolding) is tracked separately under `clients/trials/longaeva/TRACKER.md` \u2014 that work runs on its own cadence with the trial timeline.",
+      "status": "released",
+      "commits": 18,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-08",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "BrightSignals: Real-Time Notifications Are Live",
+      "keys": [],
+      "summary": "Your data quality runs and agent actions now push instant Slack notifications \u2014 no more polling or waiting. BrightSignals delivers structured alerts the moment something happens across your workspace. - Quality check com",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Enterprise SSO: Log In With Okta",
+      "keys": [],
+      "summary": "BrightHive now supports federated login via Okta. Your team can sign in with their existing enterprise credentials \u2014 no separate BrightHive password required. - \"Log in with Okta\" button live in the webapp - Automatic us",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "MCP Connectivity: A2A Integration Is Real",
+      "keys": [],
+      "summary": "The MCP connectivity card now shows your live toolset in real-time \u2014 every tool your AI agent has access to, visible and testable directly from the UI. - Live tools/list rendering directly in the workspace settings card ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Engineering Agent Audit Trail",
+      "keys": [],
+      "summary": "Every action your BrightAgent engineering agents take is now logged with a tamper-evident audit record \u2014 who asked, what was done, what data it touched. - Decorator-based instrumentation on all mutation tools - Dual-writ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Data Catalog Improvements",
+      "keys": [],
+      "summary": "- **Quality rule SQL preview**: see the exact SQL your quality rules will run before executing - **Health indicators**: preview and profiler availability shown directly in the catalog grid - **Tag management**: inline ta",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Snowflake Reliability",
+      "keys": [],
+      "summary": "A comprehensive compatibility pass ensures Snowflake workspaces no longer encounter crashes or incorrect behavior: - TIMESTAMP_NTZ(9) overflow recovered gracefully instead of crashing queries - Full table FQN fallback ch",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "System Admin: Feature Flag Management",
+      "keys": [],
+      "summary": "Admins can now toggle feature flags per workspace directly from the `/system-admin` portal \u2014 no code deploy needed to enable or disable capabilities for specific customers. ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "dbt Cloud Agent: More Reliable, More Flexible",
+      "keys": [],
+      "summary": "- Support for dbt Cloud account-specific access URLs (enterprise accounts) - Token probe at agent startup with a clear admin error on 401/403 \u2014 no more silent failures - Scaffold tool ValidationError fixed \u2014 dbt project ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "BrightRoutines: Your Agent Now Notices Patterns and Offers to Automate Them",
+      "keys": [],
+      "summary": "BrightAgent watches for recurring requests and proactively suggests turning them into scheduled routines \u2014 no manual setup required. - Detects recurring patterns in how you use the platform and surfaces a \"want to automa",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "Signal Catalog: One Source of Truth for Every Notification",
+      "keys": [],
+      "summary": "BrightSignals notifications across Slack and the webapp now speak from a single shared catalog \u2014 consistent severity, consistent copy, no more drift between surfaces. - Every notification stage carries a canonical severi",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "Configurable Quality Agent Goes Live",
+      "keys": [],
+      "summary": "The Quality Agent's rule library now drives real-time BrightSignals alerts \u2014 a failing rule reaches you the moment it happens, not on your next check-in. - Quality check completions and failures deliver end-to-end, per-r",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "Monitoring Agents: Pipeline Health Watchdog (in progress)",
+      "keys": [],
+      "summary": "A new proactive watchdog checks your dbt and Databricks pipelines on a cadence and can auto-remediate known failure patterns \u2014 moving from reactive quality checks to proactive pipeline health. - Pipeline discovery adapte",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "PII Protection Hardening (in progress)",
+      "keys": [],
+      "summary": "Following the discovery of an unmasked-sample-row gap, we're extending PII masking to every agent tool boundary \u2014 not just the primary retrieval path. - dbt sample-row endpoints now route through the masking layer - Swee",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "Skills Extension Framework: Diagnostic Superpowers for the Analyst Agent",
+      "keys": [],
+      "summary": "BrightAgent's analyst can now load specialized diagnostic skills on demand \u2014 starting with SSIS/SSRS pipeline diagnostics for enterprise ETL customers. - Skill affinity system routes the right diagnostic skill to the rig",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "UAT-Driven Bug Fix Wave",
+      "keys": [],
+      "summary": "A dedicated round of user-acceptance-testing findings shipped as a batch \u2014 small papercuts that add up to a noticeably smoother experience: - Upload modal click-to-browse now works (previously drag-and-drop only) - Consi",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "Your warehouse's real health, on the home screen",
+      "keys": [],
+      "summary": "The landing page no longer just says \"connected.\" A background watchdog now folds each warehouse's **operational health** \u2014 disk pressure, failed nightly jobs, the name of the step that broke \u2014 into the health band you s",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "Pipeline lineage you can see and re-run",
+      "keys": [],
+      "summary": "Every pipeline now carries a **6-tier medallion lineage** you can open on the project observability page \u2014 where the data came from, what transformed it, where it landed. Tiers are derived from the pipeline's declared st",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "The MCP tool layer, hardened against real customer warehouses",
+      "keys": [],
+      "summary": "Thirteen fixes drove the warehouse and pipeline tools against a real production-test Redshift workspace until they stopped lying: hyphenated database names now parse, Redshift Spectrum external tables are no longer invis",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "The product surface, cleaned up end to end",
+      "keys": [],
+      "summary": "The long tail of \"small things that make a product feel unfinished\" \u2014 cleared in one sweep. Real toggle switches replacing fake ones, correct write-mode labels, the missing \"JSON Schema\" tab on Projects, a Tags field on ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "Bring your own schema files",
+      "keys": [],
+      "summary": "Projects now accept **XSD/XML schema files** \u2014 upload them, store them, read them back, and edit them in place with a dedicated editor. A clean vertical slice from the GraphQL layer through to the Project Files UI. *(Mar",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "Sharper knowledge-base answers",
+      "keys": [],
+      "summary": "The knowledge base now **reranks** its retrieval for precision, agents are grounded to cut hallucination, and file-scoping works correctly across every graph alias. *(Harbour)* ---",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 14,
+      "window": "July 21 \u2013 Aug 1, 2026",
+      "title": "Team",
+      "keys": [],
+      "summary": "- **Kuri** carried the sprint's three backbone initiatives end-to-end \u2014 warehouse health, engine-agnostic lineage, and the MCP hardening sweep \u2014 plus the release train that shipped them to staging and prod. 57 PRs, 69.5%",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 15,
+      "window": "Aug 2\u201317, 2026",
+      "title": "On-Prem Engineering Runner \u2014 Loop Capital's dbt Plugin Goes Governed",
+      "keys": [
+        "BH-1403",
+        "BH-1414",
+        "BH-1421"
+      ],
+      "summary": "The on-prem autonomous dbt lifecycle moved from prototype to something a customer can actually install: an outbound-only job queue (no inbound port ever opens on the customer network), a governed sandbox with a scoped-re",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-08-18",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 15,
+      "window": "Aug 2\u201317, 2026",
+      "title": "Warehouse Identity \u2014 Name It, Verify It, Default It",
+      "keys": [
+        "BH-1362",
+        "BH-1430",
+        "BH-1432",
+        "BH-1439",
+        "BH-1440",
+        "BH-1441",
+        "BH-1443",
+        "BH-1446",
+        "BH-1447"
+      ],
+      "summary": "A connected warehouse is now a first-class thing with a name and a state: register it, verify the connection, see every database it can reach, and pick which one is the default. In chat, `@warehouse` mentions now resolve",
+      "status": "released",
+      "commits": 27,
+      "kuri_share_pct": 96.3,
+      "first_production_date": "2026-08-07",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-e2e",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 15,
+      "window": "Aug 2\u201317, 2026",
+      "title": "Routines & Notifications \u2014 Show Your Work",
+      "keys": [
+        "BH-1331",
+        "BH-1333",
+        "BH-1334",
+        "BH-1340",
+        "BH-1346",
+        "BH-1348",
+        "BH-1397",
+        "BH-1398",
+        "BH-1399",
+        "BH-1400",
+        "BH-1401",
+        "BH-1402"
+      ],
+      "summary": "Scheduled routines now carry their delivery target end to end and show it \u2014 a picker on the webapp, a delivered-channel chip, and the actual SQL that ran plus a link to the artifact, landing directly in the Slack channel",
+      "status": "released",
+      "commits": 31,
+      "kuri_share_pct": 96.8,
+      "first_production_date": "2026-08-01",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-e2e",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 15,
+      "window": "Aug 2\u201317, 2026",
+      "title": "Infra \u2014 GraphQL Core Moves to ECS",
+      "keys": [],
+      "summary": "The GraphQL API cut over to an ECS/CloudFront runtime in staging, with S3 trust sync and Lambda IAM parity carried across. The migration surfaced a run of Neo4j connection-pool issues under the new topology \u2014 all closed ",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 15,
+      "window": "Aug 2\u201317, 2026",
+      "title": "Product Surface \u2014 Streaming Chat & Project Activation",
+      "keys": [],
+      "summary": "BrightAgent's chat bubble now streams tokens live over SSE instead of waiting for a full response. Project activation checks run automatically the moment a project flips to ACTIVE, with the result surfaced as a signal, a",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 16,
+      "window": "Aug 17\u201323, 2026",
+      "title": "Sync Stops Failing Closed",
+      "keys": [
+        "BH-1461",
+        "BH-1462"
+      ],
+      "summary": "The GraphQL Core service's move to ECS last week left one gap: the `LANGGRAPH_BASE_URL` and `LANGGRAPH_API_KEY` env values weren't reaching the runtime, so sync calls failed closed. Both the ECS service and the GraphQL L",
+      "status": "released",
+      "commits": 5,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-08-18",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 16,
+      "window": "Aug 17\u201323, 2026",
+      "title": "Warehouse Resolution, Off the Legacy Path",
+      "keys": [
+        "BH-1454"
+      ],
+      "summary": "Scheduled jobs and legacy SQL callers used to fall back to the public catalog when no warehouse was explicitly named. Both now resolve through the workspace's default warehouse via OGM \u2014 the same identity model the rest ",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-08-18",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 16,
+      "window": "Aug 17\u201323, 2026",
+      "title": "Infra \u2014 GraphQL Core's ECS Cutover Continues",
+      "keys": [],
+      "summary": "The Lambda warmer that used to keep GraphQL Core's cold path warm is now retired now that ECS carries production traffic in staging.",
+      "status": "no_ticket_key",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 16,
+      "window": "Aug 17\u201323, 2026",
+      "title": "Notifications \u2014 Artifacts on the Direct Channel",
+      "keys": [
+        "BH-1452"
+      ],
+      "summary": "slack-server now delivers PDF/CSV/table artifacts on the direct channel-push path, closing a gap where only the threaded-reply path could carry a file. (BH-1452)",
+      "status": "pre_production",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": null,
+      "kuri_led": true,
+      "production_repos": []
+    }
+  ],
+  "ticket_level_sprints": [
+    6,
+    12,
+    13
+  ],
+  "ticket_level_items": [
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "SSE push delivery + end-to-end observability in slack-server",
+      "keys": [
+        "BH-713"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "CloudWatch alarms + on-call runbook + monitoring infra",
+      "keys": [
+        "BH-714"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Notifications MVP cross-repo (brightbot + platform-core + webapp)",
+      "keys": [
+        "BH-715"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "AuditEvent dataclass + ActionClass/OutcomeStatus enums + AuditEmitter Protocol",
+      "keys": [
+        "BH-696"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 3,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Fix session_info gap \u2014 persist user_id + user_email in initialization_middleware",
+      "keys": [
+        "BH-697"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 4,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "@audit_action decorator with STARTED/SUCCESS/FAILURE/CANCELLED emission",
+      "keys": [
+        "BH-698"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 4,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "CloudWatchDynamoDBAuditEmitter \u2014 dual-write production implementation",
+      "keys": [
+        "BH-699"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 4,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "IaC for audit DynamoDB + WORM CloudWatch log group (subsequently cleaned up)",
+      "keys": [
+        "BH-700"
+      ],
+      "summary": "",
+      "status": "released",
+      "commits": 9,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Instrument 6 engineering agent mutation tools with @audit_action",
+      "keys": [
+        "BH-701"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 4,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Citation chain carrier \u2014 propagate retrieval node IDs into AuditCitation",
+      "keys": [
+        "BH-702"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 3,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Integration tests \u2014 moto-backed AWS DynamoDB + CloudWatch",
+      "keys": [
+        "BH-704"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 3,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-22",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Webapp \"Log in with Okta\" PKCE callback route",
+      "keys": [
+        "BH-675"
+      ],
+      "summary": "",
+      "status": "released",
+      "commits": 9,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-21",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Federated SSO resolver-side JIT provisioning into Neo4j",
+      "keys": [
+        "BH-674"
+      ],
+      "summary": "",
+      "status": "released",
+      "commits": 19,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-21",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "MetricSnapshotNode + AnomalyEventNode persistence (platform-core)",
+      "keys": [
+        "BH-668"
+      ],
+      "summary": "",
+      "status": "released",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-17",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Longitudinal monitoring as quality-agent capability node (brightbot)",
+      "keys": [
+        "BH-669"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 2,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-17",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Analyst read path for AnomalyEventNode",
+      "keys": [
+        "BH-671"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "longitudinal_anomaly QualityRule type (platform-core + webapp editor)",
+      "keys": [
+        "BH-672"
+      ],
+      "summary": "",
+      "status": "released",
+      "commits": 4,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-17",
+      "kuri_led": true,
+      "production_repos": [
+        "brightbot",
+        "brighthive-e2e",
+        "brighthive-platform-core",
+        "brighthive-webapp"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "previewAvailable + profilerAvailable health indicators in catalog grid",
+      "keys": [
+        "BH-666"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-25",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-e2e"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Inline tag removal, overflow popover, bulk tag dialog, tag search fix",
+      "keys": [
+        "BH-667"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Engine-agnostic data asset preview for BYOW (Snowflake/Redshift/BigQuery)",
+      "keys": [
+        "BH-683"
+      ],
+      "summary": "",
+      "status": "released",
+      "commits": 4,
+      "kuri_share_pct": 0.0,
+      "first_production_date": "2026-06-19",
+      "kuri_led": false,
+      "production_repos": [
+        "brighthive-platform-core"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Fix cooldown returning 503 on OGM failure",
+      "keys": [
+        "BH-687"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-25",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-e2e"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Warehouse-agnostic quality SQL + workspace picking fix",
+      "keys": [
+        "BH-688"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Surface generated SQL in quality-check responses",
+      "keys": [
+        "BH-689"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Quality-check FQN fallback when filter fields empty",
+      "keys": [
+        "BH-690"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 0.0,
+      "first_production_date": "2026-06-19",
+      "kuri_led": false,
+      "production_repos": [
+        "brightbot"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Fail open with clear message on core API timeout during quality check",
+      "keys": [
+        "BH-691"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Fix data catalogue search to be case-insensitive",
+      "keys": [
+        "BH-712"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-25",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-e2e"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Fix slackConnection FORBIDDEN for non-admin roles",
+      "keys": [
+        "BH-677"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-25",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-e2e"
+      ]
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "ECS deploy reliability: immutable image digest + desiredCount fight fix",
+      "keys": [
+        "BH-716"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "ECS infra: INTERRUPTS_ENABLED + IAM hardening + SSRF allowlist split",
+      "keys": [
+        "BH-717"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "brightagent-mcp dedicated ingress ({env}.brighthive.net)",
+      "keys": [
+        "BH-726"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Redshift connector v2.17 SOC compliance + audit IaC cleanup",
+      "keys": [
+        "BH-737"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Thinking indicator: full agent fleet + dbt/MCP/Longaeva tools",
+      "keys": [
+        "BH-720"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "CORS preflight fixes (7 PRs \u2014 MCP session, agent-run, files, scheduled-agents)",
+      "keys": [
+        "BH-721"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "dbt agent account-specific URLs + scaffold ValidationError fix",
+      "keys": [
+        "BH-722"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Snowflake: tableFQN fallback + TIMESTAMP_NTZ overflow + compat pass",
+      "keys": [
+        "BH-723"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Multi-workspace auth: thread access, run tagging, X-Workspace-Id header",
+      "keys": [
+        "BH-724"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "MCP connectivity card: tools/list live + JSON-RPC test + streamable-http parser",
+      "keys": [
+        "BH-725"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "System admin portal: per-workspace feature flag management",
+      "keys": [
+        "BH-727"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Webapp auth: error toasts, logout cookie clear, workspace-switch cascade fix",
+      "keys": [
+        "BH-728"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "platform-core getWorkspaces OGM 20-cap fix (raw Cypher)",
+      "keys": [
+        "BH-729"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "OM webhook: OM 1.8 parse + embeddings trigger for scanned tables",
+      "keys": [
+        "BH-730"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Lambda 504 fix: remove assertConstraints from request path",
+      "keys": [
+        "BH-731"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Superadmin cleanup: dedup assets, purge embeddings, BYOW preview",
+      "keys": [
+        "BH-732"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Slack workspace connect: bhagent_api_key provisioning + disconnect cleanup",
+      "keys": [
+        "BH-733"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Webapp Slack connect: progress legends + state polling (no 504)",
+      "keys": [
+        "BH-734"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "RBAC: honest 5-role display + members error state + BbAssistant deprecation",
+      "keys": [
+        "BH-735"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Governance: SQL preview for quality rules + Data Drift Monitor flag",
+      "keys": [
+        "BH-736"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "HITL interrupts: DBT query_selection input surface in Slack",
+      "keys": [
+        "BH-738"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Playwright e2e auth suite + Amplify CI fix",
+      "keys": [
+        "BH-739"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "Slack-server auth: Cognito JWT + x-api-key primary chain",
+      "keys": [
+        "BH-718"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 12,
+      "window": "",
+      "title": "OAuth workspace guard: refuse re-point to unprovisioned workspace",
+      "keys": [
+        "BH-719"
+      ],
+      "summary": "",
+      "status": "no_code_found",
+      "commits": 0,
+      "kuri_share_pct": null,
+      "first_production_date": null,
+      "kuri_led": false,
+      "production_repos": []
+    },
+    {
+      "sprint": 13,
+      "window": "",
+      "title": "case-insensitive catalog search",
+      "keys": [
+        "BH-712"
+      ],
+      "summary": "",
+      "status": "on_main",
+      "commits": 1,
+      "kuri_share_pct": 100.0,
+      "first_production_date": "2026-06-25",
+      "kuri_led": true,
+      "production_repos": [
+        "brighthive-e2e"
+      ]
+    }
+  ],
+  "ticket_level_status": {
+    "no_code_found": 32,
+    "on_main": 14,
+    "released": 6
+  },
+  "ticket_level_kuri_led_in_production": 18
+}
