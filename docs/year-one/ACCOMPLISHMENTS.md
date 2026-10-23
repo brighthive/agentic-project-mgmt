@@ -147,7 +147,7 @@ Every claim below points to a pull request (PR), commit, ticket or file you can 
 
 ### Quality and testing
 - **Outcome:** the platform went from a handful of tests and almost no CI to tested, reviewed, gated delivery.
-- **Evidence:** test files `brightbot` 10 → 413, `platform-core` 3 → 237, `webapp` 37 → 220; CI workflow files 1 → 7, 3 → 12, 1 → 3 (`METRICS.md`). A 16-scenario agent evaluation framework with SQL-injection and PII cases and LangSmith cost tracking (`brightbot`, January 2026, #623).
+- **Evidence:** across all 8 repos, test files 51 → 1,276 and pipeline files 6 → 38 (before counts only the 4 repos that existed; `repo_structure.json`); by repo, test files `brightbot` 10 → 413, `platform-core` 3 → 237, `webapp` 37 → 220; CI workflow files 1 → 7, 3 → 12, 1 → 3 (`METRICS.md`). A 16-scenario agent evaluation framework with SQL-injection and PII cases and LangSmith cost tracking (`brightbot`, January 2026, #623).
 
 ### The end-to-end suite 🟢
 - **Outcome:** for the first time one repo verifies the deployed platform across auth, GraphQL, agent routes, agents, semantic views, MCP, graph integrity and the web app, in all three environments.
