@@ -1,12 +1,15 @@
 {
-  "generated_at": "2026-10-22T22:48:51.935950+00:00",
+  "generated_at": "2026-10-23T00:13:31.505460+00:00",
   "project": "BH",
   "first_issue_created": "2026-01-11T20:44:57.681000-06:00",
   "totals": {
     "issues": 1507,
     "epics": 48,
     "work_items": 1459,
-    "work_items_done": 422
+    "work_items_done": 362,
+    "work_items_canceled": 60,
+    "work_items_in_flight": 174,
+    "work_items_backlog": 863
   },
   "by_type": {
     "Epic": 48,
@@ -19,7 +22,7 @@
     "pct_work_items_with_parent_epic": 88.6,
     "pct_work_items_assigned": 80.5,
     "pct_work_items_with_description": 97.7,
-    "median_days_created_to_resolved": 3.0
+    "median_days_created_to_resolved": 2.9
   },
   "created_by_month": {
     "2026-01": 107,
@@ -52,11 +55,11 @@
     "Ahmed Elsherbiny": 38
   },
   "done_by_assignee": {
-    "Kuri Chinca": 168,
-    "Harbour Wang": 135,
-    "unassigned": 46,
-    "Ahmed Elsherbiny": 38,
-    "Marwan Samih": 35
+    "Kuri Chinca": 158,
+    "Harbour Wang": 123,
+    "Ahmed Elsherbiny": 35,
+    "unassigned": 24,
+    "Marwan Samih": 22
   },
   "epics": [
     {
@@ -64,7 +67,7 @@
       "summary": "Platform Features & Enhancements",
       "status": "To Do",
       "children": 132,
-      "children_done": 54
+      "children_done": 50
     },
     {
       "key": "BH-876",
@@ -78,7 +81,7 @@
       "summary": "Bugs & Fixes",
       "status": "To Do",
       "children": 105,
-      "children_done": 40
+      "children_done": 39
     },
     {
       "key": "BH-1255",
@@ -134,7 +137,7 @@
       "summary": "Interconnect-ability: Source & Destinations (A2A)",
       "status": "Needs Refinement",
       "children": 40,
-      "children_done": 7
+      "children_done": 5
     },
     {
       "key": "BH-170",
@@ -148,7 +151,7 @@
       "summary": "On-Prem Engineering Runner \u2014 filesystem-resident dbt + legacy artifact work inside the customer network",
       "status": "In Progress",
       "children": 30,
-      "children_done": 5
+      "children_done": 4
     },
     {
       "key": "BH-1370",
@@ -162,14 +165,14 @@
       "summary": "AWS DevOps & Infrastructure",
       "status": "To Do",
       "children": 27,
-      "children_done": 14
+      "children_done": 13
     },
     {
       "key": "BH-624",
       "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
       "status": "Needs Refinement",
       "children": 26,
-      "children_done": 3
+      "children_done": 2
     },
     {
       "key": "BH-453",
@@ -183,21 +186,21 @@
       "summary": "UX WebApp Re-design for latest features",
       "status": "Needs Refinement",
       "children": 23,
-      "children_done": 8
+      "children_done": 4
     },
     {
       "key": "BH-503",
       "summary": "Configurable Quality Agent \u2014 workspace rule library, curation, and history",
       "status": "Done",
       "children": 23,
-      "children_done": 20
+      "children_done": 17
     },
     {
       "key": "BH-260",
       "summary": "BrightStudio - AI-Powered Studio & Workspace Management",
       "status": "Needs Refinement",
       "children": 22,
-      "children_done": 12
+      "children_done": 11
     },
     {
       "key": "BH-1168",
@@ -225,7 +228,7 @@
       "summary": "Internal improvements (Performance/Monitoring)",
       "status": "Needs Refinement",
       "children": 16,
-      "children_done": 9
+      "children_done": 6
     },
     {
       "key": "BH-695",
@@ -239,7 +242,7 @@
       "summary": "BH Omni integrations (Slack, Teams, Google)",
       "status": "Needs Refinement",
       "children": 14,
-      "children_done": 7
+      "children_done": 5
     },
     {
       "key": "BH-835",
@@ -253,7 +256,7 @@
       "summary": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities",
       "status": "Done",
       "children": 14,
-      "children_done": 14
+      "children_done": 12
     },
     {
       "key": "BH-1061",
@@ -267,21 +270,21 @@
       "summary": "Proactive Multi Agents",
       "status": "Needs Refinement",
       "children": 11,
-      "children_done": 6
+      "children_done": 4
     },
     {
       "key": "BH-116",
       "summary": "Projects & automations tasks (Containers of Custom contexts)",
       "status": "Canceled",
       "children": 11,
-      "children_done": 10
+      "children_done": 5
     },
     {
       "key": "BH-1009",
       "summary": "Visualization Agent Refactor \u2014 deterministic spec assembly, multi-panel support, hardened data pipeline",
       "status": "Needs Refinement",
       "children": 11,
-      "children_done": 1
+      "children_done": 0
     },
     {
       "key": "BH-1245",
@@ -295,7 +298,7 @@
       "summary": "Context Engineering Architecture",
       "status": "Needs Refinement",
       "children": 10,
-      "children_done": 9
+      "children_done": 1
     },
     {
       "key": "BH-332",
@@ -344,7 +347,7 @@
       "summary": "Custom Tailored Personas Insights",
       "status": "Needs Refinement",
       "children": 2,
-      "children_done": 2
+      "children_done": 0
     },
     {
       "key": "BH-118",
@@ -358,7 +361,7 @@
       "summary": "Big Data Highly Complex Tasks reduce to minutes",
       "status": "Needs Refinement",
       "children": 2,
-      "children_done": 2
+      "children_done": 0
     },
     {
       "key": "BH-196",
@@ -395,5 +398,38 @@
       "children": 0,
       "children_done": 0
     }
-  ]
+  ],
+  "other_projects": {
+    "BL": {
+      "issues": 18,
+      "first_created": "2026-03-17",
+      "last_created": "2026-04-06",
+      "by_type": {
+        "Task": 18
+      },
+      "by_status": {
+        "Done": 9,
+        "MATT": 4,
+        "KURI": 5
+      },
+      "created_before_2025_10_23": 0
+    },
+    "BPP": {
+      "issues": 74,
+      "first_created": "2023-12-14",
+      "last_created": "2025-10-29",
+      "by_type": {
+        "Idea": 74
+      },
+      "by_status": {
+        "Parking lot": 36,
+        "Done": 23,
+        "Ready for delivery": 5,
+        "Discovery": 7,
+        "Delivery": 3
+      },
+      "created_before_2025_10_23": 69
+    }
+  },
+  "bh_keys_below_110_retrievable": false
 }

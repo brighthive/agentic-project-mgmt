@@ -14,7 +14,11 @@ PROJECT_KEY = "BH"
 PAGE_SIZE = 100
 MIN_DESCRIPTION_CHARS = 100
 EPIC_TYPE = "Epic"
-DONE_CATEGORY = "Done"
+DONE_STATUS = "Done"
+CANCELED_STATUS = "Canceled"
+IN_PROGRESS_CATEGORY = "In Progress"
+OTHER_PROJECTS = ("BL", "BPP")
+STATE_DONE, STATE_CANCELED, STATE_IN_FLIGHT, STATE_BACKLOG = "done", "canceled", "in_flight", "backlog"
 OUTPUT_PATH = Path(__file__).parent.parent.parent / "docs" / "year-one" / "data" / "jira.json"
 FIELDS = "summary,issuetype,status,created,resolutiondate,assignee,creator,parent,description,labels,priority"
 
@@ -28,12 +32,12 @@ def jira_get(*, path: str, params: dict[str, str]) -> dict:
         return json.load(response)
 
 
-def fetch_all_issues() -> list[dict]:
-    """Page through every issue in the project."""
+def fetch_all_issues(*, project: str = PROJECT_KEY) -> list[dict]:
+    """Page through every issue in a project."""
     issues: list[dict] = []
     page_token = ""
     while True:
-        params = {"jql": f"project = {PROJECT_KEY} ORDER BY created ASC", "maxResults": str(PAGE_SIZE), "fields": FIELDS}
+        params = {"jql": f"project = {project} ORDER BY created ASC", "maxResults": str(PAGE_SIZE), "fields": FIELDS}
         if page_token:
             params["nextPageToken"] = page_token
         page = jira_get(path="/rest/api/3/search/jql", params=params)
@@ -61,6 +65,15 @@ def description_chars(*, description: dict | None) -> int:
     return total
 
 
+def state_of(*, status: dict) -> str:
+    """Map a Jira status to done, canceled, in flight or backlog (Canceled is not Done)."""
+    if status["name"] == DONE_STATUS:
+        return STATE_DONE
+    if status["name"] == CANCELED_STATUS:
+        return STATE_CANCELED
+    return STATE_IN_FLIGHT if status["statusCategory"]["name"] == IN_PROGRESS_CATEGORY else STATE_BACKLOG
+
+
 def pct(*, part: int, whole: int) -> float | None:
     """Percentage rounded to 1 decimal."""
     return round(100 * part / whole, 1) if whole else None
@@ -80,7 +93,7 @@ def summarize(*, issues: list[dict]) -> dict:
             "key": issue["key"],
             "type": f["issuetype"]["name"],
             "status": f["status"]["name"],
-            "done": f["status"]["statusCategory"]["name"] == DONE_CATEGORY,
+            "state": state_of(status=f["status"]),
             "created": parse_ts(value=f["created"]),
             "resolved": parse_ts(value=f["resolutiondate"]),
             "assignee": (f["assignee"] or {}).get("displayName"),
@@ -92,15 +105,15 @@ def summarize(*, issues: list[dict]) -> dict:
     epics = [r for r in rows if r["type"] == EPIC_TYPE]
     work = [r for r in rows if r["type"] != EPIC_TYPE]
     children = Counter(r["parent"] for r in work if r["parent"])
-    done_children = Counter(r["parent"] for r in work if r["parent"] and r["done"])
-    cycle_days = [(r["resolved"] - r["created"]).total_seconds() / 86400 for r in work if r["resolved"]]
+    done_children = Counter(r["parent"] for r in work if r["parent"] and r["state"] == STATE_DONE)
+    cycle_days = [(r["resolved"] - r["created"]).total_seconds() / 86400 for r in work if r["resolved"] and r["state"] == STATE_DONE]
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "project": PROJECT_KEY,
         "first_issue_created": min(r["created"] for r in rows).isoformat(),
         "totals": {
             "issues": len(rows), "epics": len(epics), "work_items": len(work),
-            "work_items_done": sum(r["done"] for r in work),
+            **{f"work_items_{st}": sum(1 for r in work if r["state"] == st) for st in (STATE_DONE, STATE_CANCELED, STATE_IN_FLIGHT, STATE_BACKLOG)},
         },
         "by_type": dict(Counter(r["type"] for r in rows)),
         "discipline": {
@@ -113,7 +126,7 @@ def summarize(*, issues: list[dict]) -> dict:
         "created_by_month": dict(sorted(Counter(month_of(ts=r["created"]) for r in rows).items())),
         "resolved_by_month": dict(sorted(Counter(month_of(ts=r["resolved"]) for r in rows if r["resolved"]).items())),
         "assignee_distribution": dict(Counter(r["assignee"] or "unassigned" for r in work).most_common()),
-        "done_by_assignee": dict(Counter(r["assignee"] or "unassigned" for r in work if r["done"]).most_common()),
+        "done_by_assignee": dict(Counter(r["assignee"] or "unassigned" for r in work if r["state"] == STATE_DONE).most_common()),
         "epics": sorted(
             ({"key": e["key"], "summary": e["summary"], "status": e["status"],
               "children": children[e["key"]], "children_done": done_children[e["key"]]} for e in epics),
@@ -122,11 +135,25 @@ def summarize(*, issues: list[dict]) -> dict:
     }
 
 
+def summarize_other_project(*, project: str) -> dict:
+    """Counts, date span and status mix for a non-BH project."""
+    issues = fetch_all_issues(project=project)
+    created = [i["fields"]["created"][:10] for i in issues]
+    return {
+        "issues": len(issues), "first_created": created[0] if created else None, "last_created": created[-1] if created else None,
+        "by_type": dict(Counter(i["fields"]["issuetype"]["name"] for i in issues)),
+        "by_status": dict(Counter(i["fields"]["status"]["name"] for i in issues)),
+        "created_before_2025_10_23": sum(1 for c in created if c < "2025-10-23"),
+    }
+
+
 def main() -> None:
     """Fetch, summarize and write the Jira metrics file."""
     payload = summarize(issues=fetch_all_issues())
+    payload["other_projects"] = {k: summarize_other_project(project=k) for k in OTHER_PROJECTS}
+    payload["bh_keys_below_110_retrievable"] = False
     OUTPUT_PATH.write_text(json.dumps(payload, indent=2))
-    print(json.dumps({k: payload[k] for k in ("totals", "by_type", "discipline", "assignee_distribution", "done_by_assignee")}, indent=2))
+    print(json.dumps({k: payload[k] for k in ("totals", "discipline", "other_projects")}, indent=2))
 
 
 if __name__ == "__main__":

@@ -67,17 +67,25 @@ def practices_section(*, practices: dict | None) -> str:
 
 
 def jira_section(*, jira: dict) -> str:
-    """Jira discipline and distribution."""
-    d, t = jira["discipline"], jira["totals"]
+    """Jira discipline, state mix and distribution, with the earlier planning record as the before."""
+    d, t, bpp = jira["discipline"], jira["totals"], jira["other_projects"]["BPP"]
     assigned = jira["assignee_distribution"]
     work = t["work_items"]
+
+    def share(count: int) -> str:
+        return f"{count:,} ({round(100 * count / work)}%)"
+
+    before = f"{bpp['created_before_2025_10_23']} ideas in BPP (2023-12 → 2025-10), an idea backlog only"
     rows = [
-        ["Issues / epics", "no project", f"{t['issues']:,} / {t['epics']}"],
+        ["Planning record", before, f"{t['issues']:,} issues / {t['epics']} epics in BH (first ticket 2026-01-11)"],
         ["Work items with a parent epic", "n/a", f"{d['pct_work_items_with_parent_epic']}%"],
         ["Work items with a real description", "n/a", f"{d['pct_work_items_with_description']}%"],
         ["Work items assigned", "n/a", f"{d['pct_work_items_assigned']}%"],
-        ["Median days created → resolved", "n/a", d["median_days_created_to_resolved"]],
-        ["Work items done", "n/a", f"{t['work_items_done']:,} of {work:,} ({round(100 * t['work_items_done'] / work)}%)"],
+        ["Median days created → done", "n/a", d["median_days_created_to_resolved"]],
+        ["Work items done", "n/a", share(t["work_items_done"])],
+        ["Work items canceled", "n/a", share(t["work_items_canceled"])],
+        ["Work items in flight (review, testing, staging)", "n/a", share(t["work_items_in_flight"])],
+        ["Work items in backlog (mostly Needs Refinement)", "n/a", share(t["work_items_backlog"])],
         ["⚠️ Share of work items assigned to Kuri", "n/a", f"{round(100 * assigned['Kuri Chinca'] / work)}%"],
         ["⚠️ Unassigned work items", "n/a", f"{assigned['unassigned']:,}"],
     ]
@@ -134,7 +142,8 @@ def main() -> None:
         "## Delivery (GitHub)", delivery_section(github=github),
         "## Engineering practices (GitHub PRs)", practices_section(practices=practices),
         "## Project management (Jira)",
-        "Jira's BH project starts 2026-01-11, so there is no before.", jira_section(jira=jira),
+        "BH keys 1 to 109 are not retrievable (deleted or never existed), so BH is shown from its first visible ticket, BH-110 on 2026-01-11. "
+        "BPP (Platform Planning) holds the earlier idea backlog. Canceled is counted separately from Done.", jira_section(jira=jira),
         "## Repo structure: tests, specs, ADRs, contracts, CI files", structure_section(structure=structure),
         "Counts are by file-name pattern, so treat them as approximate.",
         "## CI/CD health (year after only)",

@@ -22,16 +22,19 @@ Windows: year before = 2024-10-23 → 2025-10-22, year after = 2025-10-23 → 20
 
 ## Project management (Jira)
 
-Jira's BH project starts 2026-01-11, so there is no before.
+BH keys 1 to 109 are not retrievable (deleted or never existed), so BH is shown from its first visible ticket, BH-110 on 2026-01-11. BPP (Platform Planning) holds the earlier idea backlog. Canceled is counted separately from Done.
 
 | Metric | Year before | Year after |
 |---|---|---|
-| Issues / epics | no project | 1,507 / 48 |
+| Planning record | 69 ideas in BPP (2023-12 → 2025-10), an idea backlog only | 1,507 issues / 48 epics in BH (first ticket 2026-01-11) |
 | Work items with a parent epic | n/a | 88.6% |
 | Work items with a real description | n/a | 97.7% |
 | Work items assigned | n/a | 80.5% |
-| Median days created → resolved | n/a | 3.0 |
-| Work items done | n/a | 422 of 1,459 (29%) |
+| Median days created → done | n/a | 2.9 |
+| Work items done | n/a | 362 (25%) |
+| Work items canceled | n/a | 60 (4%) |
+| Work items in flight (review, testing, staging) | n/a | 174 (12%) |
+| Work items in backlog (mostly Needs Refinement) | n/a | 863 (59%) |
 | ⚠️ Share of work items assigned to Kuri | n/a | 62% |
 | ⚠️ Unassigned work items | n/a | 285 |
 
