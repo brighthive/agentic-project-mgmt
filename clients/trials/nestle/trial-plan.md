@@ -7,7 +7,7 @@ champion_email: ""
 trial_start: ""
 trial_end: ""
 decision_date: ""
-jira_epic: ""
+jira_epic: "BH-1639"
 notion_page: ""
 workspace_id: ""
 aws_account: ""
@@ -28,7 +28,7 @@ and the decision meeting before committing this window. No calendar invites exis
 - Agree the pilot division/region, data product, business decision and writable scope.
 - Sign the scorecard: baseline, target, evidence source and acceptance owner per row.
 - Confirm workspace/account identity, access, classification, residency and retention.
-- Assign a live Jira trial epic and link the GTM record; do not reuse another client's epic.
+- Jira trial epic is [BH-1639](https://brighthiveio.atlassian.net/browse/BH-1639) (Azure: [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640)); link the GTM record and do not reuse another client's epic. Ticket map: [tickets](tickets.md).
 - Verify the chosen journey on the intended environment, including denial and cleanup.
 - Agree delivery routing, response expectations, coverage and escalation contacts.
 - Decide whether measured cost/volume evidence is required; begin the billing baseline.

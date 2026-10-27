@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-10-23T19:27:13.017276+00:00",
+  "repos": {
+    "brightbot": {
+      "ref": "origin/develop",
+      "agent_skills": 0,
+      "claude_review_workflows": 1,
+      "agent_contracts": 3
+    },
+    "brighthive-platform-core": {
+      "ref": "origin/develop",
+      "agent_skills": 0,
+      "claude_review_workflows": 1,
+      "agent_contracts": 2
+    },
+    "brighthive-webapp": {
+      "ref": "origin/develop",
+      "agent_skills": 0,
+      "claude_review_workflows": 1,
+      "agent_contracts": 2
+    },
+    "brighthive-e2e": {
+      "ref": "origin/master",
+      "agent_skills": 0,
+      "claude_review_workflows": 0,
+      "agent_contracts": 1
+    },
+    "agentic-project-mgmt": {
+      "ref": "origin/master",
+      "agent_skills": 3,
+      "claude_review_workflows": 1,
+      "agent_contracts": 9
+    },
+    "platform-saas-ai-context": {
+      "ref": "origin/master",
+      "agent_skills": 0,
+      "claude_review_workflows": 1,
+      "agent_contracts": 4
+    },
+    "brightbot-slack-server": {
+      "ref": "origin/develop",
+      "agent_skills": 0,
+      "claude_review_workflows": 1,
+      "agent_contracts": 0
+    },
+    "brightagent-v3": {
+      "ref": "origin/develop",
+      "agent_skills": 0,
+      "claude_review_workflows": 1,
+      "agent_contracts": 14
+    },
+    "brightagent-engineering-runner": {
+      "ref": "origin/main",
+      "agent_skills": 0,
+      "claude_review_workflows": 0,
+      "agent_contracts": 0
+    }
+  },
+  "totals": {
+    "agent_skills": 3,
+    "repos_with_claude_review": 7,
+    "agent_contracts": 35
+  },
+  "project_management": {
+    "ref": "origin/master",
+    "sprints_with_release_notes": 16,
+    "specs": 123,
+    "specs_with_gherkin_scenarios": 79,
+    "gherkin_scenarios": 570,
+    "adrs": 3,
+    "documented_make_targets": 66,
+    "year_one_collectors_and_renderers": 16
+  }
+}

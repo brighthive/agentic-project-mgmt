@@ -1,0 +1,175 @@
+{
+  "generated_at": "2026-10-23T01:34:59.116618+00:00",
+  "definitions": {
+    "conventional_title": "PR title matches type(scope): description, type in feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert",
+    "ticket_in_title": "Jira-style key such as BH-123 in the PR title",
+    "structured_branch": "branch named name/TICKET/description",
+    "described_body": "PR body of at least 200 characters",
+    "human_approval": "an APPROVED review by someone other than the author",
+    "human_review": "any review by someone other than the author",
+    "conventional_commits": "share of commit headlines inside merged PRs that are conventional"
+  },
+  "practices": {
+    "before": {
+      "everyone": {
+        "prs": 926,
+        "pct_conventional_title": 9.4,
+        "pct_ticket_in_title": 23.3,
+        "pct_ticket_in_title_or_branch": 35.9,
+        "pct_structured_branch": 0.0,
+        "pct_described_body": 80.6,
+        "pct_human_approval": 95.7,
+        "pct_human_review": 95.7,
+        "pct_assignee_set": 8.9,
+        "pct_conventional_commits": 11.6
+      },
+      "kuri": {
+        "prs": 0,
+        "pct_conventional_title": null,
+        "pct_ticket_in_title": null,
+        "pct_ticket_in_title_or_branch": null,
+        "pct_structured_branch": null,
+        "pct_described_body": null,
+        "pct_human_approval": null,
+        "pct_human_review": null,
+        "pct_assignee_set": null,
+        "pct_conventional_commits": null
+      },
+      "everyone_else": {
+        "prs": 926,
+        "pct_conventional_title": 9.4,
+        "pct_ticket_in_title": 23.3,
+        "pct_ticket_in_title_or_branch": 35.9,
+        "pct_structured_branch": 0.0,
+        "pct_described_body": 80.6,
+        "pct_human_approval": 95.7,
+        "pct_human_review": 95.7,
+        "pct_assignee_set": 8.9,
+        "pct_conventional_commits": 11.6
+      }
+    },
+    "after": {
+      "everyone": {
+        "prs": 2641,
+        "pct_conventional_title": 76.1,
+        "pct_ticket_in_title": 41.3,
+        "pct_ticket_in_title_or_branch": 48.1,
+        "pct_structured_branch": 37.5,
+        "pct_described_body": 95.4,
+        "pct_human_approval": 11.5,
+        "pct_human_review": 49.1,
+        "pct_assignee_set": 52.6,
+        "pct_conventional_commits": 63.4
+      },
+      "kuri": {
+        "prs": 1737,
+        "pct_conventional_title": 91.0,
+        "pct_ticket_in_title": 57.6,
+        "pct_ticket_in_title_or_branch": 64.3,
+        "pct_structured_branch": 53.2,
+        "pct_described_body": 96.4,
+        "pct_human_approval": 0.7,
+        "pct_human_review": 53.2,
+        "pct_assignee_set": 79.3,
+        "pct_conventional_commits": 79.9
+      },
+      "everyone_else": {
+        "prs": 904,
+        "pct_conventional_title": 47.3,
+        "pct_ticket_in_title": 10.0,
+        "pct_ticket_in_title_or_branch": 17.0,
+        "pct_structured_branch": 7.4,
+        "pct_described_body": 93.4,
+        "pct_human_approval": 32.3,
+        "pct_human_review": 41.3,
+        "pct_assignee_set": 1.2,
+        "pct_conventional_commits": 42.5
+      }
+    }
+  },
+  "contributors_with_10plus_prs": {
+    "before": 9,
+    "after": 8
+  },
+  "author_counts": {
+    "before": {
+      "azahid89": 235,
+      "adrianmf94": 190,
+      "Marwan-Samih-Brighthive": 116,
+      "keaganpzh-brighthive": 107,
+      "yuvbindalBrightHive": 84,
+      "larebksyed": 81,
+      "emad-boctor": 57,
+      "sherbiny-bh": 36,
+      "chloetan-brighthive": 12,
+      "matthewgee": 6,
+      "mjwgoh": 1,
+      "KirollosAziz26": 1
+    },
+    "after": {
+      "drchinca": 1737,
+      "Marwan-Samih-Brighthive": 474,
+      "Nano-233": 237,
+      "sherbiny-bh": 108,
+      "keaganpzh-brighthive": 30,
+      "azahid89": 21,
+      "yuvbindalBrightHive": 18,
+      "larebksyed": 13,
+      "KirollosTarek-BH": 1,
+      "adrianmf94": 1,
+      "chloetan-brighthive": 1
+    }
+  },
+  "release_cadence": {
+    "brightbot": {
+      "before": {
+        "releases": 0,
+        "median_gap_days": null
+      },
+      "after": {
+        "releases": 5,
+        "median_gap_days": 22.0
+      }
+    },
+    "brighthive-platform-core": {
+      "before": {
+        "releases": 66,
+        "median_gap_days": 4
+      },
+      "after": {
+        "releases": 222,
+        "median_gap_days": 0
+      }
+    },
+    "brighthive-webapp": {
+      "before": {
+        "releases": 79,
+        "median_gap_days": 1.0
+      },
+      "after": {
+        "releases": 148,
+        "median_gap_days": 0
+      }
+    },
+    "brightagent-v3": {
+      "before": {
+        "releases": 0,
+        "median_gap_days": null
+      },
+      "after": {
+        "releases": 2,
+        "median_gap_days": 1
+      }
+    },
+    "brightagent-engineering-runner": {
+      "before": {
+        "releases": 0,
+        "median_gap_days": null
+      },
+      "after": {
+        "releases": 1,
+        "median_gap_days": null
+      }
+    }
+  }
+}

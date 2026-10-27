@@ -1,0 +1,83 @@
+{
+  "method": "Non-merge commits on origin/develop of brightbot, brighthive-platform-core and brighthive-webapp. Ramp-up counts contributors with 10+ commits whose first commit falls in the window; authors are matched by email, so one person with two emails counts twice.",
+  "windows": {
+    "before": [
+      "2024-10-23",
+      "2025-10-23"
+    ],
+    "after": [
+      "2025-10-23",
+      "2026-10-23"
+    ]
+  },
+  "commit_profile": {
+    "before": {
+      "commits": 1423,
+      "pct_conventional": 12.3,
+      "pct_with_ticket_key": 28.6,
+      "pct_reverts": 0.8,
+      "pct_hotfix": 0.4,
+      "type_mix_of_conventional": {
+        "feat": 42.9,
+        "fix": 30.9,
+        "refactor": 18.3,
+        "chore": 7.4,
+        "ci": 0.6
+      }
+    },
+    "after": {
+      "commits": 1950,
+      "pct_conventional": 72.8,
+      "pct_with_ticket_key": 41.0,
+      "pct_reverts": 0.8,
+      "pct_hotfix": 1.2,
+      "type_mix_of_conventional": {
+        "feat": 41.0,
+        "fix": 39.6,
+        "docs": 7.1,
+        "chore": 4.4,
+        "test": 3.9,
+        "refactor": 1.8
+      }
+    }
+  },
+  "contributor_ramp": {
+    "before": {
+      "new_contributors": 13,
+      "median_commits_first_30_days": 10,
+      "values": [
+        1,
+        2,
+        2,
+        2,
+        2,
+        10,
+        10,
+        11,
+        14,
+        16,
+        17,
+        20,
+        26
+      ]
+    },
+    "after": {
+      "new_contributors": 12,
+      "median_commits_first_30_days": 4.0,
+      "values": [
+        1,
+        1,
+        3,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        13,
+        16,
+        44
+      ]
+    }
+  }
+}

@@ -1,0 +1,435 @@
+{
+  "generated_at": "2026-10-23T00:58:44.198253+00:00",
+  "project": "BH",
+  "first_issue_created": "2026-01-11T20:44:57.681000-06:00",
+  "totals": {
+    "issues": 1507,
+    "epics": 48,
+    "work_items": 1459,
+    "work_items_done": 362,
+    "work_items_canceled": 60,
+    "work_items_in_flight": 174,
+    "work_items_backlog": 863
+  },
+  "by_type": {
+    "Epic": 48,
+    "Task": 1034,
+    "Subtask": 11,
+    "Bug": 260,
+    "Story": 154
+  },
+  "discipline": {
+    "pct_work_items_with_parent_epic": 88.6,
+    "pct_work_items_assigned": 80.5,
+    "pct_work_items_with_description": 97.7,
+    "median_days_created_to_resolved": 2.9
+  },
+  "created_by_month": {
+    "2026-01": 107,
+    "2026-02": 46,
+    "2026-03": 19,
+    "2026-04": 139,
+    "2026-05": 106,
+    "2026-06": 343,
+    "2026-07": 438,
+    "2026-08": 158,
+    "2026-09": 52,
+    "2026-10": 99
+  },
+  "resolved_by_month": {
+    "2026-01": 39,
+    "2026-02": 55,
+    "2026-03": 21,
+    "2026-04": 59,
+    "2026-05": 23,
+    "2026-06": 59,
+    "2026-07": 157,
+    "2026-08": 10,
+    "2026-09": 4
+  },
+  "assignee_distribution": {
+    "Kuri Chinca": 909,
+    "unassigned": 285,
+    "Harbour Wang": 149,
+    "Marwan Samih": 78,
+    "Ahmed Elsherbiny": 38
+  },
+  "done_by_assignee": {
+    "Kuri Chinca": 158,
+    "Harbour Wang": 123,
+    "Ahmed Elsherbiny": 35,
+    "unassigned": 24,
+    "Marwan Samih": 22
+  },
+  "epics": [
+    {
+      "key": "BH-172",
+      "summary": "Platform Features & Enhancements",
+      "status": "To Do",
+      "children": 132,
+      "children_done": 50
+    },
+    {
+      "key": "BH-876",
+      "summary": "BrightRoutines \u2014 proactive schedule detection and workflow automation",
+      "status": "Done",
+      "children": 118,
+      "children_done": 64
+    },
+    {
+      "key": "BH-173",
+      "summary": "Bugs & Fixes",
+      "status": "To Do",
+      "children": 105,
+      "children_done": 39
+    },
+    {
+      "key": "BH-1255",
+      "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs \u2014 configured & monitored through BrightAgent",
+      "status": "To Do",
+      "children": 78,
+      "children_done": 3
+    },
+    {
+      "key": "BH-1181",
+      "summary": "MCP capability coverage & availability across environments",
+      "status": "Needs Refinement",
+      "children": 72,
+      "children_done": 15
+    },
+    {
+      "key": "BH-526",
+      "summary": "Longaeva Partners POC \u2014 14-day pre-trial execution",
+      "status": "Needs Refinement",
+      "children": 62,
+      "children_done": 3
+    },
+    {
+      "key": "BH-1464",
+      "summary": "Authorization & Governance Enforcement: configurable roles, per-resource grants, one decision point",
+      "status": "In Progress",
+      "children": 57,
+      "children_done": 0
+    },
+    {
+      "key": "BH-409",
+      "summary": "BrightSignals \u2014 proactive Slack notifications across the platform",
+      "status": "Needs Refinement",
+      "children": 53,
+      "children_done": 13
+    },
+    {
+      "key": "BH-601",
+      "summary": "Longaeva PoC \u2014 14 Golden Success Paths (GC-1..14) explicit tracking",
+      "status": "Needs Refinement",
+      "children": 43,
+      "children_done": 4
+    },
+    {
+      "key": "BH-1036",
+      "summary": "Monitoring Agents \u2014 proactive pipeline discovery &amp; health (dbt, Databricks, ETL)",
+      "status": "Needs Refinement",
+      "children": 41,
+      "children_done": 1
+    },
+    {
+      "key": "BH-115",
+      "summary": "Interconnect-ability: Source & Destinations (A2A)",
+      "status": "Needs Refinement",
+      "children": 40,
+      "children_done": 5
+    },
+    {
+      "key": "BH-170",
+      "summary": "SDLC & Code Quality",
+      "status": "To Do",
+      "children": 32,
+      "children_done": 2
+    },
+    {
+      "key": "BH-1421",
+      "summary": "On-Prem Engineering Runner \u2014 filesystem-resident dbt + legacy artifact work inside the customer network",
+      "status": "In Progress",
+      "children": 30,
+      "children_done": 4
+    },
+    {
+      "key": "BH-1370",
+      "summary": "Warehouse \u2192 Database \u2192 Table hierarchical identity",
+      "status": "Needs Refinement",
+      "children": 28,
+      "children_done": 0
+    },
+    {
+      "key": "BH-171",
+      "summary": "AWS DevOps & Infrastructure",
+      "status": "To Do",
+      "children": 27,
+      "children_done": 13
+    },
+    {
+      "key": "BH-624",
+      "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
+      "status": "Needs Refinement",
+      "children": 26,
+      "children_done": 2
+    },
+    {
+      "key": "BH-453",
+      "summary": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore \u2014 remove LangGraph Cloud / LangSmith service dependency",
+      "status": "Needs Refinement",
+      "children": 25,
+      "children_done": 0
+    },
+    {
+      "key": "BH-114",
+      "summary": "UX WebApp Re-design for latest features",
+      "status": "Needs Refinement",
+      "children": 23,
+      "children_done": 4
+    },
+    {
+      "key": "BH-503",
+      "summary": "Configurable Quality Agent \u2014 workspace rule library, curation, and history",
+      "status": "Done",
+      "children": 23,
+      "children_done": 17
+    },
+    {
+      "key": "BH-260",
+      "summary": "BrightStudio - AI-Powered Studio & Workspace Management",
+      "status": "Needs Refinement",
+      "children": 22,
+      "children_done": 11
+    },
+    {
+      "key": "BH-1168",
+      "summary": "BUGS-V3 \u2014 BrightAgent v3 production bugs & e2e findings",
+      "status": "Needs Refinement",
+      "children": 21,
+      "children_done": 0
+    },
+    {
+      "key": "BH-359",
+      "summary": "Platform Analytics, Monitoring & Reporting Dashboard",
+      "status": "Needs Refinement",
+      "children": 19,
+      "children_done": 1
+    },
+    {
+      "key": "BH-1403",
+      "summary": "Autonomous dbt Project Lifecycle on On-Prem SQL Server \u2014 local dbt Core provisioning, governed model management, and a reproducible Loop Capital sandbox",
+      "status": "In Progress",
+      "children": 19,
+      "children_done": 4
+    },
+    {
+      "key": "BH-113",
+      "summary": "Internal improvements (Performance/Monitoring)",
+      "status": "Needs Refinement",
+      "children": 16,
+      "children_done": 6
+    },
+    {
+      "key": "BH-695",
+      "summary": "Engineering Agent Audit Trail \u2014 JWT-attributed tamper-evident action log",
+      "status": "Needs Refinement",
+      "children": 16,
+      "children_done": 0
+    },
+    {
+      "key": "BH-117",
+      "summary": "BH Omni integrations (Slack, Teams, Google)",
+      "status": "Needs Refinement",
+      "children": 14,
+      "children_done": 5
+    },
+    {
+      "key": "BH-835",
+      "summary": "DASHBOARD_ANALYTICS \u2014 Wire Analytics Dashboard to real workspace data (mock \u2192 live)",
+      "status": "Needs Refinement",
+      "children": 14,
+      "children_done": 0
+    },
+    {
+      "key": "BH-860",
+      "summary": "Skills Extension Framework for deep_agent \u2014 Low-Effort Agent Capabilities",
+      "status": "Done",
+      "children": 14,
+      "children_done": 12
+    },
+    {
+      "key": "BH-1061",
+      "summary": "Lineage-Aware Data Quality \u2014 glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+      "status": "To Do",
+      "children": 12,
+      "children_done": 1
+    },
+    {
+      "key": "BH-111",
+      "summary": "Proactive Multi Agents",
+      "status": "Needs Refinement",
+      "children": 11,
+      "children_done": 4
+    },
+    {
+      "key": "BH-116",
+      "summary": "Projects & automations tasks (Containers of Custom contexts)",
+      "status": "Canceled",
+      "children": 11,
+      "children_done": 5
+    },
+    {
+      "key": "BH-1009",
+      "summary": "Visualization Agent Refactor \u2014 deterministic spec assembly, multi-panel support, hardened data pipeline",
+      "status": "Needs Refinement",
+      "children": 11,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1245",
+      "summary": "Loop Capital Trial Execution \u2014 client-delivery verification of the 9 SQL Server trial success criteria",
+      "status": "Needs Refinement",
+      "children": 11,
+      "children_done": 0
+    },
+    {
+      "key": "BH-110",
+      "summary": "Context Engineering Architecture",
+      "status": "Needs Refinement",
+      "children": 10,
+      "children_done": 1
+    },
+    {
+      "key": "BH-332",
+      "summary": "dbt Cloud Auto-Provisioning \u2014 Automated workspace+project setup",
+      "status": "Needs Refinement",
+      "children": 10,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1273",
+      "summary": "Data Lineage \u2014 structure-derived tiering, delete/merge integrity, and lineage observability",
+      "status": "Needs Refinement",
+      "children": 9,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1353",
+      "summary": "Context Anchors \u2014 inline @/#//[] references to ground the agent on a chosen warehouse, table, KB, pipeline, or project",
+      "status": "Needs Refinement",
+      "children": 6,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1037",
+      "summary": "Ingestion Observability \u2014 source syncs, batch, and event-processing health",
+      "status": "Needs Refinement",
+      "children": 5,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1084",
+      "summary": "Always-on PII enforcement across agent I/O (BH-1078 follow-through)",
+      "status": "Needs Refinement",
+      "children": 3,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1131",
+      "summary": "On-Demand Alerts \u2014 agent-authored notification rules on the Signal Catalog",
+      "status": "Needs Refinement",
+      "children": 3,
+      "children_done": 0
+    },
+    {
+      "key": "BH-112",
+      "summary": "Custom Tailored Personas Insights",
+      "status": "Needs Refinement",
+      "children": 2,
+      "children_done": 0
+    },
+    {
+      "key": "BH-118",
+      "summary": "Workspace/Orgs usage & pricing reporting",
+      "status": "Needs Refinement",
+      "children": 2,
+      "children_done": 2
+    },
+    {
+      "key": "BH-119",
+      "summary": "Big Data Highly Complex Tasks reduce to minutes",
+      "status": "Needs Refinement",
+      "children": 2,
+      "children_done": 0
+    },
+    {
+      "key": "BH-196",
+      "summary": "Partnerships",
+      "status": "To Do",
+      "children": 2,
+      "children_done": 2
+    },
+    {
+      "key": "BH-428",
+      "summary": "Webapp \u2194 BrightAgent v2.3 integration \u2014 phased cut-over from brightbot",
+      "status": "Needs Refinement",
+      "children": 2,
+      "children_done": 0
+    },
+    {
+      "key": "BH-358",
+      "summary": "Unstructured Data Pipeline \u2014 ingestion, vectorization, warehouse integration",
+      "status": "Canceled",
+      "children": 0,
+      "children_done": 0
+    },
+    {
+      "key": "BH-425",
+      "summary": "refactor: src/brightagent/ layout reorganization \u2014 PEP 695/649-native, hexagonal, feature-sliced agents",
+      "status": "Needs Refinement",
+      "children": 0,
+      "children_done": 0
+    },
+    {
+      "key": "BH-1463",
+      "summary": "BrightRoutines next-phase \u2014 team-targeted delivery & AI-authored multi-step routines",
+      "status": "Needs Refinement",
+      "children": 0,
+      "children_done": 0
+    }
+  ],
+  "other_projects": {
+    "BL": {
+      "issues": 18,
+      "first_created": "2026-03-17",
+      "last_created": "2026-04-06",
+      "by_type": {
+        "Task": 18
+      },
+      "by_status": {
+        "Done": 9,
+        "MATT": 4,
+        "KURI": 5
+      },
+      "created_before_2025_10_23": 0
+    },
+    "BPP": {
+      "issues": 74,
+      "first_created": "2023-12-14",
+      "last_created": "2025-10-29",
+      "by_type": {
+        "Idea": 74
+      },
+      "by_status": {
+        "Parking lot": 36,
+        "Done": 23,
+        "Ready for delivery": 5,
+        "Discovery": 7,
+        "Delivery": 3
+      },
+      "created_before_2025_10_23": 69
+    }
+  },
+  "bh_keys_below_110_retrievable": false
+}
