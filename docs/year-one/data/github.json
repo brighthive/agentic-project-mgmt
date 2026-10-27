@@ -1,0 +1,1090 @@
+{
+  "generated_at": "2026-10-22T22:24:56.785174+00:00",
+  "org": "brighthive",
+  "kuri_login": "drchinca",
+  "windows": {
+    "before": {
+      "start": "2024-10-23T00:00:00+00:00",
+      "end": "2025-10-23T00:00:00+00:00"
+    },
+    "after": {
+      "start": "2025-10-23T00:00:00+00:00",
+      "end": "2026-10-23T00:00:00+00:00"
+    }
+  },
+  "totals": {
+    "before": {
+      "prs_merged": 927,
+      "prs_merged_by_kuri": 0,
+      "lines_added": 2492041,
+      "lines_deleted": 1330285,
+      "lines_added_by_kuri": 0,
+      "releases_published": 145,
+      "repos_with_merges": 12
+    },
+    "after": {
+      "prs_merged": 2861,
+      "prs_merged_by_kuri": 1931,
+      "lines_added": 5154586,
+      "lines_deleted": 2295591,
+      "lines_added_by_kuri": 2510977,
+      "releases_published": 378,
+      "repos_with_merges": 29
+    }
+  },
+  "repos": [
+    {
+      "repo": "brightbot",
+      "created_at": "2024-03-28T15:49:44Z",
+      "windows": {
+        "before": {
+          "prs_merged": 242,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 303949,
+          "lines_deleted": 156193,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 0.7,
+          "releases_published": 0,
+          "distinct_authors": 7,
+          "top_authors": {
+            "adrianmf94": 102,
+            "yuvbindalBrightHive": 75,
+            "Marwan-Samih-Brighthive": 42,
+            "keaganpzh-brighthive": 9,
+            "larebksyed": 6,
+            "matthewgee": 6,
+            "chloetan-brighthive": 2
+          }
+        },
+        "after": {
+          "prs_merged": 832,
+          "prs_merged_by_kuri": 557,
+          "lines_added": 1093409,
+          "lines_deleted": 301362,
+          "lines_added_by_kuri": 634944,
+          "median_hours_to_merge": 0.1,
+          "releases_published": 5,
+          "distinct_authors": 9,
+          "top_authors": {
+            "drchinca": 557,
+            "Marwan-Samih-Brighthive": 167,
+            "Nano-233": 78,
+            "sherbiny-bh": 17,
+            "yuvbindalBrightHive": 7,
+            "keaganpzh-brighthive": 3,
+            "azahid89": 1,
+            "larebksyed": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-platform-core",
+      "created_at": "2022-01-18T21:10:42Z",
+      "windows": {
+        "before": {
+          "prs_merged": 210,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 379856,
+          "lines_deleted": 244341,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 1.1,
+          "releases_published": 66,
+          "distinct_authors": 9,
+          "top_authors": {
+            "larebksyed": 53,
+            "adrianmf94": 44,
+            "emad-boctor": 42,
+            "keaganpzh-brighthive": 39,
+            "azahid89": 18,
+            "sherbiny-bh": 10,
+            "chloetan-brighthive": 2,
+            "app/dependabot": 1
+          }
+        },
+        "after": {
+          "prs_merged": 729,
+          "prs_merged_by_kuri": 459,
+          "lines_added": 1817054,
+          "lines_deleted": 737882,
+          "lines_added_by_kuri": 810353,
+          "median_hours_to_merge": 0.1,
+          "releases_published": 222,
+          "distinct_authors": 9,
+          "top_authors": {
+            "drchinca": 459,
+            "Marwan-Samih-Brighthive": 141,
+            "Nano-233": 52,
+            "sherbiny-bh": 42,
+            "keaganpzh-brighthive": 15,
+            "larebksyed": 9,
+            "yuvbindalBrightHive": 6,
+            "azahid89": 4
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-webapp",
+      "created_at": "2021-12-31T04:10:52Z",
+      "windows": {
+        "before": {
+          "prs_merged": 337,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 1126029,
+          "lines_deleted": 910497,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 2.3,
+          "releases_published": 79,
+          "distinct_authors": 8,
+          "top_authors": {
+            "azahid89": 216,
+            "Marwan-Samih-Brighthive": 74,
+            "keaganpzh-brighthive": 22,
+            "yuvbindalBrightHive": 7,
+            "larebksyed": 7,
+            "emad-boctor": 5,
+            "chloetan-brighthive": 3,
+            "adrianmf94": 3
+          }
+        },
+        "after": {
+          "prs_merged": 560,
+          "prs_merged_by_kuri": 281,
+          "lines_added": 1709596,
+          "lines_deleted": 1190817,
+          "lines_added_by_kuri": 580432,
+          "median_hours_to_merge": 0.1,
+          "releases_published": 148,
+          "distinct_authors": 8,
+          "top_authors": {
+            "drchinca": 281,
+            "Marwan-Samih-Brighthive": 148,
+            "Nano-233": 94,
+            "azahid89": 16,
+            "keaganpzh-brighthive": 10,
+            "yuvbindalBrightHive": 5,
+            "sherbiny-bh": 4,
+            "larebksyed": 2
+          }
+        }
+      }
+    },
+    {
+      "repo": "agentic-project-mgmt",
+      "created_at": "2026-01-23T03:54:03Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 196,
+          "prs_merged_by_kuri": 194,
+          "lines_added": 91250,
+          "lines_deleted": 8485,
+          "lines_added_by_kuri": 91178,
+          "median_hours_to_merge": 1.7,
+          "releases_published": 0,
+          "distinct_authors": 3,
+          "top_authors": {
+            "drchinca": 194,
+            "Nano-233": 1,
+            "Marwan-Samih-Brighthive": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brightbot-slack-server",
+      "created_at": "2025-10-19T07:05:23Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 171,
+          "prs_merged_by_kuri": 129,
+          "lines_added": 111367,
+          "lines_deleted": 17709,
+          "lines_added_by_kuri": 79442,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 3,
+          "top_authors": {
+            "drchinca": 129,
+            "Marwan-Samih-Brighthive": 31,
+            "Nano-233": 11
+          }
+        }
+      }
+    },
+    {
+      "repo": "brightagent-v3",
+      "created_at": "2025-11-11T16:43:25Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 111,
+          "prs_merged_by_kuri": 111,
+          "lines_added": 209707,
+          "lines_deleted": 25798,
+          "lines_added_by_kuri": 209707,
+          "median_hours_to_merge": 0.5,
+          "releases_published": 2,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 111
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-e2e",
+      "created_at": "2026-06-18T20:26:07Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 97,
+          "prs_merged_by_kuri": 92,
+          "lines_added": 53155,
+          "lines_deleted": 3398,
+          "lines_added_by_kuri": 51480,
+          "median_hours_to_merge": 0.5,
+          "releases_published": 0,
+          "distinct_authors": 3,
+          "top_authors": {
+            "drchinca": 92,
+            "Nano-233": 4,
+            "Marwan-Samih-Brighthive": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "platform-saas-ai-context",
+      "created_at": "2026-01-20T01:31:07Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 46,
+          "prs_merged_by_kuri": 46,
+          "lines_added": 6145,
+          "lines_deleted": 1535,
+          "lines_added_by_kuri": 6145,
+          "median_hours_to_merge": 0.6,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 46
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-data-organization-cdk",
+      "created_at": "2022-03-25T22:22:01Z",
+      "windows": {
+        "before": {
+          "prs_merged": 10,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 1439,
+          "lines_deleted": 223,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 12.3,
+          "releases_published": 0,
+          "distinct_authors": 2,
+          "top_authors": {
+            "sherbiny-bh": 9,
+            "adrianmf94": 1
+          }
+        },
+        "after": {
+          "prs_merged": 44,
+          "prs_merged_by_kuri": 9,
+          "lines_added": 9988,
+          "lines_deleted": 1191,
+          "lines_added_by_kuri": 5342,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 5,
+          "top_authors": {
+            "sherbiny-bh": 29,
+            "drchinca": 9,
+            "Marwan-Samih-Brighthive": 4,
+            "Nano-233": 1,
+            "keaganpzh-brighthive": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-data-workspace-cdk",
+      "created_at": "2022-04-12T21:14:38Z",
+      "windows": {
+        "before": {
+          "prs_merged": 23,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 3757,
+          "lines_deleted": 478,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 1.7,
+          "releases_published": 0,
+          "distinct_authors": 4,
+          "top_authors": {
+            "sherbiny-bh": 12,
+            "adrianmf94": 8,
+            "keaganpzh-brighthive": 2,
+            "larebksyed": 1
+          }
+        },
+        "after": {
+          "prs_merged": 17,
+          "prs_merged_by_kuri": 4,
+          "lines_added": 7556,
+          "lines_deleted": 410,
+          "lines_added_by_kuri": 490,
+          "median_hours_to_merge": 0.1,
+          "releases_published": 0,
+          "distinct_authors": 4,
+          "top_authors": {
+            "sherbiny-bh": 10,
+            "drchinca": 4,
+            "Marwan-Samih-Brighthive": 2,
+            "Nano-233": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-admin",
+      "created_at": "2022-08-09T15:05:38Z",
+      "windows": {
+        "before": {
+          "prs_merged": 22,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 46842,
+          "lines_deleted": 10183,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 1.2,
+          "releases_published": 0,
+          "distinct_authors": 4,
+          "top_authors": {
+            "keaganpzh-brighthive": 11,
+            "adrianmf94": 6,
+            "sherbiny-bh": 3,
+            "larebksyed": 2
+          }
+        },
+        "after": {
+          "prs_merged": 10,
+          "prs_merged_by_kuri": 7,
+          "lines_added": 6572,
+          "lines_deleted": 50,
+          "lines_added_by_kuri": 4915,
+          "median_hours_to_merge": 28.9,
+          "releases_published": 0,
+          "distinct_authors": 4,
+          "top_authors": {
+            "drchinca": 7,
+            "sherbiny-bh": 1,
+            "keaganpzh-brighthive": 1,
+            "larebksyed": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brightagent-engineering-runner",
+      "created_at": "2026-08-13T19:48:44Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 9,
+          "prs_merged_by_kuri": 9,
+          "lines_added": 6406,
+          "lines_deleted": 327,
+          "lines_added_by_kuri": 6406,
+          "median_hours_to_merge": 0.3,
+          "releases_published": 1,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 9
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-scripts",
+      "created_at": "2025-10-30T14:13:57Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 6,
+          "prs_merged_by_kuri": 6,
+          "lines_added": 900,
+          "lines_deleted": 3,
+          "lines_added_by_kuri": 900,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 6
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-docs",
+      "created_at": "2025-04-10T15:55:53Z",
+      "windows": {
+        "before": {
+          "prs_merged": 16,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 6606,
+          "lines_deleted": 942,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 0.1,
+          "releases_published": 0,
+          "distinct_authors": 3,
+          "top_authors": {
+            "keaganpzh-brighthive": 9,
+            "chloetan-brighthive": 5,
+            "yuvbindalBrightHive": 2
+          }
+        },
+        "after": {
+          "prs_merged": 6,
+          "prs_merged_by_kuri": 6,
+          "lines_added": 2839,
+          "lines_deleted": 2985,
+          "lines_added_by_kuri": 2839,
+          "median_hours_to_merge": 35.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 6
+          }
+        }
+      }
+    },
+    {
+      "repo": "datapiary",
+      "created_at": "2023-04-06T08:10:56Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 4,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 1435,
+          "lines_deleted": 273,
+          "lines_added_by_kuri": 25,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 2,
+          "top_authors": {
+            "sherbiny-bh": 3,
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-testing-infrastructure-cdk",
+      "created_at": "2026-01-03T07:25:06Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 3,
+          "prs_merged_by_kuri": 3,
+          "lines_added": 24293,
+          "lines_deleted": 3100,
+          "lines_added_by_kuri": 24293,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 3
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-metaByte-stack",
+      "created_at": "2026-02-05T15:17:02Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 3,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 192,
+          "lines_deleted": 42,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 0.6,
+          "releases_published": 0,
+          "distinct_authors": 2,
+          "top_authors": {
+            "sherbiny-bh": 2,
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-ibm-wxo",
+      "created_at": "2025-08-20T20:23:33Z",
+      "windows": {
+        "before": {
+          "prs_merged": 5,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 201,
+          "lines_deleted": 37,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "keaganpzh-brighthive": 5
+          }
+        },
+        "after": {
+          "prs_merged": 2,
+          "prs_merged_by_kuri": 2,
+          "lines_added": 51,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 51,
+          "median_hours_to_merge": 3.2,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 2
+          }
+        }
+      }
+    },
+    {
+      "repo": "longaeva-semantic-views",
+      "created_at": "2026-06-09T02:39:56Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 2,
+          "prs_merged_by_kuri": 2,
+          "lines_added": 20,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 20,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 2
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-okta-idp-cdk",
+      "created_at": "2026-06-18T00:31:01Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 2,
+          "prs_merged_by_kuri": 2,
+          "lines_added": 731,
+          "lines_deleted": 83,
+          "lines_added_by_kuri": 731,
+          "median_hours_to_merge": 30.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 2
+          }
+        }
+      }
+    },
+    {
+      "repo": "brightbot-dbt-MCP-server",
+      "created_at": "2025-04-04T21:30:53Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 2,
+          "prs_merged_by_kuri": 2,
+          "lines_added": 818,
+          "lines_deleted": 127,
+          "lines_added_by_kuri": 818,
+          "median_hours_to_merge": 4.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 2
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-jobs",
+      "created_at": "2025-02-04T19:15:50Z",
+      "windows": {
+        "before": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 464,
+          "lines_deleted": 5,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "keaganpzh-brighthive": 1
+          }
+        },
+        "after": {
+          "prs_merged": 2,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 652,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 170.0,
+          "releases_published": 0,
+          "distinct_authors": 2,
+          "top_authors": {
+            "drchinca": 1,
+            "chloetan-brighthive": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brightportal-webapp",
+      "created_at": "2026-05-12T18:12:30Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 403,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 403,
+          "median_hours_to_merge": 884.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-mock-data",
+      "created_at": "2025-06-09T20:29:33Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 7,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 7,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-openmetadata-stack",
+      "created_at": "2025-10-14T13:13:38Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 8,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "dbt_brighthive_cdk",
+      "created_at": "2022-04-28T16:59:21Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 8,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-metadata-cdk",
+      "created_at": "2022-02-10T23:07:47Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 8,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-data-onboarding-cdk",
+      "created_at": "2022-03-30T15:36:40Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 8,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "brighthive-auth-cdk",
+      "created_at": "2022-01-21T14:58:37Z",
+      "windows": {
+        "before": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        },
+        "after": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 1,
+          "lines_added": 8,
+          "lines_deleted": 2,
+          "lines_added_by_kuri": 8,
+          "median_hours_to_merge": 0.0,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "drchinca": 1
+          }
+        }
+      }
+    },
+    {
+      "repo": "bbassistants",
+      "created_at": "2024-07-12T21:46:09Z",
+      "windows": {
+        "before": {
+          "prs_merged": 20,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 264,
+          "lines_deleted": 244,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 0.1,
+          "releases_published": 0,
+          "distinct_authors": 3,
+          "top_authors": {
+            "larebksyed": 10,
+            "adrianmf94": 9,
+            "azahid89": 1
+          }
+        },
+        "after": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        }
+      }
+    },
+    {
+      "repo": "brighthive-testing-exercise",
+      "created_at": "2025-05-20T01:41:37Z",
+      "windows": {
+        "before": {
+          "prs_merged": 1,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 546011,
+          "lines_deleted": 9,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 22.2,
+          "releases_published": 0,
+          "distinct_authors": 1,
+          "top_authors": {
+            "KirollosAziz26": 1
+          }
+        },
+        "after": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        }
+      }
+    },
+    {
+      "repo": "brighthive-platform-services",
+      "created_at": "2023-04-27T14:05:52Z",
+      "windows": {
+        "before": {
+          "prs_merged": 40,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 76623,
+          "lines_deleted": 7133,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": 8.7,
+          "releases_published": 0,
+          "distinct_authors": 5,
+          "top_authors": {
+            "adrianmf94": 17,
+            "emad-boctor": 10,
+            "keaganpzh-brighthive": 9,
+            "larebksyed": 2,
+            "sherbiny-bh": 2
+          }
+        },
+        "after": {
+          "prs_merged": 0,
+          "prs_merged_by_kuri": 0,
+          "lines_added": 0,
+          "lines_deleted": 0,
+          "lines_added_by_kuri": 0,
+          "median_hours_to_merge": null,
+          "releases_published": 0,
+          "distinct_authors": 0,
+          "top_authors": {}
+        }
+      }
+    }
+  ]
+}

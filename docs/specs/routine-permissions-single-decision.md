@@ -3,7 +3,7 @@ title: Routine permissions — one decision in platform-core
 epic: BH-1464
 tickets: [BH-1565, BH-1572, BH-1573, BH-1574, BH-1575, BH-1576, BH-1577]
 author: kuri
-status: Draft
+status: Partial
 created: 2026-10-05
 last-reviewed: 2026-10-05
 generates: tickets
