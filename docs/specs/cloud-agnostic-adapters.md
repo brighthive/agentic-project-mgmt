@@ -1,7 +1,8 @@
 ---
 name: "Cloud-agnostic adapters"
 epic: "BH-1640"
-status: "Draft"
+status: Partial
+roadmap: "Epic BH-1640 and clients/trials/nestle/tickets.md; registries exist today, Phase 0 cleanups and Azure adapters not started"
 last_reviewed: "2026-10-27"
 ---
 
