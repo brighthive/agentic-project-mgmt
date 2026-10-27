@@ -1,0 +1,6 @@
+[
+  {"key": "BH-1505", "summary": "feat(brightbot): add `project` Skills-affinity bucket + routing for project_agent", "status": "Done", "assignee": "Kuri", "points": null, "type": "Task", "epic": "BH-1255"},
+  {"key": "BH-1506", "summary": "fix(platform-core): addResourceToProject/removeResourceFromProject missing workspaceId — permanent authorize() fail-closed", "status": "Done", "assignee": "Kuri", "points": null, "type": "Task", "epic": "BH-1255"},
+  {"key": "BH-1507", "summary": "fix(platform-core): resource↔project link/unlink never invalidates the Redis project-resources cache", "status": "Done", "assignee": "Kuri", "points": null, "type": "Task", "epic": "BH-1255"},
+  {"key": "BH-1539", "summary": "RESOLVED: root-owned files broke Neo4j after 2026-09-22 scheduled reboot — recursive chown fixed it, no data lost", "status": "Done", "assignee": "Kuri", "points": null, "type": "Task", "epic": null}
+]

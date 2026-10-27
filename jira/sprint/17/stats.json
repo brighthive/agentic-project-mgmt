@@ -1,0 +1,151 @@
+{
+  "sprint": 17,
+  "name": "Sprint 17 🥝",
+  "dates": {
+    "start": "2026-08-24",
+    "end": "2026-10-06",
+    "duration_days": 44
+  },
+  "unofficial": true,
+  "note": "No Jira sprint object exists for this window. Last release was Sprint 16 🍓 (Aug 17–23, posted to Slack Aug 23; no repo artifacts). Window is a date-range cut.",
+  "tickets": {
+    "resolved_in_window": 4,
+    "done": [
+      "BH-1505",
+      "BH-1506",
+      "BH-1507",
+      "BH-1539"
+    ],
+    "referenced_by_prs": 103,
+    "referenced_status": {
+      "testing_dev": 35,
+      "ready_for_staging": 3,
+      "code_review": 4,
+      "staging_qc": 1,
+      "in_progress": 1,
+      "to_do": 5,
+      "needs_refinement": 46,
+      "done": 5
+    },
+    "note": "Every ticket referenced by a PR is Kuri-owned. Marwan and Harbour PRs carry no Jira key and no Jira issue assigned to them was updated in-window.",
+    "referenced_by_prs_found_in_jira": 100
+  },
+  "points": {
+    "note": "Team does not estimate — no story points on in-window tickets."
+  },
+  "team": [
+    "Kuri",
+    "Marwan",
+    "Harbour"
+  ],
+  "production_release": {
+    "date": "2026-09-30",
+    "prs": [
+      "brightbot#1084",
+      "brighthive-platform-core#1306",
+      "brighthive-webapp#1479"
+    ],
+    "followups": [
+      "platform-core#1307–1311 prod GraphQL ECS cutover + Cognito/CI fixes",
+      "webapp#1480/#1481 revert then re-apply of the promotion",
+      "brightbot#1090 scheduler in-process fix on prod"
+    ]
+  },
+  "prs": {
+    "total": 254,
+    "code_prs": 195,
+    "release_promotion_prs": 59,
+    "lines_changed_code_only": {
+      "additions": 218197,
+      "deletions": 53750
+    },
+    "generated_lines_note": "platform-core#1220 includes 65,811 lines of regenerated src/common/ogm-types.ts",
+    "repos": [
+      "agentic-project-mgmt",
+      "brightbot",
+      "brightbot-slack-server",
+      "brighthive-e2e",
+      "brighthive-platform-core",
+      "brighthive-webapp",
+      "platform-saas-ai-context"
+    ],
+    "by_repo": {
+      "agentic-project-mgmt": {
+        "total": 12,
+        "code": 12
+      },
+      "brightbot": {
+        "total": 73,
+        "code": 59
+      },
+      "brightbot-slack-server": {
+        "total": 1,
+        "code": 1
+      },
+      "brighthive-e2e": {
+        "total": 12,
+        "code": 12
+      },
+      "brighthive-platform-core": {
+        "total": 103,
+        "code": 75
+      },
+      "brighthive-webapp": {
+        "total": 50,
+        "code": 33
+      },
+      "platform-saas-ai-context": {
+        "total": 3,
+        "code": 3
+      }
+    },
+    "by_author": {
+      "Marwan": {
+        "github": "Marwan-Samih-Brighthive",
+        "code_prs": 27,
+        "additions": 94481,
+        "deletions": 39929,
+        "repos": {
+          "brightbot": 5,
+          "brighthive-platform-core": 15,
+          "brighthive-webapp": 7
+        },
+        "excl_generated": {
+          "additions": 28670,
+          "deletions": 2845
+        }
+      },
+      "Harbour": {
+        "github": "Nano-233",
+        "code_prs": 16,
+        "additions": 39553,
+        "deletions": 9099,
+        "repos": {
+          "brightbot": 5,
+          "brighthive-platform-core": 2,
+          "brighthive-webapp": 9
+        }
+      },
+      "Kuri": {
+        "github": "drchinca",
+        "code_prs": 152,
+        "additions": 84163,
+        "deletions": 4722,
+        "repos": {
+          "agentic-project-mgmt": 12,
+          "brightbot": 49,
+          "brightbot-slack-server": 1,
+          "brighthive-e2e": 12,
+          "brighthive-platform-core": 58,
+          "brighthive-webapp": 17,
+          "platform-saas-ai-context": 3
+        }
+      }
+    },
+    "kuri_share_pct": 77.9,
+    "lines_changed_code_only_excl_generated": {
+      "additions": 152386,
+      "deletions": 16666
+    }
+  }
+}
