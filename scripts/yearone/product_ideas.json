@@ -1,0 +1,212 @@
+[
+  {
+    "id": "brightsignals",
+    "name": "BrightSignals",
+    "one_line": "Proactive notifications across the platform, one shared signal catalog for Slack and the webapp.",
+    "spec_globs": [
+      "THEME-honest-surfaces.md",
+      "honest-observe-surface.md",
+      "chat-session-notifications.md",
+      "proactive-pipeline-ingestion-monitoring.md",
+      "hive-health-landing-indicator.md"
+    ],
+    "epic_keys": [
+      "BH-409",
+      "BH-1131"
+    ],
+    "epic_summary_regex": "signal|notification|alert",
+    "modules": [
+      {
+        "repo": "brighthive-platform-core",
+        "path": "src/notifications"
+      },
+      {
+        "repo": "brighthive-platform-core",
+        "path": "lambdas/notification_dispatcher"
+      },
+      {
+        "repo": "brighthive-webapp",
+        "path": "src/Notifications"
+      }
+    ],
+    "origin_epics": [
+      "BH-111",
+      "BH-117"
+    ]
+  },
+  {
+    "id": "brightroutines",
+    "name": "BrightRoutines",
+    "one_line": "The agent notices repeated work and proposes a scheduled, auditable routine.",
+    "spec_globs": [
+      "brightroutine*.md",
+      "brightroutines-*.md",
+      "routine-permissions-single-decision.md",
+      "slack-routine-suggestion-scheduling.md",
+      "THEME-brightroutines-closeout.md",
+      "THEME-routine-authoring.md"
+    ],
+    "epic_keys": [
+      "BH-876",
+      "BH-1463"
+    ],
+    "epic_summary_regex": "routine",
+    "modules": [
+      {
+        "repo": "brightbot",
+        "path": "brightbot/routines"
+      },
+      {
+        "repo": "brightbot",
+        "path": "brightbot/scheduled_agents"
+      },
+      {
+        "repo": "brighthive-platform-core",
+        "path": "lambdas/scheduled_agent_dispatcher"
+      },
+      {
+        "repo": "brighthive-webapp",
+        "path": "src/Schedules"
+      }
+    ],
+    "origin_epics": [
+      "BH-111"
+    ]
+  },
+  {
+    "id": "fleet",
+    "name": "Fleet health and self-healing",
+    "one_line": "Watch every pipeline and warehouse as a fleet, and fix failures through reviewed pull requests.",
+    "spec_globs": [
+      "fleet-health-digest-push.md",
+      "pipeline-self-healing-fleet.md",
+      "self-healing-pipelines.md",
+      "THEME-fleet-self-healing.md",
+      "sqlserver-health-watch.md",
+      "pipeline-connectivity-watchdog.md"
+    ],
+    "epic_keys": [
+      "BH-1036"
+    ],
+    "epic_summary_regex": "monitoring|health|self-heal|watchdog",
+    "modules": [
+      {
+        "repo": "brightbot",
+        "path": "brightbot/fleet_health"
+      }
+    ],
+    "origin_epics": [
+      "BH-111",
+      "BH-113"
+    ]
+  },
+  {
+    "id": "project-glue",
+    "name": "Project as the glue",
+    "one_line": "A Project is the join point of every platform capability, not a container.",
+    "spec_globs": [
+      "projects-2.0-design-spec.md",
+      "projects-2.0-technical-requirements.md",
+      "projects-at-scale.md",
+      "project-*.md",
+      "PROJECT_V2_TRACKER.md",
+      "THEME-project-activation.md",
+      "THEME-project-proactive-lifecycle.md"
+    ],
+    "epic_keys": [
+      "BH-1255"
+    ],
+    "epic_summary_regex": "project",
+    "modules": [],
+    "origin_epics": [
+      "BH-116",
+      "BH-114"
+    ]
+  },
+  {
+    "id": "multi-warehouse",
+    "name": "Multi-warehouse, multi-database",
+    "one_line": "Warehouse, database and table identity that works the same across Snowflake, Redshift, Synapse and on-prem SQL Server.",
+    "spec_globs": [
+      "azure-synapse-full-integration.md",
+      "snowflake-full-integration.md",
+      "on-prem-sql-server-warehouse.md",
+      "table-parity-cross-warehouse-database.md",
+      "table-parity-verb.md",
+      "default-warehouse-ui-surfacing.md",
+      "THEME-catalog-and-identity.md",
+      "THEME-cross-engine-correctness.md",
+      "loopcapital-onprem-read-write-sandbox.md",
+      "aws-azure-network-connectivity.md",
+      "byow-end-to-end-omd-native.md"
+    ],
+    "epic_keys": [
+      "BH-1370"
+    ],
+    "epic_summary_regex": "warehouse|synapse|snowflake|database|byow",
+    "modules": [],
+    "origin_epics": [
+      "BH-115"
+    ]
+  },
+  {
+    "id": "engine-agnostic",
+    "name": "Engine and framework agnosticism",
+    "one_line": "Pipelines, lineage and semantic views defined once, independent of dbt, Databricks, SSIS or any single engine.",
+    "spec_globs": [
+      "open-semantic-view.md",
+      "engineering-agent-warehouse-agnostic.md",
+      "pipeline-artifact-parser-registry.md",
+      "lineage-adapter-sql-server.md",
+      "lineage-aware-data-quality.md",
+      "THEME-spec-driven-pipelines.md"
+    ],
+    "epic_keys": [
+      "BH-1061"
+    ],
+    "epic_summary_regex": "lineage|agnostic|semantic view",
+    "modules": [
+      {
+        "repo": "brightbot",
+        "path": "brightbot/integrations"
+      }
+    ],
+    "origin_epics": [
+      "BH-115",
+      "BH-110"
+    ]
+  },
+  {
+    "id": "orchestrated-elt",
+    "name": "Orchestrated ELT with agents",
+    "one_line": "Up- and downstream data pipelines run, versioned and repaired by agents, including on the customer's own filesystem.",
+    "spec_globs": [
+      "pipeline-engine-full-lifecycle-control.md",
+      "autonomous-dbt-project-lifecycle.md",
+      "pipeline-run-lifecycle.md",
+      "ssis-ssrs-to-dbt-regeneration.md",
+      "ssis-ssrs-proactive-pipeline-source.md",
+      "on-prem-engineering-runner.md",
+      "project-engine-run-sync.md",
+      "remediation-pr-engine-run-logs.md",
+      "THEME-onprem-engineering.md",
+      "THEME-legacy-file-intake.md"
+    ],
+    "epic_keys": [
+      "BH-1421",
+      "BH-860",
+      "BH-1255"
+    ],
+    "epic_summary_regex": "pipeline|dbt|on-prem|engineering",
+    "modules": [
+      {
+        "repo": "brightbot",
+        "path": "brightbot/pipelines"
+      }
+    ],
+    "origin_epics": [
+      "BH-119",
+      "BH-111"
+    ]
+  }
+]

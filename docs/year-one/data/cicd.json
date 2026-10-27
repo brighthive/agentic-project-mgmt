@@ -1,0 +1,467 @@
+{
+  "generated_at": "2026-10-22T23:50:54.311038+00:00",
+  "note": "Only completed runs; success% is success/(success+failure), cancelled and skipped excluded.",
+  "repos": {
+    "brightbot": {
+      "before": {
+        "runs_completed": 131,
+        "pct_success_of_decided": 0.0,
+        "median_minutes": 571240.3,
+        "distinct_workflows": 1,
+        "pull_request_runs": 89,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-09": 67,
+          "2025-10": 64
+        },
+        "top_workflows": {
+          "Brightbot Unit Tests": 131
+        }
+      },
+      "after": {
+        "runs_completed": 7037,
+        "pct_success_of_decided": 90.4,
+        "median_minutes": 0.2,
+        "distinct_workflows": 30,
+        "pull_request_runs": 4366,
+        "deploy_runs": 50,
+        "deploy_success": 1,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-10": 46,
+          "2025-11": 78,
+          "2025-12": 8,
+          "2026-01": 51,
+          "2026-02": 234,
+          "2026-03": 203,
+          "2026-04": 341,
+          "2026-05": 178,
+          "2026-06": 1827,
+          "2026-07": 2449,
+          "2026-08": 616,
+          "2026-09": 295,
+          "2026-10": 711
+        },
+        "top_workflows": {
+          "PR Title Check": 2130,
+          "Claude PR Review": 2078,
+          "Run Tests": 1598,
+          "PR Auto Template": 797,
+          "Run Evaluations": 210,
+          "Build production image": 92,
+          "Brightbot Unit Tests": 56,
+          "Release": 50
+        }
+      }
+    },
+    "brighthive-platform-core": {
+      "before": {
+        "runs_completed": 21,
+        "pct_success_of_decided": 76.2,
+        "median_minutes": 12.2,
+        "distinct_workflows": 3,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-09": 12,
+          "2025-10": 9
+        },
+        "top_workflows": {
+          "Develop": 13,
+          "Staging": 5,
+          "Production": 3
+        }
+      },
+      "after": {
+        "runs_completed": 6500,
+        "pct_success_of_decided": 85.5,
+        "median_minutes": 1.1,
+        "distinct_workflows": 25,
+        "pull_request_runs": 4092,
+        "deploy_runs": 5,
+        "deploy_success": 1,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-10": 14,
+          "2025-11": 9,
+          "2025-12": 18,
+          "2026-01": 20,
+          "2026-02": 38,
+          "2026-03": 29,
+          "2026-04": 289,
+          "2026-05": 128,
+          "2026-06": 1475,
+          "2026-07": 2308,
+          "2026-08": 847,
+          "2026-09": 685,
+          "2026-10": 640
+        },
+        "top_workflows": {
+          "Claude PR Review": 2333,
+          "PR Title Check": 1633,
+          "Unit Tests": 1170,
+          "PR Auto Template": 636,
+          "Develop": 276,
+          "Staging": 221,
+          "Authz Integration (live Neo4j)": 175,
+          "Production": 33
+        }
+      }
+    },
+    "brighthive-webapp": {
+      "before": {
+        "runs_completed": 10,
+        "pct_success_of_decided": 0.0,
+        "median_minutes": 0.6,
+        "distinct_workflows": 10,
+        "pull_request_runs": 0,
+        "deploy_runs": 10,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-09": 4,
+          "2025-10": 6
+        },
+        "top_workflows": {
+          "Deploying Release v.2.6.1.1-pre-release to Staging": 1,
+          "Deploying Release v.2.6.1.1-release to Production": 1,
+          "Deploying Release v.2.6.2.4-pre-release to Staging": 1,
+          "Deploying Release v.2.6.2.3-pre-release to Staging": 1,
+          "Deploying Release v.2.6.2.2-pre-release to Staging": 1,
+          "Deploying Release v.2.6.2.1-pre-release to Staging": 1,
+          "Deploying Release v.2.6.1-release to Production": 1,
+          "Deploying Release v.2.5.8-pre-release to Staging": 1
+        }
+      },
+      "after": {
+        "runs_completed": 1922,
+        "pct_success_of_decided": 46.7,
+        "median_minutes": 3.1,
+        "distinct_workflows": 152,
+        "pull_request_runs": 431,
+        "deploy_runs": 155,
+        "deploy_success": 63,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-10": 3,
+          "2025-11": 5,
+          "2025-12": 4,
+          "2026-01": 5,
+          "2026-02": 59,
+          "2026-03": 45,
+          "2026-04": 165,
+          "2026-05": 103,
+          "2026-06": 349,
+          "2026-07": 709,
+          "2026-08": 279,
+          "2026-09": 124,
+          "2026-10": 72
+        },
+        "top_workflows": {
+          "Claude PR Review": 1730,
+          "Signal Catalog Check": 37,
+          "Deploying Release  to Production": 3,
+          "Deploying Release v2.8.1.1-release to Production": 2,
+          "Deploying Release v2.8.0.3-pre-release to Staging": 2,
+          "Deploying Release v2.7.0.2-pre-release to Staging": 2,
+          "Deploying Release v2.8.2.1-pre-release to Staging": 1,
+          "Deploying Release v2.8.2.0-pre-release to Staging": 1
+        }
+      }
+    },
+    "brighthive-e2e": {
+      "before": {
+        "runs_completed": 0,
+        "pct_success_of_decided": null,
+        "median_minutes": null,
+        "distinct_workflows": 0,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {},
+        "top_workflows": {}
+      },
+      "after": {
+        "runs_completed": 343,
+        "pct_success_of_decided": 67.9,
+        "median_minutes": 0.5,
+        "distinct_workflows": 4,
+        "pull_request_runs": 203,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 64,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-06": 104,
+          "2026-07": 133,
+          "2026-08": 41,
+          "2026-09": 15,
+          "2026-10": 50
+        },
+        "top_workflows": {
+          "tracker-up-to-date": 278,
+          "brighthive-e2e health-check": 52,
+          "brighthive-e2e prod smoke (read-only)": 12,
+          "Graph Update: uv in /. #1421803068": 1
+        }
+      }
+    },
+    "brightbot-slack-server": {
+      "before": {
+        "runs_completed": 51,
+        "pct_success_of_decided": 21.6,
+        "median_minutes": 2.1,
+        "distinct_workflows": 1,
+        "pull_request_runs": 0,
+        "deploy_runs": 51,
+        "deploy_success": 11,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2025-10": 51
+        },
+        "top_workflows": {
+          "Deploy Slack Bot to AWS": 51
+        }
+      },
+      "after": {
+        "runs_completed": 924,
+        "pct_success_of_decided": 70.2,
+        "median_minutes": 2.5,
+        "distinct_workflows": 5,
+        "pull_request_runs": 348,
+        "deploy_runs": 466,
+        "deploy_success": 305,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-01": 16,
+          "2026-02": 25,
+          "2026-03": 44,
+          "2026-04": 69,
+          "2026-05": 19,
+          "2026-06": 289,
+          "2026-07": 382,
+          "2026-08": 40,
+          "2026-10": 40
+        },
+        "top_workflows": {
+          "Deploy Slack Bot to AWS": 471,
+          "Claude PR Review": 422,
+          "Signal Catalog Check": 28,
+          "PR Title Check": 2,
+          "PR Auto Template": 1
+        }
+      }
+    },
+    "agentic-project-mgmt": {
+      "before": {
+        "runs_completed": 0,
+        "pct_success_of_decided": null,
+        "median_minutes": null,
+        "distinct_workflows": 0,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {},
+        "top_workflows": {}
+      },
+      "after": {
+        "runs_completed": 837,
+        "pct_success_of_decided": 69.8,
+        "median_minutes": 0.9,
+        "distinct_workflows": 5,
+        "pull_request_runs": 182,
+        "deploy_runs": 20,
+        "deploy_success": 4,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-01": 3,
+          "2026-02": 18,
+          "2026-03": 1,
+          "2026-05": 44,
+          "2026-06": 129,
+          "2026-07": 422,
+          "2026-08": 122,
+          "2026-09": 25,
+          "2026-10": 73
+        },
+        "top_workflows": {
+          "Claude PR Review": 753,
+          "Specs classified": 64,
+          ".github/workflows/sprint-release.yml": 12,
+          "Sprint Release Automation": 4,
+          ".github/workflows/sprint-release-v2.yml": 4
+        }
+      }
+    },
+    "brightagent-v3": {
+      "before": {
+        "runs_completed": 0,
+        "pct_success_of_decided": null,
+        "median_minutes": null,
+        "distinct_workflows": 0,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {},
+        "top_workflows": {}
+      },
+      "after": {
+        "runs_completed": 2717,
+        "pct_success_of_decided": 66.0,
+        "median_minutes": 0.4,
+        "distinct_workflows": 7,
+        "pull_request_runs": 1454,
+        "deploy_runs": 6,
+        "deploy_success": 3,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-04": 862,
+          "2026-05": 946,
+          "2026-06": 100,
+          "2026-07": 726,
+          "2026-08": 31,
+          "2026-09": 30,
+          "2026-10": 22
+        },
+        "top_workflows": {
+          "Claude PR Review": 1052,
+          "CI": 1003,
+          "PR Title Check": 506,
+          "eval-nightly": 146,
+          "eval-pr": 4,
+          "Deploy to AWS": 3,
+          "Release": 3
+        }
+      }
+    },
+    "brighthive-admin": {
+      "before": {
+        "runs_completed": 0,
+        "pct_success_of_decided": null,
+        "median_minutes": null,
+        "distinct_workflows": 0,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {},
+        "top_workflows": {}
+      },
+      "after": {
+        "runs_completed": 9,
+        "pct_success_of_decided": 0.0,
+        "median_minutes": 0.5,
+        "distinct_workflows": 1,
+        "pull_request_runs": 1,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-02": 1,
+          "2026-04": 2,
+          "2026-06": 5,
+          "2026-07": 1
+        },
+        "top_workflows": {
+          "Claude PR Review": 9
+        }
+      }
+    },
+    "brighthive-data-organization-cdk": {
+      "before": {
+        "runs_completed": 0,
+        "pct_success_of_decided": null,
+        "median_minutes": null,
+        "distinct_workflows": 0,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {},
+        "top_workflows": {}
+      },
+      "after": {
+        "runs_completed": 34,
+        "pct_success_of_decided": 71.4,
+        "median_minutes": 2.3,
+        "distinct_workflows": 2,
+        "pull_request_runs": 2,
+        "deploy_runs": 1,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-02": 3,
+          "2026-04": 17,
+          "2026-05": 1,
+          "2026-06": 7,
+          "2026-07": 4,
+          "2026-08": 2
+        },
+        "top_workflows": {
+          "Claude PR Review": 33,
+          "Release": 1
+        }
+      }
+    },
+    "brighthive-data-workspace-cdk": {
+      "before": {
+        "runs_completed": 0,
+        "pct_success_of_decided": null,
+        "median_minutes": null,
+        "distinct_workflows": 0,
+        "pull_request_runs": 0,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {},
+        "top_workflows": {}
+      },
+      "after": {
+        "runs_completed": 12,
+        "pct_success_of_decided": 0.0,
+        "median_minutes": 0.5,
+        "distinct_workflows": 1,
+        "pull_request_runs": 1,
+        "deploy_runs": 0,
+        "deploy_success": 0,
+        "e2e_or_health_runs": 0,
+        "e2e_or_health_success": 0,
+        "runs_by_month": {
+          "2026-02": 2,
+          "2026-04": 3,
+          "2026-06": 3,
+          "2026-07": 1,
+          "2026-08": 3
+        },
+        "top_workflows": {
+          "Claude PR Review": 12
+        }
+      }
+    }
+  }
+}
