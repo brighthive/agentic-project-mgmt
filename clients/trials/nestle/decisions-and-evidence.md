@@ -42,7 +42,7 @@ until the trial owner accepts it.
 | O-03 | Full division/region inventory and pilot selection | Nestlé sponsor | Before scope signoff | Open |
 | O-04 | Business products, baseline, thresholds and signatories | Product owners | Before Day 1 | Open |
 | O-05 | Current workspace/account mapping and data/access permission | Technical/security owners | Before access | Open |
-| O-06 | Live Jira epic and GTM reference | Delivery owner | Before Day 1 | Epics BH-1639 (trial) and BH-1640 (Azure) created 2026-10-26; GTM record link still open. See [tickets](tickets.md) |
+| O-06 | Live Jira epic and GTM reference | Delivery owner | Before Day 1 | Epics [BH-1639](https://brighthiveio.atlassian.net/browse/BH-1639) (trial) and [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640) (Azure) created 2026-10-26; GTM record link still open. See [tickets](tickets.md) |
 | O-07 | Cost/volume acceptance scope and billing evidence availability | Commercial/platform owners | Before Day 1 | Historical ask to reconfirm |
 | O-08 | Incident recipients, support coverage and real approval path | Operations owner | Before monitoring | Open |
 | O-09–O-13 | Trial venue vs Azure readiness, orchestrator engine, Foundry models, Git remote, Lightweight-first scope | See [Azure architecture alignment](AZURE_ARCHITECTURE.md) | Before Day 1 | Open (added 2026-10-17) |

@@ -10,17 +10,17 @@ last_reviewed: "2026-10-27"
 
 ## 1. Context
 
-Brightbot and platform-core run on AWS (Bedrock, S3, Secrets Manager, Cognito, AgentCore). The Nestlé pilot needs Azure (BH-1640). Four registries already exist, but cloud SDK calls bypass them in about 30 files. Azure should be an adapter added to a registry; GCP stays an open slot until a client needs it. Audit date 2026-10-27, from tracked files only.
+Brightbot and platform-core run on AWS (Bedrock, S3, Secrets Manager, Cognito, AgentCore). The Nestlé pilot needs Azure ([BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640)). Four registries already exist, but cloud SDK calls bypass them in about 30 files. Azure should be an adapter added to a registry; GCP stays an open slot until a client needs it. Audit date 2026-10-27, from tracked files only.
 
 ## 2. Interface contract: registries to extend
 
 | Capability | Where it lives today | Add |
 |---|---|---|
-| LLM | `brightbot/custom_llms/model_provider.py`: `LLMProvider`, tier map, `build_chat_model` | Enum value, model map, `_build_<provider>` (BH-1644) |
+| LLM | `brightbot/custom_llms/model_provider.py`: `LLMProvider`, tier map, `build_chat_model` | Enum value, model map, `_build_<provider>` ([BH-1644](https://brighthiveio.atlassian.net/browse/BH-1644)) |
 | Warehouse | `brightbot/tools/warehouse_connections.py` `CONNECTION_CLASSES` | BigQuery class for GCP; Synapse exists |
 | Pipeline sources | `brightbot/agents/governance_agent/tools/pipeline_health.py` `PIPELINE_SOURCE_ADAPTERS` | None cloud-specific |
-| Files | `brightbot/backends/s3_backend.py` implements `BackendProtocol` | `AzureBlobBackend` (BH-1646) |
-| Core services | `platform-core/src/config/inversify.config.ts`: `IIdentityProvider`, `IServiceCredentialStore`, `IMailService` | Entra provider (BH-1645), Key Vault store (BH-1646) |
+| Files | `brightbot/backends/s3_backend.py` implements `BackendProtocol` | `AzureBlobBackend` ([BH-1646](https://brighthiveio.atlassian.net/browse/BH-1646)) |
+| Core services | `platform-core/src/config/inversify.config.ts`: `IIdentityProvider`, `IServiceCredentialStore`, `IMailService` | Entra provider ([BH-1645](https://brighthiveio.atlassian.net/browse/BH-1645)), Key Vault store ([BH-1646](https://brighthiveio.atlassian.net/browse/BH-1646)) |
 
 ## 3. Invariants
 
@@ -63,7 +63,7 @@ GCP adapters (no client, no ticket), a second orchestrator, webapp auth, AWS pro
 
 ## 6. Dependencies
 
-BH-1641 decides the runtime (self-hosted LangGraph on AKS). Claude availability on Azure AI Foundry in Nestlé's region is unverified; confirm before BH-1644 starts.
+[BH-1641](https://brighthiveio.atlassian.net/browse/BH-1641) decides the runtime (self-hosted LangGraph on AKS). Claude availability on Azure AI Foundry in Nestlé's region is unverified; confirm before [BH-1644](https://brighthiveio.atlassian.net/browse/BH-1644) starts.
 
 ## 7. Slices (one PR each, under 300 lines)
 
@@ -79,7 +79,7 @@ BH-1641 decides the runtime (self-hosted LangGraph on AKS). Claude availability 
 | 0.6 | Configurable token issuers and claims | brightbot | `audit/identity.py:62`, `simple_messaging_agent.py:59` |
 | 0.7 | Guard test: SDK imports only under a provider package | both | none |
 
-**Phase 1:** Azure adapters under BH-1644 to BH-1650. Add a sandbox port (today `utils/sandbox_utils.py:200` calls `bedrock-agentcore` directly) with an "unavailable" mode on Azure.
+**Phase 1:** Azure adapters under [BH-1644](https://brighthiveio.atlassian.net/browse/BH-1644) to [BH-1650](https://brighthiveio.atlassian.net/browse/BH-1650). Add a sandbox port (today `utils/sandbox_utils.py:200` calls `bedrock-agentcore` directly) with an "unavailable" mode on Azure.
 
 ## 8. Risks
 
