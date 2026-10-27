@@ -5,6 +5,7 @@ stage: "lead"
 champion: "John Sutton"
 champion_email: ""
 first_contact: "2026-07"
+jira_epic: "BH-1658"
 status: "active"
 tags: [acg, lead, azure, vendor-feeds, ssis, asset-management]
 ---
@@ -88,6 +89,6 @@ Checked against brightbot `origin/develop` on 2026-10-27; paths are under `brigh
 
 ## Next step
 
-**Action:** confirm the demo outcome and the Azure-tenant rule with John Sutton, then agree one vendor feed for a first proof. See the [roadmap](roadmap.md) and the [pilot spec](../../../docs/specs/acg-vendor-data-pilot.md).
+**Action:** confirm the demo outcome and the Azure-tenant rule with John Sutton, then agree one vendor feed for a first proof. See the [roadmap](roadmap.md), the [tickets](tickets.md) (epic [BH-1658](https://brighthiveio.atlassian.net/browse/BH-1658)) and the [pilot spec](../../../docs/specs/acg-vendor-data-pilot.md).
 **Owner:** Suzanne El-Moursi (relationship), Kuri (technical plan)
 **By:** to set

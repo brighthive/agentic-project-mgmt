@@ -6,7 +6,7 @@ last_reviewed: "2026-10-27"
 
 # ACG roadmap
 
-Thin slices, each ending in something ACG can see. Lead record: [overview](overview.md). Acceptance criteria: [pilot spec](../../../docs/specs/acg-vendor-data-pilot.md). Nothing below is committed with ACG or in Jira yet.
+Thin slices, each ending in something ACG can see. Lead record: [overview](overview.md). Acceptance criteria: [pilot spec](../../../docs/specs/acg-vendor-data-pilot.md). Nothing below is committed with ACG yet.
 
 ## Slice 0: settle the facts
 
@@ -44,4 +44,4 @@ Only if Slice 0 says data must stay in ACG's Azure tenant. This reuses the Nestl
 
 ## Jira
 
-No ACG tickets exist. Proposed: one epic, with Slices 0 to 3 as tickets and Slice 4 linked to [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640).
+Epic [BH-1658](https://brighthiveio.atlassian.net/browse/BH-1658). Slice 0 is [BH-1659](https://brighthiveio.atlassian.net/browse/BH-1659), Slice 1 is [BH-1660](https://brighthiveio.atlassian.net/browse/BH-1660), Slice 2 is [BH-1661](https://brighthiveio.atlassian.net/browse/BH-1661), Slice 3 is [BH-1662](https://brighthiveio.atlassian.net/browse/BH-1662), and Slice 4 is [BH-1663](https://brighthiveio.atlassian.net/browse/BH-1663) (linked to [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640)). Details and status: [tickets](tickets.md).
