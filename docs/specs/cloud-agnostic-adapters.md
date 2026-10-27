@@ -71,7 +71,7 @@ GCP adapters (no client, no ticket), a second orchestrator, webapp auth, AWS pro
 
 | # | Slice | Repo | Leaks to remove |
 |---|---|---|---|
-| 0.1 | Route direct Bedrock models through `build_chat_model` | brightbot | `slack_router_agent/mcp_tool_node.py:122`, `workflow_agent/agent.py:71`, `custom_llms/custom_claude.py:77`, `dbt_agent_react.py:365` |
+| 0.1 | Route direct model construction through `build_chat_model`, and delete the unused `CustomChatBedrock` | brightbot | `slack_router_agent/mcp_tool_node.py:122`, `workflow_agent/agent.py:71`, `dbt_agent_react.py:368` (the `USE_ANTHROPIC_DIRECT` switch, branch starts at `:381`); `custom_llms/custom_claude.py:77` has no users |
 | 0.2 | One secrets port with an AWS adapter | brightbot | `tools/aws/secrets_manager.py:97`, `async_secrets_manager.py:57`, `credentials_tools.py:184`, `super_agent/nodes/agents/dbt.py:699` |
 | 0.3 | Pick the storage backend from `storage_kind` in workspace config | brightbot | `backend_factory.py:83,165`, `studio_backend.py:36`, `backend_utils.py:87` |
 | 0.4 | Per-provider binding modules and neutral interface names | platform-core | `IS3Service`, `ICognitoService`, `ISecretsManagerService`, `IDynamoDBService` |
