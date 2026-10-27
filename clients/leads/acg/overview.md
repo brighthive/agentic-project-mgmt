@@ -46,19 +46,19 @@ Registered investment adviser (RIA) that has just moved off Guggenheim-hosted in
 
 ## What the proposal promises, and what exists today
 
-Checked against brightbot `develop` on 2026-10-27. Fix the wording before anything goes to ACG again.
+Checked against brightbot `origin/develop` on 2026-10-27; paths are under `brightbot/brightbot/`. Fix the wording before anything goes to ACG again.
 
 | The proposal says | What the code shows | Verdict |
 |---|---|---|
-| 650+ connectors, custom builds on demand | Ingestion runs through Airbyte, with a custom-connector agent (`agents/airbyte_custom_agent`). No eVestment, FactSet, Morningstar, Bloomberg or Advent code exists in our repos. Whether Airbyte's catalog covers them is unchecked. | Verify each vendor before promising |
-| Great Expectations runs in the ingestion agent | It runs in the quality agent (`quality_check_agent.py`, `quality_tools.py`), not in `ingestion_agent` | Partly true; reword |
+| 650+ connectors, custom builds on demand | Ingestion runs through Airbyte, with a custom-connector agent (`agents/airbyte_custom_agent`). No eVestment, FactSet, Morningstar, Bloomberg or Advent connector code exists in our repos; the only hit is a `bloomberg_ticker` column-name pattern (`agents/dbt_agent/tools/atlas_semantic_view/constants.py:50,71`). Whether Airbyte's catalog covers them is unchecked. | Verify each vendor before promising |
+| Great Expectations runs in the ingestion agent | It runs in the quality agent (`agents/governance_agent/sub_agents/quality_check_agent.py:91`, `agents/governance_agent/tools/quality_tools.py:18`), not in `ingestion_agent` | Partly true; reword |
 | Schema profile, drift and quality score on every dataset at ingestion | `data_profiler_agent` and `schema_agent` exist. Automatic scoring at ingestion is not verified. | Verify |
 | 7 agents plus a supervisor | 21 deployed graphs, counting scheduled tasks; the supervisor is `superduper_agent` / `deep_agent`. "7" is not a code concept. | Reword |
 | "Night Shift" agent | No such agent. The real ones: `pipeline_watchdog_task`, `fleet_health_digest_task`, `profiler_task`, `quality_check_task`. | Rename to what exists |
-| Morning list in Slack, Teams, MCP or inbox | Slack delivery and MCP read-back work. Teams is a read-only tool in the Slack router, with no delivery. The webapp inbox was flag-gated off in our June notes. | Teams and inbox not available |
-| Agent writes SQL or dbt and commits to GitHub | dbt agent has GitHub commit tooling (`github_commit_resolve.py`) | Supported, through a reviewed pull request |
-| Works with Data Factory | Snowflake, Databricks, Synapse, Postgres and Redshift connections exist. No Data Factory code. | Not supported |
-| SSIS/SSRS diagnosis skill | `analyst_agent/ssis_remediation_agent.py` and pipeline diagnostics tools exist, and shipped for another client | Supported. Do not name the other client. |
+| Morning list in Slack, Teams, MCP or inbox | Slack delivery and MCP read-back work. Teams is a read-only tool in the Slack router (`agents/slack_router_agent/intent_classifier.py:23`, `mcp_tool_node.py:1`), with no delivery code. The webapp inbox was flag-gated off in our June notes. | Teams and inbox not available |
+| Agent writes SQL or dbt and commits to GitHub | dbt agent has GitHub commit tooling (`agents/dbt_agent/tools/github_commit_resolve.py`) | Supported, through a reviewed pull request |
+| Works with Data Factory | Snowflake, Databricks, Synapse, Postgres and Redshift connections exist (`utils/warehouse_types.py:22-26`). No Data Factory code (0 matches). | Not supported |
+| SSIS/SSRS diagnosis skill | `agents/analyst_agent/ssis_remediation_agent.py:104` and pipeline diagnostics tools exist, and shipped for another client | Supported. Do not name the other client. |
 | Single tenant, own S3 bucket via AWS Bedrock, "full model copy in your environment" | A per-workspace bucket in the customer's AWS account through a cross-account role exists. ACG is on Azure. Nothing in our code or docs supports a model copy, and we know of no Bedrock feature for it. | Contradicts their Azure tenant; do not repeat the model-copy claim |
 | Deployable in ACG's environment | AWS only today. Azure work is planned under [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640) for Nestlé. | Same blocker as Nestlé |
 
