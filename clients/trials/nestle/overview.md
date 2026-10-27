@@ -49,7 +49,7 @@ not a started trial or an approved global rollout.
 | Success | Baselines, thresholds, measurement windows and signatories | Business owner |
 | Access | Authorized workspace, systems, data classification and write scope | Technical/security owners |
 | Delivery | Real alert destination, operator and escalation coverage | Operations owner |
-| Coordination | Jira epics BH-1639 and BH-1640 exist ([tickets](tickets.md)); GTM page reference still needed before Day 1 | BrightHive delivery owner |
+| Coordination | Jira epics [BH-1639](https://brighthiveio.atlassian.net/browse/BH-1639) and [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640) exist ([tickets](tickets.md)); GTM page reference still needed before Day 1 | BrightHive delivery owner |
 
 ## Business outcomes to agree
 
