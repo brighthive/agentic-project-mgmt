@@ -7,7 +7,7 @@ champion_email: ""
 trial_start: ""
 trial_end: ""
 decision_date: ""
-jira_epic: ""
+jira_epic: "BH-1639"
 notion_page: ""
 workspace_id: ""
 aws_account: ""
@@ -37,6 +37,7 @@ not a started trial or an approved global rollout.
 | Expansion across all agreed divisions | [Global rollout plan](global-rollout.md) |
 | Decisions, blockers and authoritative sources | [Decisions and evidence](decisions-and-evidence.md) |
 | Azure private deployment: what exists, blockers, proposed tickets | [Azure architecture alignment](AZURE_ARCHITECTURE.md) |
+| Jira epics and tickets, mapped to scorecard and journeys | [Tickets](tickets.md) |
 
 ## First decisions
 
@@ -48,7 +49,7 @@ not a started trial or an approved global rollout.
 | Success | Baselines, thresholds, measurement windows and signatories | Business owner |
 | Access | Authorized workspace, systems, data classification and write scope | Technical/security owners |
 | Delivery | Real alert destination, operator and escalation coverage | Operations owner |
-| Coordination | Live Jira epic before Day 1 and GTM page reference | BrightHive delivery owner |
+| Coordination | Jira epics BH-1639 and BH-1640 exist ([tickets](tickets.md)); GTM page reference still needed before Day 1 | BrightHive delivery owner |
 
 ## Business outcomes to agree
 
