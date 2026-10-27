@@ -15,7 +15,6 @@ For client architecture profiles and capability maps, see `../platform-saas-ai-c
 | [Loop Capital](trials/loopcapital/overview.md) | Frank Sung | MVP trial goal passed → vendor evaluation for a paid co-build ([fit](trials/loopcapital/GOVERNANCE_REQUIREMENTS_FIT.md)); phase 1 = [AI agent governance](trials/loopcapital/PHASE1_GOVERNANCE.md); working session 2026-10-21 | Phase-1 epic proposed ([alignment](ALIGNMENT_2026-10.md)); data-engineering work (BH-1036, BH-1245) is next phase | Active |
 | [Nestlé Global](trials/nestle/overview.md) | To confirm | Six weeks; target Nov 15, 2026, January fallback (years provisional); [Azure private deployment](trials/nestle/AZURE_ARCHITECTURE.md) | Epics proposed ([alignment](ALIGNMENT_2026-10.md)); none in Jira yet | Preparation; dates/scope to confirm |
 | [Safe-Guard Products International](trials/safe-guard/overview.md) | To confirm | To confirm; technical evaluation / trial | None yet (required before Day 1) | Snowflake governance and metadata monitoring |
-| [Virginia DSS / Virginia Works](trials/virginia-dss/overview.md) | To confirm | UAT / integration | None yet | Workforce Data Trust and historical data preparation |
 
 ---
 
@@ -36,6 +35,7 @@ For client architecture profiles and capability maps, see `../platform-saas-ai-c
 
 | Customer | Workspace ID | AWS Account | Contract Start | Owner |
 |---|---|---|---|---|
+| [Virginia DSS / Virginia Works](active/virginia-dss/overview.md) | _(DynamoDB)_ | _(DynamoDB)_ | To confirm | UAT / integration; Workforce Data Trust and historical data preparation |
 | [Indiana Tech](active/indiana-tech/overview.md) | _(DynamoDB)_ | _(DynamoDB)_ | To confirm | Production migration planning; owner to confirm |
 
 > Live account data lives in DynamoDB `AdminConfig` (PROD account `104403016368`).
