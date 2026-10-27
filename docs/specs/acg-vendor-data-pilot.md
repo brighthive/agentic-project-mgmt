@@ -26,7 +26,7 @@ ACG, a registered investment adviser on its own Azure tenant, wants vendor data 
 - Every exception names the dataset, the rule that failed, the measured value and when it was measured.
 - A bad record never stops the feed silently; it becomes an exception.
 - A fix is a reviewed pull request. No agent writes to ACG's warehouse or repository directly.
-- Delivery uses only channels that exist. Today that is Slack and MCP read-back, not Teams.
+- Delivery uses only channels that work end to end. Today that is Slack and MCP read-back. Teams is offered in the webapp but does not deliver (see the lead overview).
 - All evidence comes from the environment ACG agreed to, not from AWS staging alone.
 
 ## 4. Acceptance criteria

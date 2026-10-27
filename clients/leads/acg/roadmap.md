@@ -38,8 +38,8 @@ Only if Slice 0 says data must stay in ACG's Azure tenant. This reuses the Nestl
 
 | Item | Why |
 |---|---|
-| Microsoft Teams delivery | Not built; only a read tool exists today |
-| Azure Data Factory support | No code; ACG may still be evaluating it |
+| Microsoft Teams delivery | A sender exists but is disconnected (`delivery.py:282`, routed to Slack at `:349`). Wiring it is a small slice if ACG wants it; prove it with a real Teams channel first. |
+| Azure Data Factory support | Listed as an ingestion card in the webapp with no code behind it; ACG may still be evaluating it |
 | Per-vendor connector library for APX, eVestment, FactSet, Morningstar, Bloomberg | Unverified; Slice 1 tests one |
 
 ## Jira

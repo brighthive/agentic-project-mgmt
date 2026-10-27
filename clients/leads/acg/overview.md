@@ -47,18 +47,18 @@ Registered investment adviser (RIA) that has just moved off Guggenheim-hosted in
 
 ## What the proposal promises, and what exists today
 
-Checked against brightbot `origin/develop` on 2026-10-27; paths are under `brightbot/brightbot/`. Fix the wording before anything goes to ACG again.
+Checked on 2026-10-27 against `origin/develop` of brightbot (paths under `brightbot/brightbot/`), brighthive-platform-core and brighthive-webapp, and `origin/main` of brightbot-slack-server. Fix the wording before anything goes to ACG again.
 
 | The proposal says | What the code shows | Verdict |
 |---|---|---|
-| 650+ connectors, custom builds on demand | Ingestion runs through Airbyte, with a custom-connector agent (`agents/airbyte_custom_agent`). No eVestment, FactSet, Morningstar, Bloomberg or Advent connector code exists in our repos; the only hit is a `bloomberg_ticker` column-name pattern (`agents/dbt_agent/tools/atlas_semantic_view/constants.py:50,71`). Whether Airbyte's catalog covers them is unchecked. | Verify each vendor before promising |
+| 650+ connectors, custom builds on demand | Ingestion runs through Airbyte, with a custom-connector agent (`agents/airbyte_custom_agent`). No eVestment, FactSet, Morningstar, Bloomberg or Advent connector code exists in our repos; the only hits are a `bloomberg_ticker` column-name pattern (`agents/dbt_agent/tools/atlas_semantic_view/constants.py:50,71`) and an Adaptive Card element type named `FactSet` that is not the vendor. An `airbyte-source-sftp-bulk` source repo exists and may cover FTP-style feeds (unchecked). Whether Airbyte's catalog covers them is unchecked. | Verify each vendor before promising |
 | Great Expectations runs in the ingestion agent | It runs in the quality agent (`agents/governance_agent/sub_agents/quality_check_agent.py:91`, `agents/governance_agent/tools/quality_tools.py:18`), not in `ingestion_agent` | Partly true; reword |
 | Schema profile, drift and quality score on every dataset at ingestion | `data_profiler_agent` and `schema_agent` exist. Automatic scoring at ingestion is not verified. | Verify |
 | 7 agents plus a supervisor | 21 deployed graphs, counting scheduled tasks; the supervisor is `superduper_agent` / `deep_agent`. "7" is not a code concept. | Reword |
 | "Night Shift" agent | No such agent. The real ones: `pipeline_watchdog_task`, `fleet_health_digest_task`, `profiler_task`, `quality_check_task`. | Rename to what exists |
-| Morning list in Slack, Teams, MCP or inbox | Slack delivery and MCP read-back work. Teams is a read-only tool in the Slack router (`agents/slack_router_agent/intent_classifier.py:23`, `mcp_tool_node.py:1`), with no delivery code. The webapp inbox was flag-gated off in our June notes. | Teams and inbox not available |
+| Morning list in Slack, Teams, MCP or inbox | Slack delivery and MCP read-back work. Teams: a webhook sender exists but is disconnected (platform-core `lambdas/notification_dispatcher/delivery.py:282`, marked unused at `:348`). The channel map sends `teams` to the Slack sender (`:349`), the Slack server has only `src/notifications/channels/slack.ts`, and the webapp offers "Microsoft Teams" as a channel (`brighthive-webapp` `src/Notifications/constants.ts:88`). The webapp inbox is behind `VITE_NOTIFICATIONS_ENABLED`, default off (`src/Notifications/notificationsFlag.ts:15`). | Teams is offered in the UI but does not deliver; inbox is off by default. Teams is a small fix, not a build. |
 | Agent writes SQL or dbt and commits to GitHub | dbt agent has GitHub commit tooling (`agents/dbt_agent/tools/github_commit_resolve.py`) | Supported, through a reviewed pull request |
-| Works with Data Factory | Snowflake, Databricks, Synapse, Postgres and Redshift connections exist (`utils/warehouse_types.py:22-26`). No Data Factory code (0 matches). | Not supported |
+| Works with Data Factory | Snowflake, Databricks, Synapse, Postgres and Redshift connections exist (`utils/warehouse_types.py:22-26`). No agent or backend code in brightbot or platform-core mentions Data Factory. The webapp lists it as a selectable ingestion provider (`brighthive-webapp` `src/common/Services/Ingestions/AddIngestions.tsx:63-65`), and I found nothing behind it. | Not supported; do not demo the Data Factory card |
 | SSIS/SSRS diagnosis skill | `agents/analyst_agent/ssis_remediation_agent.py:104` and pipeline diagnostics tools exist, and shipped for another client | Supported. Do not name the other client. |
 | Single tenant, own S3 bucket via AWS Bedrock, "full model copy in your environment" | A per-workspace bucket in the customer's AWS account through a cross-account role exists. ACG is on Azure. Nothing in our code or docs supports a model copy, and we know of no Bedrock feature for it. | Contradicts their Azure tenant; do not repeat the model-copy claim |
 | Deployable in ACG's environment | AWS only today. Azure work is planned under [BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640) for Nestlé. | Same blocker as Nestlé |
@@ -69,6 +69,7 @@ Checked against brightbot `origin/develop` on 2026-10-27; paths are under `brigh
 - **A regulated RIA will ask about the model-copy sentence.** A claim we can't support is worse than a missing feature. Strike it.
 - **The demo date has passed.** The proposal set a technical demo for Tuesday 14 July 2026. Its outcome is not recorded anywhere.
 - **Reusing the Chicago asset manager as a reference** discloses another client's work. Get that client's consent or drop it.
+- **Teams is the likely ask for a Microsoft shop.** The sender exists but is disconnected, so it is a small fix. Do not promise it until it has delivered to a real Teams channel.
 - **Vendor feeds are the unproven centre.** We have no vendor-specific proof, so the first slice picks one feed and proves it.
 
 ## First call notes

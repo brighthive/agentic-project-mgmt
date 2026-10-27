@@ -40,4 +40,4 @@ The scenarios are in the [pilot spec](https://github.com/brighthive/agentic-proj
 
 ## Not ticketed on purpose
 
-Microsoft Teams delivery, Azure Data Factory support, and connectors for all five vendors. None is built today, and ACG has not said it needs them. Decide with ACG first. See the [overview](overview.md#what-the-proposal-promises-and-what-exists-today).
+Microsoft Teams delivery (a sender exists but is disconnected), Azure Data Factory support (a webapp card with nothing behind it), and connectors for all five vendors. None works today, and ACG has not said it needs them. Decide with ACG first. See the [overview](overview.md#what-the-proposal-promises-and-what-exists-today).
