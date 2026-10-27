@@ -15,7 +15,7 @@ Jira is the source of truth for status. [All epics in Jira](https://brighthiveio
 - **Eight things Nestlé would judge the trial on.** None is agreed with Nestlé yet, and none has a baseline or a named person who signs it off.
 - **Two of the eight have no pilot test at all:** cost and usage, and readiness of the next division.
 - **Only two of the eight have any Jira work behind them,** and both are Azure-only.
-- **The trial target is 15 Nov 2026,** with January 2027 as the fallback ([plan](trial-plan.md)).
+- **The target start is 15 November, with January as the fallback** ([plan](trial-plan.md)). The trial-room docs infer the year as 2026 and no dates are confirmed with Nestlé.
 
 ## Epics
 
