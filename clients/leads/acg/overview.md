@@ -65,7 +65,7 @@ Checked on 2026-10-27 against `origin/develop` of brightbot (paths under `bright
 
 ## Red team
 
-- **The environment decides everything.** If ACG's security rules require data to stay in its Azure tenant, nothing runs until the Azure adapters exist. The Nestlé plan has 17 unstarted tickets for that.
+- **The environment decides everything.** If ACG's security rules require data to stay in its Azure tenant, nothing runs until the Azure adapters exist. The Nestlé plan has 15 unstarted tickets for that (14 pilot, 1 deferred).
 - **A regulated RIA will ask about the model-copy sentence.** A claim we can't support is worse than a missing feature. Strike it.
 - **The demo date has passed.** The proposal set a technical demo for Tuesday 14 July 2026. Its outcome is not recorded anywhere.
 - **Reusing the Chicago asset manager as a reference** discloses another client's work. Get that client's consent or drop it.
