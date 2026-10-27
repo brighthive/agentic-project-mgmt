@@ -21,7 +21,7 @@ For client architecture profiles and capability maps, see `../platform-saas-ai-c
 
 | Prospect | Champion | First Contact | Qualification | Next Step |
 |---|---|---|---|---|
-| — | | | | |
+| [ACG](leads/acg/overview.md) | John Sutton (CTO) | July 2026 | Technical champion engaged; budget, timeline and environment open | Confirm demo outcome and Azure-tenant rule, then pick one vendor feed ([roadmap](leads/acg/roadmap.md)) |
 
 ---
 
