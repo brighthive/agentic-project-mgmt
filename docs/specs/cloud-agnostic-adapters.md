@@ -10,7 +10,7 @@ last_reviewed: "2026-10-27"
 
 ## 1. Context
 
-Brightbot and platform-core run on AWS (Bedrock, S3, Secrets Manager, Cognito, AgentCore). The Nestlé pilot needs Azure ([BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640)). Four registries already exist, but cloud SDK calls bypass them in about 30 files. Azure should be an adapter added to a registry; GCP stays an open slot until a client needs it. Audit date 2026-10-27, from tracked files only.
+Brightbot and platform-core run on AWS (Bedrock, S3, Secrets Manager, Cognito, AgentCore). The Nestlé pilot needs Azure ([BH-1640](https://brighthiveio.atlassian.net/browse/BH-1640)). Four registries already exist, but cloud SDK calls bypass them: 21 brightbot files import `boto3` directly, and 20 platform-core files import the AWS SDK outside the container (counted on `develop`, 2026-10-27). Azure should be an adapter added to a registry; GCP stays an open slot until a client needs it. Audit date 2026-10-27, from tracked files only.
 
 ## 2. Interface contract: registries to extend
 
@@ -71,11 +71,11 @@ GCP adapters (no client, no ticket), a second orchestrator, webapp auth, AWS pro
 
 | # | Slice | Repo | Leaks to remove |
 |---|---|---|---|
-| 0.1 | Route direct Bedrock models through `build_chat_model` | brightbot | `slack_router_agent/mcp_tool_node.py:122`, `workflow_agent/agent.py:71`, `custom_llms/custom_claude.py:77`, `dbt_agent_react.py:365` |
+| 0.1 | Route direct model construction through `build_chat_model`, and delete the unused `CustomChatBedrock` | brightbot | `slack_router_agent/mcp_tool_node.py:122`, `workflow_agent/agent.py:71`, `dbt_agent_react.py:368` (the `USE_ANTHROPIC_DIRECT` switch, branch starts at `:381`); `custom_llms/custom_claude.py:77` has no users |
 | 0.2 | One secrets port with an AWS adapter | brightbot | `tools/aws/secrets_manager.py:97`, `async_secrets_manager.py:57`, `credentials_tools.py:184`, `super_agent/nodes/agents/dbt.py:699` |
 | 0.3 | Pick the storage backend from `storage_kind` in workspace config | brightbot | `backend_factory.py:83,165`, `studio_backend.py:36`, `backend_utils.py:87` |
 | 0.4 | Per-provider binding modules and neutral interface names | platform-core | `IS3Service`, `ICognitoService`, `ISecretsManagerService`, `IDynamoDBService` |
-| 0.5 | Move direct SDK use onto the container, 3 to 4 files per PR | platform-core | about 10 files in `src/graphql/models/*`, about 10 in `src/graphql/service/aws/*` |
+| 0.5 | Move direct SDK use onto the container, 3 to 4 files per PR | platform-core | 10 files in `src/graphql/models/*`, 10 of the 12 files in `src/graphql/service/aws/*` |
 | 0.6 | Configurable token issuers and claims | brightbot | `audit/identity.py:62`, `simple_messaging_agent.py:59` |
 | 0.7 | Guard test: SDK imports only under a provider package | both | none |
 
