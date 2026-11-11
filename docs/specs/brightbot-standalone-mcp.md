@@ -95,7 +95,8 @@ entrypoint alone does not establish that Brightbot is ready on Azure.
 ## 6. Dependencies and review slices
 
 - Dependency packaging first, preserving existing locked versions; then shared
-  MCP assembly/CLI and deferred imports. Keep each PR under 700 changed lines.
+  MCP assembly/deferred imports as a behavior-preserving refactor; then the CLI
+  and health feature. Keep each PR under 700 changed lines.
 - Existing Deploy handoff: `brighthive-deploy/docs/specs/brightbot-deployment.md`.
 - Before release: exact image/native/transitive license inventory, established
   application-source license rights, synthetic Core membership/matrix and a
