@@ -12,7 +12,8 @@ Technical release notes, grouped by repository then author. Unofficial date-rang
 | Tickets transitioned to Done | 0 |
 | Repos touched | 11 |
 | Code lines (excl. release re-merges) | +290,650 / −66,998 |
-| Authors (code PRs, full window → last 3 weeks) | Kuri (323 → 110), Marwan (8 → 8), Harbour (53 → 24) |
+| Code PRs — last 3 weeks (Nov 5 – 26) | Kuri 110 · Harbour 24 · Marwan 8 (team 142) |
+| Code PRs — whole sprint (Oct 7 – Nov 26) | Kuri 323 · Harbour 53 · Marwan 8 (team 384) |
 
 Release/promotion carriers (develop→staging, staging→production, versioned releases) are excluded from the lists below.
 

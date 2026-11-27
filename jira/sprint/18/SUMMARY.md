@@ -19,10 +19,11 @@
 │ Tickets referenced by PRs    │ 99 (85 Kuri, 1 Harbour, 13 —) │
 │ Story points                 │ not estimated                 │
 ├──────────────────────────────┼───────────────────────────────┤
-│                              │ full window   │ last 3 weeks  │
-│ Kuri                         │ 323 · 84.1%   │ 110 · 77.5%   │
-│ Harbour                      │  53 · 13.8%   │  24 · 16.9%   │
-│ Marwan                       │   8 ·  2.1%   │   8 ·  5.6%   │
+│ Code PRs                     │ last 3 weeks  │ whole sprint  │
+│ Kuri                         │ 110           │ 323           │
+│ Harbour                      │  24           │  53           │
+│ Marwan                       │   8           │   8           │
+│ Team                         │ 142           │ 384           │
 └──────────────────────────────┴───────────────────────────────┘
 ```
 
@@ -74,7 +75,7 @@
 
 ### 👤 Marwan (Marwan-Samih-Brighthive): 8 code PRs · 3 repos · +5,293 / −243
 
-**🕒 Last 3 weeks (Nov 5 – Nov 26): 8 PRs (all of his in-window work, merged Nov 11–12)**
+**🕒 Last 3 weeks (Nov 5 – Nov 26): 8 PRs, merged Nov 11–12**
 
 | Theme | What shipped |
 |---|---|
@@ -110,7 +111,7 @@ Two PRs account for much of the line count. webapp #1419 (+70,502 / −48,400) i
 
 1. **Zero tickets reached Done in 7 weeks** against 384 code PRs. Of the 99 tickets that PRs reference, 68 sit in Needs Refinement and 15 in To Do.
 2. **Seventh unofficial sprint.** There is still no Jira sprint object.
-3. **Work is invisible on the board.** 85 code PRs carry no `BH-`/`AZ-` key: Harbour 51 of 53, Marwan 8 of 8, Kuri 26. Azure delivery is tracked in a local AZ backlog, so it never shows in Jira.
+3. **Work is invisible on the board.** 85 code PRs carry no `BH-`/`AZ-` key — Harbour 51, Kuri 26, Marwan 8 (every one of his). Azure delivery is tracked in a local AZ backlog, so it never shows in Jira.
 4. **Merged is not the same as in develop.** 48 PRs merged into feature branches. brightbot's `feat/deployment-profile` (18 of Harbour's PRs, including the Nov 24–25 pipeline fixes) has no open PR to develop.
 5. **Concentration.** Kuri authored 84.1% of code PRs (77.9% in Sprint 17). Over the last 3 weeks the share is 77.5%, as Harbour's output rose.
 
