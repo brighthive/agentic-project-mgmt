@@ -1,0 +1,893 @@
+[
+ {
+  "key": "BH-170",
+  "summary": "SDLC & Code Quality",
+  "status": "To Do",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-172",
+  "summary": "Platform Features & Enhancements",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-453",
+  "summary": "BrightAgent Runtime Migration to Amazon Bedrock AgentCore — remove LangGraph Cloud / LangSmith service dependency",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-624",
+  "summary": "Semantic View Lifecycle: Read/Sync/Mirror/Write for Snowflake Tables",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-648",
+  "summary": "MCP tools/call is synchronous — heavy agents (deep_agent) 504 at the ~170s gateway cap",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-526"
+ },
+ {
+  "key": "BH-684",
+  "summary": "fix(brightbot): quality-check loads Redshift config on Snowflake workspaces despite BH-549",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-526"
+ },
+ {
+  "key": "BH-695",
+  "summary": "Engineering Agent Audit Trail — JWT-attributed tamper-evident action log",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-871",
+  "summary": "Pre-token-gen Lambda: emit mcp:write scope for WorkspaceAdmins",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-115"
+ },
+ {
+  "key": "BH-877",
+  "summary": "feat(scheduler): Add secure execute_workflow support to scheduled-agent CRUD",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-876"
+ },
+ {
+  "key": "BH-917",
+  "summary": "Deleting a schedule mid-run resurrects a malformed row (no existence/running guard on DynamoDB update_item)",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-876"
+ },
+ {
+  "key": "BH-933",
+  "summary": "Terminal-bridge webhook has no dedup key — lost ack + poller retry can double-fire notification signal",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-876"
+ },
+ {
+  "key": "BH-1036",
+  "summary": "Monitoring Agents — proactive pipeline discovery &amp; health (dbt, Databricks, ETL)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1047",
+  "summary": "feat(monitoring): auto-remediation loop for known fix patterns (check→find→alert→fix)",
+  "status": "Staging QC",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1036"
+ },
+ {
+  "key": "BH-1061",
+  "summary": "Lineage-Aware Data Quality — glue dbt/Databricks' own lineage to pre-ELT source health and post-ELT Gold/Diamond impact",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1131",
+  "summary": "On-Demand Alerts — agent-authored notification rules on the Signal Catalog",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1134",
+  "summary": "Concurrent same-workspace chat requests fail: shared InMemoryRunLogger single-run state race",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-173"
+ },
+ {
+  "key": "BH-1181",
+  "summary": "MCP capability coverage & availability across environments",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1207",
+  "summary": "get_routine_scores broken in all envs — brightroutines table missing GSI5 index",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": null
+ },
+ {
+  "key": "BH-1217",
+  "summary": "get_pipeline_health hangs on Redshift/Snowflake-only workspaces (etl adapter TDS-connects wrong engine)",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1255",
+  "summary": "Scheduled, Versioned, Lineage-Aware Pipeline Runs — configured & monitored through BrightAgent",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1320",
+  "summary": "Engineering agent (workflow_agent) is Redshift-locked — make it warehouse-agnostic read + write",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1168"
+ },
+ {
+  "key": "BH-1329",
+  "summary": "Surgical remediation PRs embed the engine's before+after run logs via the PipelineRunner port",
+  "status": "Code Review",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1330",
+  "summary": "Sync a project with its transformation engine's existing jobs, runs, and logs (via PipelineRunner port)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1333",
+  "summary": "feat(platform-core): GovernanceGateBinding + gatesForNode/gatesForProject resolvers",
+  "status": "Code Review",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1343",
+  "summary": "Project ACTIVE → SYNC(): activation fan-out that surfaces proactive golden nuggets",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1362",
+  "summary": "Show default-warehouse indicator on warehouse listing UI",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-172"
+ },
+ {
+  "key": "BH-1364",
+  "summary": "Apollo retry link misclassifies GraphQL errors as network failures (retries FORBIDDEN/validation 3x)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-173"
+ },
+ {
+  "key": "BH-1366",
+  "summary": "Suppress Apollo error toasts during automatic retries — only surface once retries are exhausted",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-113"
+ },
+ {
+  "key": "BH-1370",
+  "summary": "Warehouse → Database → Table hierarchical identity",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1371",
+  "summary": "(Step 1) DatabaseNode entity + HAS_DATABASE/HAS_TABLE relationships in OGM schema",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1370"
+ },
+ {
+  "key": "BH-1372",
+  "summary": "(Step 1) ResourceNode + JobNode entities + HAS_RESOURCE/HAS_JOB relationships in OGM schema",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1370"
+ },
+ {
+  "key": "BH-1373",
+  "summary": "(Step 2) Data migration: backfill DatabaseNode for every warehouse's database string + verify 100% DataAssetNode coverage",
+  "status": "Testing (Dev)",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1370"
+ },
+ {
+  "key": "BH-1380",
+  "summary": "(Step 5) brightbot: resolve_warehouse — replace next(iter(...)) with isDefault-aware resolution + override",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1370"
+ },
+ {
+  "key": "BH-1438",
+  "summary": "Quality jobs: support scoping against 1 asset, n-assets, tags/groups, and data products for on-prem sources",
+  "status": "Needs Refinement",
+  "assignee": "Harbour",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1421"
+ },
+ {
+  "key": "BH-1452",
+  "summary": "slack-server: deliver PDF/CSV/table artifacts on the direct channel-push path",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-876"
+ },
+ {
+  "key": "BH-1454",
+  "summary": "Give the supervisor a warehouse-listing tool so \"what warehouses do I have\" never needs GraphQL introspection",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Story",
+  "epic": "BH-1421"
+ },
+ {
+  "key": "BH-1457",
+  "summary": "Impact Capital: default-warehouse mismatch + unreachable Azure SQL server blocking all workflow execution",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-876"
+ },
+ {
+  "key": "BH-1461",
+  "summary": "Wire LANGGRAPH_BASE_URL + LANGGRAPH_API_KEY into core GraphQL API env (Sync fails closed)",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": null
+ },
+ {
+  "key": "BH-1462",
+  "summary": "fix(observability): run-card timestamps from stored lastRunAt + GitHub org from repo URL",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-359"
+ },
+ {
+  "key": "BH-1464",
+  "summary": "Authorization & Governance Enforcement: configurable roles, per-resource grants, one decision point",
+  "status": "In Progress",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1491",
+  "summary": "feat(platform-core): attribute conditions on authorize() — closed-enum condition cells + AttributeReader (implements SPEC-BH-1476)",
+  "status": "Testing (Dev)",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1495",
+  "summary": "fix(platform-core): createQualityRuleExecution is authenticated-only with no workspace scope — any tenant can write another's quality-check runs",
+  "status": "Testing (Dev)",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1503",
+  "summary": "feat(brightbot): wire Great Expectations quality-check as a golden-nugget source in project SYNC()",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1504",
+  "summary": "feat(brightbot): recurring project SYNC() trigger — proactive re-check cadence for ACTIVE projects",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1505",
+  "summary": "feat(brightbot): add `project` Skills-affinity bucket + routing for project_agent",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1506",
+  "summary": "fix(platform-core): addResourceToProject/removeResourceFromProject missing workspaceId — permanent authorize() fail-closed",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1507",
+  "summary": "fix(platform-core): resource↔project link/unlink never invalidates the Redis project-resources cache",
+  "status": "Done",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1508",
+  "summary": "feat(brightbot,platform-core): move project activation/sync fan-out off BackgroundTasks onto a queue with per-workspace fairness",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1511",
+  "summary": "feat(brightbot): schema-contract resolver + typed SchemaContract model",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-172"
+ },
+ {
+  "key": "BH-1512",
+  "summary": "feat(brightbot): deterministic conformance validator for schema contracts",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-172"
+ },
+ {
+  "key": "BH-1513",
+  "summary": "feat(brightbot): bind OUTPUT schema contract to analysis/query — refuse-on-mismatch",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-172"
+ },
+ {
+  "key": "BH-1514",
+  "summary": "feat(brightbot): bind INPUT/OUTPUT schema contracts to dbt transformation generation",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-172"
+ },
+ {
+  "key": "BH-1515",
+  "summary": "feat(brightbot): bind schema contract gates to visualization + join output",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-172"
+ },
+ {
+  "key": "BH-1525",
+  "summary": "authorize() resource-scope hop blocks every workspace-granular mutation (P0, live on staging)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1527",
+  "summary": "feat(platform-core): parse /spec/*.md frontmatter + canonical sections",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1530",
+  "summary": "feat(platform-core+webapp): per-section conformance status + Spec tab badges",
+  "status": "To Do",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1534",
+  "summary": "Thread project_id through pipeline_watchdog_task for Project-scoped health monitoring",
+  "status": "Code Review",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1255"
+ },
+ {
+  "key": "BH-1549",
+  "summary": "feat(mcp): project run tools — list/get runs, run/rerun/pause/resume pipeline, sync run history",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1551",
+  "summary": "feat(mcp): project access + extras — owner/managers, duplicate, destinations, governance gate, delete_project",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1564",
+  "summary": "fix(scheduler): owner-or-admin guard on schedule edit, delete, run-now",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1565",
+  "summary": "feat(authz): ROUTINE resource kind with ownership rule in authorize()",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1566",
+  "summary": "fix(routines): typed forbidden/unavailable outcomes when turning off a routine",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1567",
+  "summary": "feat(webapp): hide schedule edit/delete/run from non-owners; explain 403/503",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1571",
+  "summary": "feat(mcp): project pipeline authoring tools — create, edit, bind, compile a pipeline (the Claude Code loop for data pipelines)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1572",
+  "summary": "feat(authz): ROUTINE resource kind, workspace binding and default cells",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1573",
+  "summary": "feat(routines): turn-off decided by authorize(), node removed",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1579",
+  "summary": "feat(audit): record every GraphQL mutation automatically (audit plugin)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-695"
+ },
+ {
+  "key": "BH-1581",
+  "summary": "fix(mcp): ~50% of MCP calls 404 — sessions held in one instance's memory",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1583",
+  "summary": "test(e2e): Projects v2 coverage — surface MCP refusals, audit trail, agent stream fix",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1584",
+  "summary": "fix(projects): removing a data asset or target schema from a project is always forbidden",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1585",
+  "summary": "test(e2e): cover every Projects v2 MCP tool (reads, build lifecycle, refusals)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1586",
+  "summary": "fix(workflow): project pipelines readable and deletable across workspaces",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1587",
+  "summary": "fix(mcp): project tools answer ok/preview for a project that does not exist",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1588",
+  "summary": "fix(auth): workspace admins can update projects in other workspaces",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1589",
+  "summary": "fix(authz): 30 project-id GraphQL operations are not scoped to the caller's workspace",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1600",
+  "summary": "fix(warehouse): remove silent Redshift fallback; fail on ambiguous same-engine routing; live tests for Redshift/Postgres",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1370"
+ },
+ {
+  "key": "BH-1601",
+  "summary": "fix(warehouse): verifyWarehouseConnection gated on READ though documented admin-only; require a default per workspace",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1370"
+ },
+ {
+  "key": "BH-1613",
+  "summary": "chore(release): coordinated 4-repo promotion — land staging-only fixes on prod, cherry-pick develop skips",
+  "status": "Needs Refinement",
+  "assignee": "Unassigned",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-170"
+ },
+ {
+  "key": "BH-1624",
+  "summary": "fix(authz): 8 glossary and resource mutations are refused for everyone",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1625",
+  "summary": "feat(webapp): Workflows page filters every card by one selected project",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1626",
+  "summary": "spec: projects at enterprise scale — n projects × n pipelines with fleet, watchdogs, signals, routines",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1627",
+  "summary": "fix(authz): any asset manager can hand asset ownership to any organization, or empty the manager list",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1628",
+  "summary": "fix(signals): slack-server poller silently drops keyed signals (scheduled workflow success/error never delivered)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-409"
+ },
+ {
+  "key": "BH-1629",
+  "summary": "fix(signals): any workspace member can read personal signals addressed to someone else",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-409"
+ },
+ {
+  "key": "BH-1631",
+  "summary": "fix(quality): tag, all-assets and group rules are listed but never run; agent-made rules stay DRAFT",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1061"
+ },
+ {
+  "key": "BH-1632",
+  "summary": "feat(quality): run each quality rule at its stage — before load, during transform, after load",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Story",
+  "epic": "BH-1061"
+ },
+ {
+  "key": "BH-1634",
+  "summary": "feat(signals): send quality failures to the asset's managers and the project's managers, once per status change",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Story",
+  "epic": "BH-409"
+ },
+ {
+  "key": "BH-1636",
+  "summary": "fix(projects): activation review silently does nothing on staging",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-111"
+ },
+ {
+  "key": "BH-1637",
+  "summary": "fix(authz): quality rule update, delete and status change ignore workspace membership",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1464"
+ },
+ {
+  "key": "BH-1638",
+  "summary": "fix(auth): staging deploy removed the Cognito pre-token trigger — no user gets mcp:write",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Bug",
+  "epic": "BH-1181"
+ },
+ {
+  "key": "BH-1639",
+  "summary": "Nestlé trial: six-week global expansion",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1640",
+  "summary": "Nestlé: Azure private deployment (Lightweight)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1641",
+  "summary": "docs(adr): run the orchestrator as self-hosted LangGraph on AKS for the Nestlé pilot (NZ-0)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1640"
+ },
+ {
+  "key": "BH-1655",
+  "summary": "chore(azure): hardening after the Nestlé pilot, deferred from the thin slice",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1640"
+ },
+ {
+  "key": "BH-1656",
+  "summary": "chore(models): move Claude models to Opus 5.5 / Sonnet 5.5 across staging and prod",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-113"
+ },
+ {
+  "key": "BH-1657",
+  "summary": "ci(aws): Bedrock cost guardrails for staging and prod (budgets, anomaly alerts, per-person attribution)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-171"
+ },
+ {
+  "key": "BH-1658",
+  "summary": "ACG: vendor data pilot (lead)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Epic",
+  "epic": null
+ },
+ {
+  "key": "BH-1659",
+  "summary": "docs(acg): settle the facts and correct the proposal before building (Slice 0)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1658"
+ },
+ {
+  "key": "BH-1663",
+  "summary": "feat(acg): run in ACG's own Azure tenant, sequenced behind Nestlé (Slice 4)",
+  "status": "Needs Refinement",
+  "assignee": "Kuri",
+  "points": null,
+  "type": "Task",
+  "epic": "BH-1658"
+ }
+]

@@ -1,0 +1,257 @@
+{
+  "sprint": 18,
+  "name": "Sprint 18 🍒",
+  "dates": {
+    "start": "2026-10-07",
+    "end": "2026-11-26",
+    "duration_days": 51
+  },
+  "last_3_weeks": {
+    "start": "2026-11-05",
+    "end": "2026-11-26",
+    "note": "Per-person sections mark work merged in this sub-window separately."
+  },
+  "unofficial": true,
+  "note": "No Jira sprint object exists since Sprint 8. Window is a date-range cut starting the day after Sprint 17 (Aug 24 – Oct 6).",
+  "tickets": {
+    "resolved_in_window": 0,
+    "referenced_by_prs": 99,
+    "referenced_status": {
+      "Needs Refinement": 68,
+      "Code Review": 3,
+      "To Do": 15,
+      "Done": 8,
+      "Testing (Dev)": 3,
+      "In Progress": 1,
+      "Staging QC": 1
+    },
+    "referenced_assignees": {
+      "Kuri Chinca": 85,
+      "Unassigned": 13,
+      "Harbour Wang": 1
+    },
+    "local_backlog_note": "Azure delivery (brighthive-deploy, brightagent, brightagent-selfhost) tracks work as local AZ-### tasks, not Jira."
+  },
+  "points": {
+    "note": "Team does not estimate — no story points on in-window tickets."
+  },
+  "team": [
+    "Kuri",
+    "Marwan",
+    "Harbour"
+  ],
+  "releases": {
+    "production": {
+      "date": "2026-10-16",
+      "prs": [
+        "brightbot#1187",
+        "brighthive-platform-core#1359",
+        "brighthive-webapp#1505"
+      ],
+      "followups": [
+        "webapp#1506-1508 Amplify release verification",
+        "platform-core#1360 secret log redaction",
+        "platform-core#1361 catalog identity fix"
+      ]
+    },
+    "staging": [
+      "2026-10-12/13 (bot #1148/#1155, core #1351/#1353/#1356, webapp #1490/#1493/#1502)",
+      "2026-10-14 project-health promotions (bot #1166-1176)",
+      "2026-11-12 bot #1222",
+      "2026-11-16 core #1386, webapp #1513"
+    ],
+    "brighthive_deploy": [
+      "v0.1.0 (Oct 29, #40)",
+      "v0.2.0 (Nov 16, #129)"
+    ]
+  },
+  "prs": {
+    "total": 412,
+    "code_prs": 384,
+    "release_promotion_prs": 28,
+    "lines_changed_code_only": {
+      "additions": 290650,
+      "deletions": 66998
+    },
+    "large_prs_note": "webapp#1419 (+70,502/−48,400, long-running auth+i18n branch incl. schema.graphql and locale tooling) and platform-core#1367 (+34,093/−1,827, multi-cloud runtime branch that carried 22 Marwan/Harbour PRs into develop).",
+    "repos": [
+      "agentic-project-mgmt",
+      "brightagent",
+      "brightagent-selfhost",
+      "brightagent-v3",
+      "brightbot",
+      "brightbot-slack-server",
+      "brighthive-deploy",
+      "brighthive-e2e",
+      "brighthive-platform-core",
+      "brighthive-webapp",
+      "platform-saas-ai-context"
+    ],
+    "by_repo": {
+      "agentic-project-mgmt": {
+        "total": 28,
+        "code": 28,
+        "additions": 27238,
+        "deletions": 349
+      },
+      "brightagent": {
+        "total": 7,
+        "code": 7,
+        "additions": 3457,
+        "deletions": 415
+      },
+      "brightagent-selfhost": {
+        "total": 5,
+        "code": 5,
+        "additions": 2120,
+        "deletions": 698
+      },
+      "brightagent-v3": {
+        "total": 8,
+        "code": 8,
+        "additions": 2587,
+        "deletions": 123
+      },
+      "brightbot": {
+        "total": 112,
+        "code": 96,
+        "additions": 44854,
+        "deletions": 7761
+      },
+      "brightbot-slack-server": {
+        "total": 7,
+        "code": 7,
+        "additions": 12100,
+        "deletions": 179
+      },
+      "brighthive-deploy": {
+        "total": 113,
+        "code": 111,
+        "additions": 48256,
+        "deletions": 3760
+      },
+      "brighthive-e2e": {
+        "total": 17,
+        "code": 17,
+        "additions": 3840,
+        "deletions": 364
+      },
+      "brighthive-platform-core": {
+        "total": 73,
+        "code": 68,
+        "additions": 62774,
+        "deletions": 4550
+      },
+      "brighthive-webapp": {
+        "total": 30,
+        "code": 25,
+        "additions": 80282,
+        "deletions": 48786
+      },
+      "platform-saas-ai-context": {
+        "total": 12,
+        "code": 12,
+        "additions": 3142,
+        "deletions": 13
+      }
+    },
+    "by_author": {
+      "Kuri": {
+        "github": "drchinca",
+        "full_window": {
+          "prs": 323,
+          "additions": 245976,
+          "deletions": 61842,
+          "repos": [
+            "agentic-project-mgmt",
+            "brightagent",
+            "brightagent-selfhost",
+            "brightagent-v3",
+            "brightbot",
+            "brightbot-slack-server",
+            "brighthive-deploy",
+            "brighthive-e2e",
+            "brighthive-platform-core",
+            "brighthive-webapp",
+            "platform-saas-ai-context"
+          ],
+          "share_pct": 84.1
+        },
+        "last_3_weeks": {
+          "prs": 110,
+          "additions": 86431,
+          "deletions": 8143,
+          "repos": [
+            "agentic-project-mgmt",
+            "brightagent",
+            "brightagent-selfhost",
+            "brightagent-v3",
+            "brightbot",
+            "brightbot-slack-server",
+            "brighthive-deploy",
+            "brighthive-e2e",
+            "brighthive-platform-core",
+            "platform-saas-ai-context"
+          ],
+          "share_pct": 77.5
+        },
+        "prs_without_ticket_key": 26
+      },
+      "Marwan": {
+        "github": "Marwan-Samih-Brighthive",
+        "full_window": {
+          "prs": 8,
+          "additions": 5293,
+          "deletions": 243,
+          "repos": [
+            "brightbot",
+            "brighthive-platform-core",
+            "brighthive-webapp"
+          ],
+          "share_pct": 2.1
+        },
+        "last_3_weeks": {
+          "prs": 8,
+          "additions": 5293,
+          "deletions": 243,
+          "repos": [
+            "brightbot",
+            "brighthive-platform-core",
+            "brighthive-webapp"
+          ],
+          "share_pct": 5.6
+        },
+        "prs_without_ticket_key": 8
+      },
+      "Harbour": {
+        "github": "Nano-233",
+        "full_window": {
+          "prs": 53,
+          "additions": 39381,
+          "deletions": 4913,
+          "repos": [
+            "brightbot",
+            "brightbot-slack-server",
+            "brighthive-e2e",
+            "brighthive-platform-core",
+            "brighthive-webapp"
+          ],
+          "share_pct": 13.8
+        },
+        "last_3_weeks": {
+          "prs": 24,
+          "additions": 23131,
+          "deletions": 2914,
+          "repos": [
+            "brightbot",
+            "brightbot-slack-server",
+            "brighthive-platform-core"
+          ],
+          "share_pct": 16.9
+        },
+        "prs_without_ticket_key": 51
+      }
+    },
+    "merged_into_feature_branches": 56
+  }
+}

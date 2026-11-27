@@ -1,8 +1,21 @@
 # Sprint Summary - Q1 2026 + Q2 2026 to Date
 
-**Current**: Sprint 17 (released Oct 6, unofficial) | **AgentCore epic BH-453 active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
+**Current**: Sprint 18 (released Nov 26, unofficial) | **Azure self-hosted BrightAgent (AZ backlog) active** | **Board**: [Jira](https://brighthiveio.atlassian.net/jira/software/projects/BH/boards)
 
 **📊 Q4 2025 → Q2 2026 Board Report**: [`BOARD_REPORT_OCT_2025_MAY_2026.md`](./BOARD_REPORT_OCT_2025_MAY_2026.md)
+
+---
+
+## Sprint 18 🍒 — Self-Hosted BrightAgent on Azure, Project Health & Every Warehouse Watched (Oct 7 – Nov 26, 2026)
+- **Duration**: 51 days (date-range cut, unofficial — seventh unofficial sprint in a row). Per-person sections mark the **last 3 weeks (Nov 5 – Nov 26)** separately.
+- **Focus**: self-hosted BrightAgent on Azure (MCP behind Entra over Synapse, customer install package, brighthive-deploy v0.1.0 → v0.2.0), project health (watchdog per project, health headline, self-repairing monitoring), quality rules over MCP, project workspace scoping, governance across every warehouse, Microsoft Teams notifications, pipelines that repair their own SQL, Oct 16 Staging → Production promotion
+- **Team**: Kuri, Harbour, Marwan (written per person, last 3 weeks marked)
+- **PRs Merged**: 412 total (384 code + 28 release/promotion carriers, 11 repos)
+- **Lines Changed**: +290,650 / −66,998 code-only
+- **Highlights**: Kuri — Azure self-host from zero to an installable package, project health, warehouse watch, multi-cloud runtime merged; Harbour — Teams channel, Azure runtime parity (Key Vault, Table Storage, AKS executor), self-repairing pipeline SQL; Marwan — dbt Cloud ids per service, Azure webapp + secret-store hardening (all Nov 11–12)
+- **Last 3 weeks**: 142 code PRs — Kuri 110, Harbour 24, Marwan 8
+- **Sprint Health**: 0 tickets to Done in 7 weeks against 384 code PRs; 68 PR-linked tickets in Needs Refinement, 15 in To Do. 85 code PRs carry no ticket key. 48 PRs merged into feature branches (brightbot `feat/deployment-profile` not yet in develop). Kuri authored 84.1% of code PRs (up from 77.9%).
+- [Details →](./18/)
 
 ---
 
